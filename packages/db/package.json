@@ -3,27 +3,35 @@
   "version": "0.1.0",
   "description": "Database layer with MikroORM entities, migrations, and repositories",
   "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
-    "build": "tsc",
     "type-check": "tsc --noEmit",
     "migrate": "mikro-orm migration:up",
     "migrate:down": "mikro-orm migration:down",
     "migration:create": "mikro-orm migration:create",
     "seed": "ts-node scripts/seed.ts"
   },
+  "mikro-orm": {
+    "configPaths": [
+      "./mikro-orm.config.ts"
+    ]
+  },
   "dependencies": {
     "@devmentor/core": "*",
-    "mikro-orm": "^5.9",
-    "@mikro-orm/postgresql": "^5.9",
-    "@mikro-orm/migrations": "^5.9",
-    "pg": "^8.12",
-    "class-validator": "^0.14",
-    "class-transformer": "^0.5"
+    "@mikro-orm/core": "^6",
+    "@mikro-orm/migrations": "^6",
+    "@mikro-orm/postgresql": "^6",
+    "dotenv": "^16.6.1",
+    "reflect-metadata": "^0.2"
   },
   "devDependencies": {
+    "@mikro-orm/cli": "^6",
     "@types/node": "^20",
+    "ts-node": "^10",
     "typescript": "^5"
   }
 }

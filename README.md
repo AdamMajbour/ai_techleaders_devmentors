@@ -44,41 +44,38 @@ packages/
 └── ui/              # Komponenty interfejsu (shadcn-ui, custom komponenty)
 ```
 
-> **Uwaga:** na obecnym etapie działająca aplikacja Next.js (App Router) znajduje się w katalogu głównym `src/app/`, a `packages/app` jest na razie szkieletem.
+> **Uwaga:** aplikacja Next.js (App Router) mieszka w `packages/app/src/app/`. Pakiety `core`, `db` i `ui` są wewnętrzne — używane jako kod źródłowy TypeScript (`transpilePackages`), bez osobnego kroku budowania do `dist/`. Kod serwerowy (kontener DI, serwisy, `apiHandler`) importuj z `@devmentor/core/server`; `@devmentor/core` (wejście izomorficzne) jest bezpieczne także w kliencie. Standardy: `.ai/specs/engineering-standards.md`.
 
 ### Przepływ zależności
 
 ```
-app/ (konsumuje)
-  ↓
-core/, ui/, db/ (niezależne, mogą zależeć od siebie)
+app → core → db        ui: samodzielny, importowany tylko przez app
 ```
 
+Wymuszane przez ESLint (`no-restricted-imports`): `core` nie importuje `next`/`react`, `ui` nie importuje `core`/`db`,
+`app` nie importuje `db`, a `@mikro-orm/*` jest tylko w `db`.
+
 - **app/** — Next.js aplikacja z App Router
-  - Strony frontendowe w `app/` katalogu
-  - API routes w `app/api/`
-  - Server components, Client components
-  - Nie zawiera logiki biznesowej — deleguje do `core/`, `db/`, `ui/`
+  - Strony w `src/app/` (grupy tras per persona, np. `(marketing)/`)
+  - Route handlers w `src/app/api/<koncept>/route.ts` — tylko `apiHandler` + walidacja + wywołanie serwisu
+  - Nie zawiera logiki biznesowej — deleguje do `core/` i `ui/`
 
-- **core/** — Logika biznesowa i utilitki
-  - `utils/` — funkcje pomocnicze
-  - `types/` — TypeScript types i interfaces
-  - `hooks/` — React hooks do logiki biznesowej
-  - `constants/` — stałe aplikacji
-  - Niezależny od frameworka — może być używany w Node.js lub przeglądarce
+- **core/** — Logika biznesowa, niezależna od frameworka
+  - `http/` — `AppError` i potomkowie, `apiHandler` (koperta JSON `{ ok, data | error }`)
+  - `services/<koncept>/` — reguły biznesowe; `validators/<koncept>/` — schematy Zod współdzielone client/server
+  - `container/` — Awilix (`container.ts`, `cradle.ts`); `logger.ts` — logger JSON z maskowaniem sekretów
+  - `types/`, `utils/`, `constants/`
+  - Wejścia: `@devmentor/core` (izomorficzne) i `@devmentor/core/server` (kontener, serwisy, `apiHandler`)
 
-- **db/** — Zarządzanie danymi
-  - `entities/` — MikroORM modele danych
-  - `repositories/` — warstwa abstrakcji dostępu do danych
-  - `migrations/` — migracje bazy danych
-  - `config/` — konfiguracja MikroORM i connection pool
-  - Obsługuje: lazy loading, pooling, migracje, relationships
+- **db/** — Zarządzanie danymi (jedyny pakiet z `@mikro-orm/*`)
+  - `entities/<koncept>/<nazwa>.entity.ts` — `defineEntity`; tabele snake_case w liczbie mnogiej
+  - `repositories/` — dostęp do danych; `migrations/`; `config/`
 
-- **ui/** — Komponenty interfejsu
-  - `components/` — shadcn-ui + custom komponenty
-  - `hooks/` — UI-specificzne hooks
-  - `styles/` — globalne Tailwind CSS
-  - Wykorzystuje Tailwind i shadcn-ui dla spójności
+- **ui/** — Komponenty interfejsu (samodzielny)
+  - `components/ui/` — prymitywy shadcn; `components/<koncept>/` — komponenty konceptu
+  - `backend/api/` — `apiCall` (jedyne miejsce na `fetch` do `/api/*`)
+  - `hooks/` — hooki React; `lib/` — `cn`
+  - Tokeny i style globalne: `@devmentor/ui/styles` (importowane w `globals.css` aplikacji)
 
 ## 🛠️ Stack techniczny
 
@@ -96,7 +93,7 @@ core/, ui/, db/ (niezależne, mogą zależeć od siebie)
 ## 🚀 Getting Started
 
 ### Wymagania
-- Node.js 18+
+- Node.js 20.9+ (wymóg Next.js 16)
 - PostgreSQL 14+
 - npm 9+
 
@@ -106,8 +103,13 @@ core/, ui/, db/ (niezależne, mogą zależeć od siebie)
 # Zainstaluj zależności dla wszystkich pakietów
 npm install
 
-# Migruj bazę danych
+# PostgreSQL lokalnie (albo własny serwer) i połączenie z bazą (zobacz „Zmienne środowiskowe”)
+docker compose up -d db
+cp .env.example .env.local
+
+# Migruj bazę danych (tworzy bazę, jeśli jej brakuje) i opcjonalnie załaduj dane demo
 npm run migrate
+npm run db:seed
 
 # Uruchom dev server
 npm run dev
@@ -117,12 +119,16 @@ npm run dev
 
 ```bash
 npm run dev          # Uruchom dev server (app/)
-npm run build        # Zbuduj aplikację produkcyjną
+npm run build        # Type-check pakietów + build aplikacji (uruchamiaj z NODE_ENV=production)
 npm run start        # Uruchom aplikację (po build)
 npm run migrate      # Uruchom migracje bazy danych
+npm run migrate:down # Wycofaj ostatnią migrację
+npm run db:seed      # Dane demo (idempotentne, wymaga migracji)
 npm run lint         # Sprawdź linting
 npm run type-check   # Sprawdzenie typów TypeScript
-npm run test         # Uruchom testy
+npm run test         # Testy jednostkowe (bez bazy)
+npm run test:integration # Testy repozytoriów i migracji (wymaga PostgreSQL)
+npm run test:e2e     # Build + start aplikacji, testy HTTP i w Chromium (wymaga PostgreSQL i Chromium)
 ```
 
 ## 📁 Konwencje projektowe
@@ -150,16 +156,16 @@ npm run test         # Uruchom testy
 
 ### MikroORM
 
-- **Entities** — modele w `packages/db/entities/`
-- **Migracje** — automatyczne w `packages/db/migrations/`
-- **Repositories** — warstwa abstrakcji w `packages/db/repositories/`
+- **Entities** — modele w `packages/db/src/entities/`
+- **Migracje** — w `packages/db/src/migrations/`; bez pliku snapshotu (`snapshot: false`), więc `migration:create` porównuje encje z aktualną bazą — najpierw `npm run migrate`
+- **Repositories** — warstwa abstrakcji w `packages/db/src/repositories/`; konstruktor przyjmuje `EntityManager` (`orm.em.fork()` na żądanie/skrypt), bo MikroORM zabrania użycia globalnego EM
 - **Connection Pool** — zarządzane przez MikroORM
 
 ### Migracje
 
 ```bash
 # Utwórz nową migrację
-npm run mikro-orm migration:create
+npm --workspace=@devmentor/db run migration:create
 
 # Uruchom wszystkie migracje
 npm run migrate
@@ -170,21 +176,83 @@ npm run migrate:down
 
 **Zasady:**
 - Nigdy nie edytuj starych migracji — zawsze utwórz nową
-- Migracje muszą być reversible (up i down)
+- Migracje muszą być reversible (up i down) — `migration:create` generuje oba; sprawdź wygenerowany `down()`
 - Commituj migracje do git
+
+## 🧩 Dependency Injection (Awilix)
+
+Kontener jest w `packages/core/src/container/` (tylko kod serwerowy, `@devmentor/core/server`). Każda zależność jest
+rejestrowana ręcznie w `container.ts` i opisana w `cradle.ts` (bez `loadModules`):
+
+- `logger`, `orm` — singletony (jedna pula połączeń na proces), ORM tworzony leniwie przy pierwszym żądaniu
+- `em`, repozytoria, serwisy — **scoped**: każdy scope ma własny `EntityManager` (`fork()`)
+
+```ts
+export const GET = apiHandler(async (request) => {
+  const { authorId } = parseOrThrow(articleListQuerySchema, { authorId: new URL(request.url).searchParams.get('authorId') });
+  return withScope(({ articleService }) => articleService.listByAuthor(authorId));
+});
+```
+
+Przykład: `packages/app/src/app/api/articles/` (`makeCrudRoute`). Odpowiedzi mają kopertę
+`{ "ok": true, "data": … }` albo `{ "ok": false, "error": { "code", "message", "fieldErrors"? } }`.
+Aplikacja czyta `DATABASE_*` i `JWT_SECRET` z `.env.local` w korzeniu repozytorium (`next.config.ts`, `forceReload` — bez niego
+Next ładuje tylko pliki z `packages/app`).
+
+## 🌐 API
+
+| Trasa | Metoda | Dostęp | Opis |
+|---|---|---|---|
+| `/api/health` | GET | publiczna | Status procesu, bez bazy |
+| `/api/auth/register` | POST | publiczna, limit | Tworzy konto i loguje (cookie sesji) |
+| `/api/auth/login` | POST | publiczna, limit | Loguje; wszystkie błędy to `Invalid credentials.` |
+| `/api/auth/logout` | POST | sesja | Czyści cookie |
+| `/api/auth/me` | GET | sesja | Zalogowany użytkownik |
+| `/api/articles?authorId=&page=&pageSize=` | GET | publiczna | Lista stronicowana |
+| `/api/articles` | POST | sesja | Tworzy artykuł (autor = zalogowany) |
+| `/api/articles/[id]` | GET / PUT / DELETE | GET publiczny, PUT i DELETE tylko autor | Jeden artykuł |
+
+Każde żądanie zmieniające stan wymaga nagłówka `x-requested-with: devmentor` (używaj `apiCall` z `@devmentor/ui`).
+Strony: `/login`, `/register`, `/articles` (lista z `DataTable`, formularz z `CrudForm`).
 
 ## 🧪 Testowanie
 
-- **Unit testy:** `packages/core/`, `packages/db/`
+- **Unit i komponentowe:** `packages/core/`, `packages/ui/` (Jest + React Testing Library, jsdom)
+- **Testy integracyjne:** `packages/db/` (`*.integration.test.ts`) — prawdziwy PostgreSQL, osobna baza `devmentor_test`
+  (nazwa z `DATABASE_TEST_NAME`); odtwarzają schemat z migracji, więc nie dotykają bazy deweloperskiej
 - **Component testy:** `packages/ui/`
-- **E2E testy:** `packages/app/`
+- **E2E:** `packages/app/e2e/` — `next build` + `next start` na wolnym porcie, własna baza `devmentor_e2e` (`DATABASE_E2E_NAME`),
+  migrowana i zasilana tymi samymi skryptami npm co w pracy deweloperskiej; strony i API sprawdzane po HTTP, a strony dodatkowo
+  renderowane w headless Chromium (obliczone style, błędy konsoli)
 - **Framework:** Jest + React Testing Library
 - **Lokalizacja:** `component.tsx` + `component.test.tsx`
 
 ```bash
-npm run test          # Uruchom wszystkie testy
-npm run test:watch   # Watch mode
+npm run test              # Testy jednostkowe
+npm run test:integration  # Testy z bazą danych
+npm run test:e2e          # Build + serwer + testy HTTP i w przeglądarce
+npm run test:all          # Wszystkie trzy
+npm run test:watch        # Watch mode
 ```
+
+### Środowisko testowe
+
+- **PostgreSQL:** `docker compose up -d db` (`docker-compose.yml`, dane logowania = domyślne z `packages/db/src/config`).
+  Testy integracyjne i E2E same tworzą bazy `devmentor_test` i `devmentor_e2e`.
+- **Chromium (testy przeglądarkowe w E2E):** `npx playwright install --with-deps chromium` (wymaga roota). Bez roota:
+  `npx playwright install chromium && python3 scripts/setup-chromium-libs.py` — skrypt pobiera brakujące biblioteki systemowe
+  (Debian/Ubuntu, amd64) do `~/.cache/chromium-libs`, a test sam dodaje je do `LD_LIBRARY_PATH` (katalog: `CHROMIUM_LIBS_DIR`).
+- **CI:** `.github/workflows/ci.yml` (type-check, lint, testy jednostkowe, migracje up/down/up + seed, testy integracyjne,
+  E2E z Chromium, build produkcyjny) z usługą `postgres:17`.
+
+### shadcn-ui
+
+`packages/ui/components.json` i `packages/app/components.json` konfigurują CLI (`npx shadcn@latest add <komponent> --cwd packages/ui`).
+Aliasy `@devmentor/ui/components|lib|hooks/*` są wyeksportowane w `package.json` pakietu i zmapowane w `tsconfig`.
+Uwaga: CLI 4.22.1 generuje obecnie import `import { cn } from "cn"` (także w zwykłym projekcie Next.js — to problem rejestru/CLI,
+nie konfiguracji, `shadcn info` rozwiązuje aliasy poprawnie) i dopisuje zależność `cn`. Po `shadcn add` popraw import na
+`../lib/utils` i usuń zbędne zależności. Aplikacja nie ładuje preflightu Tailwinda, więc komponenty muszą same resetować natywne style
+(patrz `Button`).
 
 ## 📝 Dokumentacja
 
@@ -196,14 +264,21 @@ npm run test:watch   # Watch mode
 
 ## 🔐 Zmienne środowiskowe
 
-Utwórz `.env.local` w root katalogu:
+Skopiuj `.env.example` do `.env.local` w katalogu głównym i dostosuj. Używamy osobnych zmiennych `DATABASE_*`, a nie `DATABASE_URL`, żeby nie uruchomić migracji na cudzej bazie ustawionej w środowisku. `NODE_ENV` ustawia Next.js — nie ustawiaj go ręcznie:
 
 ```env
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/devmentor
+# Database (czytane przez MikroORM CLI i seed; wzór w .env.example)
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_NAME=devmentor
+DATABASE_USER=postgres
+DATABASE_PASSWORD=postgres
+
+# Sesja (JWT HS256): min. 32 losowe bajty, wygeneruj: openssl rand -base64 48
+# Wymagane tylko przez trasy auth; aplikacja buduje się i startuje bez tego.
+JWT_SECRET=
 
 # Application
-NODE_ENV=development
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 

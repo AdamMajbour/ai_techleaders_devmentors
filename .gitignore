@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# monorepo packages
+node_modules
+.next/
+dist/
+
+# keep the committed template
+!.env.example
+.swc

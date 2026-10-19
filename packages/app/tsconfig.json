@@ -1,18 +1,47 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "./.next/static",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@devmentor/core": ["../core/src/index.ts"],
-      "@devmentor/core/*": ["../core/src/*"],
-      "@devmentor/db": ["../db/src/index.ts"],
-      "@devmentor/db/*": ["../db/src/*"],
-      "@devmentor/ui": ["../ui/src/index.ts"],
-      "@devmentor/ui/*": ["../ui/src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@devmentor/core": [
+        "../core/src/index.ts"
+      ],
+      "@devmentor/db": [
+        "../db/src/index.ts"
+      ],
+      "@devmentor/ui": [
+        "../ui/src/index.ts"
+      ],
+      "@devmentor/ui/*": [
+        "../ui/src/*"
+      ],
+      "@devmentor/core/server": [
+        "../core/src/server.ts"
+      ]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "next.config.ts",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
 }

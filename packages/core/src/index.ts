@@ -1,5 +1,18 @@
-// Core package - re-export utilities, types, and hooks
+// Core package, isomorphic entry: types, utilities, constants, typed errors and shared Zod schemas.
+// Safe to import from anywhere (also client code). It never imports next, react or the ORM.
+// Server-only pieces (DI container, services, API handler) live in `@devmentor/core/server`.
 export * from './types';
 export * from './utils';
-export * from './hooks';
 export * from './constants';
+export * from './http/errors';
+export type { ApiEnvelope } from './http/envelope';
+export * from './validators/parse';
+export * from './validators/id.schema';
+export * from './validators/auth/register.schema';
+export * from './validators/auth/login.schema';
+export * from './validators/articles/article-create.schema';
+export * from './validators/articles/article-update.schema';
+export * from './validators/articles/article-list.schema';
+export type { ArticleDto, UserDto, Page } from './services/dto';
+export { CLIENT_HEADER_NAME, CLIENT_HEADER_VALUE } from './security/csrf';
+export type { Session } from './security/session';

@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # The same defaults as docker-compose.yml and packages/db/src/config.
+    # The integration and E2E tests create their own databases (devmentor_test, devmentor_e2e).
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: devmentor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d devmentor"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Dependency audit (production dependencies, critical only)
+        run: npm run audit:prod
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit and component tests
+        run: npm test
+
+      - name: Database migrations (up, down, up) and seed
+        run: |
+          npm run migrate
+          npm run migrate:down
+          npm run migrate
+          npm run db:seed
+
+      - name: Integration tests
+        run: npm run test:integration
+
+      - name: Install Chromium for the browser checks
+        run: npx playwright install --with-deps chromium
+
+      - name: Build and end-to-end tests
+        run: npm run test:e2e
+
+      - name: Production build
+        run: npm run build
+        env:
+          NODE_ENV: production
