@@ -14,6 +14,7 @@ export const HTTP_STATUS = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
+  TOO_MANY_REQUESTS: 429,
   INTERNAL_ERROR: 500,
 } as const;
 
@@ -24,3 +25,6 @@ export const ERROR_MESSAGES = {
   NOT_FOUND: 'Resource not found.',
   SERVER_ERROR: 'Server error. Please try again later.',
 } as const;
+
+/** bcrypt ignores everything after 72 bytes, so longer passwords are rejected up front. Lives here so client code can validate without pulling in bcrypt. */
+export const PASSWORD_MAX_LENGTH = 72;

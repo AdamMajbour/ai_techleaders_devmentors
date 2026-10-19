@@ -26,6 +26,15 @@
   --radius: 8px;
 }
 
+/* Tailwind's preflight is not loaded, so borders would default to currentColor (white on this theme). */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

@@ -3,5 +3,6 @@
 export * from './config';
 export * from './entities';
 export * from './repositories';
+export * from './errors';
 // The only ORM type other packages may name; they never import @mikro-orm/* themselves.
 export type { EntityManager } from '@mikro-orm/core';

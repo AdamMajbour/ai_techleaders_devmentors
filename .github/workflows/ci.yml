@@ -37,6 +37,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Dependency audit (production dependencies, critical only)
+        run: npm run audit:prod
+
       - name: Type-check
         run: npm run type-check
 

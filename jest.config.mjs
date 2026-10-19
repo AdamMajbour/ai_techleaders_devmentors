@@ -62,4 +62,9 @@ const e2e = {
   transform: tsJest,
 };
 
-export default async () => ({ projects: [await unitConfig(), db, e2e] });
+export default async () => {
+  const unit = await unitConfig();
+  // jose is ESM-only; let SWC transform it (next/jest ignores all of node_modules by default).
+  unit.transformIgnorePatterns = ["/node_modules/(?!(jose)/)", "^.+\\.module\\.(css|sass|scss)$"];
+  return { projects: [unit, db, e2e] };
+};

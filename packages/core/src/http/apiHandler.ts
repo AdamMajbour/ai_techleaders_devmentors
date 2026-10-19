@@ -7,8 +7,13 @@ type RouteHandler<TContext> = (request: Request, context: TContext) => Promise<u
 
 const defaultLogger = createLogger();
 
-function json<T>(body: ApiEnvelope<T>, status: number): Response {
-  return Response.json(body, { status });
+function json<T>(body: ApiEnvelope<T>, status: number, headers?: HeadersInit): Response {
+  return Response.json(body, { status, headers });
+}
+
+/** A success envelope with a custom status or headers (201, Set-Cookie); a handler returns this to take control. */
+export function jsonResponse<T>(data: T, init: { status?: number; headers?: HeadersInit } = {}): Response {
+  return json({ ok: true, data }, init.status ?? HTTP_STATUS.OK, init.headers);
 }
 
 /**
@@ -27,6 +32,7 @@ export function apiHandler<TContext = unknown>(handler: RouteHandler<TContext>, 
         return json(
           { ok: false, error: { code: error.code, message: error.message, fieldErrors: error.fieldErrors } },
           error.status,
+          error.headers,
         );
       }
       logger.error('Unhandled error in API route', { error, method: request.method, url: new URL(request.url).pathname });

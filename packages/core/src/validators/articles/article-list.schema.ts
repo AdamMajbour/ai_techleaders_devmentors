@@ -1,7 +1,12 @@
 import { z } from 'zod';
 
+export const DEFAULT_PAGE_SIZE = 10;
+export const MAX_PAGE_SIZE = 50;
+
 export const articleListQuerySchema = z.object({
-  authorId: z.uuid(),
+  authorId: z.uuid().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(DEFAULT_PAGE_SIZE),
 });
 
 export type ArticleListQuery = z.infer<typeof articleListQuerySchema>;

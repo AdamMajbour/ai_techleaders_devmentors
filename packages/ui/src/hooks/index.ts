@@ -31,6 +31,10 @@ export function useMediaQuery(query: string): boolean {
   );
 }
 
+/**
+ * Runs `fn` on mount and whenever `deps` change. While a re-run is pending the previous `data` is
+ * kept (stale-while-revalidate), so a reload does not blank the screen.
+ */
 export function useAsync<T>(fn: () => Promise<T>, deps: DependencyList = []) {
   const [state, setState] = useState<{
     status: 'idle' | 'pending' | 'success' | 'error';
@@ -42,7 +46,7 @@ export function useAsync<T>(fn: () => Promise<T>, deps: DependencyList = []) {
     let isMounted = true;
 
     const run = async () => {
-      setState({ status: 'pending' });
+      setState((previous) => ({ status: 'pending', data: previous.data }));
       try {
         const data = await fn();
         if (isMounted) {
@@ -50,7 +54,7 @@ export function useAsync<T>(fn: () => Promise<T>, deps: DependencyList = []) {
         }
       } catch (error) {
         if (isMounted) {
-          setState({ status: 'error', error: error as Error });
+          setState({ status: 'error', error: error instanceof Error ? error : new Error(String(error)) });
         }
       }
     };

@@ -20,7 +20,8 @@
     "db:seed": "npm --workspace=@devmentor/db run seed",
     "test:integration": "jest --selectProjects db",
     "test:all": "jest",
-    "test:e2e": "jest --selectProjects e2e"
+    "test:e2e": "jest --selectProjects e2e",
+    "audit:prod": "npm audit --omit=dev --audit-level=critical"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.2",

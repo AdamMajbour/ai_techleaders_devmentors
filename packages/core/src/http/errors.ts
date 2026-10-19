@@ -9,6 +9,8 @@ export class AppError extends Error {
     readonly code: string,
     readonly status: number,
     readonly fieldErrors?: FieldErrors,
+    /** Extra response headers, e.g. Retry-After. */
+    readonly headers?: Record<string, string>,
   ) {
     super(message);
     this.name = new.target.name;
@@ -42,5 +44,13 @@ export class NotFoundError extends AppError {
 export class ConflictError extends AppError {
   constructor(message = 'The request conflicts with the current state.') {
     super(message, 'conflict', HTTP_STATUS.CONFLICT);
+  }
+}
+
+export class TooManyRequestsError extends AppError {
+  constructor(retryAfterSeconds: number) {
+    super('Too many attempts. Try again later.', 'too_many_requests', HTTP_STATUS.TOO_MANY_REQUESTS, undefined, {
+      'Retry-After': String(retryAfterSeconds),
+    });
   }
 }

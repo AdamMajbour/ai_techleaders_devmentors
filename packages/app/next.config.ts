@@ -4,7 +4,8 @@ import type { NextConfig } from "next";
 
 // Next.js only reads .env files from this package; share the repository-root ones
 // (DATABASE_*, see .env.example) with the app. The cwd is packages/app for dev/build/start.
-loadEnvConfig(path.resolve(process.cwd(), "../.."));
+// forceReload: Next has already loaded this package's own .env files, and without it the call is a no-op.
+loadEnvConfig(path.resolve(process.cwd(), "../.."), process.env.NODE_ENV !== "production", console, true);
 
 const nextConfig: NextConfig = {
   // Internal workspace packages are consumed as TypeScript source.

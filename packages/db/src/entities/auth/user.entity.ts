@@ -7,6 +7,8 @@ export const User = defineDomainEntity({
     email: p.string().unique(),
     name: p.string(),
     avatar: p.string().nullable(),
+    // bcrypt hash. Nullable: users created without a password cannot log in. Hidden from serialization.
+    passwordHash: p.string().hidden().nullable(),
   },
 });
 

@@ -1,5 +1,6 @@
-import type { User, UserRepository } from '@devmentor/db';
+import type { UserRepository } from '@devmentor/db';
 import { NotFoundError } from '../../http/errors';
+import { toUserDto, type UserDto } from '../dto';
 
 export class UserService {
   private readonly userRepository: UserRepository;
@@ -8,15 +9,9 @@ export class UserService {
     this.userRepository = userRepository;
   }
 
-  async getById(id: string): Promise<User> {
+  async getById(id: string): Promise<UserDto> {
     const user = await this.userRepository.findById(id);
     if (!user) throw new NotFoundError('User not found.');
-    return user;
-  }
-
-  async getByEmail(email: string): Promise<User> {
-    const user = await this.userRepository.findByEmail(email);
-    if (!user) throw new NotFoundError('User not found.');
-    return user;
+    return toUserDto(user);
   }
 }

@@ -91,4 +91,26 @@ describe('useAsync', () => {
     await waitFor(() => expect(result.current.data).toBe(2));
     expect(fn).toHaveBeenCalledTimes(2);
   });
+
+  it('keeps the previous data while a re-run is pending', async () => {
+    let release: (value: number) => void = () => undefined;
+    const fn = jest.fn((value: number) => (value === 1 ? Promise.resolve(1) : new Promise<number>((resolve) => (release = resolve))));
+    const { result, rerender } = renderHook(({ value }) => useAsync(() => fn(value), [value]), { initialProps: { value: 1 } });
+    await waitFor(() => expect(result.current.data).toBe(1));
+
+    rerender({ value: 2 });
+    await waitFor(() => expect(result.current.status).toBe('pending'));
+    expect(result.current.data).toBe(1);
+
+    release(2);
+    await waitFor(() => expect(result.current.data).toBe(2));
+  });
+
+  it('wraps a non-Error rejection in an Error', async () => {
+    const { result } = renderHook(() => useAsync(() => Promise.reject('plain string')));
+
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    expect(result.current.error).toBeInstanceOf(Error);
+    expect(result.current.error?.message).toBe('plain string');
+  });
 });

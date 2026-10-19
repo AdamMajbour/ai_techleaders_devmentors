@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { MikroORM } from '@mikro-orm/core';
 import type { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { closeORM, initializeORM } from '../config';
+import { isUniqueConstraintViolation } from '../errors';
 import { ArticleRepository, UserRepository } from './index';
 
 let orm: MikroORM<PostgreSqlDriver>;
@@ -72,9 +73,11 @@ describe('UserRepository', () => {
     const users = new UserRepository(orm.em.fork());
     await users.create({ email: 'dup@example.com', name: 'First' });
 
-    await expect(
-      new UserRepository(orm.em.fork()).create({ email: 'dup@example.com', name: 'Second' }),
-    ).rejects.toThrow(/unique|duplicate/i);
+    const duplicate = await new UserRepository(orm.em.fork())
+      .create({ email: 'dup@example.com', name: 'Second' })
+      .catch((error: unknown) => error);
+    expect(isUniqueConstraintViolation(duplicate)).toBe(true);
+    expect(isUniqueConstraintViolation(new Error('something else'))).toBe(false);
   });
 
   it('updates a user and returns null for an unknown id', async () => {
@@ -116,15 +119,74 @@ describe('ArticleRepository', () => {
   });
 });
 
+describe('ArticleRepository paging, update and delete', () => {
+  it('pages newest first and counts the total, optionally per author', async () => {
+    const author = '00000000-0000-4000-8000-0000000000a1';
+    const articles = new ArticleRepository(orm.em.fork());
+    for (const title of ['first', 'second', 'third']) {
+      await articles.create({ title, content: title, authorId: author });
+      await new Promise((resolve) => setTimeout(resolve, 5)); // distinct createdAt
+    }
+
+    const reader = new ArticleRepository(orm.em.fork());
+    const firstPage = await reader.findPage({ authorId: author, limit: 2, offset: 0 });
+    expect(firstPage.total).toBe(3);
+    expect(firstPage.items.map((article) => article.title)).toEqual(['third', 'second']);
+    const secondPage = await reader.findPage({ authorId: author, limit: 2, offset: 2 });
+    expect(secondPage.items.map((article) => article.title)).toEqual(['first']);
+    expect((await reader.findPage({ limit: 100, offset: 0 })).total).toBeGreaterThanOrEqual(3);
+  });
+
+  it('updates only the given fields and returns null for an unknown id', async () => {
+    const created = await new ArticleRepository(orm.em.fork()).create({
+      title: 'Old',
+      content: 'Body',
+      authorId: '00000000-0000-4000-8000-0000000000a2',
+    });
+
+    const updated = await new ArticleRepository(orm.em.fork()).update(created.id, { title: 'New' });
+    expect(updated).toMatchObject({ title: 'New', content: 'Body' });
+    expect(await new ArticleRepository(orm.em.fork()).update('00000000-0000-4000-8000-000000000000', { title: 'x' })).toBeNull();
+  });
+
+  it('deletes an article once', async () => {
+    const created = await new ArticleRepository(orm.em.fork()).create({
+      title: 'Gone',
+      content: 'Soon',
+      authorId: '00000000-0000-4000-8000-0000000000a3',
+    });
+
+    expect(await new ArticleRepository(orm.em.fork()).delete(created.id)).toBe(true);
+    expect(await new ArticleRepository(orm.em.fork()).findById(created.id)).toBeNull();
+    expect(await new ArticleRepository(orm.em.fork()).delete(created.id)).toBe(false);
+  });
+});
+
+describe('User password hash', () => {
+  it('is stored, loaded, and left out of the serialized entity', async () => {
+    const created = await new UserRepository(orm.em.fork()).create({
+      email: 'hash@example.com',
+      name: 'Hash',
+      passwordHash: '$2b$12$abcdefghijklmnopqrstuuabcdefghijklmnopqrstuvwxyz01234',
+    });
+
+    const stored = await new UserRepository(orm.em.fork()).findById(created.id);
+    expect(stored?.passwordHash).toMatch(/^\$2b\$12\$/);
+    expect(JSON.parse(JSON.stringify(stored))).not.toHaveProperty('passwordHash');
+  });
+});
+
 describe('migrations (down)', () => {
   it('rename the tables back and keep their rows when the last migration is reverted', async () => {
     const created = await new UserRepository(orm.em.fork()).create({ email: 'rename@example.com', name: 'Rename' });
 
-    await orm.migrator.down();
+    await orm.migrator.down(); // add_user_password_hash
+    await orm.migrator.down(); // plural_table_names
     expect(await publicTables()).toEqual(['article', 'mikro_orm_migrations', 'user']);
     const rows: { email: string }[] = await orm.em.getConnection().execute('select email from "user" where id = ?', [created.id]);
     expect(rows).toEqual([{ email: 'rename@example.com' }]);
 
+    await orm.migrator.up();
     await orm.migrator.up();
     expect(await publicTables()).toEqual(['articles', 'mikro_orm_migrations', 'users']);
   });

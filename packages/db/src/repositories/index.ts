@@ -5,6 +5,9 @@
 import type { EntityManager, RequiredEntityData } from '@mikro-orm/core';
 import { User, Article } from '../entities';
 
+/** `passwordHash` is hidden from serialization, which makes the type system require it; here it is optional. */
+export type NewUser = Omit<RequiredEntityData<User>, 'passwordHash'> & { passwordHash?: string | null };
+
 export class UserRepository {
   constructor(private readonly em: EntityManager) {}
 
@@ -16,8 +19,8 @@ export class UserRepository {
     return this.em.findOne(User, { email });
   }
 
-  async create(data: RequiredEntityData<User>): Promise<User> {
-    const user = this.em.create(User, data);
+  async create(data: NewUser): Promise<User> {
+    const user = this.em.create(User, data as RequiredEntityData<User>);
     this.em.persist(user);
     await this.em.flush();
     return user;
@@ -40,6 +43,8 @@ export class UserRepository {
   }
 }
 
+export type ArticlePage = { items: Article[]; total: number };
+
 export class ArticleRepository {
   constructor(private readonly em: EntityManager) {}
 
@@ -51,10 +56,37 @@ export class ArticleRepository {
     return this.em.find(Article, { authorId });
   }
 
+  /** Newest first. `authorId` narrows the list; without it every article is returned. */
+  async findPage(options: { authorId?: string; limit: number; offset: number }): Promise<ArticlePage> {
+    const { authorId, limit, offset } = options;
+    const [items, total] = await this.em.findAndCount(
+      Article,
+      authorId ? { authorId } : {},
+      { orderBy: { createdAt: 'desc', id: 'asc' }, limit, offset },
+    );
+    return { items, total };
+  }
+
   async create(data: RequiredEntityData<Article>): Promise<Article> {
     const article = this.em.create(Article, data);
     this.em.persist(article);
     await this.em.flush();
     return article;
+  }
+
+  async update(id: string, data: { title?: string; content?: string }): Promise<Article | null> {
+    const article = await this.em.findOne(Article, { id });
+    if (!article) return null;
+    Object.assign(article, data);
+    await this.em.flush();
+    return article;
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const article = await this.em.findOne(Article, { id });
+    if (!article) return false;
+    this.em.remove(article);
+    await this.em.flush();
+    return true;
   }
 }
