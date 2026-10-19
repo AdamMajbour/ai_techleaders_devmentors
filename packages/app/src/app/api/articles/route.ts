@@ -1,22 +1,17 @@
-import { HTTP_STATUS } from "@devmentor/core";
-
-import { createRequestScope } from "../../../server/container";
+import { articleListQuerySchema, parseOrThrow } from "@devmentor/core";
+import { apiHandler, withScope } from "@devmentor/core/server";
 
 export const dynamic = "force-dynamic";
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** GET /api/articles?authorId=<uuid> - public list of one author's articles. */
+export const GET = apiHandler(async (request) => {
+  const { authorId } = parseOrThrow(articleListQuerySchema, {
+    authorId: new URL(request.url).searchParams.get("authorId"),
+  });
 
-/** GET /api/articles?authorId=<uuid> - list one author's articles. */
-export async function GET(request: Request) {
-  const authorId = new URL(request.url).searchParams.get("authorId");
-  if (!authorId || !UUID.test(authorId)) {
-    return Response.json({ error: "Query parameter 'authorId' must be a UUID." }, { status: HTTP_STATUS.BAD_REQUEST });
-  }
+  const articles = await withScope(({ articleService }) => articleService.listByAuthor(authorId));
 
-  const { cradle } = await createRequestScope();
-  const articles = await cradle.articleRepository.findByAuthor(authorId);
-
-  return Response.json({
+  return {
     articles: articles.map((article) => ({
       id: article.id,
       title: article.title,
@@ -24,5 +19,5 @@ export async function GET(request: Request) {
       authorId: article.authorId,
       createdAt: article.createdAt.toISOString(),
     })),
-  });
-}
+  };
+});

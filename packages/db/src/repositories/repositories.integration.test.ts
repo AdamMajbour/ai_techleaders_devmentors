@@ -45,7 +45,7 @@ afterAll(async () => {
 
 describe('migrations', () => {
   it('create the application tables', async () => {
-    expect(await publicTables()).toEqual(['article', 'mikro_orm_migrations', 'user']);
+    expect(await publicTables()).toEqual(['articles', 'mikro_orm_migrations', 'users']);
   });
 });
 
@@ -117,8 +117,20 @@ describe('ArticleRepository', () => {
 });
 
 describe('migrations (down)', () => {
-  it('remove the application tables again', async () => {
+  it('rename the tables back and keep their rows when the last migration is reverted', async () => {
+    const created = await new UserRepository(orm.em.fork()).create({ email: 'rename@example.com', name: 'Rename' });
+
     await orm.migrator.down();
+    expect(await publicTables()).toEqual(['article', 'mikro_orm_migrations', 'user']);
+    const rows: { email: string }[] = await orm.em.getConnection().execute('select email from "user" where id = ?', [created.id]);
+    expect(rows).toEqual([{ email: 'rename@example.com' }]);
+
+    await orm.migrator.up();
+    expect(await publicTables()).toEqual(['articles', 'mikro_orm_migrations', 'users']);
+  });
+
+  it('remove the application tables when everything is reverted', async () => {
+    await orm.migrator.down({ to: 0 });
     expect(await publicTables()).toEqual(['mikro_orm_migrations']);
   });
 });

@@ -15,7 +15,7 @@
     "baseUrl": ".",
     "paths": {
       "@devmentor/core": ["packages/core/src/index.ts"],
-      "@devmentor/core/hooks": ["packages/core/src/hooks/index.ts"],
+      "@devmentor/core/server": ["packages/core/src/server.ts"],
       "@devmentor/db": ["packages/db/src/index.ts"],
       "@devmentor/ui": ["packages/ui/src/index.ts"]
     }

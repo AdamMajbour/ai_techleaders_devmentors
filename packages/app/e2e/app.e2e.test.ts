@@ -10,6 +10,8 @@ import os from 'node:os';
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium, type Browser } from 'playwright';
+// Relative on purpose: app code must not import the db package, but a test may read its demo constants.
+import { DEMO_ARTICLE_TITLE, DEMO_AUTHOR } from '../../db/scripts/seed-data';
 
 const APP_DIR = path.resolve(__dirname, '..');
 const ROOT = path.resolve(APP_DIR, '../..');
@@ -109,37 +111,44 @@ describe('pages', () => {
 });
 
 describe('API', () => {
-  it('reports health without touching the database', async () => {
+  it('reports health in the standard envelope, without touching the database', async () => {
     const response = await fetch(`${baseUrl}/api/health`);
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ status: 'ok' });
+    expect(await response.json()).toMatchObject({ ok: true, data: { status: 'ok' } });
   });
 
-  it('finds a seeded user by e-mail through the DI container', async () => {
-    const response = await fetch(`${baseUrl}/api/users?email=ada@devmentor.local`);
+  it("lists the seeded author's article through the container, service and repository", async () => {
+    const response = await fetch(`${baseUrl}/api/articles?authorId=${DEMO_AUTHOR.id}`);
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ email: 'ada@devmentor.local', name: 'Ada Mentor' });
+    const { ok, data } = await response.json();
+    expect(ok).toBe(true);
+    expect(data.articles).toHaveLength(1);
+    expect(data.articles[0]).toMatchObject({ title: DEMO_ARTICLE_TITLE, authorId: DEMO_AUTHOR.id });
   });
 
-  it('validates query parameters and reports unknown users', async () => {
-    expect((await fetch(`${baseUrl}/api/users`)).status).toBe(400);
-    expect((await fetch(`${baseUrl}/api/users?email=nobody@devmentor.local`)).status).toBe(404);
-    expect((await fetch(`${baseUrl}/api/articles?authorId=not-a-uuid`)).status).toBe(400);
-  });
-
-  it('lists the seeded article of that user', async () => {
-    const user = await (await fetch(`${baseUrl}/api/users?email=ada@devmentor.local`)).json();
-
-    const response = await fetch(`${baseUrl}/api/articles?authorId=${user.id}`);
+  it('answers an unknown author with an empty list', async () => {
+    const response = await fetch(`${baseUrl}/api/articles?authorId=00000000-0000-4000-8000-000000000000`);
     expect(response.status).toBe(200);
-    const { articles } = await response.json();
-    expect(articles).toHaveLength(1);
-    expect(articles[0]).toMatchObject({ title: 'Getting started with mentoring', authorId: user.id });
+    expect(await response.json()).toEqual({ ok: true, data: { articles: [] } });
+  });
+
+  it('rejects a missing or malformed authorId with field errors in the error envelope', async () => {
+    for (const query of ['', '?authorId=not-a-uuid']) {
+      const response = await fetch(`${baseUrl}/api/articles${query}`);
+      expect(response.status).toBe(400);
+      const body = await response.json();
+      expect(body).toMatchObject({ ok: false, error: { code: 'validation_failed' } });
+      expect(body.error.fieldErrors.authorId.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('does not expose a user lookup (no auth yet, so no public user data)', async () => {
+    expect((await fetch(`${baseUrl}/api/users?email=${DEMO_AUTHOR.email}`)).status).toBe(404);
   });
 
   it('serves concurrent requests, each in its own scope', async () => {
     const responses = await Promise.all(
-      Array.from({ length: 10 }, () => fetch(`${baseUrl}/api/users?email=linus@devmentor.local`)),
+      Array.from({ length: 10 }, () => fetch(`${baseUrl}/api/articles?authorId=${DEMO_AUTHOR.id}`)),
     );
     expect(responses.map((response) => response.status)).toEqual(Array(10).fill(200));
   });

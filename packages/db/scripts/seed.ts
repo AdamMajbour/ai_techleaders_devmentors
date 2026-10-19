@@ -2,11 +2,7 @@
 // Usage: npm run db:seed   (migrations must be applied first)
 import '../src/load-env';
 import { ArticleRepository, closeORM, initializeORM, UserRepository } from '../src';
-
-const USERS = [
-  { email: 'ada@devmentor.local', name: 'Ada Mentor' },
-  { email: 'linus@devmentor.local', name: 'Linus Learner' },
-];
+import { DEMO_ARTICLE_TITLE, DEMO_AUTHOR, DEMO_LEARNER } from './seed-data';
 
 async function main(): Promise<void> {
   const orm = await initializeORM();
@@ -14,23 +10,20 @@ async function main(): Promise<void> {
   const users = new UserRepository(em);
   const articles = new ArticleRepository(em);
 
-  const created = [];
-  for (const data of USERS) {
-    created.push((await users.findByEmail(data.email)) ?? (await users.create(data)));
+  for (const data of [DEMO_AUTHOR, DEMO_LEARNER]) {
+    if (!(await users.findByEmail(data.email))) await users.create({ ...data });
   }
 
-  const [author] = created;
-  const title = 'Getting started with mentoring';
-  const existing = await articles.findByAuthor(author.id);
-  if (!existing.some((article) => article.title === title)) {
+  const existing = await articles.findByAuthor(DEMO_AUTHOR.id);
+  if (!existing.some((article) => article.title === DEMO_ARTICLE_TITLE)) {
     await articles.create({
-      title,
+      title: DEMO_ARTICLE_TITLE,
       content: 'Welcome to DevMentor. This article was created by the seed script.',
-      authorId: author.id,
+      authorId: DEMO_AUTHOR.id,
     });
   }
 
-  console.log(`Seeded ${created.length} users and 1 article.`);
+  console.log('Seeded 2 users and 1 article.');
 }
 
 main()

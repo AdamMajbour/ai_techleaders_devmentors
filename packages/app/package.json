@@ -12,12 +12,7 @@
   },
   "dependencies": {
     "@devmentor/core": "*",
-    "@devmentor/db": "*",
     "@devmentor/ui": "*",
-    "@mikro-orm/core": "^6.6.17",
-    "awilix": "^11",
-    "class-transformer": "^0.5",
-    "class-validator": "^0.14",
     "next": "16.4.2",
     "react": "19.2.8",
     "react-dom": "19.2.8"

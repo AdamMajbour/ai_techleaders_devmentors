@@ -15,6 +15,7 @@ const unitConfig = createJestConfig({
   testPathIgnorePatterns: ["\\.integration\\.test\\.", "\\.e2e\\.test\\."],
   moduleNameMapper: {
     "^@devmentor/core$": "<rootDir>/packages/core/src/index.ts",
+    "^@devmentor/core/server$": "<rootDir>/packages/core/src/server.ts",
     "^@devmentor/db$": "<rootDir>/packages/db/src/index.ts",
     "^@devmentor/ui$": "<rootDir>/packages/ui/src/index.ts",
     "^@devmentor/ui/(.*)$": "<rootDir>/packages/ui/src/$1",

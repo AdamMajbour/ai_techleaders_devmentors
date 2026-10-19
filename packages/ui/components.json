@@ -13,7 +13,7 @@
   "iconLibrary": "lucide",
   "aliases": {
     "components": "@devmentor/ui/components",
-    "ui": "@devmentor/ui/components",
+    "ui": "@devmentor/ui/components/ui",
     "utils": "@devmentor/ui/lib/utils",
     "lib": "@devmentor/ui/lib",
     "hooks": "@devmentor/ui/hooks"

@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes } from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 
-import { cn } from '../lib/utils';
+import { cn } from '../../lib/utils';
 
 // The app does not load Tailwind's preflight, so the base classes reset the native
 // button look themselves (border, background, font) instead of relying on it.

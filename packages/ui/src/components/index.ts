@@ -1,4 +1,2 @@
-// UI Components - shadcn-ui style components built on Tailwind CSS
-// Re-export all UI components here
-export * from './button';
-export * from './card';
+// Components. Raw shadcn primitives live in ./ui, concept-specific shared components in ./<concept>/.
+export * from './ui';

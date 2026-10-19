@@ -18,9 +18,6 @@
       "@devmentor/core": [
         "../core/src/index.ts"
       ],
-      "@devmentor/core/hooks": [
-        "../core/src/hooks/index.ts"
-      ],
       "@devmentor/db": [
         "../db/src/index.ts"
       ],
@@ -29,6 +26,9 @@
       ],
       "@devmentor/ui/*": [
         "../ui/src/*"
+      ],
+      "@devmentor/core/server": [
+        "../core/src/server.ts"
       ]
     }
   },
