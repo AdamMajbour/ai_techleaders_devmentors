@@ -227,8 +227,9 @@ Ograniczenia i uwagi:
      `.starter > main` (zrzut `/` pikselowo identyczny przed i po)
   Dodane testy przeglądarkowe w E2E (obliczone style obu stron, brak błędów konsoli, brak wycieku stylów).
 - **PostgreSQL w CI i lokalnie:** `docker-compose.yml` (usługa `db`) i `.github/workflows/ci.yml` (usługa `postgres:17`, wszystkie
-  sprawdzenia, w tym E2E z Chromium). Składnię obu plików sprawdzono parserem YAML; **nie uruchamiałem** ich (brak Dockera w
-  środowisku, workflow nie był jeszcze wykonany na GitHub Actions).
+  sprawdzenia, w tym E2E z Chromium). Składnię obu plików sprawdzono parserem YAML. `docker-compose.yml` nie był
+  uruchamiany (brak Dockera w środowisku). Workflow CI przeszedł na GitHub Actions dla kolejnych commitów PR #3 (usługa postgres:17,
+  Chromium, wszystkie kroki, w tym `audit:prod`) — potwierdzone po wypchnięciu.
 - **shadcn:** `components.json` w `ui` i `app`, aliasy `@devmentor/ui/{components,lib,hooks}/*` w `exports` i `tsconfig`
   (sprawdzone: type-check + build Turbopack z importami podścieżek; `shadcn info` rozwiązuje wszystkie ścieżki; CLI tworzy plik w
   `src/components`). Znaleziony problem po stronie CLI/rejestru: wygenerowany import `from "cn"` także w czystym projekcie —
