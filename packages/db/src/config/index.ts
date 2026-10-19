@@ -1,6 +1,8 @@
 // MikroORM configuration
-import { MikroORM, Options } from '@mikro-orm/core';
+import { Migrator } from '@mikro-orm/migrations';
+import { MikroORM, type Options } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { Article, User } from '../entities';
 
 export const mikroOrmConfig: Options<PostgreSqlDriver> = {
   driver: PostgreSqlDriver,
@@ -9,12 +11,15 @@ export const mikroOrmConfig: Options<PostgreSqlDriver> = {
   password: process.env.DATABASE_PASSWORD || 'postgres',
   host: process.env.DATABASE_HOST || 'localhost',
   port: parseInt(process.env.DATABASE_PORT || '5432'),
-  entities: ['./dist/entities'], // will be updated in build
-  entitiesTs: ['./src/entities'],
+  entities: [User, Article],
+  extensions: [Migrator],
   migrations: {
-    path: './dist/migrations',
-    pathTs: './src/migrations',
-    pattern: /^[\w-]+\d+\.[jt]s$/,
+    path: './src/migrations',
+    // No snapshot file: MikroORM rewrites it from whichever database ran last (devmentor_test,
+    // devmentor_e2e, ...), so it never stays committed-clean. Without it `migration:create`
+    // diffs against the real database (run `npm run migrate` first) and also generates `down()`.
+    snapshot: false,
+    glob: '!(*.d).{js,ts}',
   },
   pool: {
     min: 2,
@@ -26,12 +31,19 @@ export const mikroOrmConfig: Options<PostgreSqlDriver> = {
 
 let orm: MikroORM<PostgreSqlDriver> | null = null;
 
-export async function initializeORM(): Promise<MikroORM<PostgreSqlDriver>> {
+/**
+ * Initializes the shared ORM instance. `overrides` are merged into
+ * `mikroOrmConfig` on first initialization (e.g. an absolute migrations path
+ * when the process is not started from `packages/db`).
+ */
+export async function initializeORM(
+  overrides: Partial<Options<PostgreSqlDriver>> = {},
+): Promise<MikroORM<PostgreSqlDriver>> {
   if (orm) {
     return orm;
   }
 
-  orm = await MikroORM.init<PostgreSqlDriver>(mikroOrmConfig);
+  orm = await MikroORM.init<PostgreSqlDriver>({ ...mikroOrmConfig, ...overrides });
   return orm;
 }
 

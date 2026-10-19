@@ -1,13 +1,17 @@
 // MikroORM Entities
 // Define your database models here
 
-import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
-import { v4 } from 'uuid';
+import 'reflect-metadata';
+import { randomUUID } from 'node:crypto';
+import { Entity, PrimaryKey, Property, types, type Opt } from '@mikro-orm/core';
 
-@Entity()
+// Table names are explicit on purpose: MikroORM derives them from the class name, and a
+// minified production bundle renames classes (`User` became `u`), pointing queries at
+// a table that does not exist.
+@Entity({ tableName: 'user' })
 export class User {
   @PrimaryKey({ type: 'uuid' })
-  id: string = v4();
+  id: string & Opt = randomUUID();
 
   @Property({ type: 'string', unique: true })
   email!: string;
@@ -18,17 +22,17 @@ export class User {
   @Property({ type: 'string', nullable: true })
   avatar?: string;
 
-  @Property({ type: 'date', onCreate: () => new Date() })
-  createdAt: Date = new Date();
+  @Property({ type: types.datetime, onCreate: () => new Date() })
+  createdAt: Date & Opt = new Date();
 
-  @Property({ type: 'date', onUpdate: () => new Date() })
-  updatedAt: Date = new Date();
+  @Property({ type: types.datetime, onUpdate: () => new Date() })
+  updatedAt: Date & Opt = new Date();
 }
 
-@Entity()
+@Entity({ tableName: 'article' })
 export class Article {
   @PrimaryKey({ type: 'uuid' })
-  id: string = v4();
+  id: string & Opt = randomUUID();
 
   @Property({ type: 'string' })
   title!: string;
@@ -36,12 +40,12 @@ export class Article {
   @Property({ type: 'text' })
   content!: string;
 
-  @Property({ type: 'uuid' })
+  @Property({ type: 'uuid', index: true })
   authorId!: string;
 
-  @Property({ type: 'date', onCreate: () => new Date() })
-  createdAt: Date = new Date();
+  @Property({ type: types.datetime, onCreate: () => new Date() })
+  createdAt: Date & Opt = new Date();
 
-  @Property({ type: 'date', onUpdate: () => new Date() })
-  updatedAt: Date = new Date();
+  @Property({ type: types.datetime, onUpdate: () => new Date() })
+  updatedAt: Date & Opt = new Date();
 }
