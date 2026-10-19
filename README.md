@@ -2,6 +2,34 @@
 
 Platforma edukacyjna do mentoringu i rozwoju umiejętności programistycznych zbudowana na nowoczesnym stosie technologicznym.
 
+## 💡 Koncepcja produktu
+
+Wstępna koncepcja portalu mentoringowego, inspirowanego sprawdzonymi funkcjami i przepływami **Preply.com**. Preply jest tu traktowany wyłącznie jako **benchmark funkcjonalny i UX** — identyfikacja wizualna, treści oraz kod serwisu nie są kopiowane ani odwzorowywane.
+
+Projekt jest realizowany jako aplikacja Next.js i służy jako miejsce pracy nad koncepcją (dokumentacja + klikalne mockupy), a nie jako produkcyjna implementacja platformy.
+
+### Zakres koncepcji
+
+Zgodnie z przyjętym briefem, efektem prac ma być:
+
+1. **Lista użytkowników systemu i ich potrzeb** — role (np. uczeń/student, mentor/korepetytor, administrator) wraz z ich celami i oczekiwaniami wobec platformy.
+2. **Najważniejsze use case'y oraz kompletne przepływy użytkownika** — m.in. rejestracja, wyszukiwanie i dobór mentora, rezerwacja i realizacja lekcji, płatności, komunikacja, oceny i opinie.
+3. **Mapa ekranów i nawigacji** — struktura aplikacji i relacje między ekranami dla poszczególnych ról.
+4. **Specyfikacja każdego ekranu**, obejmująca:
+   - cel ekranu,
+   - dostępne funkcje,
+   - komponenty UI,
+   - stany: `loading`, `empty`, `error`, `success`,
+   - walidacje,
+   - powiązane endpointy API.
+5. **Klikalne mockupy (HTML/CSS/TypeScript)** obejmujące wszystkie kluczowe ścieżki użytkownika.
+
+> Status: koncepcja wstępna / work in progress. Powyższe elementy będą dodawane iteracyjnie (dokumentacja w repozytorium, mockupy jako osobne widoki aplikacji).
+
+### Uwaga dotycząca benchmarku
+
+Preply.com służy wyłącznie jako punkt odniesienia dla sprawdzonych wzorców funkcjonalnych i przepływów UX w branży mentoringu/korepetycji. Wszystkie elementy wizualne, treściowe i implementacyjne tego projektu są tworzone niezależnie.
+
 ## 🏗️ Architektura
 
 DevMentor jest aplikacją **monorepo** zorganizowaną w cztery główne pakiety, każdy z jasno zdefiniowaną odpowiedzialnością:
@@ -15,6 +43,8 @@ packages/
 ├── db/              # Warstwa danych (MikroORM entities, migracje, repositories)
 └── ui/              # Komponenty interfejsu (shadcn-ui, custom komponenty)
 ```
+
+> **Uwaga:** na obecnym etapie działająca aplikacja Next.js (App Router) znajduje się w katalogu głównym `src/app/`, a `packages/app` jest na razie szkieletem.
 
 ### Przepływ zależności
 
