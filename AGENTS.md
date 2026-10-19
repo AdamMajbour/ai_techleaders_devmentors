@@ -26,25 +26,69 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ```
 packages/
-├── app/              # Główna aplikacja Next.js + strony frontendowe
-│   ├── app/         # App Router
-│   ├── pages/       # Jeśli używamy API routes
-│   └── public/      # Zasoby statyczne
-├── core/            # Wielokrotnie używalny kod
-│   ├── utils/       # Utilitki
-│   ├── types/       # Typy TypeScript
-│   ├── hooks/       # React hooks
-│   └── constants/   # Stałe aplikacji
-├── db/              # Warstwa danych
-│   ├── entities/    # MikroORM entities (modele)
-│   ├── migrations/  # Migracje bazodanowe
-│   ├── repositories/ # Repozytoria
-│   └── config/      # Konfiguracja MikroORM i połączeń
-└── ui/              # Komponenty interfejsu wielokrotnego użytku
-    ├── components/  # shadcn-ui komponenty + customowe
-    ├── hooks/       # UI-specificzne hooks
-    └── styles/      # Globalne style Tailwind
+├── app/                      # Next.js: routing, strony, route handlers (api/)
+│   ├── src/app/              # App Router; grupy tras per persona, np. (marketing)/
+│   ├── public/               # Zasoby statyczne
+│   └── e2e/                  # Testy E2E (build + start + HTTP + Chromium)
+├── core/                     # Logika biznesowa, niezależna od frameworka (bez next/react)
+│   ├── src/http/             # errors.ts (AppError), apiHandler.ts, envelope.ts
+│   ├── src/container/        # Awilix: container.ts, cradle.ts
+│   ├── src/services/<concept>/<name>.service.ts
+│   ├── src/validators/<concept>/<name>.schema.ts   # Zod, współdzielone client/server
+│   ├── src/{types,utils,constants,logger.ts}
+│   ├── src/index.ts          # wejście izomorficzne (bezpieczne w kliencie)
+│   └── src/server.ts         # wejście serwerowe: kontener, serwisy, apiHandler
+├── db/                       # Jedyny pakiet importujący @mikro-orm/*
+│   ├── src/entities/<concept>/<name>.entity.ts     # defineEntity, tabele snake_case w l. mnogiej
+│   ├── src/repositories/     # Dostęp do danych (przyjmują EntityManager)
+│   ├── src/migrations/       # Migracje (up i down)
+│   └── src/config/           # Konfiguracja MikroORM
+└── ui/                       # Samodzielny: nie importuje core ani db
+    ├── src/components/ui/    # Prymitywy shadcn (CLI), src/components/<concept>/ — komponenty konceptu
+    ├── src/backend/          # Ogólne wzorce paneli: api/apiCall.ts (jedyne miejsce na fetch do /api/*)
+    ├── src/hooks/            # Hooki React (useAsync, useDebounce, ...)
+    └── src/styles/           # Tokeny i style globalne Tailwind
 ```
+
+Kierunek zależności jest wymuszany przez ESLint (`no-restricted-imports`): `app → core → db`, `ui` importowalne
+tylko przez `app`; `core` nie importuje `next`/`react`; `@mikro-orm/*` tylko w `db`.
+
+### Domain concept convention
+
+Kod domenowy nie jest podzielony na `modules/`. Każdy koncept (`auth`, `mentors`, `availability`, `bookings`,
+`payments`, `messages`, `favorites`, `reviews`, ...) to podkatalog o tej samej nazwie powtórzony w warstwach, które go potrzebują:
+
+- `packages/db/src/entities/<concept>/<name>.entity.ts`
+- `packages/core/src/services/<concept>/<name>.service.ts`
+- `packages/core/src/validators/<concept>/` (współdzielone schematy Zod, gdy potrzebne)
+- `packages/app/src/app/api/<concept>/route.ts` i odpowiadające `page.tsx` w grupie tras persony
+
+Katalog konceptu powstaje dopiero wraz z pierwszym plikiem — nigdy puste szkielety. To konwencja katalogów, a nie runtime
+modułów: bez per-konceptowego setupu/ACL/auto-discovery. Pełna tabela nazewnictwa, wzorce portów płatności i emitera zdarzeń:
+`.ai/specs/engineering-standards.md`.
+
+ID zdarzeń: `concept.entity.action` (np. `bookings.booking.created`), emitowane przez typowany emiter w
+`packages/core/src/events` zarejestrowany w `Cradle` — tylko in-process, bez kolejek/workerów. (Emiter powstanie przy pierwszej
+funkcji, która go potrzebuje.)
+
+### Reusable API & UI layer
+
+Każda trasa i strona używa dwóch współdzielonych warstw zamiast własnego fetch/walidacji/auth/obsługi błędów:
+
+- `packages/core/src/http/` — `errors.ts` (hierarchia `AppError`), `apiHandler.ts` (łapie `AppError`, mapuje na status i
+  kopertę JSON `{ ok, data | error }`, loguje nieoczekiwane błędy, nigdy nie zwraca stack trace). Trasy nie mają własnego
+  `try/catch`. `makeCrudRoute.ts` i `auth.ts` (`requireSession`, `requireRole`, asercje własności) powstaną z pierwszym zasobem
+  CRUD / pierwszym konceptem wymagającym logowania.
+- `packages/ui/src/backend/` — `api/apiCall.ts` (jedyny dozwolony `fetch()` do `/api/*`). `forms/CrudForm.tsx`,
+  `tables/DataTable.tsx`, `feedback/*` powstaną z pierwszą stroną, która ich potrzebuje.
+
+Nowy komponent wielokrotnego użytku ma jedno wyznaczone miejsce:
+
+1. Prymityw shadcn → `ui/src/components/ui/` (przez `npx shadcn@latest add`, nie ręcznie — wyjątek: `Button` i `Card` napisane
+   ręcznie z powodu błędu CLI, patrz README).
+2. Ogólny wzorzec paneli niezależny od konceptu → `ui/src/backend/<category>/`.
+3. Komponent związany z kształtem domeny jednego konceptu → `ui/src/components/<concept>/`.
+4. Używany przez jedną stronę → obok jej `page.tsx`, dopóki nie pojawi się drugi konsument.
 
 ## Princypia architektoniczne
 
@@ -56,21 +100,21 @@ packages/
 - `ui/` zawiera tylko komponenty i styling
 
 ### 2. Dependency Injection z Awilix
-- Rejestruj serwisy w kontenerze DI
+- Rejestruj serwisy w kontenerze DI (`packages/core/src/container/container.ts`) ręcznie, jedna linia na zależność — bez `loadModules`
 - Wstrzykuj zależności zamiast tworzyć je localnie
 - Ułatwia testowanie i zmianę implementacji
 - Unikaj sprzężeń między warstwami
 
 ### 3. MikroORM i baza danych
-- Definiuj modele w `packages/db/entities/`
-- Migracje automatyczne w `packages/db/migrations/`
+- Definiuj modele przez `defineEntity` w `packages/db/src/entities/<concept>/` (jawne `name` i `tableName`)
+- Migracje w `packages/db/src/migrations/` (generuj przez `migration:create`, sprawdź `down()`)
 - Pulę połączeń zarządza MikroORM
-- Repositories w `packages/db/repositories/` dla abstrakcji dostępu do danych
+- Repositories w `packages/db/src/repositories/` dla abstrakcji dostępu do danych; serwisy w `core` używają ich przez kontener
 
 ### 4. TypeScript everywhere
 - Strikt mode: `"strict": true` w `tsconfig.json`
 - Bez `any` — jeśli nie wiesz typ, zamiast tego napisz interface
-- Wspólne typy w `packages/core/types/`
+- Wspólne typy w `packages/core/src/types/`
 - Wykorzystuj branded types dla dodatkowej bezpieczeństwa (np. UserId, ArticleId)
 
 ### 5. UI z Tailwind i shadcn-ui

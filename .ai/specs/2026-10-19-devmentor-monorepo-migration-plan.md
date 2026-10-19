@@ -1,7 +1,7 @@
 ---
 date: 2026-10-19
 title: DevMentor — plan migracji aplikacji do monorepo
-status: in-progress  # wszystkie fazy zakończone (1-4); migracja zweryfikowana
+status: in-progress  # fazy 1-4 zakończone; dostosowanie do engineering-standards.md (faza 5) wdrożone
 ---
 
 # Plan migracji do monorepo
@@ -236,4 +236,53 @@ Ograniczenia i uwagi:
 
 Weryfikacja po tych zmianach: `type-check`, `lint`, `npm test` (25), `test:integration` (8), `test:e2e` (9, w tym 2 w Chromium),
 `NODE_ENV=production npm run build`, dev: `/`, `/ui-preview`, `/api/health`, `/api/users` → 200.
+
+## Faza 5 — dostosowanie do `.ai/specs/engineering-standards.md` (2026-10-19)
+
+Dokument (status: active) opisuje inny bootstrap (np. `admin/users`, `cradle.ts`, `withScope`), więc zastosowano jego **zasady**
+do istniejącego kodu, a elementy bez konsumenta odłożono (YAGNI — sam dokument każe budować warstwy dopiero przy pierwszym użyciu).
+
+Wdrożone:
+- **Nazewnictwo i struktura konceptów:** `db/src/entities/<koncept>/<nazwa>.entity.ts` (`auth/user`, `articles/article`) przez
+  `defineEntity` (jawne `name` i `tableName`, co zastępuje też obejście minifikacji), `base.entity.ts` (UUID + znaczniki czasu),
+  `define.ts`; tabele snake_case w liczbie mnogiej — migracja `…_plural_table_names` (rename z zachowaniem danych, `down()` odwraca;
+  `schema:update --dump` → „Schema is up-to-date”). `core/src/services/<koncept>/<nazwa>.service.ts`,
+  `core/src/validators/<koncept>/<nazwa>.schema.ts` (Zod), `components/ui/` dla prymitywów shadcn, trasy w `api/<koncept>/`,
+  grupa tras `(marketing)` i `HomePage`.
+- **Kierunek zależności** `app → core → db`, `ui` samodzielny — wymuszony ESLintem (`no-restricted-imports`, sprawdzone próbnymi
+  naruszeniami: `@mikro-orm` w app, `@devmentor/db` w app, `react` i `@devmentor/ui` w core, `@devmentor/core` w ui).
+  Skutki: kontener DI przeniesiony z `app` do `core/src/container/` (`container.ts` + `cradle.ts`, rejestracja ręczna), serwisy w `core`
+  używają repozytoriów z `db`, `app` nie zależy już od `db`/`awilix`/`@mikro-orm`; hooki React przeniesione z `core` do `ui`
+  (`useAsync`), `ui` nie zależy od `core`; `db` re-eksportuje tylko typ `EntityManager`.
+- **Wejścia pakietu core:** `@devmentor/core` (izomorficzne: typy, utils, stałe, błędy, walidatory) i `@devmentor/core/server`
+  (kontener, serwisy, `apiHandler`, logger), żeby klient nie ciągnął bazy.
+- **Warstwa API (server):** `http/errors.ts` (`AppError`, `ValidationError`, `Unauthorized/Forbidden/NotFound/ConflictError`),
+  `http/apiHandler.ts` (koperta `{ ok, data | error }`, nieoczekiwany błąd → logowany, ogólny 500 bez szczegółów), `parseOrThrow`
+  (Zod → `ValidationError` z `fieldErrors`, brak mass assignment), `logger.ts` (JSON, maskowanie haseł/tokenów/JWT/cookies).
+  Trasy `/api/health` i `/api/articles` bez własnego `try/catch`.
+- **Warstwa API (klient):** `ui/src/backend/api/apiCall.ts` (+ `apiCallOrThrow`, `readJsonSafe`, nagłówek klienta dla CSRF, wynik zamiast wyjątku).
+- **Serwisy:** `UserService`, `ArticleService` (wymóg „encja ⇔ serwis”), testy jednostkowe z fałszywymi repozytoriami.
+- Dokumentacja: sekcje „Domain concept convention” i „Reusable API & UI layer” w `AGENTS.md`, README, plik standardów dodany do repo.
+
+Zmiana zachowania (świadoma): usunięto publiczne `GET /api/users?email=` — standard wymaga uwierzytelnienia tras niepublicznych,
+a wyszukiwanie użytkownika po e-mailu bez logowania ujawnia dane i pozwala sprawdzać, kto ma konto. E2E potwierdza, że trasy już nie ma.
+Dane demo mają stałe UUID (`packages/db/scripts/seed-data.ts`), więc E2E znajduje artykuł bez wyszukiwania użytkownika.
+`/api/health` odpowiada teraz w kopercie (`{ ok: true, data: { status, timestamp } }`).
+
+Odłożone (brak konsumenta lub poza zakresem repo):
+- `makeCrudRoute.ts`, `auth.ts` (`requireSession`/`requireRole`/własność), JWT, cookies, CSRF po stronie serwera (klient już wysyła nagłówek),
+  rate limiting, bcrypt — pierwszy koncept z logowaniem (`auth`); `config/env.ts` (Zod) — razem z pierwszym sekretem
+- `CrudForm`, `DataTable`, `feedback/*` — pierwsza strona z listą/formularzem; `core/src/events` — pierwsza funkcja z efektami ubocznymi
+- `docs/product-scope.md` i refaktor `/admin/users` z dokumentu — tych plików nie ma w tym repozytorium
+- `pino` zamiast własnego loggera (20 linii, bez nowej zależności); `npm audit` jako bramka walidacji — raport jest w sekcji o ograniczeniach
+
+Odstępstwa i pytania do właściciela:
+- `Article` nie należy do konceptów z dokumentu (auth, mentors, availability, bookings, payments, messages, favorites, reviews) — zostaje jako
+  przykład szkieletu (`articles`); do decyzji, czy usunąć przy pierwszym prawdziwym koncepcie.
+- `Button` i `Card` są napisane ręcznie (standard: prymitywy tylko z `shadcn add`) — CLI 4.22.1 generuje błędny import `from "cn"`;
+  alias `ui` w `components.json` wskazuje już `components/ui`, więc następne prymitywy trafią tam z CLI.
+- Standard zakłada MikroORM z `defineEntity` — jest w 6.6.17, więc zostaliśmy przy v6 (migracja do v7 niepotrzebna).
+
+Weryfikacja: `type-check`, `lint` (0 problemów), `npm test` (55 testów w 14 zestawach), `test:integration` (9), `test:e2e` (10, w tym 2 w Chromium),
+`NODE_ENV=production npm run build`; strona główna pikselowo identyczna jak przed refaktorem.
 

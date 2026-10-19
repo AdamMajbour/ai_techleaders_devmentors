@@ -44,41 +44,37 @@ packages/
 └── ui/              # Komponenty interfejsu (shadcn-ui, custom komponenty)
 ```
 
-> **Uwaga:** aplikacja Next.js (App Router) mieszka w `packages/app/src/app/`. Pakiety `core`, `db` i `ui` są wewnętrzne — używane jako kod źródłowy TypeScript (`transpilePackages`), bez osobnego kroku budowania do `dist/`. Hooki React z `core` importuj z `@devmentor/core/hooks`, a `@devmentor/db` tylko z kodu serwerowego.
+> **Uwaga:** aplikacja Next.js (App Router) mieszka w `packages/app/src/app/`. Pakiety `core`, `db` i `ui` są wewnętrzne — używane jako kod źródłowy TypeScript (`transpilePackages`), bez osobnego kroku budowania do `dist/`. Kod serwerowy (kontener DI, serwisy, `apiHandler`) importuj z `@devmentor/core/server`; `@devmentor/core` (wejście izomorficzne) jest bezpieczne także w kliencie. Standardy: `.ai/specs/engineering-standards.md`.
 
 ### Przepływ zależności
 
 ```
-app/ (konsumuje)
-  ↓
-core/, ui/, db/ (niezależne, mogą zależeć od siebie)
+app → core → db        ui: samodzielny, importowany tylko przez app
 ```
 
+Wymuszane przez ESLint (`no-restricted-imports`): `core` nie importuje `next`/`react`, `ui` nie importuje `core`/`db`,
+`app` nie importuje `db`, a `@mikro-orm/*` jest tylko w `db`.
+
 - **app/** — Next.js aplikacja z App Router
-  - Strony frontendowe w `app/` katalogu
-  - API routes w `app/api/`
-  - Server components, Client components
-  - Nie zawiera logiki biznesowej — deleguje do `core/`, `db/`, `ui/`
+  - Strony w `src/app/` (grupy tras per persona, np. `(marketing)/`)
+  - Route handlers w `src/app/api/<koncept>/route.ts` — tylko `apiHandler` + walidacja + wywołanie serwisu
+  - Nie zawiera logiki biznesowej — deleguje do `core/` i `ui/`
 
-- **core/** — Logika biznesowa i utilitki
-  - `utils/` — funkcje pomocnicze
-  - `types/` — TypeScript types i interfaces
-  - `hooks/` — React hooks do logiki biznesowej
-  - `constants/` — stałe aplikacji
-  - Niezależny od frameworka — może być używany w Node.js lub przeglądarce
+- **core/** — Logika biznesowa, niezależna od frameworka
+  - `http/` — `AppError` i potomkowie, `apiHandler` (koperta JSON `{ ok, data | error }`)
+  - `services/<koncept>/` — reguły biznesowe; `validators/<koncept>/` — schematy Zod współdzielone client/server
+  - `container/` — Awilix (`container.ts`, `cradle.ts`); `logger.ts` — logger JSON z maskowaniem sekretów
+  - `types/`, `utils/`, `constants/`
+  - Wejścia: `@devmentor/core` (izomorficzne) i `@devmentor/core/server` (kontener, serwisy, `apiHandler`)
 
-- **db/** — Zarządzanie danymi
-  - `entities/` — MikroORM modele danych
-  - `repositories/` — warstwa abstrakcji dostępu do danych
-  - `migrations/` — migracje bazy danych
-  - `config/` — konfiguracja MikroORM i connection pool
-  - Obsługuje: lazy loading, pooling, migracje, relationships
+- **db/** — Zarządzanie danymi (jedyny pakiet z `@mikro-orm/*`)
+  - `entities/<koncept>/<nazwa>.entity.ts` — `defineEntity`; tabele snake_case w liczbie mnogiej
+  - `repositories/` — dostęp do danych; `migrations/`; `config/`
 
-- **ui/** — Komponenty interfejsu
-  - `components/` — shadcn-ui + custom komponenty
-  - `hooks/` — UI-specificzne hooks
-  - `styles/` — globalne Tailwind CSS
-  - Wykorzystuje Tailwind i shadcn-ui dla spójności
+- **ui/** — Komponenty interfejsu (samodzielny)
+  - `components/ui/` — prymitywy shadcn; `components/<koncept>/` — komponenty konceptu
+  - `backend/api/` — `apiCall` (jedyne miejsce na `fetch` do `/api/*`)
+  - `hooks/` — hooki React; `lib/` — `cn`
   - Tokeny i style globalne: `@devmentor/ui/styles` (importowane w `globals.css` aplikacji)
 
 ## 🛠️ Stack techniczny
@@ -185,22 +181,26 @@ npm run migrate:down
 
 ## 🧩 Dependency Injection (Awilix)
 
-Kontener jest w `packages/app/src/server/container.ts` (tylko kod serwerowy):
+Kontener jest w `packages/core/src/container/` (tylko kod serwerowy, `@devmentor/core/server`). Każda zależność jest
+rejestrowana ręcznie w `container.ts` i opisana w `cradle.ts` (bez `loadModules`):
 
-- `orm` — singleton (jedna pula połączeń na proces), tworzony leniwie przy pierwszym żądaniu
-- `em`, `userRepository`, `articleRepository` — **scoped**: każde żądanie dostaje własny scope i własny `EntityManager` (`fork()`)
+- `logger`, `orm` — singletony (jedna pula połączeń na proces), ORM tworzony leniwie przy pierwszym żądaniu
+- `em`, repozytoria, serwisy — **scoped**: każdy scope ma własny `EntityManager` (`fork()`)
 
 ```ts
-const { cradle } = await createRequestScope();
-const user = await cradle.userRepository.findByEmail(email);
+export const GET = apiHandler(async (request) => {
+  const { authorId } = parseOrThrow(articleListQuerySchema, { authorId: new URL(request.url).searchParams.get('authorId') });
+  return withScope(({ articleService }) => articleService.listByAuthor(authorId));
+});
 ```
 
-Przykłady użycia: `GET /api/users?email=…` i `GET /api/articles?authorId=…` (`packages/app/src/app/api/`).
+Przykład: `GET /api/articles?authorId=<uuid>` (`packages/app/src/app/api/articles/route.ts`). Odpowiedzi mają kopertę
+`{ "ok": true, "data": … }` albo `{ "ok": false, "error": { "code", "message", "fieldErrors"? } }`.
 Aplikacja czyta `DATABASE_*` z `.env.local` w korzeniu repozytorium (`next.config.ts`).
 
 ## 🧪 Testowanie
 
-- **Unit i komponentowe:** `packages/core/`, `packages/ui/`, `packages/app/src/server/` (Jest + React Testing Library, jsdom)
+- **Unit i komponentowe:** `packages/core/`, `packages/ui/` (Jest + React Testing Library, jsdom)
 - **Testy integracyjne:** `packages/db/` (`*.integration.test.ts`) — prawdziwy PostgreSQL, osobna baza `devmentor_test`
   (nazwa z `DATABASE_TEST_NAME`); odtwarzają schemat z migracji, więc nie dotykają bazy deweloperskiej
 - **Component testy:** `packages/ui/`

@@ -16,6 +16,7 @@ Spis wszystkich ustaleń, wniosków i usprawień odkrytych w trakcie pracy nad p
 - [2026-10-19 — MikroORM v6: EM, daty, migracje w Jest](lessons/2026-10-19-mikroorm-v6-em-and-jest.md) — EM przez `fork()`, `types.datetime`, `down()` ręcznie, `migrationsList` w testach.
 - [2026-10-19 — Minifikacja nazw klas a MikroORM](lessons/2026-10-19-minified-class-names-mikroorm.md) — jawne `tableName`; E2E na buildzie produkcyjnym.
 - [2026-10-19 — Render w przeglądarce i Tailwind bez preflightu](lessons/2026-10-19-render-check-and-preflight.md) — zrzuty ekranu ujawniły błędy niewidoczne w testach; resety w komponentach; Chromium bez roota.
+- [2026-10-19 — Standardy vs istniejący kod](lessons/2026-10-19-standards-vs-existing-code.md) — stosuj zasady, odkładaj warstwy bez konsumenta; egzekwuj granice ESLintem.
 
 ---
 
