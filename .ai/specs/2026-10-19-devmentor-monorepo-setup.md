@@ -1,7 +1,7 @@
 ---
 date: 2026-10-19
 title: DevMentor Monorepo Setup — Specyfikacja architekturalny
-status: implemented
+status: superseded-by-migration-plan
 ---
 
 # DevMentor — Setup struktury monorepo
@@ -10,7 +10,9 @@ status: implemented
 
 Ustanowienie struktury monorepo dla aplikacji DevMentor z podziałem na cztery niezależne pakiety, każdy odpowiadający za jasno określoną warstwę aplikacji.
 
-## Wdrożone
+> Ten dokument opisuje docelową strukturę. Stan wdrożenia i fazy migracji: `2026-10-19-devmentor-monorepo-migration-plan.md`.
+
+## Struktura docelowa
 
 ### Struktura pakietów
 
@@ -27,9 +29,7 @@ packages/
 - **Technologia:** Next.js 16+, React 19, TypeScript
 - **Struktura:**
   - `src/app/` — App Router (strony, layouty)
-  - `src/api/` — API routes
-  - `src/components/` — Komponenty Next.js
-  - `src/lib/` — Utilities dla aplikacji
+  - `src/app/api/` — API routes (route handlers)
 - **Zależności:** @devmentor/core, @devmentor/db, @devmentor/ui
 - **Odpowiedzialność:** Routing, UI, API endpoints
 
@@ -74,15 +74,15 @@ packages/
 
 - **Root tsconfig.json** — Base config z path aliases dla wszystkich pakietów
 - **Path aliases:**
-  - `@devmentor/app/*` → `packages/app/src/*`
-  - `@devmentor/core/*` → `packages/core/src/*`
-  - `@devmentor/db/*` → `packages/db/src/*`
-  - `@devmentor/ui/*` → `packages/ui/src/*`
+  - `@devmentor/core` → `packages/core/src/index.ts` (+ `@devmentor/core/hooks`)
+  - `@devmentor/db` → `packages/db/src/index.ts`
+  - `@devmentor/ui` → `packages/ui/src/index.ts`
+  - `app` nie ma aliasu — jest konsumentem pakietów, nie zależnością
 
 ### Package.json dla każdego pakietu
 
-- `app/` — Next.js scriptsNEXT.js
-- `core/`, `db/`, `ui/` — `tsc` dla compilacji
+- `app/` — skrypty Next.js (`dev`, `build`, `start`) + `type-check`
+- `core/`, `db/`, `ui/` — tylko `type-check` (`tsc --noEmit`); pakiety wewnętrzne, konsumowane jako źródło TS
 
 ## Konwencje kodowe
 

@@ -10,7 +10,12 @@ Spis wszystkich ustaleń, wniosków i usprawień odkrytych w trakcie pracy nad p
 
 ## Aktualne lekcje
 
-*Sekcja będzie pojawiać się w miarę odkrywania wniosków. Każdy wpis powinien zawierać datę, temat i krótki opis.*
+- [2026-10-19 — `next build` pada przy `NODE_ENV=development`](lessons/2026-10-19-next-build-node-env.md) — buduj z `NODE_ENV=production`; to nie jest problem duplikatu Reacta.
+- [2026-10-19 — Hooki React w barrelu `core`](lessons/2026-10-19-core-barrel-react-hooks.md) — hooki w osobnym entry poincie `@devmentor/core/hooks`.
+- [2026-10-19 — Tailwind v4 bez zmiany wyglądu](lessons/2026-10-19-tailwind-v4-no-preflight-layers.md) — bez preflight, stare style w `@layer base`, `@source` dla `ui`.
+- [2026-10-19 — MikroORM v6: EM, daty, migracje w Jest](lessons/2026-10-19-mikroorm-v6-em-and-jest.md) — EM przez `fork()`, `types.datetime`, `down()` ręcznie, `migrationsList` w testach.
+- [2026-10-19 — Minifikacja nazw klas a MikroORM](lessons/2026-10-19-minified-class-names-mikroorm.md) — jawne `tableName`; E2E na buildzie produkcyjnym.
+- [2026-10-19 — Render w przeglądarce i Tailwind bez preflightu](lessons/2026-10-19-render-check-and-preflight.md) — zrzuty ekranu ujawniły błędy niewidoczne w testach; resety w komponentach; Chromium bez roota.
 
 ---
 
