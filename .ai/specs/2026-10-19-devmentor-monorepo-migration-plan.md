@@ -206,7 +206,7 @@ Ograniczenia i uwagi:
 - Testy integracyjne i E2E wymagają działającego PostgreSQL (lokalnie dostępny na `localhost:5432`, `postgres/postgres`) i tworzą bazy
   `devmentor_test` / `devmentor_e2e` (`ensureDatabase`); baza `devmentor` zawiera migrację i dane z seeda.
 - `npm audit` zgłasza podatności w zależnościach (głównie narzędzia deweloperskie: jest, CLI) — nie były analizowane.
-- Zmiany z faz 1–4 nie są jeszcze scommitowane.
+- Zmiany z faz 1–4 trafiły do PR #3 (PR #2 został zmergowany wcześniej i zawierał tylko szkielet pakietów).
 
 ## Domknięcie ograniczeń (2026-10-19, po weryfikacji końcowej)
 
