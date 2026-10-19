@@ -1,14 +1,18 @@
+'use client';
+
 // React hooks for business logic
 // Place reusable hooks here
 
-export function useAsync<T>(fn: () => Promise<T>, deps: React.DependencyList = []) {
-  const [state, setState] = React.useState<{
+import { useEffect, useState, type DependencyList } from 'react';
+
+export function useAsync<T>(fn: () => Promise<T>, deps: DependencyList = []) {
+  const [state, setState] = useState<{
     status: 'idle' | 'pending' | 'success' | 'error';
     data?: T;
     error?: Error;
   }>({ status: 'idle' });
 
-  React.useEffect(() => {
+  useEffect(() => {
     let isMounted = true;
 
     const run = async () => {
@@ -29,6 +33,8 @@ export function useAsync<T>(fn: () => Promise<T>, deps: React.DependencyList = [
     return () => {
       isMounted = false;
     };
+    // Callers control re-runs through `deps`, as with useEffect itself.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   return state;

@@ -1,0 +1,51 @@
+/* Design tokens shared by every app that consumes @devmentor/ui.
+   Imported from the app's global stylesheet, after Tailwind's theme layer.
+   Preflight is intentionally not part of the setup: the app has its own base
+   styles and Tailwind only contributes theme tokens and utilities. */
+
+:root {
+  --background: #141313;
+  --foreground: #edf5cd;
+  --headline: var(--foreground);
+  --soft: #948d85;
+  --card: #1c1b1b;
+  --card-foreground: var(--foreground);
+  --primary: #e5f520;
+  --primary-foreground: #1a1919;
+  --secondary: #262524;
+  --secondary-foreground: var(--foreground);
+  --muted: #262524;
+  --muted-foreground: var(--soft);
+  --accent: #2f2e2c;
+  --accent-foreground: var(--foreground);
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.14);
+  --ring: #e5f520;
+  --radius: 8px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
