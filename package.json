@@ -8,28 +8,35 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm --workspace=packages/app run dev",
-    "build": "npm run build --workspaces",
-    "start": "npm --workspace=packages/app run start",
-    "lint": "eslint packages/*/src --ext .ts,.tsx",
-    "type-check": "tsc --noEmit",
-    "test": "jest",
+    "dev": "npm --workspace=@devmentor/app run dev --",
+    "build": "npm run type-check && npm --workspace=@devmentor/app run build",
+    "start": "npm --workspace=@devmentor/app run start --",
+    "lint": "eslint packages",
+    "type-check": "npm run type-check --workspaces --if-present",
+    "test": "jest --selectProjects unit",
     "test:watch": "jest --watch",
-    "migrate": "npm --workspace=packages/db run migrate",
-    "migrate:down": "npm --workspace=packages/db run migrate:down",
-    "db:seed": "npm --workspace=packages/db run seed"
+    "migrate": "npm --workspace=@devmentor/db run migrate",
+    "migrate:down": "npm --workspace=@devmentor/db run migrate:down",
+    "db:seed": "npm --workspace=@devmentor/db run seed",
+    "test:integration": "jest --selectProjects db",
+    "test:all": "jest",
+    "test:e2e": "jest --selectProjects e2e"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
     "@types/jest": "^29",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@typescript-eslint/eslint-plugin": "^7",
-    "@typescript-eslint/parser": "^7",
     "eslint": "^9",
-    "eslint-config-next": "16.3.4",
+    "eslint-config-next": "16.4.2",
     "jest": "^29",
     "jest-environment-jsdom": "^29",
+    "playwright": "^1.64.1",
+    "ts-jest": "^29.4.15",
     "typescript": "^5"
   }
 }

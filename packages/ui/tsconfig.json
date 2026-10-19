@@ -1,17 +1,18 @@
 {
   "extends": "../../tsconfig.json",
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
   "compilerOptions": {
-    "outDir": "./dist",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "jsx": "react-jsx",
+    "baseUrl": ".",
     "paths": {
-      "@devmentor/core": ["../core/src/index.ts"],
-      "@devmentor/core/*": ["../core/src/*"]
+      "@devmentor/ui/*": [
+        "./src/*"
+      ]
     }
-  },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["node_modules", "dist"]
+  }
 }
