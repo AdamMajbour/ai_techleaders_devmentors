@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -18,17 +18,24 @@
         "name": "next"
       }
     ],
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@devmentor/app": ["packages/app/src/index.ts"],
+      "@devmentor/app/*": ["packages/app/src/*"],
+      "@devmentor/core": ["packages/core/src/index.ts"],
+      "@devmentor/core/*": ["packages/core/src/*"],
+      "@devmentor/db": ["packages/db/src/index.ts"],
+      "@devmentor/db/*": ["packages/db/src/*"],
+      "@devmentor/ui": ["packages/ui/src/index.ts"],
+      "@devmentor/ui/*": ["packages/ui/src/*"]
     }
   },
   "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx",
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist", ".next"]
 }

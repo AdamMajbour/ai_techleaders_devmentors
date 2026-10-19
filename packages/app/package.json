@@ -1,0 +1,29 @@
+{
+  "name": "@devmentor/app",
+  "version": "0.1.0",
+  "description": "DevMentor - Main Next.js application",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "next": "16.3.4",
+    "@devmentor/core": "*",
+    "@devmentor/db": "*",
+    "@devmentor/ui": "*",
+    "awilix": "^11",
+    "class-validator": "^0.14",
+    "class-transformer": "^0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}
