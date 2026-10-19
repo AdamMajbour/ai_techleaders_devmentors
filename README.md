@@ -194,9 +194,26 @@ export const GET = apiHandler(async (request) => {
 });
 ```
 
-Przykład: `GET /api/articles?authorId=<uuid>` (`packages/app/src/app/api/articles/route.ts`). Odpowiedzi mają kopertę
+Przykład: `packages/app/src/app/api/articles/` (`makeCrudRoute`). Odpowiedzi mają kopertę
 `{ "ok": true, "data": … }` albo `{ "ok": false, "error": { "code", "message", "fieldErrors"? } }`.
-Aplikacja czyta `DATABASE_*` z `.env.local` w korzeniu repozytorium (`next.config.ts`).
+Aplikacja czyta `DATABASE_*` i `JWT_SECRET` z `.env.local` w korzeniu repozytorium (`next.config.ts`, `forceReload` — bez niego
+Next ładuje tylko pliki z `packages/app`).
+
+## 🌐 API
+
+| Trasa | Metoda | Dostęp | Opis |
+|---|---|---|---|
+| `/api/health` | GET | publiczna | Status procesu, bez bazy |
+| `/api/auth/register` | POST | publiczna, limit | Tworzy konto i loguje (cookie sesji) |
+| `/api/auth/login` | POST | publiczna, limit | Loguje; wszystkie błędy to `Invalid credentials.` |
+| `/api/auth/logout` | POST | sesja | Czyści cookie |
+| `/api/auth/me` | GET | sesja | Zalogowany użytkownik |
+| `/api/articles?authorId=&page=&pageSize=` | GET | publiczna | Lista stronicowana |
+| `/api/articles` | POST | sesja | Tworzy artykuł (autor = zalogowany) |
+| `/api/articles/[id]` | GET / PUT / DELETE | GET publiczny, PUT i DELETE tylko autor | Jeden artykuł |
+
+Każde żądanie zmieniające stan wymaga nagłówka `x-requested-with: devmentor` (używaj `apiCall` z `@devmentor/ui`).
+Strony: `/login`, `/register`, `/articles` (lista z `DataTable`, formularz z `CrudForm`).
 
 ## 🧪 Testowanie
 
@@ -256,6 +273,10 @@ DATABASE_PORT=5432
 DATABASE_NAME=devmentor
 DATABASE_USER=postgres
 DATABASE_PASSWORD=postgres
+
+# Sesja (JWT HS256): min. 32 losowe bajty, wygeneruj: openssl rand -base64 48
+# Wymagane tylko przez trasy auth; aplikacja buduje się i startuje bez tego.
+JWT_SECRET=
 
 # Application
 NEXT_PUBLIC_API_URL=http://localhost:3000

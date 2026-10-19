@@ -1,7 +1,7 @@
 ---
 date: 2026-10-19
 title: DevMentor — plan migracji aplikacji do monorepo
-status: in-progress  # fazy 1-4 zakończone; dostosowanie do engineering-standards.md (faza 5) wdrożone
+status: in-progress  # fazy 1-6 zakończone; engineering-standards.md wdrożony (faza 5: struktura, faza 6: warstwy i bezpieczeństwo)
 ---
 
 # Plan migracji do monorepo
@@ -269,7 +269,7 @@ a wyszukiwanie użytkownika po e-mailu bez logowania ujawnia dane i pozwala spra
 Dane demo mają stałe UUID (`packages/db/scripts/seed-data.ts`), więc E2E znajduje artykuł bez wyszukiwania użytkownika.
 `/api/health` odpowiada teraz w kopercie (`{ ok: true, data: { status, timestamp } }`).
 
-Odłożone (brak konsumenta lub poza zakresem repo):
+Odłożone w fazie 5 (wdrożone w fazie 6, patrz niżej; poza zakresem repo zostają dwie ostatnie pozycje):
 - `makeCrudRoute.ts`, `auth.ts` (`requireSession`/`requireRole`/własność), JWT, cookies, CSRF po stronie serwera (klient już wysyła nagłówek),
   rate limiting, bcrypt — pierwszy koncept z logowaniem (`auth`); `config/env.ts` (Zod) — razem z pierwszym sekretem
 - `CrudForm`, `DataTable`, `feedback/*` — pierwsza strona z listą/formularzem; `core/src/events` — pierwsza funkcja z efektami ubocznymi
@@ -285,4 +285,41 @@ Odstępstwa i pytania do właściciela:
 
 Weryfikacja: `type-check`, `lint` (0 problemów), `npm test` (55 testów w 14 zestawach), `test:integration` (9), `test:e2e` (10, w tym 2 w Chromium),
 `NODE_ENV=production npm run build`; strona główna pikselowo identyczna jak przed refaktorem.
+
+## Faza 6 — reszta `engineering-standards.md`: warstwa API/UI, auth i bezpieczeństwo (2026-10-19)
+
+Na wyraźną prośbę wdrożono także elementy odłożone w fazie 5, z wzorcami referencyjnymi na zasobie `articles` i stronach auth.
+
+Wdrożone (kod + testy):
+- **`core/http`:** `makeCrudRoute` (Zod + metody serwisów → `GET/POST/PUT/DELETE`; mutacje zawsze: CSRF → sesja → walidacja → serwis),
+  `auth.ts` (`requireSession`, `optionalSession`, `assertOwns` z odmową domyślną; `requireRole` pominięte — produkt nie ma RBAC),
+  `readJsonBody`, `jsonResponse`, `TooManyRequestsError` (429 + `Retry-After`).
+- **`core/security`:** bcrypt koszt 12 (+ weryfikacja wobec atrapy dla nieznanego konta), JWT HS256 24 h (`jose`, odrzuca `alg: none` i inny HMAC),
+  cookie `httpOnly`/`SameSite=Lax`/`Secure` w produkcji, CSRF (nagłówek klienta + `Origin` vs `Host`), limiter prób w pamięci
+  (logowanie: 5 niepowodzeń / 15 min na klienta+e-mail; rejestracja: 10 prób / h), `withFailureLimit`.
+- **`core/config/env.ts`** (Zod, leniwie): `JWT_SECRET` ≥ 32 znaki; aplikacja buduje się i startuje bez niego, trasy auth zawodzą przed jakąkolwiek mutacją.
+- **`core/events`:** typowany emiter in-process (`event-bus`, `event-map`, subskrybent logujący) w `Cradle`; serwisy emitują po mutacji.
+- **Serwisy:** `AuthService` (rejestracja z mapowaniem naruszenia unikalności na ogólny konflikt, logowanie z jednym komunikatem błędu),
+  `ArticleService` (lista stronicowana, CRUD, własność, autor z sesji), DTO zamiast encji; `UserService` zawężony do `getById`.
+- **`db`:** kolumna `password_hash` (migracja z `down()`, `hidden()` w serializacji), `findPage`/`update`/`delete`, `isUniqueConstraintViolation`.
+- **`ui/backend`:** `CrudForm`, `DataTable`, `feedback/*`; prymitywy `input`, `textarea`, `table` dodane CLI `shadcn` (+ poprawka importu
+  `from "cn"`); `useAsync` zachowuje poprzednie dane w trakcie ponownego ładowania; reset koloru obramowań (brak preflightu).
+- **`app`:** trasy `api/auth/{register,login,logout,me}`, `api/articles` i `api/articles/[id]` (`makeCrudRoute`), strony `(auth)/login`,
+  `(auth)/register`, `(marketing)/articles` (`DataTable` + `CrudForm` + `apiCall`).
+- **CI:** `npm run audit:prod` (próg critical — 0 krytycznych w zależnościach produkcyjnych).
+
+Błędy znalezione testami i naprawione: `loadEnvConfig` bez `forceReload` był no-op (zmienne z `.env.local` w korzeniu nigdy nie trafiały do aplikacji —
+wcześniejsze twierdzenie w dokumentacji było nieprawdziwe), CSRF odrzucał prawdziwe żądania (`request.url` vs `Host`), konto tworzone przed
+niepowodzeniem wystawienia sesji, publiczny odczyt wymagał sekretu, `z.email()` bez przycinania, wyjątek synchroniczny w subskrybencie
+zdarzeń, wyciek `bcryptjs` do wejścia izomorficznego (stała w złym pliku), nieczytelne komunikaty Zod.
+
+Weryfikacja: `type-check`, `lint` (0 problemów), 143 testy jednostkowe/komponentowe, 13 integracyjnych, 31 E2E (API, bezpieczeństwo, Chromium: rejestracja → artykuł →
+usunięcie → wylogowanie), build produkcyjny; zrzuty ekranu `/articles`, `/login` obejrzane (po poprawce obramowań i komunikatów).
+
+Nie wdrożone:
+- `docs/product-scope.md` i `/admin/users` z dokumentu — brak tych plików w repozytorium
+- `pino` (zostaje własny logger z maskowaniem, 30 linii, bez nowej zależności); port/adapter płatności, transakcje rezerwacji, kontrola ceny po stronie
+  serwera — dotyczą konceptów `payments`/`bookings`, których jeszcze nie ma (folder konceptu powstaje z pierwszym plikiem)
+- limiter w pamięci procesu i brak refresh tokenów — znane ograniczenia MVP z dokumentu, opisane w kodzie
+- wartości `x-forwarded-for` są wiarygodne tylko za zaufanym proxy
 

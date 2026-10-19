@@ -31,7 +31,10 @@ packages/
 │   ├── public/               # Zasoby statyczne
 │   └── e2e/                  # Testy E2E (build + start + HTTP + Chromium)
 ├── core/                     # Logika biznesowa, niezależna od frameworka (bez next/react)
-│   ├── src/http/             # errors.ts (AppError), apiHandler.ts, envelope.ts
+│   ├── src/http/             # errors.ts (AppError), apiHandler.ts, makeCrudRoute.ts, auth.ts, body.ts, envelope.ts
+│   ├── src/security/         # password (bcrypt 12), session (JWT HS256 + cookie), csrf, rate-limit
+│   ├── src/events/           # typowany emiter in-process: event-bus.ts, event-map.ts
+│   ├── src/config/env.ts     # Zod, czytany leniwie (aplikacja buduje się i startuje bez sekretów)
 │   ├── src/container/        # Awilix: container.ts, cradle.ts
 │   ├── src/services/<concept>/<name>.service.ts
 │   ├── src/validators/<concept>/<name>.schema.ts   # Zod, współdzielone client/server
@@ -45,7 +48,7 @@ packages/
 │   └── src/config/           # Konfiguracja MikroORM
 └── ui/                       # Samodzielny: nie importuje core ani db
     ├── src/components/ui/    # Prymitywy shadcn (CLI), src/components/<concept>/ — komponenty konceptu
-    ├── src/backend/          # Ogólne wzorce paneli: api/apiCall.ts (jedyne miejsce na fetch do /api/*)
+    ├── src/backend/          # Ogólne wzorce paneli: api/apiCall.ts (jedyne miejsce na fetch do /api/*), forms/CrudForm, tables/DataTable, feedback/*
     ├── src/hooks/            # Hooki React (useAsync, useDebounce, ...)
     └── src/styles/           # Tokeny i style globalne Tailwind
 ```
@@ -67,9 +70,9 @@ Katalog konceptu powstaje dopiero wraz z pierwszym plikiem — nigdy puste szkie
 modułów: bez per-konceptowego setupu/ACL/auto-discovery. Pełna tabela nazewnictwa, wzorce portów płatności i emitera zdarzeń:
 `.ai/specs/engineering-standards.md`.
 
-ID zdarzeń: `concept.entity.action` (np. `bookings.booking.created`), emitowane przez typowany emiter w
-`packages/core/src/events` zarejestrowany w `Cradle` — tylko in-process, bez kolejek/workerów. (Emiter powstanie przy pierwszej
-funkcji, która go potrzebuje.)
+ID zdarzeń: `concept.entity.action` (np. `articles.article.created`), emitowane przez serwis po udanej mutacji przez typowany
+emiter w `packages/core/src/events` (`eventBus` w `Cradle`, rejestr w `event-map.ts`) — tylko in-process, bez kolejek/workerów;
+wyjątek w subskrybencie jest logowany i nie psuje mutacji. Nowe zdarzenie = wpis w `EventMap` i w `logging-subscriber.ts`.
 
 ### Reusable API & UI layer
 
@@ -77,10 +80,23 @@ Każda trasa i strona używa dwóch współdzielonych warstw zamiast własnego f
 
 - `packages/core/src/http/` — `errors.ts` (hierarchia `AppError`), `apiHandler.ts` (łapie `AppError`, mapuje na status i
   kopertę JSON `{ ok, data | error }`, loguje nieoczekiwane błędy, nigdy nie zwraca stack trace). Trasy nie mają własnego
-  `try/catch`. `makeCrudRoute.ts` i `auth.ts` (`requireSession`, `requireRole`, asercje własności) powstaną z pierwszym zasobem
-  CRUD / pierwszym konceptem wymagającym logowania.
-- `packages/ui/src/backend/` — `api/apiCall.ts` (jedyny dozwolony `fetch()` do `/api/*`). `forms/CrudForm.tsx`,
-  `tables/DataTable.tsx`, `feedback/*` powstaną z pierwszą stroną, która ich potrzebuje.
+  `try/catch`. `makeCrudRoute.ts` (schematy Zod + metody serwisów → `{ GET, POST, PUT, DELETE }`; mutacje zawsze wymagają sesji
+  i nagłówka CSRF) oraz `auth.ts` (`requireSession`, `optionalSession`, `assertOwns`; brak `requireRole`, bo produkt nie ma RBAC).
+  Wzorzec: `packages/app/src/app/api/articles/`.
+- `packages/ui/src/backend/` — `api/apiCall.ts` (jedyny dozwolony `fetch()` do `/api/*`), `forms/CrudForm.tsx` (ten sam schemat
+  Zod co serwer, błędy pól z serwera, Ctrl/Cmd+Enter i Escape), `tables/DataTable.tsx` (stany loading/empty/error, paginacja,
+  akcje wiersza), `feedback/{LoadingMessage,ErrorMessage,EmptyState}.tsx`. Wzorzec: `packages/app/src/app/(marketing)/articles/`.
+
+### Bezpieczeństwo (minimum z `.ai/specs/engineering-standards.md`)
+
+- Hasła: bcrypt, koszt 12, długość 10–72. Sesja: JWT HS256, ważny 24 h, sekret `JWT_SECRET` (min. 32 znaki, z `.env.local`,
+  nigdy w repo), cookie `httpOnly`, `SameSite=Lax`, `Secure` w produkcji. Brak refresh tokenów (znane ograniczenie).
+- CSRF: każde żądanie zmieniające stan musi mieć nagłówek `x-requested-with: devmentor` (`apiCall` ustawia go zawsze), a `Origin`
+  musi zgadzać się z hostem. Rate limiting logowania i rejestracji w pamięci procesu (do zastąpienia współdzielonym magazynem).
+- Własność, nie role: każda mutacja sprawdza właściciela rekordu (`assertOwns`, odmowa domyślna). Autor rekordu zawsze pochodzi z
+  sesji, nigdy z ciała żądania; dane wejściowe przechodzą przez schemat Zod (brak mass assignment). Błędy logowania są ogólne.
+- Logger maskuje hasła/tokeny/JWT/cookies; encje nie opuszczają `core` (DTO), więc hash hasła nie trafia do odpowiedzi.
+- `npm run audit:prod` w CI (próg: critical).
 
 Nowy komponent wielokrotnego użytku ma jedno wyznaczone miejsce:
 
