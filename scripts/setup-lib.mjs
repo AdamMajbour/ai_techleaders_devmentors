@@ -66,7 +66,10 @@ export function checkVersions(nodeVersion, npmVersion) {
   return problems;
 }
 
-/** Install when node_modules is missing or older than package-lock.json. Times are mtimeMs, or null if absent. */
+/**
+ * Install when node_modules is missing or older than package-lock.json. Times are mtimeMs, or null if absent.
+ * Pass the mtime of node_modules/.package-lock.json (rewritten by every npm install), not of the directory.
+ */
 export function needsInstall(nodeModulesMtime, lockMtime) {
   if (nodeModulesMtime === null) return true;
   return lockMtime !== null && nodeModulesMtime < lockMtime;
@@ -83,10 +86,20 @@ export function resolveDbTarget(fileEnv, processEnv = {}) {
   };
 }
 
-/** "skip" when PostgreSQL already answers, "docker" to start the compose service, otherwise "fail". */
-export function decideDbAction({ reachable, hasDocker }) {
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+
+/** The compose `db` service only binds localhost:5432 (docker-compose.yml). */
+export function isComposeTarget({ host, port }) {
+  return LOCAL_HOSTS.has(host) && port === 5432;
+}
+
+/**
+ * "skip" when PostgreSQL already answers, "docker" to start the compose service (only when the
+ * configured target is the one it provides), otherwise "fail".
+ */
+export function decideDbAction({ reachable, hasDocker, target }) {
   if (reachable) return "skip";
-  return hasDocker ? "docker" : "fail";
+  return hasDocker && isComposeTarget(target) ? "docker" : "fail";
 }
 
 /** Renders the final report. Takes only step names, statuses and notes, never env values. */

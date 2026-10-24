@@ -2,6 +2,7 @@
 import {
   checkVersions,
   decideDbAction,
+  isComposeTarget,
   ensureJwtSecret,
   formatSummary,
   generateSecret,
@@ -79,9 +80,16 @@ describe("step-skip decisions", () => {
   });
 
   it("chooses skip, docker or fail for PostgreSQL", () => {
-    expect(decideDbAction({ reachable: true, hasDocker: false })).toBe("skip");
-    expect(decideDbAction({ reachable: false, hasDocker: true })).toBe("docker");
-    expect(decideDbAction({ reachable: false, hasDocker: false })).toBe("fail");
+    const local = { host: "localhost", port: 5432 };
+    expect(decideDbAction({ reachable: true, hasDocker: false, target: local })).toBe("skip");
+    expect(decideDbAction({ reachable: false, hasDocker: true, target: local })).toBe("docker");
+    expect(decideDbAction({ reachable: false, hasDocker: false, target: local })).toBe("fail");
+  });
+
+  it("never starts the compose service for a target it does not provide", () => {
+    expect(isComposeTarget({ host: "127.0.0.1", port: 5432 })).toBe(true);
+    expect(decideDbAction({ reachable: false, hasDocker: true, target: { host: "db.example.com", port: 5432 } })).toBe("fail");
+    expect(decideDbAction({ reachable: false, hasDocker: true, target: { host: "localhost", port: 6543 } })).toBe("fail");
   });
 
   it("probes the configured host and port, with the process environment winning", () => {

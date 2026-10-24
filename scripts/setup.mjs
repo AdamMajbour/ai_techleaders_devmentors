@@ -84,7 +84,7 @@ async function main() {
   record("preflight", "done", `node ${process.version}, npm ${npmVersion}`);
 
   // 2. Dependencies
-  if (needsInstall(mtime(path.join(ROOT, "node_modules")), mtime(path.join(ROOT, "package-lock.json")))) {
+  if (needsInstall(mtime(path.join(ROOT, "node_modules", ".package-lock.json")), mtime(path.join(ROOT, "package-lock.json")))) {
     if (run("npm", ["install"]).status !== 0) fail("dependencies", "npm install failed.");
     record("dependencies", "done");
   } else {
@@ -105,14 +105,14 @@ async function main() {
   // 4. PostgreSQL
   const target = resolveDbTarget(parseEnv(text), process.env);
   const reachable = await probe(target.host, target.port);
-  const action = decideDbAction({ reachable, hasDocker: capture("docker", ["--version"]) !== null });
+  const action = decideDbAction({ reachable, hasDocker: capture("docker", ["--version"]) !== null, target });
   if (action === "skip") {
     record("postgres", "skipped", `${target.host}:${target.port} accepts connections`);
   } else if (action === "fail") {
     fail(
       "postgres",
-      `PostgreSQL is not reachable at ${target.host}:${target.port} and Docker is not available.\n` +
-        "Start PostgreSQL 14+ (matching DATABASE_* in .env.local) or install Docker, then re-run: npm run setup",
+      `PostgreSQL is not reachable at ${target.host}:${target.port}.\n` +
+        "Start PostgreSQL 14+ matching DATABASE_* in .env.local, or (for localhost:5432) install Docker, then re-run: npm run setup",
     );
   } else {
     if (run("docker", ["compose", "up", "-d", "db"]).status !== 0) fail("postgres", "docker compose up -d db failed.");
