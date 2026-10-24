@@ -27,5 +27,9 @@
     "qa": ".ai/qa"
   },
   "reviewChecklist": null,
-  "closeKeywords": ["zamyka", "naprawia", "rozwiązuje"]
+  "closeKeywords": ["zamyka", "naprawia", "rozwiązuje"],
+  "discovery": {
+    "enabled": true,
+    "roles": { "domainExpert": false, "designer": false }
+  }
 }
