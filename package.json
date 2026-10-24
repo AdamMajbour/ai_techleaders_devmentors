@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "setup": "node scripts/setup.mjs",
     "dev": "npm --workspace=@devmentor/app run dev --",
     "build": "npm run type-check && npm --workspace=@devmentor/app run build",
     "start": "npm --workspace=@devmentor/app run start --",
