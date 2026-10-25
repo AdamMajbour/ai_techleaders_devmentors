@@ -99,6 +99,15 @@ Wymuszane przez ESLint (`no-restricted-imports`): `core` nie importuje `next`/`r
 
 ### Instalacja
 
+Jedna komenda przygotowuje środowisko lokalne (zależności, `.env.local` z wygenerowanym `JWT_SECRET`, PostgreSQL przez Docker, migracje i dane demo). Można ją uruchamiać wielokrotnie — wykonane kroki są pomijane:
+
+```bash
+npm run setup              # dodaj --no-seed (npm run setup -- --no-seed), aby pominąć dane demo
+npm run dev
+```
+
+#### Ręcznie
+
 ```bash
 # Zainstaluj zależności dla wszystkich pakietów
 npm install
@@ -118,6 +127,7 @@ npm run dev
 ### Dostępne komendy
 
 ```bash
+npm run setup        # Jednorazowe przygotowanie środowiska lokalnego (idempotentne)
 npm run dev          # Uruchom dev server (app/)
 npm run build        # Type-check pakietów + build aplikacji (uruchamiaj z NODE_ENV=production)
 npm run start        # Uruchom aplikację (po build)

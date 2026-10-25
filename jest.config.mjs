@@ -10,7 +10,7 @@ const unitConfig = createJestConfig({
   displayName: "unit",
   testEnvironment: "jsdom",
   setupFilesAfterEnv: ["<rootDir>/packages/ui/src/test/setup.ts"],
-  roots: ["<rootDir>/packages"],
+  roots: ["<rootDir>/packages", "<rootDir>/scripts"],
   testMatch: ["**/*.test.{ts,tsx}"],
   testPathIgnorePatterns: ["\\.integration\\.test\\.", "\\.e2e\\.test\\."],
   moduleNameMapper: {
