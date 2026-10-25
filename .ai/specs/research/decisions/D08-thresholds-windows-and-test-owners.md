@@ -1,0 +1,13 @@
+# D08 — Thresholds, windows, review dates and owners for the D05 criteria
+- Date, owner: 2026-10-25, founder A (Oliwia), confirmed in the discovery session; answers the thresholds part of Q01; supplements D05
+- Context and the options weighed: D05 left the values open. The agent proposed example values and the owner accepted them as proposed. The material gives no empirical basis for any of them; they are provisional targets chosen by the owner, with the reasons below. The owner may edit them at any time.
+- Decision and why:
+  1. Prepaid bookings (A03): fewer than 5 people prepay within 4 weeks of pilot start, planned for 2026-11-02 (stated in the session as a proposal, accepted); reason: a small pilot from the Discord where one or two payments are not distinguishable from chance (the agent's reasoning, not from a source).
+  2. Mentor availability (A04): no invited mentor with a warm contact publishes availability within 3 weeks of the invitation; first invitations planned for 2026-11-02, so the window ends 2026-11-23 (stated by the owner in the session); the first batch comes from the 29 with a warm contact.
+  3. Response time (A02): the median reply to paid test questions is longer than 60 minutes; this is the promise "within the hour" itself; then the promise becomes "the same day".
+  4. Notes coverage (A01, supply gate): the notes answer fewer than 6 of 10 real recent questions; then other mentors with notes are sought instead of building the vault from these notes; a half is a choice with no source.
+  5. Vault payments (A01): fewer than 3 people book or pay for a vault answer at a separate price within 4 weeks; then D01 narrows to sessions only.
+  6. Effort (A03, optional measure): time from landing to a prepaid booking above 5 minutes counts against R04 and R05 in the reading of the result; the number is the fintech developer's own limit ("jak booking trwa więcej niż pięć minut to robię rollback").
+  Owners and review dates, as assigned by the owner: A03 test, founder A, 2026-11-30; A04 test, founders A and B, 2026-11-30; A02 test, founder B, 2026-11-30; A01 tests, founder B for the notes check and founder A for the offer, 2026-12-14. Founder B's confirmation of the assignments was reported by founder A in the same session ("founder B potwierdza"); founder B's own words were not captured.
+- Consequences, and what would make us revisit it: Q01 is answered. Founder B's acceptance rests on founder A's report; a note from founder B would make it first-hand. The values have no baseline; review them if the Discord pilot population differs from what the brief assumes.
+- Status: active

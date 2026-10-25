@@ -1,0 +1,7 @@
+# D17 — Pilot payouts and refunds through Stripe, refunds approved by founder A, EU data rules treated as applicable
+- Date, owner: 2026-10-25, founder A (Oliwia), confirmed in the discovery session; answers part of Q12; supplements D15
+- Context and the options weighed: D15 left the legal entity, payouts and refunds and the data-law position undecided. The agent proposed an example and the owner accepted it as proposed. The brief's stakeholder note says Stripe handles payments; the RACI names no owner for settling payouts and refunds. The assumption that EU rules apply rests on prices in EUR; the material gives no participants' countries.
+- Decision and why: payouts and refunds go through Stripe; founder A approves refunds (R04: same-day refund for a mentor no-show); EU data rules are treated as applicable in the pilot; a qualified person reviews D15 before the first payment. The legal entity's name and the qualified reviewer are not given in the session.
+- Consequences, and what would make us revisit it: Q12 stays open for the entity's name and the reviewer, and the first payment cannot be taken until both exist. Whether Stripe needs further terms for payouts to mentors is not decided. Revisit if participants outside the EU join or if the reviewer objects.
+- Status: active
+- Supplement (2026-10-25): D21 names the entity and the reviewer; the reviewer's role and qualification were not stated, so the "qualified person" condition above is not shown to be met, and Q12 stays partly open until it is.

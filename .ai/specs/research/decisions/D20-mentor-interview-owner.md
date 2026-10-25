@@ -1,0 +1,6 @@
+# D20 — Founder B interviews mentors about the share, AI use and previews before 2026-11-02
+- Date, owner: 2026-10-25, founder A (Oliwia), confirmed in the discovery session; founder B's acceptance was reported by founder A and not captured in founder B's own words
+- Context and the options weighed: the collection plan entry on what mentors would accept had no owner. The 80% share (D11), AI use of notes (D06) and previews (D09) rest on mentors who were not asked. The agent proposed an owner and a date as an example and the owner accepted it with the other examples.
+- Decision and why: founder B interviews mentors, using the interview-note template, before the first invitations on 2026-11-02.
+- Consequences, and what would make us revisit it: the date leaves about a week; if it is missed the invitations either wait or go out with D11, D06 and D09 untested on mentors. The founder B acceptance should be confirmed first-hand.
+- Status: active

@@ -1,0 +1,12 @@
+# D05 — Primary metric is prepaid bookings; stop or revise criteria are fixed in shape, thresholds still open
+- Date, owner: 2026-10-25, founder A (Oliwia), confirmed in the discovery session; answers the structure part of Q01
+- Context and the options weighed: the brief had no stop criterion and no metric (Q01). The agent proposed a structure in the session and the owner accepted it as proposed. Nothing in the material gives a baseline other than zero (nobody has booked or paid) or a reason for any threshold; the board goal of 100 mentors has no empirical basis.
+- Decision and why: the primary metric is the number of people who prepay a 25-minute text session in the test window, counted separately from stated intent; baseline 0. The team stops or revises as follows (a follow-up on 2026-10-25, after the skeptic read, added the vault-payment criterion and the time measurement at the owner's choice), with thresholds and windows set later by founder A with a stated reason:
+  - fewer than [N] people prepay within [window]: stop building checkout and talk to those who declined (A03);
+  - no invited mentor with a warm contact publishes availability within [window]: change how supply is found before building for seekers (A04);
+  - mentors answer paid test questions slower than [threshold]: change the promise from "within the hour" to "the same day" (A02);
+  - the mentors' notes answer fewer than [x] of ten real recent questions: this is a gate on whether a vault can be supplied from those notes, not a test of seeker demand; what the team does when it fails is not decided (A01);
+  - fewer than [N] people book or pay for a vault answer at a separate price within [window]: D01 narrows to sessions only (A01);
+  - the test of A03 also records the time from landing to a prepaid booking, with no threshold; the owner may set one later with a stated reason.
+- Consequences, and what would make us revisit it: until the bracketed values are set the criteria cannot be checked, so Q01 stays open on thresholds and windows. They may come from what makes the 25-hour build budget worthwhile and from the date by which the owner wants to decide; the agent supplies no numbers. The owner of each test and its date are still unknown.
+- Status: active
