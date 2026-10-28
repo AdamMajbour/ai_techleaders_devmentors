@@ -40,9 +40,9 @@ Templates for any list with filters. `noun` is the plural of what the list holds
 |---|---|
 | Count | `3 sessions`, `1 session`, `0 sessions`. With a filter: `1 session with status Accepted` |
 | Nothing yet | Title `No sessions yet`, then why and the next step |
-| No results for the filters | Title `No sessions with status Accepted`, then "No session has this status. Choose another status or clear the filter." and a **Clear filter** button |
-| Price in a row of a list (`ul`) | Whole amount without decimals: `25 EUR`, in tabular figures. `25.00 EUR` only in a table. The length of a session is added only where the seeker can choose between lengths (the pilot has one length) |
-| Date of an accepted session in a row | `3 Nov 2026, 14:25`: `formatDate` and `formatClock`, one line. A booking that has no start time shows no date |
+| No results for the filters | Title `No sessions with status Accepted`, then "No session has this status. Choose another status or clear the filter." and a **Clear filter** button (`variant="outline"`) |
+| Price in a row of a list (`ul`) | Whole amount without decimals: `25 EUR`, in tabular figures. `25.00 EUR` only in a table. The length of a session is added only where the seeker can choose between lengths (the pilot has one length). In a booking's row the price is the booking's own (`priceMinor`, `currency`): what was charged, never the mentor's current price |
+| Date of an accepted session in a row | `3 Nov 2026, 14:25`: `formatDate` and `formatClock`, one line under the technologies, `text-label tabular-nums text-foreground`. The zone is the seeker's (`timeZone` of the profile, passed to both functions) and its name is not shown. A booking that has no start time shows no date |
 
 ## Buttons: a verb and an object
 
@@ -80,13 +80,24 @@ An error about money always says whether money was taken. No blame, no exclamati
 
 No illustration, no icon tile: the words and the next step are the content (A01).
 
+## Long text
+
+What a long value does in a row. Source: `MentorRow` and `BookingRow` (content sections); the table is a proposal (agent test 2026-10-28, round 2).
+
+| What | Behaviour |
+|---|---|
+| A name, a headline, a technology: text that identifies | Never cut. It wraps (`min-w-0` on the column, `break-words`) |
+| A question or a message the user wrote, in a row | Cut at three lines (`line-clamp-3`), the whole text behind the link (`BookingRow`) |
+| A list of technologies | One line joined with " · ", wraps at the separators |
+| An error or an empty-state sentence | Never cut, capped at `65ch` |
+
 ## Dates, times, money and numbers
 
 | What | Format | Example | In code | Source |
 |---|---|---|---|---|
 | Date | Day, short month, year | 3 Nov 2026 | `formatDate(date, timeZone)` | Proposal |
 | Time of day | 24 hours | 14:25 | `formatClock(date, timeZone)` | Proposal |
-| Time zone | Pass it explicitly where two people share a time | `timeZone="Europe/Warsaw"` | the `timeZone` prop | Proposal |
+| Time zone | Pass it explicitly. For a seeker it is the `timeZone` of the seeker's profile (an IANA name). Where two people share a time, both see the same zone | `timeZone="Europe/Warsaw"` | the `timeZone` prop | Decided 2026-10-28 (profile), the rest a proposal |
 | Length of time | Hours and minutes | 1 h 20 min | `formatDuration(minutes)` | Proposal |
 | Price in a sentence or on a button | Whole amounts without decimals, the currency code after the amount | 25 EUR | `formatPrice(amount, currency)` | Proposal |
 | Price in a table or a ledger | Always two decimals, so digits line up | 25.00 EUR | `formatPrice(amount, currency, 'exact')` | Proposal |

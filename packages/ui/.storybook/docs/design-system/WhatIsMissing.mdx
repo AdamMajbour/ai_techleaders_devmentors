@@ -40,10 +40,13 @@ Priority is the author's proposal, taken from the order of the backlog (dependen
 | Side panel, popover, tooltip | Detail beside a list, small explanations | A page, text on the page | How to choose |
 | Tabs | Views of the same record | Separate pages | How to choose |
 | Toast | Short confirmations | Plain status text. An error is never a toast | WCAG 2.2.1 |
-| Row of the seeker's session: mentor block (name, headline, technologies), status, price, link, and the date for an accepted session | "My sessions" | Compose it in the screen from `MentorRow` markup, `BookingStatus` and `TextLink`. `MentorRow` always carries "Ask a question" and no status, `BookingRow` carries no technologies and takes no children | Agent test 2026-10-28. Two screens now need the shape (mentors list, my sessions), so the Contributing threshold is met: a `BookingRow` variant for the seeker, or a `SessionRow` |
+| Row of the seeker's session: mentor block (name, headline, technologies), status, price, link, and the date for an accepted session | "My sessions" | Compose it in the screen from `MentorRow` markup, `BookingStatus` and `TextLink`. Layout until a component exists: left column the name (`h2`), the headline, the technologies, then the date line (`text-label tabular-nums text-foreground`); right column from `md` up the status, the price, the "Open" link, in that order; under the left column on a phone. `MentorRow` always carries "Ask a question" and no status, `BookingRow` carries no technologies and takes no children | Agent test 2026-10-28. Two screens now need the shape (mentors list, my sessions), so the Contributing threshold is met: a `BookingRow` variant for the seeker, or a `SessionRow` |
 | Filter bar: `Field` with a compact `Select`, removable chip, "Clear all filters", result count | Any list with filters | Copy the recipe from `patterns/list-with-filters.stories.tsx` | Agent test 2026-10-28. Same threshold as above |
 | Pagination outside `DataTable` | A `ul` list with many rows | Show every row. This holds while a list has a handful of rows (the pilot). Above 25 rows a component is needed | Agent test 2026-10-28 (approved 2026-10-28) |
 | Page shell: `main`, one `h1`, `max-w-content`, `py-between-groups` | Every page | Copy the `Page` function from `screens/e01-views.tsx` | Agent test 2026-10-28 |
+| Action slot of `Alert` (a button beside or under the message) | Refresh failed after a list loaded | A `Button` as a child of the `Alert` | Agent test 2026-10-28, round 2 |
+| A runtime list of the booking statuses. `BookingStatusValue` is only a type, so a filter repeats the list | The status filter | Repeat the six values in the order of the type | Agent test 2026-10-28, round 2 |
+| The E01 mentors list does not yet follow **List with filters**: no count, no chip, no "Clear all filters" | The mentors list | It keeps the plain `Select` | Agent test 2026-10-28, round 2 |
 | Success tone of `StatusBadge`, and a warning colour | Statuses | Three tones. `--status-success` exists as a token but no component uses it yet except the starter page | K3 settled for the colour on 2026-10-28; the component is not changed |
 
 ## States and behaviours that are missing
@@ -52,7 +55,7 @@ Workarounds approved by the owner on 2026-10-28. Source: the agent test of that 
 
 | Missing | Until then | Where it shows |
 |---|---|---|
-| **Refresh failed after the list loaded.** `SessionThread` has `refreshFailed`, a list has nothing | Keep the last result and put an `Alert` above the list: "The list could not be refreshed. It shows the last result." with a "Try again" button | Lists that poll or reload |
+| **Refresh failed after the list loaded.** `SessionThread` has `refreshFailed`, a list has nothing | Keep the last result and put a `destructive` `Alert` directly above the list, below the filter bar and the count: "The list could not be refreshed. It shows the last result." The "Try again" button (`variant="outline"`, `size="sm"`) is a child of the `Alert`, because `Alert` has no action slot | Lists that poll or reload |
 | **Error while a filter is active** | The error replaces the filter and the list. The filter value is kept and comes back after "Try again" | List with filters |
 | **A next step per booking status.** `BookingRow` has only `href`, so `payment_failed` and `pending_payment` have no "pay again" | One "Open" link for every status. A "pay again" action waits for a spec of payment retry | Seeker's list |
 | **The date of an accepted session in the row.** Decided to show it ("3 Nov 2026, 14:25", `formatDate` and `formatClock`), but `BookingRowData` has no `startsAt` | Leave it out of the row until `startsAt` is in the data | Seeker's list |
@@ -73,6 +76,10 @@ Workarounds approved by the owner on 2026-10-28. Source: the agent test of that 
 | A list is in the order the server sends, newest first, with no sortable columns in the pilot. The status filter follows the order of the status type, "All statuses" first | `List with filters` §5 |
 | The seeker's list lives at `/bookings` (booking spec) and is labelled "My sessions" | `/sessions` of the standards (S08) is not used |
 | `GET /api/bookings` carries the mentor's `name`, `headline` and `technologies`, and `startsAt` for an accepted booking | Written into the booking spec (API table) |
+| The price in a row is the price of the booking (`priceMinor`, `currency` from the API), not the mentor's current price | Written into the booking spec and into Content |
+| The status filter runs in the client over the seeker's whole list: `GET /api/bookings?role=seeker` returns all of the seeker's bookings in one response in the pilot | Written into the booking spec. A list longer than 25 rows needs pagination first |
+| Dates shown to a seeker use the `timeZone` of the seeker's profile (an IANA name) | Written into the booking spec. **The spec has no seeker profile yet**, so the field must be added |
+| `refundStatus` has four values (`none`, `pending_approval`, `processing`, `refunded`), the same as `RefundState` | The booking spec said three. It now says four |
 
 ## Open decisions that change the design system
 
@@ -80,6 +87,7 @@ Workarounds approved by the owner on 2026-10-28. Source: the agent test of that 
 |---|---|---|
 | Whether `StatusBadge` gets a success tone now that `--status-success` exists (K3 itself is settled) | The owner | Color |
 | Mentors list as a `Table` (R01.3) | The owner | `MentorRow` |
+| Where the first value of the seeker's `timeZone` comes from: the browser at the first sign-in, or a field the seeker fills in | The owner | Booking spec |
 | `BookingRow` reads `allowedActions` from the server | The owner | `BookingRow` |
 | A stable wrapper for `Button` with `disabledReason`, so focus is kept when the reason disappears | The owner | POSTEP.md |
 | A confirmation before Reject | The owner | `ReviewItem` |

@@ -56,7 +56,7 @@ export function BookingRow({ booking, viewer, href, onAccept, onDecline, pending
       )}
       {href ? (
         <TextLink href={href} className="w-fit text-label">
-          Open<span className="sr-only"> the booking with {counterpartName}</span>
+          Open<span className="sr-only"> {viewer === 'seeker' ? `the session with ${counterpartName}` : `the question from ${counterpartName}`}</span>
         </TextLink>
       ) : null}
       {canDecide ? (

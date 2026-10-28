@@ -50,6 +50,10 @@ A list the user narrows down with filters, always showing how many results there
 | When loading the list fails while a filter is active, the error replaces the filter and the list. The chosen filter is kept and comes back after "Try again" | The user does not have to choose again | Approved 2026-10-28 (agent test) |
 | The status filter lists the options in the order of the status type, "All statuses" first, in the wording of the reader | The order follows the life of a record and the words match the badge in the row | Approved 2026-10-28 (agent test) |
 | Rows are in the order the server sends. The pilot has no sortable columns. The server sends newest first | One order to learn | Approved 2026-10-28 (agent test) |
+| A skeleton row is a `div` with `flex flex-col gap-group border-b border-border py-panel-compact` that holds the three blocks, so its padding and hairline match a real row | The page does not jump when rows arrive | Proposal (agent test 2026-10-28, round 2) |
+| A filter runs in the client while the whole list is loaded (the seeker's sessions in the pilot). A list paged by the server filters on the server with a query parameter and returns to page 1 | The user filters the whole list, not one page | Approved 2026-10-28 (client side for the seeker's list); the server rule is a proposal |
+| After a filter is removed with the chip or "Clear filter" the button disappears, so **focus moves to the filter's `Select`** | Keyboard focus is not lost to the page | Proposal (agent test 2026-10-28, round 2), WCAG 2.4.3 |
+| A `ul` shows every row. A list that can grow beyond 25 rows needs pagination first: do not ship it without | A long list without pages is slow to scan | Proposal (agent test 2026-10-28, round 2) |
 
 ## 6. States, one story each
 
@@ -106,6 +110,21 @@ The filter bar is written in the story as the recipe. It becomes a shared compon
   emptyAction={technology ? <Button variant="outline" onClick={clear}>Clear filter</Button> : undefined}
   pagination={{ page, pageCount, onPageChange: setPage }}
 />
+```
+
+A list of rows (a `ul`) writes the filter bar and the states by hand. The row is written in the screen until a row component exists (see What is missing):
+
+```tsx
+<ul className="m-0 flex list-none flex-col p-0">
+  {shown.map((session) => (
+    <li
+      key={session.id}
+      className="flex flex-col gap-between-groups border-b border-border py-panel-compact last:border-b-0 md:flex-row md:items-start md:justify-between"
+    >
+      {/* left: name (h2), headline, technologies, date. right: status, price, "Open" TextLink */}
+    </li>
+  ))}
+</ul>
 ```
 
 ## 11. Do and don't

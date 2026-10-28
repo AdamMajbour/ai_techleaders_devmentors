@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { X } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { DataTable } from '../backend/tables';
 import { Button } from '../components/ui/button';
@@ -47,18 +47,21 @@ function MentorFilterList({
   const filtered = technology ? rows.filter((mentor) => mentor.technologies.includes(technology)) : rows;
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const selectRef = useRef<HTMLSelectElement>(null);
   const clear = () => {
     setTechnology('');
     setPage(1);
+    selectRef.current?.focus();
   };
 
   return (
     <div className="flex max-w-3xl flex-col gap-between-groups">
       {!isLoading && !error && rows.length > 0 ? (
-      <div className="flex flex-wrap items-end gap-between-groups">
-        <div className="w-56">
+      <div className="flex flex-col gap-between-groups">
+        <div className="max-w-session">
           <Field label="Technology">
             <Select
+              ref={selectRef}
               density="compact"
               value={technology}
               onChange={(event) => {

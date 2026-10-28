@@ -74,7 +74,12 @@ describe('BookingRow', () => {
   it('cuts a long question at three lines and opens it in full through the link', () => {
     renderRow({ href: '/bookings/b1', viewer: 'seeker' });
     expect(screen.getByText(/Ingress upgrade/)).toHaveClass('line-clamp-3');
-    expect(screen.getByRole('link', { name: 'Open the booking with Sam' })).toHaveAttribute('href', '/bookings/b1');
+    expect(screen.getByRole('link', { name: 'Open the session with Sam' })).toHaveAttribute('href', '/bookings/b1');
+  });
+
+  it('names the link after the question for a mentor', () => {
+    renderRow({ href: '/bookings/b1', viewer: 'mentor' });
+    expect(screen.getByRole('link', { name: 'Open the question from Sam' })).toHaveAttribute('href', '/bookings/b1');
   });
 
   it('shows the status in words and the price', () => {
