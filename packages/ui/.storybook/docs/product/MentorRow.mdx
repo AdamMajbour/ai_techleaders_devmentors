@@ -1,0 +1,109 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as MentorRowStories from '../../../src/components/mentors/MentorRow.stories';
+
+<Meta of={MentorRowStories} />
+
+# MentorRow
+
+## 1. What it is for
+
+One mentor in the list a seeker chooses from. It shows what the mentor did, the technologies, a link to public work, when they last acted, the price and the way to ask a question.
+
+<Canvas of={MentorRowStories.ManyInAList} />
+
+## 2. When to use it
+
+- The mentors list (E01-S01), inside a `ul`.
+- Any list of mentors where the seeker compares them: a filtered list, a list from a mentor's own link.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| One mentor's full page | The mentor page: heading, `QuestionForm` | A row is a summary |
+| Ranking or scoring mentors | Nothing. Show public work (`publicWork`) | No ratings, no scores, no "Top mentor" (N02) |
+| Rows of numbers to compare | `Table` | Column headers (R01.3) |
+
+## 4. Anatomy
+
+1. **Name**: a heading, one level below the heading of the list (`headingLevel`).
+2. **Headline**: what the mentor did, in concrete words.
+3. **Technologies**: joined with " · ".
+4. **Public work**: one link, in place of a rating (N02).
+5. **Activity**: when the mentor last acted, with "Not a promise of reply time."
+6. **Price and session length**, and the **Ask a question** button.
+
+## 5. Variants
+
+| Variant | Choose it when | Source |
+|---|---|---|
+| Default | Always | |
+| `headingLevel` 2, 3 or 4 | The outline needs it: 2 under a page `h1`, 3 under an `h2` | WCAG 1.3.1 |
+| Without `publicWork` | The mentor has none: the line is left out, nothing replaces it | N02 |
+| Without `activity` | Not known | |
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Default | Hairline between rows, no card, no shadow | R01.1 |
+| Many in a list | The last row has no line under it | R01.1 |
+| Never active | "Not active yet. Not a promise of reply time." | N02 (no score), Proposal (wording) |
+| Hover, pressed | Only the button and the links have them. The row itself is not interactive | |
+| Focus | The button and the links show the focus ring | WCAG 2.4.7 |
+| Loading, empty, error | Belong to the list, see "E01 Booking flow" > Mentors | |
+
+<Canvas of={MentorRowStories.NeverActive} />
+
+## 7. Behavior and accessibility
+
+- **List item:** render rows inside a `ul`, so a screen reader announces the count.
+- **Button name:** "Ask a question to Ada Kowalska". The visible words are "Ask a question", the name adds who.
+- **Outline:** the name is a heading, so a screen reader user can jump from mentor to mentor. Choose `headingLevel` so no level is skipped.
+- **No rating:** a test fails if "★", "rating", "stars", "score" or "top mentor" appears (N02).
+
+<Canvas of={MentorRowStories.NoRatingAnywhere} />
+
+## 8. Content
+
+- **Headline:** what the mentor did, with a verb: "Upgraded ingress-nginx on bare metal clusters". No "passionate", no adjectives about the person.
+- **Activity:** "Active today. Not a promise of reply time." It states a fact and does not promise.
+- **Price:** "25 EUR for 25 minutes of text", the amount in tabular figures.
+- **Long text:** wraps. Names and headlines are not cut.
+
+<Canvas of={MentorRowStories.LongTextNarrow} />
+
+## 9. Responsiveness
+
+At 768 px and above the price and the button sit to the right of the text. Below it they stack under it. At 320 px nothing overflows and the button keeps its full label.
+
+## 10. API
+
+<ArgTypes of={MentorRowStories} />
+
+## 11. Code
+
+```tsx
+import { MentorRow } from '@devmentor/ui';
+
+<ul>
+  {mentors.map((mentor) => (
+    <MentorRow key={mentor.id} mentor={mentor} priceMinor={2500} currency="EUR" href={`/m/${mentor.slug}`} headingLevel={2} />
+  ))}
+</ul>
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | "Upgraded ingress-nginx on bare metal clusters" and a link to articles | Something the seeker can check (N02) |
+| Don't | "4.9 ★ Top mentor" | A rating or badge (N02) |
+| Do | "Active today. Not a promise of reply time." | A fact, not a promise |
+| Don't | "Replies in about 10 minutes" | A promise the product cannot keep |
+
+## 13. Related
+
+- **Open point:** the accepted reference R01.3 asks for clear column headers on lists with several attributes. This row is a list item with labelled text, not a table with columns. Whether the mentors list should be a `Table` instead is a question for the owner (see POSTEP.md).
+- **Confused with:** `BookingRow` (a booking, not a mentor), `Table`.
+- **Used in:** "E01 Booking flow" > Mentors list. Patterns: List with filters.

@@ -1,0 +1,97 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as ComposerStories from '../../../src/components/messages/Composer.stories';
+
+<Meta of={ComposerStories} />
+
+# Composer
+
+## 1. What it is for
+
+The message box of a session. Quick to write in (R02.2): Ctrl or Cmd plus Enter sends.
+
+<Canvas of={ComposerStories.SendsWithTheKeyboard} />
+
+## 2. When to use it
+
+- Under the conversation in `SessionThread`.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A form with several fields | Patterns: Form | A composer is one field |
+| The paid question | `QuestionForm` | It has a price and terms |
+
+## 4. Anatomy
+
+1. **Text area**, with a label that is visible to screen readers only ("Message").
+2. **Reason** (when blocked): why writing is not possible, linked to the box.
+3. **Error** (when sending failed): an alert.
+4. **Send button**, a counter near the limit, and the hint about the shortcut.
+
+## 5. Variants
+
+| Prop | Choose it when | Source |
+|---|---|---|
+| `blockedReason` | Writing is not possible now: before the start or after the end | Session window |
+| `maxLength` | The limit differs from 2000 | Booking spec (`body` up to 2000) |
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Empty | "Send" is disabled | |
+| Writing | "Send" is enabled. Near the limit: "4 characters left" | WCAG 3.3.1 |
+| Sending | "Sending…", the box and the button disabled | Form rules |
+| Sent | The box is cleared after the server stored the message | Form rules |
+| Failed | An alert "Message not sent. …", the text is kept | Form rules |
+| Blocked | The box is disabled and the reason is written under it | Decision 2026-10-27 |
+
+<Canvas of={ComposerStories.Sending} />
+<Canvas of={ComposerStories.SendFailsAndKeepsTheText} />
+<Canvas of={ComposerStories.BlockedBeforeTheStart} />
+<Canvas of={ComposerStories.BlockedAfterTheEnd} />
+<Canvas of={ComposerStories.NearTheLimit} />
+
+## 7. Behavior and accessibility
+
+- **The box has a name** ("Message") even though the label is not shown.
+- **The reason is the box's description**, so it is read when the box is focused.
+- **No double send:** while sending, the box and the button are disabled.
+- **An empty or whitespace-only message is never sent.** The text is trimmed.
+- **The shortcut is written next to the button**, not only available.
+
+## 8. Content
+
+- **Failure:** "Message not sent. Check your connection and send again." Says what happened and what to do.
+- **Reasons:** "The session has not started yet. You can write when it starts."
+
+## 9. Responsiveness
+
+Full width of the column. The button, the counter and the hint wrap.
+
+## 10. API
+
+<ArgTypes of={ComposerStories} />
+
+## 11. Code
+
+```tsx
+import { Composer, apiCall } from '@devmentor/ui';
+
+<Composer onSend={(text) => apiCall(`/api/bookings/${bookingId}/messages`, { method: 'POST', json: { body: text } })} blockedReason={blockedReason} />
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | Keep the text when sending fails | The user may have written for minutes |
+| Don't | Clear the box before the server answered | A failed message is lost |
+| Do | Write why the box is blocked | The user does not wonder |
+| Don't | Hide the box after the session | The conversation stays readable, the reason tells why it is closed |
+
+## 13. Related
+
+- **Components inside:** `Textarea`, `Button`, `Alert`.
+- **Used in:** `SessionThread`. Patterns: Session thread.

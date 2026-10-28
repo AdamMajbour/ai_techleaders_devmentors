@@ -2,7 +2,8 @@
 
 import type { ReactNode } from 'react';
 import { Button } from '../../components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import { Skeleton } from '../../components/ui/skeleton';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorMessage } from '../feedback/ErrorMessage';
 import { LoadingMessage } from '../feedback/LoadingMessage';
@@ -25,6 +26,10 @@ export interface DataTableProps<TRow> {
   onRetry?: () => void;
   emptyTitle?: string;
   emptyDescription?: string;
+  /** The next step shown in the empty state: "Clear filter" when filters hide everything, or a create action. */
+  emptyAction?: ReactNode;
+  /** Names the table for assistive technology. Give it, or label the table another way. */
+  caption?: string;
   rowActions?: (row: TRow) => ReactNode;
   pagination?: DataTablePagination;
 }
@@ -42,16 +47,31 @@ export function DataTable<TRow>({
   onRetry,
   emptyTitle = 'Nothing here yet',
   emptyDescription,
+  emptyAction,
+  caption,
   rowActions,
   pagination,
 }: DataTableProps<TRow>) {
-  if (isLoading) return <LoadingMessage />;
+  if (isLoading) {
+    // The rows are not a table, so nothing is announced as data that is not there yet.
+    return (
+      <div aria-busy="true">
+        <LoadingMessage />
+        <div className="flex flex-col gap-between-groups">
+          {[0, 1, 2].map((row) => (
+            <Skeleton key={row} className="h-4 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
   if (error) return <ErrorMessage message={error} onRetry={onRetry} />;
-  if (!rows || rows.length === 0) return <EmptyState title={emptyTitle} description={emptyDescription} />;
+  if (!rows || rows.length === 0) return <EmptyState title={emptyTitle} description={emptyDescription} action={emptyAction} />;
 
   return (
-    <div className="flex flex-col gap-3">
-      <Table className="border-collapse">
+    <div className="flex flex-col gap-between-groups">
+      <Table>
+        {caption && <TableCaption>{caption}</TableCaption>}
         <TableHeader>
           <TableRow>
             {columns.map((column) => (
@@ -77,11 +97,11 @@ export function DataTable<TRow>({
       </Table>
 
       {pagination && pagination.pageCount > 1 && (
-        <nav aria-label="Pagination" className="flex items-center justify-end gap-3 text-sm">
+        <nav aria-label="Pagination" className="flex items-center justify-end gap-group text-body">
           <Button variant="outline" size="sm" disabled={pagination.page <= 1} onClick={() => pagination.onPageChange(pagination.page - 1)}>
             Previous
           </Button>
-          <span>
+          <span className="tabular-nums">
             Page {pagination.page} of {pagination.pageCount}
           </span>
           <Button

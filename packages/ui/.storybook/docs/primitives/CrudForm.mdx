@@ -1,0 +1,121 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as FormStories from '../../../src/patterns/form.stories';
+
+<Meta title="Primitives/CrudForm" />
+
+# CrudForm
+
+## 1. What it is for
+
+A form for creating or editing one record with text fields. It validates with the **same Zod schema as the server**, shows server field errors next to the right field and follows the Form pattern.
+
+<Canvas of={FormStories.Initial} />
+
+## 2. When to use it
+
+- Editing a mentor's profile, a note (`NoteEditor`), any record made of text fields.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A form with a checkbox, a price or a consent | Compose `Field` with the controls (`QuestionForm`, `PublishNoticePanel`) | `CrudForm` has text, email, password and textarea fields only |
+| One field and a button | `Composer`-like composition | A schema form is more than is needed |
+| A search or a filter | List with filters | It applies as the user chooses |
+
+## 4. Anatomy
+
+1. **A field for each entry of `fields`**: label, optional hint, optional "(required)" or "(optional)", the control, the error with an icon.
+2. **A form-level error**: an `Alert`, when the server answers with no field errors.
+3. **Submit** (and **Cancel** when `onCancel` is given).
+
+## 5. Variants
+
+| Prop | Choose it when | Source |
+|---|---|---|
+| `type: 'text' \| 'email' \| 'password' \| 'textarea'` | By the kind of value | |
+| `requirement` | Mark the **minority**: if most fields are required, mark the optional ones | Form pattern |
+| `hint` | The user needs help before typing | WCAG 3.3.2 |
+| `submitLabel` | The verb of the action: "Save draft", "Save changes" | Content rules |
+| `onCancel` | There is a way out. Escape cancels | Form pattern |
+
+## 6. States, one story each
+
+| State | Story | Source |
+|---|---|---|
+| Initial | Initial | |
+| A field is checked when the user leaves it after editing | ValidationOnLeavingAField | Form pattern |
+| A failed submit moves focus to the first error | FailedSubmitMovesFocusToTheFirstError | WCAG 3.3.1 |
+| Submitting | Submitting | No double submit |
+| Success, reported only after the server confirmed | SuccessAfterServerConfirms | Form pattern |
+| The server names a field | ServerFieldError | WCAG 3.3.1 |
+| The server fails | ServerError | WCAG 3.3.3 |
+| No network | NoNetwork | WCAG 3.3.3 |
+| Long text, narrow screen | LongTextNarrow | |
+
+<Canvas of={FormStories.ValidationOnLeavingAField} />
+<Canvas of={FormStories.ServerFieldError} />
+<Canvas of={FormStories.NoNetwork} />
+
+## 7. Behavior and accessibility
+
+- **A visible label for every field**, never a placeholder instead of it (WCAG 3.3.2).
+- **Validation:** a field is checked when the user leaves a field they **edited**, again as they fix it, and everything on submit. Tabbing past an untouched field shows no error.
+- **After a failed submit focus moves to the first field with an error.** What was typed stays.
+- **A second submit is ignored while one runs.**
+- **Success** is reported (`onSuccess`) only after the server confirmed.
+- **Keyboard:** Ctrl or Cmd plus Enter submits, Escape cancels.
+
+## 8. Content
+
+- **Labels:** the name of the thing: "Title", not "Enter the title".
+- **Errors:** what is wrong and what to do: "Give the note a title."
+- **Submit:** a verb and an object where it helps: "Save draft".
+
+## 9. Responsiveness
+
+One column at every width. Labels and errors wrap.
+
+<Canvas of={FormStories.LongTextNarrow} />
+
+## 10. API
+
+| Prop | Type | Meaning |
+|---|---|---|
+| `schema` | Zod schema | The schema the route validates with |
+| `fields` | `CrudFormField[]` | `name`, `label`, `type`, `hint`, `requirement`, `autoComplete`, `placeholder` |
+| `initialValues` | `Record<string, string>` | Values of an existing record |
+| `onSubmit` | `(values) => Promise<ApiResult>` | Receives the parsed (trimmed) values |
+| `onSuccess` | `(data) => void` | Called after the server confirmed |
+| `onCancel` | `() => void` | Adds a Cancel button, bound to Escape |
+| `submitLabel` | `string` | Defaults to "Save" |
+
+## 11. Code
+
+```tsx
+import { CrudForm, apiCall } from '@devmentor/ui';
+
+<CrudForm
+  schema={profileSchema}
+  fields={[
+    { name: 'headline', label: 'Headline', requirement: 'required', hint: 'What you did, in one sentence.' },
+    { name: 'bio', label: 'About you', type: 'textarea', requirement: 'optional' },
+  ]}
+  onSubmit={(values) => apiCall('/api/mentors/me', { method: 'PUT', json: values })}
+/>
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | The same schema on the client and the server | One rule, two places |
+| Don't | A copy of the limits in the form | They drift apart |
+| Do | Keep what was typed after an error | The user wrote it for a reason |
+| Don't | A placeholder in place of a label | It disappears when the user types |
+
+## 13. Related
+
+- **Components inside:** `Field`, `Input`, `Textarea`, `Alert`, `Button`.
+- **Patterns:** Form. **Built on it:** `NoteEditor`.
+- **Confused with:** `QuestionForm`, `PublishNoticePanel` (compose `Field` with other controls).

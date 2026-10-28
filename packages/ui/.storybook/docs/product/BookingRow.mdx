@@ -1,0 +1,122 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as BookingRowStories from '../../../src/components/bookings/BookingRow.stories';
+
+<Meta of={BookingRowStories} />
+
+# BookingRow
+
+## 1. What it is for
+
+One booking in a list. The mentor reads the whole question next to Accept and Decline (R05). The seeker sees where their question stands.
+
+<Canvas of={BookingRowStories.ManyInAList} />
+
+## 2. When to use it
+
+- The mentor's list of questions to decide on (E01-S03).
+- The seeker's list of their own questions.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| One booking in full | Patterns: Detail view | A row cuts long text |
+| Many columns to compare | `Table` | Column headers (R01.3) |
+
+## 4. Anatomy
+
+1. **The other person**: "Mentor Ada" for a seeker, "Seeker Sam" for a mentor.
+2. **Status** (`BookingStatus`) and **price**, right-aligned.
+3. **The question**: cut at three lines. For a mentor it is left out once the booking is declined or expired, and the row says so (booking spec, Grill 8).
+4. **Link** "Open", when the booking has a page.
+5. **Accept and Decline**: only for a mentor and only while the booking is `paid`.
+6. **Action error**: an `Alert`, when the last action was refused.
+
+## 5. Variants
+
+| Variant | Choose it when | Source |
+|---|---|---|
+| `viewer="seeker"` | The reader asked the question | |
+| `viewer="mentor"` | The reader answers. Shows the actions for a `paid` booking | R05 |
+| `pendingAction` | An action is running | Form rules (no double submit) |
+| `actionError` | The server refused the action | Booking spec (overlapping session, 409) |
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Default | Hairline under the row, no card | R01.1 |
+| Awaiting decision (mentor) | Both buttons enabled | R05 |
+| Accept running | "Accepting…", both buttons disabled | Form rules |
+| Refused | An alert under the row with what to do. Both buttons usable again | WCAG 3.3.3 |
+| Declined or expired | The status and the refund line. For the mentor, "You can no longer see this question." | Booking spec, Grill 8 |
+| Hover, focus | On the buttons and the link only | WCAG 2.4.7 |
+| Loading, empty, error | Belong to the list: see "E01 Booking flow" > bookings | |
+
+<Canvas of={BookingRowStories.AcceptRunning} />
+<Canvas of={BookingRowStories.OverlapRefused} />
+<Canvas of={BookingRowStories.DeclinedWithRefund} />
+<Canvas of={BookingRowStories.QuestionNoLongerVisibleToTheMentor} />
+
+## 7. Behavior and accessibility
+
+- **Button names:** "Accept the question from Sam". The visible text is "Accept", the name says which question, so several rows are told apart.
+- **Link name:** "Open the booking with Sam".
+- **Errors:** the alert is announced when it appears.
+- **The question is a plain paragraph**, not a heading, so the outline of the list stays the same.
+
+<Canvas of={BookingRowStories.MentorAwaitingDecision} />
+
+## 8. Content
+
+- **Accept, Decline:** one verb.
+- **Overlap error:** "You already have a session at that time. Choose a later start or decline this one." It says why and what to do.
+- **Long question:** cut at three lines. The whole text is on the booking's page, the link leads there.
+
+<Canvas of={BookingRowStories.LongQuestionIsCut} />
+
+## 9. Responsiveness
+
+The first line wraps. The buttons wrap under the question. At 320 px a long name and a long question stay inside the row.
+
+<Canvas of={BookingRowStories.NarrowLongText} />
+
+## 10. API
+
+<ArgTypes of={BookingRowStories} />
+
+## 11. Code
+
+```tsx
+import { BookingRow } from '@devmentor/ui';
+
+<ul>
+  {bookings.map((booking) => (
+    <BookingRow
+      key={booking.id}
+      booking={booking}
+      viewer="mentor"
+      href={`/bookings/${booking.id}`}
+      onAccept={accept}
+      onDecline={decline}
+      pendingAction={running[booking.id]}
+      actionError={errors[booking.id]}
+    />
+  ))}
+</ul>
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | The question next to Accept | R05: decide with the question in front of you |
+| Don't | Accept in the list, the question on another page | The mentor accepts blind |
+| Do | Both buttons disabled while one runs | No double accept |
+| Don't | "Something went wrong" after an overlap | It hides the cause and the next step |
+
+## 13. Related
+
+- **Confused with:** `MentorRow` (a mentor), `Table`.
+- **Components inside:** `BookingStatus`, `Button`, `Alert`, `TextLink`.
+- **Used in:** "E01 Booking flow" > bookings. Patterns: Paid action flow, Detail view.

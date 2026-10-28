@@ -1,0 +1,65 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Design system/What is missing" />
+
+# What is missing
+
+What is ready, what is not, and how the backlog is covered. "Ready" means built, tested in jsdom and documented. **Nothing here has been seen in a browser**, and no route of the product is built: every screen is an example with example data.
+
+Priority is the author's proposal, taken from the order of the backlog (dependencies) and from what blocks the pilot.
+
+## Coverage of the backlog
+
+| Backlog item | Component or screen | State | Priority (proposal) |
+|---|---|---|---|
+| E01-T01 (#10) account and login method | Screens E01: login, verify the link | Screen stories built. The login routes and pages are not built | High: everything waits for it |
+| E01-S01 (#11) find a mentor | `MentorRow`, mentors list with a technology filter | Components and screen built. Open: table or list (R01.3). The mentor's own link page is the mentor page | High |
+| E01-S02 (#12) question, price, prepay | `PriceNotice`, `QuestionForm`, payment return | Built, with the Paid action flow. Payment pages not built | High |
+| E01-S03 (#13) mentor decides, refund | `BookingRow`, `BookingStatus` | Built. Open: `allowedActions` from the server. The operator's refund approvals have no screen | High |
+| E01-S04 (#14) the session | `SessionThread`, `MessageItem`, `Composer` | Built, with the Session thread pattern. No route | High |
+| Mentor profile page (`/mentor/profile`, booking spec) | `CrudForm` could build it | **No screen story** | Medium |
+| E02-S01 (#15) publish notes with the notice | `NoteEditor`, `PublishNoticePanel` | Built. The notice text is a working draft | High |
+| E02-S02 (#16) preview before release | `ReviewItem`, Review queue | Built. Open: a confirmation before Reject | High |
+| E02-S03 (#17) buy a vault answer, credit mentors | `QuestionForm` (vault), `VaultAnswerView`, `CreditsPanel` | Built | High |
+| E03-T01 (#18), E03-T02 (#19) terms text and its review | Pilot terms page | A working text. The legal review is not done | Blocks the first payment |
+| E03-T03 (#20) delete data after the pilot | none | No screen. It is a job, not an interface | Low for the design system |
+| E03-S01 (#21) accept the terms at payment | `TermsConsent` in `QuestionForm` | Built | High |
+| E03-S02 (#22) mentor terms and payout | none | **No specification, nothing built** | Not planned |
+| E03-S03 (#23) pilot counts | `PilotCountsTable` | Built, with example numbers. The query does not exist | Medium |
+| E04 (later) | none | Reserved in the backlog, not filed | Not planned |
+
+## Components that do not exist
+
+| Missing | Used for | Until then | Source |
+|---|---|---|---|
+| Action menu | Three or more actions for one row | Two actions per row | How to choose |
+| Radio group | Two or three visible options | `Select` | How to choose |
+| Search field (combobox) | A long list | A filter with `Select` | Booking spec: the list is a handful of mentors |
+| Switch | A setting that applies at once | None needed in the backlog | How to choose |
+| Side panel, popover, tooltip | Detail beside a list, small explanations | A page, text on the page | How to choose |
+| Tabs | Views of the same record | Separate pages | How to choose |
+| Toast | Short confirmations | Plain status text. An error is never a toast | WCAG 2.2.1 |
+| Success tone of `StatusBadge`, and a warning colour | Statuses | Three tones. `--status-success` exists as a token but no component uses it yet except the starter page | K3 settled for the colour on 2026-10-28; the component is not changed |
+
+## Open decisions that change the design system
+
+| Decision | Waiting for | Where |
+|---|---|---|
+| Whether `StatusBadge` gets a success tone now that `--status-success` exists (K3 itself is settled) | The owner | Color |
+| Mentors list as a `Table` (R01.3) | The owner | `MentorRow` |
+| `BookingRow` reads `allowedActions` from the server | The owner | `BookingRow` |
+| A stable wrapper for `Button` with `disabledReason`, so focus is kept when the reason disappears | The owner | POSTEP.md |
+| A confirmation before Reject | The owner | `ReviewItem` |
+| A monospace font in the note editor | The owner | `NoteEditor` |
+| Formats of dates, times and money | The owner | Content |
+| `jsdom` as a declared dependency | The owner | POSTEP.md |
+
+## Not done or not checked
+
+| What | State |
+|---|---|
+| Browser checks at 320, 768 and 1440 px, both themes, keyboard and overlays | **Not done.** Chromium cannot run in the sandbox |
+| Browser tests of the stories (`npm run test:stories`) and the E2E tests of the app | Prepared, never run |
+| The existing pages of the app (`login`, `register`, `articles`) | Not migrated to the new rules. The articles page wraps rows in cards, which R01.1 does not allow |
+| Components without a page of their own | `AlertDialog` (parts of `ConfirmDialog`), `SessionWindow` (in `SessionThread`), `RefundStatusLine` (in `BookingStatus`) |
+| The test with an agent | Prepared in POSTEP.md, not run |

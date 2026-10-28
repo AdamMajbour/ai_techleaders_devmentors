@@ -2,7 +2,11 @@
   "extends": "../../tsconfig.json",
   "include": [
     "src/**/*.ts",
-    "src/**/*.tsx"
+    "src/**/*.tsx",
+    ".storybook/**/*.ts",
+    ".storybook/**/*.tsx",
+    "vitest.config.mts",
+    "vitest.jsdom.config.mts"
   ],
   "exclude": [
     "node_modules"

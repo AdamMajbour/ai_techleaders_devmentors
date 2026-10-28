@@ -1,30 +1,10 @@
 /* Design tokens shared by every app that consumes @devmentor/ui.
    Imported from the app's global stylesheet, after Tailwind's theme layer.
    Preflight is intentionally not part of the setup: the app has its own base
-   styles and Tailwind only contributes theme tokens and utilities. */
+   styles and Tailwind only contributes theme tokens and utilities.
+   The values live in tokens.css; this file only maps them to Tailwind. */
 
-:root {
-  --background: #141313;
-  --foreground: #edf5cd;
-  --headline: var(--foreground);
-  --soft: #948d85;
-  --card: #1c1b1b;
-  --card-foreground: var(--foreground);
-  --primary: #e5f520;
-  --primary-foreground: #1a1919;
-  --secondary: #262524;
-  --secondary-foreground: var(--foreground);
-  --muted: #262524;
-  --muted-foreground: var(--soft);
-  --accent: #2f2e2c;
-  --accent-foreground: var(--foreground);
-  --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.14);
-  --ring: #e5f520;
-  --radius: 8px;
-}
+@import './tokens.css';
 
 /* Tailwind's preflight is not loaded, so borders would default to currentColor (white on this theme). */
 @layer base {
@@ -38,6 +18,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-headline: var(--headline);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-primary: var(--primary);
@@ -53,8 +34,47 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-link: var(--link);
+  --color-status-success: var(--status-success);
+  --color-table-header-foreground: var(--table-header-foreground);
+  --color-message-meta-foreground: var(--message-meta-foreground);
+  --color-composer-border: var(--composer-border);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Space by relation: p-group, gap-between-groups, p-panel-compact, p-panel-roomy, py-section. */
+  --spacing-group: var(--space-group);
+  --spacing-between-groups: var(--space-between-groups);
+  --spacing-panel-compact: var(--space-panel-compact);
+  --spacing-panel-roomy: var(--space-panel-roomy);
+  --spacing-section: var(--space-section);
+
+  /* Layout widths: max-w-content (lists and tables, K1) and max-w-session (one column, R02.1). */
+  --container-content: var(--layout-content-max);
+  --container-session: var(--layout-session-max);
+
+  /* Controls: h-control, h-control-compact, px-control-x, px-control-x-compact, size-control. */
+  --spacing-control: var(--control-height);
+  --spacing-control-compact: var(--control-height-compact);
+  --spacing-control-x: var(--control-padding-x);
+  --spacing-control-x-compact: var(--control-padding-x-compact);
+
+  /* Typography roles: text-page-title, text-section-title, text-body, text-label, text-meta, text-code. */
+  --text-page-title: var(--font-size-page-title);
+  --text-page-title--line-height: var(--line-height-heading);
+  --text-section-title: var(--font-size-section-title);
+  --text-section-title--line-height: var(--line-height-heading);
+  --text-body: var(--font-size-body);
+  --text-body--line-height: var(--line-height-body);
+  --text-label: var(--font-size-label);
+  --text-label--line-height: var(--line-height-body);
+  --text-meta: var(--font-size-meta);
+  --text-meta--line-height: var(--line-height-body);
+  --text-code: var(--font-size-code);
+  --text-code--line-height: var(--line-height-body);
+  --font-sans: var(--family-sans);
+  --font-code: var(--family-code);
+  --font-weight-strong: var(--weight-strong);
 }

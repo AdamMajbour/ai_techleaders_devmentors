@@ -1,0 +1,71 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Design system/Content" />
+
+# Content
+
+How the product talks. The interface is in English. The tone follows the references: facts in plain words, calm, concrete (R01, R02; the words are a proposal until confirmed).
+
+## Tone
+
+**Three sentences the product says**
+
+1. "Pay 25 EUR and send." The verb, the amount, the result.
+2. "If the mentor does not accept or does not show up, you are refunded." The condition and what follows (R04).
+3. "Active today. Not a promise of reply time." A fact, and what it does not promise.
+
+**Three sentences the product does not say**
+
+1. "Top mentor ★ 4.9." A rating or a ranking (N02, A03, A05).
+2. "Oops! Something went wrong 🙈" An error that says neither what happened nor what to do, with an emoji (A01, proposal P3: no emoji in the interface).
+3. "Unlock the power of AI to supercharge your career." Sales language (A05: "to jest coś sprzedażowego?").
+
+## Buttons: a verb and an object
+
+| Write | Not | Why |
+|---|---|---|
+| Pay 25 EUR and send | Submit | It says what will happen and what it costs |
+| Accept, Decline (the question from Sam) | OK, Yes | The name of the button says the action. A row adds the object for assistive technology |
+| Take down note | Yes, delete | The object is named |
+| Publish note | Continue | The user knows what is published |
+| Save draft | Save | The user knows it is not published |
+| Try again | Retry | Plain words |
+
+Source: Confirm destructive action pattern, Button page. The rule "a verb and an object" is a proposal supported by the Confirm pattern.
+
+## Errors: what happened and what to do
+
+| Write | Not |
+|---|---|
+| "The payment failed. Your card was not charged. Check the card details and try again." | "Payment error" |
+| "You already have a session at that time. Choose a later start or decline this one." | "Something went wrong" |
+| "Give the note a title." | "Invalid input" |
+| "The notice changed. Read it again before you publish." | "Conflict (409)" |
+
+An error about money always says whether money was taken. No blame, no exclamation marks. Source: WCAG 3.3.3, Form pattern.
+
+## Empty states: why it is empty and the next step
+
+| Where | Write |
+|---|---|
+| Seeker's bookings | "No questions yet. Pick a mentor and ask your first question." with a button "Find a mentor" |
+| Mentor's bookings | "No questions waiting. When someone pays for a question to you, it appears here." |
+| Notes | "No notes yet. Write down what you explain again and again. A note feeds AI answers only after you publish it." |
+| Answers to review | "Nothing to review. When an answer cites one of your notes, it appears here and we email you." |
+| Credits | "No credits yet. You earn a share when a vault answer that cites your note is released." |
+
+No illustration, no icon tile: the words and the next step are the content (A01).
+
+## Dates, times, money and numbers
+
+| What | Format | Example | In code | Source |
+|---|---|---|---|---|
+| Date | Day, short month, year | 3 Nov 2026 | `formatDate(date, timeZone)` | Proposal |
+| Time of day | 24 hours | 14:25 | `formatClock(date, timeZone)` | Proposal |
+| Time zone | Pass it explicitly where two people share a time | `timeZone="Europe/Warsaw"` | the `timeZone` prop | Proposal |
+| Length of time | Hours and minutes | 1 h 20 min | `formatDuration(minutes)` | Proposal |
+| Price in a sentence or on a button | Whole amounts without decimals, the currency code after the amount | 25 EUR | `formatPrice(amount, currency)` | Proposal |
+| Price in a table or a ledger | Always two decimals, so digits line up | 25.00 EUR | `formatPrice(amount, currency, 'exact')` | Proposal |
+| Counts | A number and a unit, in tabular figures | 3 people | `tabular-nums` | Proposal |
+
+No reference gives a format. All of the above are proposals, and the owner can change them in one place (`lib/format.ts`). The server and the client use the same functions. A price is stored in minor units (`priceMinor`) and never as a decimal number.

@@ -77,12 +77,12 @@ body {
   width: 100%;
   height: 100%;
   opacity: 0.55;
-  -webkit-mask-image: radial-gradient(ellipse 78% 72% at 50% 50%, transparent 38%, rgba(0, 0, 0, 0.55) 72%, #000 100%);
-  mask-image: radial-gradient(ellipse 78% 72% at 50% 50%, transparent 38%, rgba(0, 0, 0, 0.55) 72%, #000 100%);
+  -webkit-mask-image: radial-gradient(ellipse 78% 72% at 50% 50%, transparent 38%, var(--mask-partial) 72%, var(--mask-opaque) 100%);
+  mask-image: radial-gradient(ellipse 78% 72% at 50% 50%, transparent 38%, var(--mask-partial) 72%, var(--mask-opaque) 100%);
 }
 
 .vignette {
-  background: radial-gradient(120% 110% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
+  background: radial-gradient(120% 110% at 50% 40%, transparent 55%, var(--vignette-edge) 100%);
 }
 
 .mark-field {
@@ -108,7 +108,7 @@ body {
 }
 
 /* Says this is a working app, not a screen waiting on a process. True by
-   construction: if the page renders, the dev server is up. Green, as the
+   construction: if the page renders, the dev server is up. Green (--status-success), as the
    portal marks a running sandbox. */
 .status {
   display: inline-flex;
@@ -128,7 +128,7 @@ body {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #34d399;
+  background: var(--status-success);
 }
 
 h1 {
@@ -158,7 +158,7 @@ h1 {
 code {
   padding: 0.1em 0.35em;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--muted);
   color: var(--headline);
   font-family: var(--mono);
   font-size: 0.875em;

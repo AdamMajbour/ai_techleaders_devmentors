@@ -1,0 +1,122 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as FormStories from '../../../src/patterns/form.stories';
+
+<Meta of={FormStories} />
+
+# Form
+
+## 1. What it is for
+
+A form collects information from the user and sends it to the server, and tells them clearly what happened.
+
+<Canvas of={FormStories.Initial} />
+
+## 2. When to use it
+
+Every screen that changes data: the mentor profile, a note, the sign-in e-mail, the question before paying.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| One quick choice | A `Select` or `Checkbox` that applies at once | A form with a submit button is heavy |
+| A destructive confirmation | Confirm destructive action | It asks a question, not for data |
+| Changing a filter | List with filters | Filters apply as the user chooses |
+
+## 4. Anatomy
+
+`CrudForm` is the implementation. It is built from these parts:
+
+1. **Fields** (`Field` with `Input`, `Textarea` or `Select`): label, hint, requirement, error.
+2. **Form-level alert** (`Alert`): for an error that is about the whole form.
+3. **Actions** (`Button`): a main action and, if needed, "Cancel".
+
+## 5. Behavior rules
+
+| Rule | Why | Source |
+|---|---|---|
+| Every field has a visible label. A placeholder is an example, never the name | A placeholder disappears and is not read as a name | WCAG 3.3.2, 1.3.1 |
+| A field is checked when the user **leaves a field they edited**, not when they merely tab past it | Errors on untouched fields feel hostile | Proposal |
+| An error that is showing is re-checked **while the user fixes it**, so it goes away at once | The user sees that the fix worked | Proposal |
+| Everything is checked on submit; after a **failed submit focus moves to the first error** | A keyboard or screen-reader user must land on the problem | WCAG 3.3.1, 2.4.3 |
+| An error is a sentence with an icon that says what to do. It is announced when it appears | Colour alone is not enough | WCAG 1.4.1, 3.3.3, 4.1.3 |
+| **What was typed stays** after any failure | Losing input is the worst form failure | Proposal |
+| A second submit is **ignored** while one runs; the button and fields are blocked | No double payments or duplicates | Decision 2026-10-27 |
+| **Success is shown only after the server confirmed it** | Do not promise what has not happened | Decision 2026-10-27 |
+| `Ctrl` or `Cmd` plus `Enter` submits, `Escape` cancels | Fast for people who write | R02.2 (fast writing) |
+| Mark the minority of fields: "(optional)" if most are required | Less noise | Proposal |
+
+## 6. States, one story each
+
+| State | Story |
+|---|---|
+| Initial: labels, hints, no errors | Initial |
+| Validation when leaving an edited field | ValidationOnLeavingAField |
+| Failed submit: focus on the first error, values kept | FailedSubmitMovesFocusToTheFirstError |
+| Submitting: button reads "Saving…", everything blocked | Submitting |
+| Success after the server confirms | SuccessAfterServerConfirms |
+| Server rejects a field | ServerFieldError |
+| Server error (500) | ServerError |
+| No network | NoNetwork |
+| Long text, narrow screen | LongTextNarrow |
+
+<Canvas of={FormStories.ValidationOnLeavingAField} />
+<Canvas of={FormStories.FailedSubmitMovesFocusToTheFirstError} />
+<Canvas of={FormStories.Submitting} />
+<Canvas of={FormStories.SuccessAfterServerConfirms} />
+<Canvas of={FormStories.ServerFieldError} />
+<Canvas of={FormStories.ServerError} />
+<Canvas of={FormStories.NoNetwork} />
+
+The server answers in these stories come from a stand-in for `fetch` that speaks the real `{ ok, data | error }` envelope, so the screens show exactly what `apiCall` produces.
+
+## 7. Accessibility
+
+- Labels are real `<label for>`; hints and errors are linked with `aria-describedby`; an invalid field has `aria-invalid`.
+- An error is `role="alert"`, announced as it appears.
+- Focus lands on the first error after a failed submit, in field order.
+- Everything works with the keyboard alone.
+
+## 8. Content
+
+- Labels: nouns. Hints: what helps. Errors: what is wrong and what to do ("Write at least 3 characters.").
+- The submit button names the action: "Save profile", "Send question", never "Submit".
+- A form-level error says what happened and that the input is kept: "Something went wrong on our side. Try again in a minute."
+
+<Canvas of={FormStories.LongTextNarrow} />
+
+## 9. Responsiveness
+
+One column at every width. At 320 px the buttons stay in one row if they fit, otherwise the main action is on top. The form is capped at a comfortable reading width on large screens.
+
+## 10. Code
+
+```tsx
+import { CrudForm } from '@devmentor/ui';
+
+<CrudForm
+  schema={profileSchema}
+  fields={[{ name: 'headline', label: 'Headline', requirement: 'required', hint: 'Seekers see this on your card.' }]}
+  submitLabel="Save profile"
+  onSubmit={(values) => apiCall('/api/mentors/me', { method: 'PUT', json: values })}
+  onSuccess={() => setSaved(true)}
+/>
+```
+
+The `schema` is the same Zod schema the route uses, so the client and the server never disagree.
+
+## 11. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | Show "Profile saved" after the request succeeded | The user knows it worked |
+| Don't | Show success on click and fail later | The user believes something that is not true |
+| Do | Keep the typed text after a server error | The user can retry without retyping |
+| Don't | Clear the form on failure | Losing input is the worst failure |
+| Do | Move focus to the first error | A keyboard user lands on the problem |
+| Don't | Show only a red outline | It does not say what is wrong (WCAG 1.4.1) |
+
+## 12. Related
+
+- **Components:** `Field`, `Input`, `Textarea`, `Select`, `Checkbox`, `Alert`, `Button`.
+- **Patterns:** Paid action flow (a form that ends in payment), Confirm destructive action.

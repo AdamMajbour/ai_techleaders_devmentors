@@ -1,14 +1,4 @@
 .page {
-  --background: #fafafa;
-  --foreground: #fff;
-
-  --text-primary: #000;
-  --text-secondary: #666;
-
-  --button-primary-hover: #383838;
-  --button-secondary-hover: #f2f2f2;
-  --button-secondary-border: #ebebeb;
-
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -26,7 +16,7 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  background-color: var(--foreground);
+  background-color: var(--card);
   padding: 120px 60px;
 }
 
@@ -45,7 +35,7 @@
   line-height: 48px;
   letter-spacing: -2.4px;
   text-wrap: balance;
-  color: var(--text-primary);
+  color: var(--foreground);
 }
 
 .intro p {
@@ -53,12 +43,12 @@
   font-size: 18px;
   line-height: 32px;
   text-wrap: balance;
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
 }
 
 .intro a {
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--foreground);
 }
 
 .ctas {
@@ -85,24 +75,24 @@
 }
 
 a.primary {
-  background: var(--text-primary);
+  background: var(--foreground);
   color: var(--background);
   gap: 8px;
 }
 
 a.secondary {
-  border-color: var(--button-secondary-border);
+  border-color: var(--border);
 }
 
 /* Enable hover only on non-touch devices */
 @media (hover: hover) and (pointer: fine) {
   a.primary:hover {
-    background: var(--button-primary-hover);
+    background: var(--muted-foreground);
     border-color: transparent;
   }
 
   a.secondary:hover {
-    background: var(--button-secondary-hover);
+    background: var(--accent);
     border-color: transparent;
   }
 }
@@ -123,21 +113,10 @@ a.secondary {
   }
 }
 
+/* Colours follow the design tokens (dark by default, light with [data-theme='light']), not the system setting. */
 @media (prefers-color-scheme: dark) {
   .logo {
     filter: invert();
-  }
-
-  .page {
-    --background: #000;
-    --foreground: #000;
-
-    --text-primary: #ededed;
-    --text-secondary: #999;
-
-    --button-primary-hover: #ccc;
-    --button-secondary-hover: #1a1a1a;
-    --button-secondary-border: #1a1a1a;
   }
 }
 

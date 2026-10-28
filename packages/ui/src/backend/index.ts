@@ -4,3 +4,4 @@ export * from './api';
 export * from './feedback';
 export * from './forms';
 export * from './tables';
+export * from './content';

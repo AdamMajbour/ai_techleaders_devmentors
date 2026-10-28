@@ -1,0 +1,36 @@
+import { Meta, Unstyled } from '@storybook/addon-docs/blocks';
+
+<Meta title="Foundations/Motion" />
+
+# Motion
+
+**Proposal.** Motion proposals M1 to M3 in `referencje.md` are not approved, so the durations here are the author's proposal, listed for decision in `POSTEP.md`.
+
+## Tokens
+
+| Token | Value | Use it for |
+|---|---|---|
+| `--duration-fast` | 100 ms | Hover and press feedback |
+| `--duration-base` | 150 ms | A panel opening, a status changing |
+
+With `prefers-reduced-motion: reduce` both tokens become 0 ms, so nothing moves (WCAG 2.3.3).
+
+<Unstyled>
+  <div className="flex flex-col gap-group rounded-lg border border-input bg-card p-panel-roomy">
+    <button
+      type="button"
+      className="w-fit rounded-md border border-input bg-secondary px-between-groups py-group text-label text-secondary-foreground hover:bg-accent"
+      style={{ transition: 'background-color var(--duration-fast)' }}
+    >
+      Hover me: background changes in --duration-fast
+    </button>
+    <p className="text-meta text-muted-foreground">Turn on "reduce motion" in your system: the change becomes instant.</p>
+  </div>
+</Unstyled>
+
+## Rules
+
+1. **Respond at once.** Sending a message or pressing a button shows its new state immediately, without waiting for the server (proposal M1; the product promises answers in minutes, not seconds of waiting).
+2. **No decorative motion.** No endless animations, floating cards, pulses or sparkles (A01, WCAG 2.2.2).
+3. **A change of state is also stated in words.** "Paid", "Accepted", "Answer ready" are text, not only movement or colour (WCAG 1.4.1).
+4. **Respect the system setting.** The tokens go to 0 ms under `prefers-reduced-motion: reduce`.

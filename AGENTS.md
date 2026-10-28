@@ -98,6 +98,8 @@ Każda trasa i strona używa dwóch współdzielonych warstw zamiast własnego f
 - Logger maskuje hasła/tokeny/JWT/cookies; encje nie opuszczają `core` (DTO), więc hash hasła nie trafia do odpowiedzi.
 - `npm run audit:prod` w CI (próg: critical).
 
+**Design system:** zanim zbudujesz lub zmienisz ekran, przeczytaj `docs/design-system.md` jako pierwszy plik (charakter produktu, komponenty z tabelą „kiedy używać i kiedy nie”, tokeny znaczeniowe, przewodniki „jeśli… to użyj…”, czego unikać, komendy). Pełna dokumentacja to Storybook w `packages/ui` (`npm run storybook` w tym katalogu).
+
 Nowy komponent wielokrotnego użytku ma jedno wyznaczone miejsce:
 
 1. Prymityw shadcn → `ui/src/components/ui/` (przez `npx shadcn@latest add`, nie ręcznie — wyjątek: `Button` i `Card` napisane

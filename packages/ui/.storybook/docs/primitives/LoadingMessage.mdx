@@ -1,0 +1,89 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as LoadingMessageStories from '../../../src/backend/feedback/LoadingMessage.stories';
+
+<Meta of={LoadingMessageStories} />
+
+# LoadingMessage
+
+## 1. What it is for
+
+Says in words that something is loading, so a screen reader user and a user who sees a still skeleton both know it.
+
+<Canvas of={LoadingMessageStories.WithSkeletonBlocks} />
+
+## 2. When to use it
+
+- A page or a list that loads: "Loading mentors…".
+- A wait that follows an action: "Confirming your payment…".
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| The layout is known | `LoadingMessage` **and** `Skeleton` blocks | The page does not jump when the data arrives |
+| A button that sends | The label of the button ("Sending…") | The wait is on the button |
+| A failure | `ErrorMessage` | Loading ended |
+
+## 4. Anatomy
+
+One line of centred secondary text. Put it first in a region marked `aria-busy="true"`, then the skeleton blocks.
+
+## 5. Variants
+
+None. The text is the only variable: say **what** loads.
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Default | The text, in secondary colour | WCAG 1.4.3 |
+| Interactive states | Not applicable: it is text | |
+| After loading | It is removed. Nothing says "loaded" | Proposal |
+
+<Canvas of={LoadingMessageStories.SaysWhatLoads} />
+
+## 7. Behavior and accessibility
+
+- **A polite status** (`role="status"`, `aria-live="polite"`): it is read when the user is idle and does not interrupt.
+- **The loading region has `aria-busy="true"`.**
+- **No spinner:** a spinner is an endless animation, and the product has none (Foundations: Motion, A01, WCAG 2.2.2). The skeleton is still.
+
+## 8. Content
+
+- **Say what loads:** "Loading your bookings…", not "Loading…".
+- **Use "…"** as the only ornament. No exclamation mark.
+
+## 9. Responsiveness
+
+The text wraps. At 320 px a long message stays inside the screen.
+
+<Canvas of={LoadingMessageStories.LongMessageNarrow} />
+
+## 10. API
+
+<ArgTypes of={LoadingMessageStories} />
+
+## 11. Code
+
+```tsx
+import { LoadingMessage, Skeleton } from '@devmentor/ui';
+
+<div aria-busy="true">
+  <LoadingMessage message="Loading your bookings…" />
+  <Skeleton className="h-6 w-1/3" />
+</div>
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | "Loading your bookings…" | The user knows what to wait for |
+| Don't | A spinner with no text | Not announced, and the product has no moving indicator |
+| Do | The text with skeleton blocks | The layout does not jump |
+| Don't | A loading text with no `aria-busy` region | Assistive technology reads half-loaded content |
+
+## 13. Related
+
+- **Confused with:** `Skeleton` (the shape), `ErrorMessage` (the failure).
+- **Used in:** Patterns: List with filters, Detail view, Session thread, Review queue. Every screen in "Product > Screens" with a loading state.

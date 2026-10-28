@@ -69,3 +69,32 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
+
+  storybook-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Fails on any colour literal, Tailwind palette class or arbitrary Tailwind value outside tokens.css.
+      - name: Values outside the tokens
+        run: npm run check:tokens --workspace=@devmentor/ui
+
+      - name: Install Chromium for the story tests
+        run: npx playwright install --with-deps chromium
+
+      # Measures every colour pair in both themes from tokens.css and writes the file the Color page reads.
+      - name: Contrast of the tokens
+        run: npm run tokens:contrast --workspace=@devmentor/ui
+
+      # Plays every story in Chromium with the accessibility check, once in the dark and once in the light theme.
+      - name: Story tests (dark and light theme)
+        run: npm run test:stories --workspace=@devmentor/ui

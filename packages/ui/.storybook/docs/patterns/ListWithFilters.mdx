@@ -1,0 +1,117 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as ListStories from '../../../src/patterns/list-with-filters.stories';
+
+<Meta of={ListStories} />
+
+# List with filters
+
+## 1. What it is for
+
+A list the user narrows down with filters, always showing how many results there are and which filters are on.
+
+<Canvas of={ListStories.FilteringShowsTheActiveFilterAndCountsResults} />
+
+## 2. When to use it
+
+- The mentor list filtered by technology (D04).
+- A seeker's questions, a mentor's bookings, the operator's approvals.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A handful of fixed items | A plain list | Filters add weight for nothing |
+| One record | Detail view | There is nothing to filter |
+| A list where search by words matters | A field with search (not built yet) | See What is missing |
+
+## 4. Anatomy
+
+1. **Filters** (`Field` with a compact `Select`).
+2. **Result count**: a polite status line.
+3. **Active filters**: one removable chip per filter and "Clear all filters".
+4. **The list** (`DataTable`): header, rows, pagination.
+5. **States** inside the list: loading, empty (two kinds), error.
+
+## 5. Behavior rules
+
+| Rule | Why | Source |
+|---|---|---|
+| The result count is always visible and announced politely when it changes | The user learns what the filter did | WCAG 4.1.3 |
+| Every active filter is visible and removable with one action, and "Clear all filters" exists | The user can always get back | Proposal |
+| A filter chip says it can be removed in words ("remove filter"), not only with an X | The X is decoration | WCAG 1.1.1, 2.5.3 |
+| Changing a filter returns to page 1 | Page 3 of a smaller list may not exist | Proposal |
+| **Two different empty states:** "nothing here yet" (no action or a create action) and "no results for these filters" (with **Clear filter**) | One says the list is empty, the other that a filter hides it | Decision (stage 3 brief) |
+| The table has a caption | It names the table for assistive technology | WCAG 1.3.1 |
+| Dense rows and hairlines, no cards around rows | K1, R01.1 | K1, R01.1 |
+| Filter state is not yet kept in the address | A shared link to a filtered list is useful, but the product has no decision for it | Proposal (see What is missing) |
+
+## 6. States, one story each
+
+| State | Story |
+|---|---|
+| Results | WithResults |
+| A filter is active: count, chip, clear | FilteringShowsTheActiveFilterAndCountsResults |
+| No results for the filters | NoResultsForTheFilters |
+| Nothing here yet | NothingHereYet |
+| Loading | Loading |
+| Load failed, with retry | LoadFailed |
+| Many rows with pagination | ManyRowsWithPagination |
+| Long text, narrow screen | LongTextNarrow |
+
+<Canvas of={ListStories.NoResultsForTheFilters} />
+<Canvas of={ListStories.NothingHereYet} />
+<Canvas of={ListStories.Loading} />
+<Canvas of={ListStories.LoadFailed} />
+<Canvas of={ListStories.ManyRowsWithPagination} />
+
+## 7. Accessibility
+
+- The count is `role="status"` (polite). The table is named by its caption.
+- A chip's accessible name includes its visible text and "remove filter".
+- Pagination is a labelled `nav`. "Previous" and "Next" are real buttons.
+- The loading region is `aria-busy`, and the loading text is announced.
+
+## 8. Content
+
+- **Count:** "2 mentors for Python", "1 mentor", "0 mentors for Go".
+- **No results:** "No mentors for Go. No mentor lists this technology yet. Try another technology or clear the filter."
+- **Nothing yet:** "No mentors yet. Mentors appear here after they accept their invitation."
+
+<Canvas of={ListStories.LongTextNarrow} />
+
+## 9. Responsiveness
+
+At 768 px and above filters sit above the list in a row. At 320 px they stack, and the table scrolls sideways inside its container. A list of rows for phones is planned (What is missing).
+
+## 10. Code
+
+The filter bar is written in the story as the recipe. It becomes a shared component when a second screen needs it (Contributing).
+
+```tsx
+<DataTable
+  caption="Mentors in the pilot"
+  columns={columns}
+  rows={visible}
+  getRowId={(mentor) => mentor.id}
+  isLoading={isLoading}
+  error={error}
+  onRetry={reload}
+  emptyTitle={technology ? `No mentors for ${technology}` : 'No mentors yet'}
+  emptyAction={technology ? <Button variant="outline" onClick={clear}>Clear filter</Button> : undefined}
+  pagination={{ page, pageCount, onPageChange: setPage }}
+/>
+```
+
+## 11. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | "No mentors for Go" with "Clear filter" | It tells the user a filter hides results and offers the way back |
+| Don't | "Nothing here yet" after filtering | It hides that a filter is on |
+| Do | A removable chip "Technology: Python, remove filter" | The active filter is visible and reversible |
+| Don't | A filter that can only be undone by reloading the page | The user is stuck |
+
+## 12. Related
+
+- **Components:** `DataTable`, `Table`, `Select`, `Field`, `EmptyState`, `ErrorMessage`, `Skeleton`.
+- **Patterns:** Detail view (opening a row).
