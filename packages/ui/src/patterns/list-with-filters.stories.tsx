@@ -54,6 +54,7 @@ function MentorFilterList({
 
   return (
     <div className="flex max-w-3xl flex-col gap-between-groups">
+      {!isLoading && !error && rows.length > 0 ? (
       <div className="flex flex-wrap items-end gap-between-groups">
         <div className="w-56">
           <Field label="Technology">
@@ -87,6 +88,7 @@ function MentorFilterList({
           </div>
         ) : null}
       </div>
+      ) : null}
       {!isLoading && !error ? (
         <p role="status" aria-live="polite" className="m-0 text-label text-muted-foreground">
           {filtered.length === 1 ? '1 mentor' : `${filtered.length} mentors`}

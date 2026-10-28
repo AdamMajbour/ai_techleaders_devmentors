@@ -12,7 +12,7 @@ import { Meta } from '@storybook/addon-docs/blocks';
 |---|---|---|---|
 | does something: sends, pays, accepts | `Button`. One main action per screen is the filled one | "Pay 25 EUR and send" | R01.5, Button page |
 | goes to another page or reads a document | `TextLink` (always underlined) | "pilot terms" in the consent sentence | WCAG 1.4.1 |
-| goes to another page and it is **the one main action of a region** (an empty state, a row of mentors) | `Button asChild` around an `a`. Every other way to another page is a `TextLink` | "Find a mentor" in an empty state, "Ask a question" in `MentorRow`; "Open" in `BookingRow` is a `TextLink` | Proposal (agent test 2026-10-28): it describes what the components already do |
+| goes to another page and it is **the one main action of a region** (an empty state, a row of mentors) | `Button asChild` around an `a`. Every other way to another page is a `TextLink` | "Find a mentor" in an empty state, "Ask a question" in `MentorRow`; "Open" in `BookingRow` is a `TextLink` | Approved 2026-10-28 (agent test): it describes what the components already do |
 | needs a command with no room for text, repeated in rows | `Button size="icon"` with an accessible name | No case in the product yet | Button page |
 | chooses among three or more actions for one row | **No action menu yet.** Keep to two actions per row | Accept and Decline in `BookingRow` | What is missing |
 
@@ -66,7 +66,7 @@ import { Meta } from '@storybook/addon-docs/blocks';
 |---|---|---|---|
 | rows are compared by several attributes | `Table` or `DataTable`, with column headers | Pilot counts, credits | R01.3 |
 | each row is prose with an action | A `ul` of rows divided by a hairline | `MentorRow`, `BookingRow` | R01.1 |
-| a list with filters has rows with a link or an action | The same `ul` of rows with the filter bar of the **List with filters** pattern | The seeker's sessions | Proposal (agent test 2026-10-28) |
+| a list with filters has rows with a link or an action | The same `ul` of rows with the filter bar of the **List with filters** pattern | The seeker's sessions | Approved 2026-10-28 (agent test) |
 | one panel must stand out from the page | `Card` | The sign-in form | R01.1 |
 | you want a card per row | No: it is the generic look | | A01 |
 

@@ -132,4 +132,4 @@ Każde „ZGADUJĘ” z kroku 1 i każda luka z tabel wyżej ma teraz zasadę al
 | 22. Dane z `BookingDto` | otwarta decyzja | `WhatIsMissing.mdx` |
 | 23. Ekran poza `packages/ui` | zasada | `design-system/Contributing.mdx` („Where an example screen lives”) |
 
-Zasady oznaczone „proposal” i otwarte decyzje czekają na zatwierdzenie właściciela. Zamyka to pokrycie z punktu widzenia dokumentacji, ale dopiero ponowny test agentem w nowej sesji pokaże, czy agent nadal zgaduje.
+2026-10-28: właściciel zatwierdził zasady „proposal” i otwarte decyzje z tego testu. Zasady są w dokumentacji jako „Approved 2026-10-28”, a decyzje w „What is missing” > „Decided on 2026-10-28”. Otwarte zostało tylko pytanie o `Table` dla listy mentorów (R01.3). Ponowny test agentem w nowej sesji pokaże, czy agent nadal zgaduje.

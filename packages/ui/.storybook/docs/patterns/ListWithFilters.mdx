@@ -43,11 +43,13 @@ A list the user narrows down with filters, always showing how many results there
 | **Two different empty states:** "nothing here yet" (no action or a create action) and "no results for these filters" (with **Clear filter**) | One says the list is empty, the other that a filter hides it | Decision (stage 3 brief) |
 | The table has a caption | It names the table for assistive technology | WCAG 1.3.1 |
 | Dense rows and hairlines, no cards around rows | K1, R01.1 | K1, R01.1 |
+| **The filter bar is shown only when the list has items**, and it stays when a filter hides them all (then the count and "No … with …" explain). It is not shown while loading, on a load error or when nothing exists yet: there is nothing to filter | A filter over nothing is noise, and the user cannot act on it | Approved 2026-10-28 (agent test) |
+| The filter field is as wide as `max-w-session`, above the chip row. The skeleton of a `ul` row is three lines: the name (`h-6 w-1/3`), the description (`h-4 w-2/3`) and the details (`h-4 w-1/3`). These are scale values, not tokens | One width and one skeleton for every list | Approved 2026-10-28 (agent test) |
 | Filter state is not yet kept in the address | A shared link to a filtered list is useful, but the product has no decision for it | Proposal (see What is missing, "States and behaviours that are missing") |
-| A `ul` list builds its own loading, empty and error states from `LoadingMessage` and `Skeleton`, `EmptyState` and `ErrorMessage` (a `DataTable` has them built in). The skeleton repeats the lines of one row (name, description, details) three times, in a region with `aria-busy` | The page does not jump when rows arrive, and the states read the same in both kinds of list | Proposal (agent test 2026-10-28), example: `screens/e01-views.tsx` |
-| When loading the list fails while a filter is active, the error replaces the filter and the list. The chosen filter is kept and comes back after "Try again" | The user does not have to choose again | Proposal |
-| The status filter lists the options in the order of the status type, "All statuses" first, in the wording of the reader | The order follows the life of a record and the words match the badge in the row | Proposal |
-| Rows are in the order the server sends. The pilot has no sortable columns. The server sends newest first | One order to learn | Proposal (see What is missing, open decisions) |
+| A `ul` list builds its own loading, empty and error states from `LoadingMessage` and `Skeleton`, `EmptyState` and `ErrorMessage` (a `DataTable` has them built in). The skeleton repeats the lines of one row (name, description, details) three times, in a region with `aria-busy` | The page does not jump when rows arrive, and the states read the same in both kinds of list | Approved 2026-10-28 (agent test), example: `screens/e01-views.tsx` |
+| When loading the list fails while a filter is active, the error replaces the filter and the list. The chosen filter is kept and comes back after "Try again" | The user does not have to choose again | Approved 2026-10-28 (agent test) |
+| The status filter lists the options in the order of the status type, "All statuses" first, in the wording of the reader | The order follows the life of a record and the words match the badge in the row | Approved 2026-10-28 (agent test) |
+| Rows are in the order the server sends. The pilot has no sortable columns. The server sends newest first | One order to learn | Approved 2026-10-28 (agent test) |
 
 ## 6. States, one story each
 
