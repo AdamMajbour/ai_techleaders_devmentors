@@ -83,7 +83,7 @@ No illustration, no icon tile: the words and the next step are the content (A01)
 
 ## Long text
 
-What a long value does in a row. Source: `MentorRow` and `BookingRow` (content sections); the table is a proposal (agent test 2026-10-28, round 2).
+What a long value does in a row. Source: `MentorRow` and `BookingRow` (content sections); the table was approved by the owner on 2026-10-28 (agent test, round 2).
 
 | What | Behaviour |
 |---|---|
@@ -98,7 +98,7 @@ What a long value does in a row. Source: `MentorRow` and `BookingRow` (content s
 |---|---|---|---|---|
 | Date | Day, short month, year | 3 Nov 2026 | `formatDate(date, timeZone)` | Proposal |
 | Time of day | 24 hours | 14:25 | `formatClock(date, timeZone)` | Proposal |
-| Time zone | Pass it explicitly. For a seeker it is the `timeZone` of the seeker's profile (an IANA name). Where two people share a time, both see the same zone | `timeZone="Europe/Warsaw"` | the `timeZone` prop | Decided 2026-10-28 (profile), the rest a proposal |
+| Time zone | Pass it explicitly. For a seeker it is the `timeZone` of the seeker's profile (an IANA name). Where two people share a time, both see the same zone | `timeZone="Europe/Warsaw"` | the `timeZone` prop | Decided 2026-10-28 |
 | Length of time | Hours and minutes | 1 h 20 min | `formatDuration(minutes)` | Proposal |
 | Price in a sentence or on a button | Whole amounts without decimals, the currency code after the amount | 25 EUR | `formatPrice(amount, currency)` | Proposal |
 | Price in a table or a ledger | Always two decimals, so digits line up | 25.00 EUR | `formatPrice(amount, currency, 'exact')` | Proposal |
