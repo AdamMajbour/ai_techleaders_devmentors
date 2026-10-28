@@ -40,7 +40,7 @@ export function MentorRow({ mentor, priceMinor, currency, sessionMinutes = 25, h
   const { name, headline, technologies, publicWork, activity } = mentor;
   return (
     <li className="flex flex-col gap-between-groups border-b border-border py-panel-compact last:border-b-0 md:flex-row md:items-start md:justify-between">
-      <div className="flex min-w-0 flex-col gap-group">
+      <div className="flex min-w-0 flex-col gap-group break-words">
         <Heading className="m-0 text-body font-strong text-headline">{name}</Heading>
         <p className="m-0 text-body text-foreground">{headline}</p>
         <p className="m-0 text-label text-muted-foreground">{technologies.join(' · ')}</p>

@@ -27,8 +27,8 @@ A list the user narrows down with filters, always showing how many results there
 ## 4. Anatomy
 
 1. **Filters** (`Field` with a compact `Select`).
-2. **Result count**: a polite status line.
-3. **Active filters**: one removable chip per filter and "Clear all filters".
+2. **Active filters**: one removable chip per filter and "Clear all filters" (only while a filter is on).
+3. **Result count**: a polite status line, directly above the list. The order is the one of the story and of the screens: filters, chips, count.
 4. **The list**: a `DataTable` when the rows are compared by columns, or a `ul` of rows (`MentorRow`, `BookingRow`, or a row composed from them) when each row has a link or an action and the user reads rather than compares. Both kinds keep the same filters, count, chips and states.
 5. **States** inside the list: loading, empty (two kinds), error.
 
@@ -58,7 +58,7 @@ A list the user narrows down with filters, always showing how many results there
 | The **count belongs to the filter bar**: it is shown when the list has items (also when a filter hides them all) and not when nothing exists yet, while loading or on a load error | A count of 0 above "nothing here yet" says the same thing twice | Approved 2026-10-28 (agent test, round 3) |
 | "Try again" in an `ErrorMessage` swaps the error for the loading state of the list. "Try again" inside an `Alert` (refresh failed) is disabled and reads "Trying again…" while it runs, as "Accepting…" in `BookingRow` | One click cannot be sent twice (form rules) | Approved 2026-10-28 (agent test, round 3) |
 | A private list that answers 401 shows an `ErrorMessage` **without** retry: "Your session has expired. Sign in again.", and a `TextLink` "Sign in" | Trying again cannot work | Approved 2026-10-28 (agent test, round 3) |
-| A status of several words goes in quotes in a count and in an empty title: `1 session with status "Accepted"`, `No sessions with status "Not answered in time"`. The chip reads `Status: Accepted` (the label of the filter, a colon, the value) | A multi-word label reads as a name, not as a clause | Approved 2026-10-28 (agent test, round 3) |
+| A status goes in quotes in a count and in an empty title, **one word or several**: `1 session with status "Accepted"`, `No sessions with status "Not answered in time"`. The chip reads `Status: Accepted` (the label of the filter, a colon, the value), without quotes | A label reads as a name, not as a clause, and the form is the same for every status | Approved 2026-10-28 (agent test, round 3) |
 
 ## 6. States, one story each
 
@@ -85,6 +85,7 @@ A list the user narrows down with filters, always showing how many results there
 - A chip's accessible name includes its visible text and "remove filter".
 - Pagination is a labelled `nav`. "Previous" and "Next" are real buttons.
 - The loading region is `aria-busy`, and the loading text is announced.
+- **A `ul` of rows has no `aria-label`** when the page `h1` names it and it is the only list: the list announces its own count, and each row has a heading. Give it a label only when two lists share a page. Proposal (agent test 2026-10-28, round 4).
 
 ## 8. Content
 
