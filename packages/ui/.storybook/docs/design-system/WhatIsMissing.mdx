@@ -16,6 +16,7 @@ Priority is the author's proposal, taken from the order of the backlog (dependen
 | E01-S01 (#11) find a mentor | `MentorRow`, mentors list with a technology filter | Components and screen built. Open: table or list (R01.3). The mentor's own link page is the mentor page | High |
 | E01-S02 (#12) question, price, prepay | `PriceNotice`, `QuestionForm`, payment return | Built, with the Paid action flow. Payment pages not built | High |
 | E01-S03 (#13) mentor decides, refund | `BookingRow`, `BookingStatus` | Built. Open: `allowedActions` from the server. The operator's refund approvals have no screen | High |
+| Seeker's list "My sessions" (S08 in the engineering standards, `/bookings` in the booking spec) | No component. The row is composed in the screen from `MentorRow` markup, `BookingStatus` and `TextLink` (test screen: `lekcja-06/nowy_ekran`). Words decided 2026-10-28 | **Needs a row component**, see below | High |
 | E01-S04 (#14) the session | `SessionThread`, `MessageItem`, `Composer` | Built, with the Session thread pattern. No route | High |
 | Mentor profile page (`/mentor/profile`, booking spec) | `CrudForm` could build it | **No screen story** | Medium |
 | E02-S01 (#15) publish notes with the notice | `NoteEditor`, `PublishNoticePanel` | Built. The notice text is a working draft | High |
@@ -39,14 +40,46 @@ Priority is the author's proposal, taken from the order of the backlog (dependen
 | Side panel, popover, tooltip | Detail beside a list, small explanations | A page, text on the page | How to choose |
 | Tabs | Views of the same record | Separate pages | How to choose |
 | Toast | Short confirmations | Plain status text. An error is never a toast | WCAG 2.2.1 |
+| Row of the seeker's session: mentor block (name, headline, technologies), status, price, link, and the date for an accepted session | "My sessions" | Compose it in the screen from `MentorRow` markup, `BookingStatus` and `TextLink`. `MentorRow` always carries "Ask a question" and no status, `BookingRow` carries no technologies and takes no children | Agent test 2026-10-28. Two screens now need the shape (mentors list, my sessions), so the Contributing threshold is met: a `BookingRow` variant for the seeker, or a `SessionRow` |
+| Filter bar: `Field` with a compact `Select`, removable chip, "Clear all filters", result count | Any list with filters | Copy the recipe from `patterns/list-with-filters.stories.tsx` | Agent test 2026-10-28. Same threshold as above |
+| Pagination outside `DataTable` | A `ul` list with many rows | Show every row. This holds while a list has a handful of rows (the pilot). Above 25 rows a component is needed | Agent test 2026-10-28 (proposal) |
+| Page shell: `main`, one `h1`, `max-w-content`, `py-between-groups` | Every page | Copy the `Page` function from `screens/e01-views.tsx` | Agent test 2026-10-28 |
 | Success tone of `StatusBadge`, and a warning colour | Statuses | Three tones. `--status-success` exists as a token but no component uses it yet except the starter page | K3 settled for the colour on 2026-10-28; the component is not changed |
+
+## States and behaviours that are missing
+
+All of these are proposals until the owner confirms them. Source: the agent test of 2026-10-28 (screen "My sessions").
+
+| Missing | Until then | Where it shows |
+|---|---|---|
+| **Refresh failed after the list loaded.** `SessionThread` has `refreshFailed`, a list has nothing | Keep the last result and put an `Alert` above the list: "The list could not be refreshed. It shows the last result." with a "Try again" button | Lists that poll or reload |
+| **Error while a filter is active** | The error replaces the filter and the list. The filter value is kept and comes back after "Try again" | List with filters |
+| **A next step per booking status.** `BookingRow` has only `href`, so `payment_failed` and `pending_payment` have no "pay again" | One "Open" link for every status. A "pay again" action waits for a spec of payment retry | Seeker's list |
+| **The date of an accepted session in the row.** Decided to show it ("3 Nov 2026, 14:25", `formatDate` and `formatClock`), but `BookingRowData` has no `startsAt` | Leave it out of the row until `startsAt` is in the data | Seeker's list |
+| **Session time stage** (upcoming, in progress, ended). A status filter cannot tell them apart: `accepted` covers all three | No filter by time stage | Seeker's list |
+| **Filter kept in the address** (a link to a filtered list). `List with filters` points here | The filter is local state and is lost on reload | List with filters |
+| **A list of rows for phones instead of a table that scrolls sideways.** `List with filters` and `DataTable` point here | A `ul` of rows (`MentorRow`, `BookingRow`) wraps by itself, a `DataTable` scrolls | Lists |
+
+## Decided on 2026-10-28 (owner, agent test)
+
+| Decision | Consequence |
+|---|---|
+| The seeker's list is called **"My sessions"**. Every booking, whatever its status, is a session for its seeker | Words in Content, "Words" section. E01 screens updated |
+| The status filter lists **all six booking statuses**, in the seeker's wording | `bookingStatusLabel(status, 'seeker')` is the one source of the words |
+| The row shows **date and time for an accepted session** | Needs `startsAt` in the data, see above |
+| **"Specialization" is the mentor's `headline`.** There is no separate field | A seniority label alone is not a headline (A05) |
 
 ## Open decisions that change the design system
 
 | Decision | Waiting for | Where |
 |---|---|---|
 | Whether `StatusBadge` gets a success tone now that `--status-success` exists (K3 itself is settled) | The owner | Color |
-| Mentors list as a `Table` (R01.3) | The owner | `MentorRow` |
+| Mentors list as a `Table` (R01.3). The same question for the seeker's sessions: rows with a link and several attributes | The owner | `MentorRow`, `List with filters` |
+| Sizes with no token: the blocks of a `Skeleton` (`h-4`, `h-6`, `w-1/3`, `w-2/3`) and the width of a filter field (`w-56` in the pattern story, `max-w-session` in the E01 screens). They are scale values, not arbitrary ones, so `check:tokens` does not flag them. **Proposal:** the filter field takes `max-w-session`; the skeleton sizes get a rule or tokens | The owner | `Skeleton`, `List with filters` |
+| Is the filter bar shown in loading, error and "nothing yet", or only when the list has items? The pattern story shows it always, the E01 screens only with items. **Recommendation:** only with items | The owner | `List with filters` |
+| Default order of a list (**proposal:** newest first, no sortable columns in the pilot) and of the status filter (**proposal:** the order of the status type, "All statuses" first) | The owner | `List with filters` |
+| Route of the seeker's list: `/bookings` (booking spec) or `/sessions` (engineering standards, S08). **Proposal:** `/bookings`, label "My sessions" | The owner | Booking spec |
+| `GET /api/bookings` carries the mentor's `name`, `headline`, `technologies` (and `startsAt` for an accepted booking). The booking spec does not say so | The owner, in the booking spec | `.ai/specs/2026-10-26-pilot-booking-flow.md` |
 | `BookingRow` reads `allowedActions` from the server | The owner | `BookingRow` |
 | A stable wrapper for `Button` with `disabledReason`, so focus is kept when the reason disappears | The owner | POSTEP.md |
 | A confirmation before Reject | The owner | `ReviewItem` |

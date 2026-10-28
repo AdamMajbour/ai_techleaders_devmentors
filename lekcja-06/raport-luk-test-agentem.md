@@ -79,3 +79,57 @@ Dodane w trakcie budowy:
 - **Przeglądarka:** nie widziałem ekranu w przeglądarce, tak jak całego design systemu (brak Chromium). Nie sprawdziłem kontrastu, układu przy 320, 768 i 1440 px ani obu motywów.
 - **`tsc` i jsdom:** `tsc` przechodzi, a test jsdom przeszedł. Obejmował 8 stories z kontrolą dostępności (bez kontrastu) oraz filtrowanie, czyszczenie, puste i błędne stany. Pliki tymczasowe usunąłem.
 - **Tailwind:** klasy ekranu są w całości używane też w `src`, więc sprawdziłem tylko pokrycie klas przez `@source`, a nie sam wygląd.
+
+## Pokrycie po 2026-10-28
+
+Każde „ZGADUJĘ” z kroku 1 i każda luka z tabel wyżej ma teraz zasadę albo wpis w „What is missing”. „Proposal” znaczy zasadę bez źródła, czekającą na właściciela (Contributing). Ścieżki są względem `packages/ui/.storybook/docs/`.
+
+### Decyzje „ZGADUJĘ” (15)
+
+| Decyzja z kroku 1 | Status | Gdzie |
+|---|---|---|
+| 5. `ul` zamiast `DataTable` dla listy z filtrami | zasada (proposal), R01.3 nadal otwarte | `patterns/ListWithFilters.mdx` §4, `primitives/DataTable.mdx` §3, `design-system/HowToChoose.mdx`, `docs/design-system.md`; otwarta decyzja w `WhatIsMissing.mdx` |
+| 9. „Specjalizacja” = `headline` | zdecydowane przez właściciela | `product/MentorRow.mdx` §13, `WhatIsMissing.mdx` („Decided on 2026-10-28”) |
+| 12. Bez długości sesji w cenie | zasada (proposal) | `design-system/Content.mdx` („Lists: counts, empty states, rows”) |
+| 14. Co jest sesją i jakie statusy w filtrze | zdecydowane (wszystkie sześć) | `WhatIsMissing.mdx`, `Content.mdx` („Words”) |
+| 15. Data w wierszu | zdecydowane (tak, dla przyjętych); brak `startsAt` w danych | `Content.mdx`, `WhatIsMissing.mdx` („States and behaviours that are missing”) |
+| 17. Akcja per status | wpis „missing” z obejściem (jeden link „Open”) | `WhatIsMissing.mdx` |
+| 18. Bez paginacji | wpis „missing” z progiem 25 wierszy | `WhatIsMissing.mdx` („Components that do not exist”) |
+| 25. Filtr nie w adresie URL | wpis „missing” (odwołanie z `ListWithFilters` już nie jest puste) | `WhatIsMissing.mdx` |
+| 27. Kształt szkieletu | zasada (proposal) | `HowToChoose.mdx`, `ListWithFilters.mdx` §5 |
+| 31. „Sessions”, a nie „questions” | zdecydowane, słownik | `Content.mdx` („Words”); ekrany E01 i teksty zaktualizowane |
+| 32. Błąd przy aktywnym filtrze | zasada (proposal) i wpis „missing” | `ListWithFilters.mdx` §5, `WhatIsMissing.mdx` |
+| 35. Tytuł „My sessions” | zdecydowane | `WhatIsMissing.mdx`, `Content.mdx`, `screens/e01-views.tsx` |
+| 43. Skąd dane (`BookingDto` bez danych mentora) | otwarta decyzja, do rozstrzygnięcia w specu rezerwacji | `WhatIsMissing.mdx` („Open decisions”) |
+| Dodane: kolejność statusów w filtrze | zasada (proposal) | `ListWithFilters.mdx` §5 |
+| Dodane: sortowanie listy | zasada (proposal) i otwarta decyzja | `ListWithFilters.mdx` §5, `WhatIsMissing.mdx` |
+
+### Luki 1–23
+
+| Luka | Status | Gdzie |
+|---|---|---|
+| 1. Wiersz sesji seekera | wpis „missing”, próg Contributing spełniony | `WhatIsMissing.mdx`, notatki w `MentorRow.mdx` i `BookingRow.mdx` |
+| 2. Pasek filtrów | wpis „missing” | `WhatIsMissing.mdx` |
+| 3. Paginacja poza `DataTable` | wpis „missing” | `WhatIsMissing.mdx` |
+| 4. Szkielet strony | wpis „missing” | `WhatIsMissing.mdx` |
+| 5. Stany listy `ul` | zasada (proposal) | `ListWithFilters.mdx` §5 |
+| 6. Odświeżenie po załadowaniu | wpis „missing” z obejściem | `WhatIsMissing.mdx` |
+| 7. Błąd przy aktywnym filtrze | zasada (proposal) | `ListWithFilters.mdx` §5 |
+| 8. Następny krok per status | wpis „missing” | `WhatIsMissing.mdx` |
+| 9. Etap sesji i data | wpis „missing” | `WhatIsMissing.mdx` |
+| 10. Wiele wierszy bez paginacji | próg 25 wierszy | `WhatIsMissing.mdx` |
+| 11. `ul` czy `DataTable` | zasada (proposal) | jak w decyzji 5 |
+| 12. `Button asChild` czy `TextLink` | zasada (proposal) | `HowToChoose.mdx`, `docs/design-system.md` |
+| 13. Cena w wierszu `ul` | zasada (proposal) | `Content.mdx` |
+| 14. Szablony licznika i pustych stanów, sortowanie | zasada (proposal) | `Content.mdx`, `ListWithFilters.mdx` |
+| 15. Rozmiary bez tokenów | otwarta decyzja | `WhatIsMissing.mdx` |
+| 16. Wzorzec kontra `DataTable.mdx` | poprawione | `ListWithFilters.mdx` §4, `DataTable.mdx` §3 |
+| 17. Filtr w stanach loading i error, szerokość pola | otwarta decyzja z rekomendacją | `WhatIsMissing.mdx` |
+| 18. Język UI | dopisane | `AGENTS.md` |
+| 19. Nazewnictwo | słownik | `Content.mdx` („Words”) |
+| 20. „Karta mentora” | wyjaśnione | `MentorRow.mdx` §13 |
+| 21. „Specjalizacja” | zdecydowane | `MentorRow.mdx` §13 |
+| 22. Dane z `BookingDto` | otwarta decyzja | `WhatIsMissing.mdx` |
+| 23. Ekran poza `packages/ui` | zasada | `design-system/Contributing.mdx` („Where an example screen lives”) |
+
+Zasady oznaczone „proposal” i otwarte decyzje czekają na zatwierdzenie właściciela. Zamyka to pokrycie z punktu widzenia dokumentacji, ale dopiero ponowny test agentem w nowej sesji pokaże, czy agent nadal zgaduje.

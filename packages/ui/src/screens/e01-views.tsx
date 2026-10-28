@@ -191,7 +191,7 @@ export function PaymentReturnView({ state, testMode = false }: { state: PaymentR
       {state === 'slow' ? (
         <div className="flex flex-col gap-group">
           <LoadingMessage message="Still confirming your payment…" />
-          <p className="m-0 text-body text-foreground">This takes longer than usual. You can leave this page: we keep checking, and the booking appears in your bookings when the payment is confirmed.</p>
+          <p className="m-0 text-body text-foreground">This takes longer than usual. You can leave this page: we keep checking, and the session appears in your sessions when the payment is confirmed.</p>
         </div>
       ) : null}
       {state === 'paid' ? (
@@ -200,7 +200,7 @@ export function PaymentReturnView({ state, testMode = false }: { state: PaymentR
             Payment received. The mentor has your question and will answer it or decline it. If they decline or do not answer, you are refunded.
           </p>
           <Button asChild>
-            <a href="#bookings">See your bookings</a>
+            <a href="#bookings">See your sessions</a>
           </Button>
         </div>
       ) : null}
@@ -224,7 +224,7 @@ export function PaymentReturnView({ state, testMode = false }: { state: PaymentR
         </div>
       ) : null}
       {state === 'reconcileFailed' ? (
-        <ErrorMessage message="We could not confirm the payment yet. If your card was charged, the booking appears in your bookings within a few minutes. Otherwise try again." onRetry={() => {}} />
+        <ErrorMessage message="We could not confirm the payment yet. If your card was charged, the session appears in your sessions within a few minutes. Otherwise try again." onRetry={() => {}} />
       ) : null}
     </Page>
   );
@@ -249,21 +249,21 @@ export function BookingsView({
   errorId?: string;
   actionError?: string;
 }) {
-  const title = viewer === 'seeker' ? 'Your questions' : 'Questions for you';
+  const title = viewer === 'seeker' ? 'My sessions' : 'Questions for you';
   return (
     <Page title={title}>
       {state === 'loading' ? (
         <div aria-busy="true" className="flex flex-col gap-between-groups">
-          <LoadingMessage message="Loading your bookings…" />
+          <LoadingMessage message={viewer === 'seeker' ? 'Loading your sessions…' : 'Loading your questions…'} />
           <Skeleton className="h-6 w-1/3" />
           <Skeleton className="h-4 w-full" />
         </div>
       ) : null}
-      {state === 'error' ? <ErrorMessage message="Bookings could not be loaded. Check your connection and try again." onRetry={() => {}} /> : null}
+      {state === 'error' ? <ErrorMessage message={`${viewer === 'seeker' ? 'Sessions' : 'Questions'} could not be loaded. Check your connection and try again.`} onRetry={() => {}} /> : null}
       {state === 'empty' ? (
         <EmptyState
-          title={viewer === 'seeker' ? 'No questions yet' : 'No questions waiting'}
-          description={viewer === 'seeker' ? 'Pick a mentor and ask your first question.' : 'When someone pays for a question to you, it appears here.'}
+          title={viewer === 'seeker' ? 'No sessions yet' : 'No questions waiting'}
+          description={viewer === 'seeker' ? 'Pick a mentor and ask your first question. Your sessions appear here.' : 'When someone pays for a question to you, it appears here.'}
           action={
             viewer === 'seeker' ? (
               <Button asChild>

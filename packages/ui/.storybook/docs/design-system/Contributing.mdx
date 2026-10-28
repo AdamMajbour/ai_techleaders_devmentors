@@ -17,6 +17,12 @@ How to add to the design system without breaking it.
 
 Where it goes: a shadcn primitive in `components/ui/` (through `npx shadcn@latest add`, then check `package.json` for dependencies you did not plan); a general panel pattern in `backend/<category>/`; the shape of one domain concept in `components/<concept>/`; one page only, next to its `page.tsx`.
 
+## Where an example screen lives
+
+An example screen (one story per state) lives in `packages/ui/src/screens/<epic>-views.tsx` with `<epic>.stories.tsx`. It is not exported from the package: the real page is built in `packages/app` from the same components. Add its stories to `ui.stories.spec.tsx` and list them on the epic page.
+
+A screen written outside `packages/ui` (an exercise folder such as `lekcja-06/nowy_ekran`) is **not picked up** by Storybook (the `stories` glob is `../src/**`), by Tailwind (`@source` covers `../src` and `.storybook`) or by `npm run check:tokens` (it scans `src` and `.storybook`). Move it to `src/screens` before it counts as part of the design system. Source: agent test 2026-10-28.
+
 ## What the page of a new component has
 
 1. A stories file with a story for **every state**: default, each variant, loading, empty, error, many items, long text, a narrow screen. Stories use the real component.

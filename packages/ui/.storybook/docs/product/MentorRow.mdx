@@ -23,6 +23,7 @@ One mentor in the list a seeker chooses from. It shows what the mentor did, the 
 | One mentor's full page | The mentor page: heading, `QuestionForm` | A row is a summary |
 | Ranking or scoring mentors | Nothing. Show public work (`publicWork`) | No ratings, no scores, no "Top mentor" (N02) |
 | Rows of numbers to compare | `Table` | Column headers (R01.3) |
+| The seeker's list of sessions | Compose the row from this markup, `BookingStatus` and `TextLink` until a row component exists | `MentorRow` always carries "Ask a question" and has no status. See What is missing |
 
 ## 4. Anatomy
 
@@ -105,5 +106,7 @@ import { MentorRow } from '@devmentor/ui';
 ## 13. Related
 
 - **Open point:** the accepted reference R01.3 asks for clear column headers on lists with several attributes. This row is a list item with labelled text, not a table with columns. Whether the mentors list should be a `Table` instead is a question for the owner (see POSTEP.md).
+- **The word "card":** the specs call the data of one list entry a mentor card (`MentorCardDto`). It is not a `Card` component: rows are divided by a hairline, not boxed (R01.1).
+- **Specialization:** what a mentor specializes in is shown by `headline` and `technologies`. There is no separate field, and a seniority label alone is not a headline (A05). Decided by the owner on 2026-10-28.
 - **Confused with:** `BookingRow` (a booking, not a mentor), `Table`.
 - **Used in:** "E01 Booking flow" > Mentors list. Patterns: List with filters.

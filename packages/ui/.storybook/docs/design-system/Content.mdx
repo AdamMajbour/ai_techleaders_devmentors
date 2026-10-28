@@ -20,6 +20,30 @@ How the product talks. The interface is in English. The tone follows the referen
 2. "Oops! Something went wrong 🙈" An error that says neither what happened nor what to do, with an emoji (A01, proposal P3: no emoji in the interface).
 3. "Unlock the power of AI to supercharge your career." Sales language (A05: "to jest coś sprzedażowego?").
 
+## Words
+
+One word for one thing. Decided by the owner on 2026-10-28 (the agent test); the booking record keeps its name in code.
+
+| Word | Means | Where it appears |
+|---|---|---|
+| **seeker** | The person who asks and pays. In the interface the seeker is "you" | Code, docs, specs. Not "mentee" and not "student" (the `(student)` route group of the standards is old) |
+| **mentor** | The person who answers | Everywhere |
+| **session** | What the seeker sees for a booking: text between one seeker and one mentor, prepaid, 25 minutes. **Every booking is a session for its seeker, whatever its status** | The seeker's interface: the list "My sessions", "See your sessions" |
+| **booking** | The record: `/api/bookings`, `BookingRow`, `BookingStatus` | Code and API. Not a word of the seeker's interface |
+| **question** | The text the seeker writes before paying | The question form. The mentor's list is "Questions for you", because the mentor decides on a question |
+
+## Lists: counts, empty states, rows
+
+Templates for any list with filters. `noun` is the plural of what the list holds, `Filter` is the label of the filter and `value` the chosen option. The source is the mentors list ("2 mentors for Python"); the templates are proposals.
+
+| Where | Write |
+|---|---|
+| Count | `3 sessions`, `1 session`, `0 sessions`. With a filter: `1 session with status Accepted` |
+| Nothing yet | Title `No sessions yet`, then why and the next step |
+| No results for the filters | Title `No sessions with status Accepted`, then "No session has this status. Choose another status or clear the filter." and a **Clear filter** button |
+| Price in a row of a list (`ul`) | Whole amount without decimals: `25 EUR`, in tabular figures. `25.00 EUR` only in a table. The length of a session is added only where the seeker can choose between lengths (the pilot has one length) |
+| Date of an accepted session in a row | `3 Nov 2026, 14:25`: `formatDate` and `formatClock`, one line. A booking that has no start time shows no date |
+
 ## Buttons: a verb and an object
 
 | Write | Not | Why |
@@ -48,7 +72,7 @@ An error about money always says whether money was taken. No blame, no exclamati
 
 | Where | Write |
 |---|---|
-| Seeker's bookings | "No questions yet. Pick a mentor and ask your first question." with a button "Find a mentor" |
+| Seeker's sessions | "No sessions yet. Pick a mentor and ask your first question. Your sessions appear here." with a button "Find a mentor" |
 | Mentor's bookings | "No questions waiting. When someone pays for a question to you, it appears here." |
 | Notes | "No notes yet. Write down what you explain again and again. A note feeds AI answers only after you publish it." |
 | Answers to review | "Nothing to review. When an answer cites one of your notes, it appears here and we email you." |

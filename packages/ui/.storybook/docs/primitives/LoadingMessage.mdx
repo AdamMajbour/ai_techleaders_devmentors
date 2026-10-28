@@ -50,7 +50,7 @@ None. The text is the only variable: say **what** loads.
 
 ## 8. Content
 
-- **Say what loads:** "Loading your bookings…", not "Loading…".
+- **Say what loads:** "Loading your sessions…", not "Loading…".
 - **Use "…"** as the only ornament. No exclamation mark.
 
 ## 9. Responsiveness
@@ -69,7 +69,7 @@ The text wraps. At 320 px a long message stays inside the screen.
 import { LoadingMessage, Skeleton } from '@devmentor/ui';
 
 <div aria-busy="true">
-  <LoadingMessage message="Loading your bookings…" />
+  <LoadingMessage message="Loading your sessions…" />
   <Skeleton className="h-6 w-1/3" />
 </div>
 ```
@@ -78,7 +78,7 @@ import { LoadingMessage, Skeleton } from '@devmentor/ui';
 
 | | Example | Why |
 |---|---|---|
-| Do | "Loading your bookings…" | The user knows what to wait for |
+| Do | "Loading your sessions…" | The user knows what to wait for |
 | Don't | A spinner with no text | Not announced, and the product has no moving indicator |
 | Do | The text with skeleton blocks | The layout does not jump |
 | Don't | A loading text with no `aria-busy` region | Assistive technology reads half-loaded content |

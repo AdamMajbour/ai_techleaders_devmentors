@@ -98,7 +98,7 @@ Każda trasa i strona używa dwóch współdzielonych warstw zamiast własnego f
 - Logger maskuje hasła/tokeny/JWT/cookies; encje nie opuszczają `core` (DTO), więc hash hasła nie trafia do odpowiedzi.
 - `npm run audit:prod` w CI (próg: critical).
 
-**Design system:** zanim zbudujesz lub zmienisz ekran, przeczytaj `docs/design-system.md` jako pierwszy plik (charakter produktu, komponenty z tabelą „kiedy używać i kiedy nie”, tokeny znaczeniowe, przewodniki „jeśli… to użyj…”, czego unikać, komendy). Pełna dokumentacja to Storybook w `packages/ui` (`npm run storybook` w tym katalogu).
+**Design system:** zanim zbudujesz lub zmienisz ekran, przeczytaj `docs/design-system.md` jako pierwszy plik (charakter produktu, komponenty z tabelą „kiedy używać i kiedy nie”, tokeny znaczeniowe, przewodniki „jeśli… to użyj…”, czego unikać, komendy). Pełna dokumentacja to Storybook w `packages/ui` (`npm run storybook` w tym katalogu). Język interfejsu: angielski (zasady i słownik: `docs/design-system.md`, sekcja Content).
 
 Nowy komponent wielokrotnego użytku ma jedno wyznaczone miejsce:
 

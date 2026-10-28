@@ -108,8 +108,10 @@ Themes: dark is the default, light is `[data-theme='light']` on the document roo
 | Rows of prose with an action | A `ul` divided by a hairline |
 | A loading region | `LoadingMessage` and `Skeleton`, in an `aria-busy` region |
 | A status | `StatusBadge` or a status component, with words |
+| The one main action of a region leads to another page | `Button asChild` around an `a`. Every other way to another page is a `TextLink` |
+| A list with filters whose rows have a link or an action | A `ul` of rows with the filter bar of the List with filters pattern, not a `DataTable` |
 
-No component exists yet for: action menu, radio group, combobox, switch, side panel, popover, tooltip, tabs, toast. Do not add one on the side: see "Contributing".
+No component exists yet for: action menu, radio group, combobox, switch, side panel, popover, tooltip, tabs, toast. Also missing, each with a workaround in "What is missing": pagination outside `DataTable`, a filter bar, a page shell, a row for the seeker's session. Do not add one on the side: see "Contributing".
 
 ## What to avoid
 
@@ -119,7 +121,7 @@ No component exists yet for: action menu, radio group, combobox, switch, side pa
 
 ## Content
 
-English. A button is a verb and an object ("Pay 25 EUR and send"). An error says what happened and what to do. An empty state says why it is empty and what to do next. Formats (proposals): date `3 Nov 2026`, time `14:25`, price `25 EUR` in sentences and `25.00 EUR` in tables, duration `1 h 20 min`. Use `lib/format.ts`.
+English. Words: **seeker** (the interface says "you"), **mentor**, **session** (what the seeker sees for any booking), **booking** (code and API only), **question** (see Storybook > Design system > Content, "Words"). A button is a verb and an object ("Pay 25 EUR and send"). An error says what happened and what to do. An empty state says why it is empty and what to do next. Formats (proposals): date `3 Nov 2026`, time `14:25`, price `25 EUR` in sentences and `25.00 EUR` in tables, duration `1 h 20 min`. Use `lib/format.ts`.
 
 ## Commands
 

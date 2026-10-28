@@ -21,6 +21,7 @@ A list of records in columns, with loading, error and empty states built in, plu
 |---|---|---|
 | A handful of fixed rows | `Table` | No states or pagination needed |
 | A list whose rows are not cells (a mentor with a button and a link) | A `ul` of rows (`MentorRow`, `BookingRow`) | Rows are not columns. The accepted reference R01.3 asks for column headers, so see the open point in `MentorRow` |
+| A list with filters whose rows have a link or an action (the seeker's sessions) | A `ul` of rows with the filter bar of the **List with filters** pattern. The pattern shows a `DataTable`, but its filters, count and states apply to a `ul` as well | The kind of list follows the row, not the filters |
 | A queue of decisions | Patterns: Review queue | Each item is read whole |
 
 ## 4. Anatomy
