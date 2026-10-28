@@ -38,10 +38,11 @@ Templates for any list with filters. `noun` is the plural of what the list holds
 
 | Where | Write |
 |---|---|
-| Count | `3 sessions`, `1 session`, `0 sessions`. With a filter: `1 session with status Accepted` |
+| Count | `3 sessions`, `1 session`, `0 sessions`. With a filter: `1 session with status "Accepted"` (a status of several words goes in quotes). Shown only when the list has items |
+| Chip of an active filter | `Status: Accepted`: the label of the filter, a colon, the value. Hidden words: ", remove filter" |
 | Nothing yet | Title `No sessions yet`, then why and the next step |
-| No results for the filters | Title `No sessions with status Accepted`, then "No session has this status. Choose another status or clear the filter." and a **Clear filter** button (`variant="outline"`) |
-| Price in a row of a list (`ul`) | Whole amount without decimals: `25 EUR`, in tabular figures. `25.00 EUR` only in a table. The length of a session is added only where the seeker can choose between lengths (the pilot has one length). In a booking's row the price is the booking's own (`priceMinor`, `currency`): what was charged, never the mentor's current price |
+| No results for the filters | Title `No sessions with status "Accepted"`, then "No session has this status. Choose another status or clear the filter." and a **Clear filter** button (`variant="outline"`) |
+| Price in a row of a list (`ul`) | Whole amount without decimals: `25 EUR`, in tabular figures. `25.00 EUR` only in a table. The length of a session is added only where the seeker can choose between lengths (the pilot has one length). In a booking's row the price is the booking's own (`priceMinor`, `currency`): what was charged, never the mentor's current price. Style in a session row: `text-body font-strong tabular-nums text-headline`. The mentor's name in that row is plain text; the row's link is "Open" |
 | Date of an accepted session in a row | `3 Nov 2026, 14:25`: `formatDate` and `formatClock`, one line under the technologies, `text-label tabular-nums text-foreground`. The zone is the seeker's (`timeZone` of the profile, passed to both functions) and its name is not shown. A booking that has no start time shows no date |
 
 ## Buttons: a verb and an object

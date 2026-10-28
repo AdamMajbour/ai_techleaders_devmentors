@@ -253,10 +253,15 @@ export function BookingsView({
   return (
     <Page title={title}>
       {state === 'loading' ? (
-        <div aria-busy="true" className="flex flex-col gap-between-groups">
+        <div aria-busy="true" className="flex flex-col">
           <LoadingMessage message={viewer === 'seeker' ? 'Loading your sessions…' : 'Loading your questions…'} />
-          <Skeleton className="h-6 w-1/3" />
-          <Skeleton className="h-4 w-full" />
+          {[0, 1, 2].map((row) => (
+            <div key={row} className="flex flex-col gap-group border-b border-border py-panel-compact">
+              <Skeleton className="h-6 w-1/3" />
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-4 w-1/3" />
+            </div>
+          ))}
         </div>
       ) : null}
       {state === 'error' ? <ErrorMessage message={`${viewer === 'seeker' ? 'Sessions' : 'Questions'} could not be loaded. Check your connection and try again.`} onRetry={() => {}} /> : null}

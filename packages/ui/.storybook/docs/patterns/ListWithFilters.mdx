@@ -54,6 +54,11 @@ A list the user narrows down with filters, always showing how many results there
 | A filter runs in the client while the whole list is loaded (the seeker's sessions in the pilot). A list paged by the server filters on the server with a query parameter and returns to page 1 | The user filters the whole list, not one page | Approved 2026-10-28 (client side for the seeker's list); the server rule is a proposal |
 | After a filter is removed with the chip or "Clear filter" the button disappears, so **focus moves to the filter's `Select`** | Keyboard focus is not lost to the page | Proposal (agent test 2026-10-28, round 2), WCAG 2.4.3 |
 | A `ul` shows every row. A list that can grow beyond 25 rows needs pagination first: do not ship it without | A long list without pages is slow to scan | Proposal (agent test 2026-10-28, round 2) |
+| The loading region of a `ul` is `flex flex-col` with **no `gap`**: the `LoadingMessage` first, then the three skeleton rows, which bring their own padding and hairline | `LoadingMessage` already has `py-panel-roomy`, so a gap would add a second space | Proposal (agent test 2026-10-28, round 3) |
+| The **count belongs to the filter bar**: it is shown when the list has items (also when a filter hides them all) and not when nothing exists yet, while loading or on a load error | A count of 0 above "nothing here yet" says the same thing twice | Proposal (agent test 2026-10-28, round 3) |
+| "Try again" in an `ErrorMessage` swaps the error for the loading state of the list. "Try again" inside an `Alert` (refresh failed) is disabled and reads "Trying again…" while it runs, as "Accepting…" in `BookingRow` | One click cannot be sent twice (form rules) | Proposal (agent test 2026-10-28, round 3) |
+| A private list that answers 401 shows an `ErrorMessage` **without** retry: "Your session has expired. Sign in again.", and a `TextLink` "Sign in" | Trying again cannot work | Proposal (agent test 2026-10-28, round 3) |
+| A status of several words goes in quotes in a count and in an empty title: `1 session with status "Accepted"`, `No sessions with status "Not answered in time"`. The chip reads `Status: Accepted` (the label of the filter, a colon, the value) | A multi-word label reads as a name, not as a clause | Proposal (agent test 2026-10-28, round 3) |
 
 ## 6. States, one story each
 
@@ -125,6 +130,17 @@ A list of rows (a `ul`) writes the filter bar and the states by hand. The row is
     </li>
   ))}
 </ul>
+```
+
+The page loads the list with `useAsync` and `apiCall`, maps the result and keeps the filter in the view that renders the list, so a failed load does not reset it. A working example: `packages/app/src/app/(marketing)/articles/articles-view.tsx`.
+
+```tsx
+const list = useAsync(() => apiCall<Page<Row>>(url), [reloads]);
+const result = list.data;
+const error = result && !result.ok ? result.error.message : null;
+const rows = result?.ok ? result.data.items : undefined;
+const isLoading = list.status === 'idle' || list.status === 'pending';
+const reload = () => setReloads((count) => count + 1); // the retry
 ```
 
 ## 11. Do and don't

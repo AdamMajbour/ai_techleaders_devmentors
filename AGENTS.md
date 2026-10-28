@@ -98,7 +98,9 @@ Każda trasa i strona używa dwóch współdzielonych warstw zamiast własnego f
 - Logger maskuje hasła/tokeny/JWT/cookies; encje nie opuszczają `core` (DTO), więc hash hasła nie trafia do odpowiedzi.
 - `npm run audit:prod` w CI (próg: critical).
 
-**Design system:** zanim zbudujesz lub zmienisz ekran, przeczytaj `docs/design-system.md` jako pierwszy plik (charakter produktu, komponenty z tabelą „kiedy używać i kiedy nie”, tokeny znaczeniowe, przewodniki „jeśli… to użyj…”, czego unikać, komendy). Pełna dokumentacja to Storybook w `packages/ui` (`npm run storybook` w tym katalogu). Język interfejsu: angielski (zasady i słownik: `docs/design-system.md`, sekcja Content).
+**Design system:** zanim zbudujesz lub zmienisz ekran, przeczytaj `docs/design-system.md` jako pierwszy plik (charakter produktu, komponenty z tabelą „kiedy używać i kiedy nie”, tokeny znaczeniowe, przewodniki „jeśli… to użyj…”, czego unikać, komendy). Pełna dokumentacja to Storybook w `packages/ui` (`npm run storybook` w tym katalogu).
+
+**Język interfejsu:** angielski. Słowa produktu (seeker, mentor, session, booking, question): `docs/design-system.md`, sekcja Content.
 
 Nowy komponent wielokrotnego użytku ma jedno wyznaczone miejsce:
 
@@ -137,7 +139,7 @@ Nowy komponent wielokrotnego użytku ma jedno wyznaczone miejsce:
 
 ### 5. UI z Tailwind i shadcn-ui
 - shadcn-ui dla "business" komponentów (forms, dialogs, tables)
-- Custom komponenty w `packages/ui/components/`
+- Custom komponenty w `packages/ui/src/components/`
 - Tailwind utility classes dla stylizacji
 - Brak CSS-in-JS — wszystko w Tailwind
 

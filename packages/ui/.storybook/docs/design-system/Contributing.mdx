@@ -23,6 +23,8 @@ An example screen (one story per state) lives in `packages/ui/src/screens/<epic>
 
 A screen written outside `packages/ui` (an exercise folder such as `lekcja-06/nowy_ekran`) is **not picked up** by Storybook (the `stories` glob is `../src/**`), by Tailwind (`@source` covers `../src` and `.storybook`) or by `npm run check:tokens` (it scans `src` and `.storybook`). Move it to `src/screens` before it counts as part of the design system. Source: agent test 2026-10-28.
 
+Stories of a screen: the title is `Product/Screens/<epic or screen name>` (an exercise screen adds "(exercise)"); the data comes from `.storybook/blocks/sampleData.ts` (add an example there only when a second story needs it); a `play` function is optional and wanted where the story shows behaviour that can break (filter, retry). A `play` function is part of the story file, not of a test file; `ui.stories.spec.tsx` runs it. Proposal (agent test 2026-10-28, round 3).
+
 ## What the page of a new component has
 
 1. A stories file with a story for **every state**: default, each variant, loading, empty, error, many items, long text, a narrow screen. Stories use the real component.

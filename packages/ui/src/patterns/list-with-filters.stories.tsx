@@ -92,7 +92,7 @@ function MentorFilterList({
         ) : null}
       </div>
       ) : null}
-      {!isLoading && !error ? (
+      {!isLoading && !error && rows.length > 0 ? (
         <p role="status" aria-live="polite" className="m-0 text-label text-muted-foreground">
           {filtered.length === 1 ? '1 mentor' : `${filtered.length} mentors`}
           {technology ? ` for ${technology}` : ''}
