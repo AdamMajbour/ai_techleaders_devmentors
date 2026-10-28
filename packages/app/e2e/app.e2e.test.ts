@@ -545,9 +545,10 @@ describe('in a browser', () => {
     await page.fill('input[name=password]', 'whatever-password');
     await page.click('button[type=submit]');
 
-    // `p[role=alert]`: Next.js has its own, empty, role=alert route announcer.
-    await page.waitForSelector('p[role=alert]');
-    expect(await page.locator('p[role=alert]').textContent()).toBe('Invalid credentials.');
+    // The form-level error is an Alert (`div[role=alert]`). Next.js has its own, empty, role=alert route announcer.
+    const alert = page.locator('[role=alert]', { hasText: 'Invalid credentials.' });
+    await alert.waitFor();
+    expect((await alert.textContent())?.trim()).toBe('Invalid credentials.');
     await page.close();
   });
 
