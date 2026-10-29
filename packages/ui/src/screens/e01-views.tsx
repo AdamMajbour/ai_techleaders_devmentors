@@ -5,6 +5,7 @@
 // package: a page in `app` composes the same components with real data and routing.
 import { useState, type FormEvent, type ReactNode } from 'react';
 
+import { Page } from '../backend/layout/Page';
 import { EmptyState } from '../backend/feedback/EmptyState';
 import { ErrorMessage } from '../backend/feedback/ErrorMessage';
 import { LoadingMessage } from '../backend/feedback/LoadingMessage';
@@ -20,15 +21,6 @@ import { Input } from '../components/ui/input';
 import { Select } from '../components/ui/select';
 import { Skeleton } from '../components/ui/skeleton';
 import { TextLink } from '../components/ui/text-link';
-
-export function Page({ title, children, narrow = false }: { title: string; children: ReactNode; narrow?: boolean }) {
-  return (
-    <main className={`mx-auto flex w-full flex-col gap-between-groups py-between-groups ${narrow ? 'max-w-session' : 'max-w-content'}`}>
-      <h1 className="m-0 text-page-title font-strong text-headline">{title}</h1>
-      {children}
-    </main>
-  );
-}
 
 export function TestModeBanner() {
   return (

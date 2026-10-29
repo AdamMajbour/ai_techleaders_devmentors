@@ -7,7 +7,7 @@ import { TextLink } from '../components/ui/text-link';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 import { PilotCountsTable, type PilotCountsTableProps } from '../components/pilot/PilotCountsTable';
 import { NOTICE_DRAFT_LABEL, TERMS_SECTIONS } from '../../.storybook/blocks/sampleData';
-import { Page } from './e01-views';
+import { Page } from '../backend/layout/Page';
 
 export function TermsPageView() {
   return (

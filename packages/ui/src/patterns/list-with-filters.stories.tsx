@@ -1,16 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { X } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
+import { FilterBar } from '../backend/filters';
 import { DataTable } from '../backend/tables';
 import { Button } from '../components/ui/button';
-import { Field } from '../components/ui/field';
-import { Select } from '../components/ui/select';
 import { TextLink } from '../components/ui/text-link';
 
 // The pattern: filters above a DataTable, a result count, the active filters shown and removable, and two
-// different empty states. The filter bar is written here, in the story, as the recipe; it becomes a shared
-// component when a second screen needs it (see Contributing).
+// different empty states. The filter bar is the shared FilterBar.
 type Mentor = { id: string; role: string; technologies: string[]; work: string; price: string };
 
 const MENTORS: Mentor[] = [
@@ -47,56 +44,27 @@ function MentorFilterList({
   const filtered = technology ? rows.filter((mentor) => mentor.technologies.includes(technology)) : rows;
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const selectRef = useRef<HTMLSelectElement>(null);
   const clear = () => {
     setTechnology('');
     setPage(1);
-    selectRef.current?.focus();
   };
 
   return (
     <div className="flex max-w-3xl flex-col gap-between-groups">
       {!isLoading && !error && rows.length > 0 ? (
-      <div className="flex flex-col gap-between-groups">
-        <div className="max-w-session">
-          <Field label="Technology">
-            <Select
-              ref={selectRef}
-              density="compact"
-              value={technology}
-              onChange={(event) => {
-                setTechnology(event.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="">All technologies</option>
-              {TECHNOLOGIES.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        </div>
-        {technology ? (
-          <div className="flex flex-wrap items-center gap-group">
-            <Button variant="outline" size="sm" onClick={clear}>
-              Technology: {technology}
-              <X aria-hidden="true" className="size-4" />
-              <span className="sr-only">, remove filter</span>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={clear}>
-              Clear all filters
-            </Button>
-          </div>
-        ) : null}
-      </div>
-      ) : null}
-      {!isLoading && !error && rows.length > 0 ? (
-        <p role="status" aria-live="polite" className="m-0 text-label text-muted-foreground">
-          {filtered.length === 1 ? '1 mentor' : `${filtered.length} mentors`}
-          {technology ? ` for ${technology}` : ''}
-        </p>
+        <FilterBar
+          label="Technology"
+          allLabel="All technologies"
+          options={TECHNOLOGIES.map((name) => ({ value: name, label: name }))}
+          value={technology}
+          onChange={(value) => {
+            setTechnology(value);
+            setPage(1);
+          }}
+          count={filtered.length}
+          noun={{ one: 'mentor', many: 'mentors' }}
+          phrase={(name) => `for ${name}`}
+        />
       ) : null}
       <DataTable
         caption="Mentors in the pilot"

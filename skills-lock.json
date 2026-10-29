@@ -275,7 +275,7 @@
       "source": "open-mercato/skills",
       "sourceType": "github",
       "skillPath": "skills/om-review-prs/SKILL.md",
-      "computedHash": "cfdc6abc87435e6d802a8ad679fed1847385eb060e8f22d578f391ab07764e52"
+      "computedHash": "18fbe870ee4413595047f89546e74da9798849c0da6c5760faeb0d708c759447"
     },
     "om-root-cause": {
       "source": "open-mercato/skills",
@@ -287,7 +287,7 @@
       "source": "open-mercato/skills",
       "sourceType": "github",
       "skillPath": "skills/om-setup-agent-pipeline/SKILL.md",
-      "computedHash": "c97e3ee3700662bbc92f5680422a6a470ce2bca915b1c9ac263058eff122aa70"
+      "computedHash": "0eab7b0296547c198e412b66a2d1afe7b9f20eb172a3a5f4a501a0c1cc3d7d71"
     },
     "om-setup-discovery-pipeline": {
       "source": "open-mercato/skills",

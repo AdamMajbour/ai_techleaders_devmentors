@@ -20,7 +20,8 @@ import { CreditsPanel, type CreditsPanelProps } from '../components/vault/Credit
 import { ReviewItem, type ReviewItemData } from '../components/vault/ReviewItem';
 import { VaultAnswerView, type VaultAnswerViewProps } from '../components/vault/VaultAnswerView';
 import { NOTE_BODY, NOTICE_DRAFT_LABEL, NOTICE_ITEMS, NOTICE_VERSION } from '../../.storybook/blocks/sampleData';
-import { Page, TestModeBanner } from './e01-views';
+import { Page } from '../backend/layout/Page';
+import { TestModeBanner } from './e01-views';
 
 const ok: ApiResult<unknown> = { ok: true, status: 200, data: {} };
 
