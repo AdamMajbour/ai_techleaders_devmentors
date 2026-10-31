@@ -53,7 +53,7 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 ## Phase 1 — Sign-in (#10)
 
-- [ ] 1.1 Record D24 by founder A and update the product brief.
+- [x] 1.1 Record D24 by founder A and update the product brief.
 - [ ] 1.2 Add invitation and login-token entities/migrations, services, env settings, and the pilot-member resolver.
 - [ ] 1.3 Add magic-link request/consume routes, rate limiting, and the `PUBLIC_SIGNUP` registration guard.
 - [ ] 1.4 Add login/verify pages, HTTP mailer, `pilot:invite` CLI, env documentation, and invite-to-sign-in E2E coverage.
@@ -102,5 +102,5 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 ## Current gates
 
 - Pilot primitives spec Phases 1–4 are not present in the current source tree; E01 implementation is blocked until they are merged.
-- Founder A confirmed D24 (invitation-based e-mail magic link) on 2026-10-31; the decision record and product-brief update remain to be committed.
+- D24 (invitation-based e-mail magic link) was confirmed by founder A and recorded in the decision log and product brief.
 - D25, operator bootstrap, E03-T02, E03-S01, mentor interviews (D20), and the rehearsal remain explicit operational gates.
