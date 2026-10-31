@@ -1,6 +1,6 @@
 # Prototyp „Konta i role” — postęp
 
-Stan: Etap 1 — szkielet i ścieżka bez błędów gotowe; czeka na zgodę „dalej”.
+Stan: Etap 3 — notatki, dokumentacja, testy i sprawdzenie prototypu gotowe.
 
 ## Zakres i źródła
 
@@ -80,4 +80,28 @@ Brak haseł, prawdziwego wysyłania e-maili i zewnętrznego logowania. Stały cz
 - Sandbox Storybook nie działał początkowo na porcie 3000, dlatego uruchomiono go lokalnie na tym porcie. Adres prototypu zwrócił HTTP 200 i został otwarty w przeglądarce.
 - Sprawdzone w przeglądarce: s01 → s04 → s05, bezpośrednia nawigacja do s06/s07/s08, powrót silnika Back, przełącznik motywu, przełączenie Comment/Clickable i otwarcie/zamknięcie panelu komentarzy.
 - Walidacja: `vite build` zakończony powodzeniem; `tsc --noEmit` dla entry pointu zakończony powodzeniem. Wygenerowany wynik jest ignorowany przez Git.
-- Nie sprawdzano jeszcze wszystkich stanów, kont demo, bramek dostępu, responsywności 320/1440 px, pełnej obsługi klawiaturą ani wszystkich kontrolek — należą do etapów 2–3.
+- Etap 3 obejmuje sprawdzenie ekranów, motywów, responsywności, klawiatury i wszystkich kontrolek.
+
+## Etap 2 — stany, role i scenariusze
+
+- Dodano kontrolki konta demo, sesji, wyniku wysyłki linku, poprawności e-maila, wyniku linku i stanu danych strony. Wszystkie pozostają w pasku przeglądu, poza nawigacją produktu.
+- Dodano cztery fikcyjne konta: Maja (seeker), Ada (mentor), Ola (operator) i Alex (seeker + mentor). Każde używa adresu `demo.test`; formularz nie zbiera haseł ani prawdziwych danych.
+- Bramki do `s05`–`s07` wymagają aktywnej sesji i właściwej roli. Wylogowanie kieruje do `s01` z komunikatem; wygaśnięcie sesji pokazuje odrębny komunikat; brak roli kieruje do `s08`.
+- Zachowano e-mail w formularzu przy błędzie walidacji i błędach wysyłki. Dla zaproszonego i niezaproszonego pokazuje się identyczny komunikat; link z symulacji konta niezaproszonego kończy się stanem wygasłym.
+- Dodano stany linku: poprawny, wygasły, użyty i błąd weryfikacji. Ponowienie po błędzie linku przechodzi przez poprawny, lokalny scenariusz logowania; nie używa prawdziwego tokenu.
+- Dla stron ról dostępne są stany ładowania, gotowości, pustych danych i błędu ładowania. Nie dodano fikcyjnych rekordów mentorów, rezerwacji ani zatwierdzeń; „ponów” czyści symulowany błąd.
+- Sprawdzone w przeglądarce: niepoprawny e-mail; limity i błędy wysyłki; wspólny komunikat dla adresu niezaproszonego; poprawne logowanie `s01` → `s04` → `s05`; wygasły/użyty/błędny link i ponowienie; wszystkie cztery konta, poprawne i odrzucone role, sesje wylogowana/wygasła oraz stany danych ładowane/puste/błąd/ponowienie.
+- Walidacja: `tsc --noEmit` oraz `vite build` zakończone powodzeniem; gotowy podgląd dostępny pod `/prototypes/konta-i-role/index.html`.
+- Interakcje silnika komentarzy, motywy, przyciski, wymiary 320/1440 px i klawiaturę pozostawiono do sprawdzenia w etapie 3.
+- Otwarte pytanie źródłowe pozostaje bez zmian: brak dedykowanej specyfikacji kont i ról; najbliższa specyfikacja pilot booking nie rozstrzyga pełnej polityki ról produkcyjnych.
+
+## Etap 3 — uczciwość i sprawdzenie
+
+- Dodano widoczną przy każdym aktywnym ekranie notatkę z historiami lub informacją o ich braku, symulowanym zachowaniem i nierozstrzygniętymi kwestiami.
+- Dodano `README.md` z komendami podglądu/build/test, kontami demo, scenariuszami, ograniczeniami symulacji i lukami design systemu.
+- Dodano testy Playwright w `test/navigation.spec.ts`: ścieżki logowania i powrotu do chronionego ekranu, nawigacja seeker/mentor/operator, bramka roli, przycisk Back, scenariusze formularza i linku, stany danych, przełączniki motywu/układu, komentarze (dodanie, odpowiedź, przeniesienie, rozwiązanie, ponowne otwarcie, usunięcie i eksport) oraz notatki ekranów.
+- W przeglądarce sprawdzono 320 i 1440 px w obu motywach; szerokość dokumentu nie przekroczyła viewportu. Klawiaturą sprawdzono widoczny focus, przejście Tab do przycisku wysyłki i uruchomienie go Enterem; po nawigacji fokus trafia na nagłówek ekranu.
+- Sprawdzono przyciski i kontrolki scenariuszy w testach; 5 testów Playwright zakończyło się powodzeniem. Type-check źródeł i testów, `vite build`, `git diff --check` oraz żądanie podglądu HTTP 200 również zakończyły się powodzeniem.
+- Na `s08` przycisk review-engine „Back” jest celowo wyłączony, aby uniknąć powrotu przez historię do trasy wymagającej innej roli. Ekran oferuje logowanie lub stronę startową konta; po przełączeniu na konto uprawnione do żądanej strony pokazuje link do bezpośredniej kontynuacji. Test nawigacji obejmuje zmianę konta na bramce.
+- Nie rozstrzygnięto braku osobnej specyfikacji kont i ról, konfliktu modelu operatora (`AGENTS.md` kontra specyfikacja pilota), zachowania produkcyjnego stron startowych ani założeń TTL/powrotu. Zob. źródła i ograniczenia wyżej oraz `README.md`; testy potwierdzają wyłącznie działanie symulacji.
+- Wynik budowania pozostaje w ignorowanym katalogu Storybooka. Nie zmieniono aplikacji ani design systemu.

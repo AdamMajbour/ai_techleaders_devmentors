@@ -2,6 +2,8 @@
 
 Status: Draft for review (gate answered by the requester 2026-10-27; not yet audited with `om-pre-implement-spec`). Source: issue #8 (E02) with #15, #16, #17; design authority `.ai/specs/product-brief.md`. **Depends on** `2026-10-27-pilot-primitives-2.md` (Phases 1, 3 and 4, and Phase 2, which lands after E01 is live) and through it on `2026-10-26-pilot-primitives.md` and `2026-10-26-pilot-booking-flow.md` (E01: payments, refunds, invitations). None of the three is implemented yet.
 
+Related mentor-onboarding prototype (reference only): [`.ai/prototypes/discovery/mentor-onboarding/revision-001/`](../prototypes/discovery/mentor-onboarding/revision-001/).
+
 ## 📝 TLDR
 
 Mentors answer the same questions unpaid and paste from a private doc (`[INTERVIEW]`); whether seekers want an answer drawn from a mentor's notes is untested (A01, accepted untested in D01). Today the app has no notes, no AI call and no per-mentor money. **Proposed (future behavior):** a mentor publishes markdown notes after being told, and agreeing per note, that they feed AI answers (D09); a seeker pays 10 EUR (D16) and receives an AI-generated answer built from the consenting mentors' notes; every cited mentor sees it first until 2026-12-14 (D09, D14, D18) and one rejection stops it with a refund; the released answer shows each mentor's name and note title (D10, D14); 80% of the price is credited equally to the cited mentors in a ledger (D11); payout is E03. Built from the primitives of the two primitives specs, plus a vault-local review table for the several-mentor approval (D14), which is not generalized until a second consumer exists.
@@ -298,6 +300,12 @@ Validation after every step: `npm run type-check && npm run lint && npm test && 
 | `OPERATOR_USER_IDS` set and a named person on the approvals page (or D26 recorded) | any live vault purchase |
 | Platform cron configured to run settlement (primitives 2, Backend 1) and seen running on staging | any live vault purchase |
 | Phase 5 rehearsal record | founder A's live flip of `AI_LIVE_ENABLED` and `VAULT_ENABLED` |
+
+### Research question from mentor-onboarding walkthrough (not an acceptance criterion)
+
+For invited mentors who answer recurring questions with private notes: does the invitation make clear how the profile/session setup relates to those notes and the consent boundary? This synthetic hypothesis is not evidence of a barrier and does not add a notes feature to onboarding.
+
+Source: [walkthrough session 002](research/walkthroughs/2026-10-31-mentor-onboarding-session-002/report.md).
 
 ### Close-out
 Lesson entry for anything non-obvious (likely: the reject/take-down semantics); move this spec and `2026-10-27-pilot-primitives-2.md` to `.ai/specs/implemented/` after Phase 4 merges and the rehearsal record exists.

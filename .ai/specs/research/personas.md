@@ -2,8 +2,8 @@
 
 Basis: `.ai/specs/research/2026-08-22-interview-mentor.md` [INTERVIEW], `.ai/specs/research/2026-09-04-mentor-list-note.md` [DATA], `.ai/specs/product-brief.md` [DOCUMENT], and the prototype context [DOCUMENT]/[PRODUCT]. Built 2026-10-31. Stance: validate.
 Panel composition: one side-channel mentor grounded in the earlier interview and one invite-list mentor with no warm contact. No population proportions are available; the 1:1 split is assumed. The low-salience seat is explicitly assumed.
-Coverage: P01/P03 each have 10 sourced and 2 assumed persona lines; P02/P04 each have 1 sourced and 11 assumed lines. Overall: 22 sourced and 26 assumed lines. P02 and P04 are assumption personas.
-Runs: P01/P02 in run 1; P03/P04 in run 2. P01 and P03 are separate fresh instances from the same interview-grounded segment; they are not independent real-user evidence.
+Coverage across both sessions: P01/P03/P05/P07 each have 10 sourced and 2 assumed persona lines; P02/P04/P06/P08 each have 1 sourced and 11 assumed lines. Overall: 44 sourced and 52 assumed lines. P02/P04/P06/P08 are assumption personas.
+Runs: session 001 used P01/P02 in run 1 and P03/P04 in run 2; session 002 used P05/P06 in run 1 and P07/P08 in run 2. The interview-grounded instances share one source and are not independent real-user evidence.
 
 ## P01 - Mentor answering recurring questions with private notes
 
@@ -36,6 +36,70 @@ Runs: 1
 - Objections: no source establishes this invitee's objections to the onboarding flow [ASSUMPTION].
 - What they will not do: no source establishes a refusal [ASSUMPTION].
 - No basis for: all individual behaviors and preferences. Recruit an invited mentor without a warm contact and ask for a think-aloud walkthrough and a recent example of accepting or ignoring a professional invitation.
+
+## P05 - Mentor answering recurring questions with private notes
+
+Runs: session 002, run 1
+- Segment: mentor who answers recurring questions in DMs and community Slack [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- Situation: repeats answers from private notes; the work is unpaid and notes rot [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- State of mind at entry: careful about sharing because publication requires the mentee's agreement [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- Topic salience: central to the extent that notes earning something without another call is the desired outcome [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- Goal: notes earn something monthly without another call, with the mentor's name retained [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- Success in this onboarding flow: no basis for what makes a profile and sample availability successful [ASSUMPTION].
+- Constraints: DMs, community Slack, private notes, no publication without consent; setup and scheduling constraints unknown [INTERVIEW]/[ASSUMPTION] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- Tools: private notes, DMs, and community Slack [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- Vocabulary: notes, call, ratings, and “my GitHub is my profile” [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- Objections: public ratings are not important; will not publish material without mentee agreement [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- What they will not do: publish anything a mentee did not agree to [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- No basis for: profile fields, availability, and invitation/account setup [ASSUMPTION].
+
+## P06 - Assumption persona: invite-list mentor without a warm contact
+
+Runs: session 002, run 1
+- Segment: invite-list entry with no known warm contact; 21 of 50 entries had nobody yet who could reach them [DATA] `.ai/specs/research/2026-09-04-mentor-list-note.md`.
+- Situation: opening an invitation and deciding whether to complete onboarding [ASSUMPTION].
+- State of mind at entry: indifferent and unhurried [ASSUMPTION].
+- Topic salience: barely; required low-salience seat, not supported by individual evidence [ASSUMPTION].
+- Goal: no source establishes this invitee's goal [ASSUMPTION].
+- Success: no source establishes what would make onboarding successful [ASSUMPTION].
+- Constraints: no source establishes time, budget, policy, or decision rights [ASSUMPTION].
+- Tools: no source establishes current tools [ASSUMPTION].
+- Vocabulary: no source establishes individual vocabulary [ASSUMPTION].
+- Objections: no source establishes individual objections [ASSUMPTION].
+- What they will not do: no source establishes a refusal [ASSUMPTION].
+- No basis for: individual goals, behavior, tools, constraints, or setup history [ASSUMPTION].
+
+## P07 - Mentor answering recurring questions with private notes
+
+Runs: session 002, run 2
+- Fresh instance of the same interview-grounded segment as P05, not an independent real-user voice [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- Situation: repeats answers from private notes in DMs and community Slack; the work is unpaid and notes rot [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- State of mind at entry: careful about sharing because publication requires the mentee's agreement [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- Topic salience: central to the extent that notes earning something without another call is the desired outcome [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- Goal: notes earn something monthly without another call, with the mentor's name retained [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- Success in this onboarding flow: no basis for what makes a profile and sample availability successful [ASSUMPTION].
+- Constraints: DMs, community Slack, private notes, no publication without consent; setup and scheduling constraints unknown [INTERVIEW]/[ASSUMPTION] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- Tools: private notes, DMs, and community Slack [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- Vocabulary: notes, call, ratings, and “my GitHub is my profile” [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- Objections: public ratings are not important; will not publish material without mentee agreement [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- What they will not do: publish anything a mentee did not agree to [INTERVIEW] `.ai/specs/research/2026-08-22-interview-mentor.md`.
+- No basis for: profile fields, availability/timezone, and invitation/account setup [ASSUMPTION].
+
+## P08 - Assumption persona: invite-list mentor without a warm contact
+
+Runs: session 002, run 2
+- Fresh instance of the invite-list segment with no known warm contact; 21 of 50 entries had nobody yet who could reach them [DATA] `.ai/specs/research/2026-09-04-mentor-list-note.md`.
+- Situation: opening an invitation and deciding whether to complete onboarding [ASSUMPTION].
+- State of mind at entry: indifferent and unhurried [ASSUMPTION].
+- Topic salience: barely; required low-salience seat, not supported by individual evidence [ASSUMPTION].
+- Goal: no source establishes this invitee's goal [ASSUMPTION].
+- Success: no source establishes what would make onboarding successful [ASSUMPTION].
+- Constraints: no source establishes time, budget, policy, or decision rights [ASSUMPTION].
+- Tools: no source establishes current tools [ASSUMPTION].
+- Vocabulary: no source establishes individual vocabulary [ASSUMPTION].
+- Objections: no source establishes individual objections [ASSUMPTION].
+- What they will not do: no source establishes a refusal [ASSUMPTION].
+- No basis for: individual goals, behavior, tools, constraints, or setup history [ASSUMPTION].
 
 ## P03 - Mentor answering recurring questions with private notes
 

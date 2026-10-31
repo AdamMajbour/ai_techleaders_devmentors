@@ -1,6 +1,6 @@
 # Pilot booking flow (E01): find a mentor, prepay, hold a 25-minute text session
 
-Screen-map prototype (reference): [`prototypes/konta-i-role/`](../../prototypes/konta-i-role/); screen decisions: [`lekcja-07/mapa-ekranow.md`](../../lekcja-07/mapa-ekranow.md).
+Screen-map prototype (reference): [`prototypes/konta-i-role/`](../../prototypes/konta-i-role/); screen decisions: [`lekcja-07/mapa-ekranow.md`](../../lekcja-07/mapa-ekranow.md). Related mentor-onboarding prototype (reference only): [`.ai/prototypes/discovery/mentor-onboarding/revision-001/`](../prototypes/discovery/mentor-onboarding/revision-001/).
 
 Status: Ready for implementation, conditional (second pre-implement audit `.ai/analysis/pre-implement-2026-10-26-pilot-specs-2.md`, fixes applied; Phase 1 waits for D24, auto-refund waits for D25). Spec 2 of 2; **depends on** `2026-10-26-pilot-primitives.md` (its Phases 1–4 merge first). Source: issue #7 (E01) with #10–#14; design authority `.ai/specs/product-brief.md`.
 
@@ -213,11 +213,11 @@ Relied on: D04, D05/D08/D13, D15, D16, D17, D19, R01, R04, R05, N01, N02 (R02, D
 | #14 session ends after 25 minutes | 5.1, 5.2 | post after `ends_at` rejected; page read-only |
 | #10 decision record and brief names the method | 1.1 | D24 file exists, brief line updated |
 | #10 / s01 invitation-only magic-link request | 1.1, 1.3, 1.4 | invited and uninvited valid addresses receive the same `200 { sent: true }` response; only an accepted, unrevoked invitation causes mail; UI tests cover invalid email, loading, neutral confirmation, rate limit and generic request failure without account enumeration. Mail transport failure is logged and remains indistinguishable from success |
-| #10 / s01 registration and login-provider scope | 1.3, 1.4 | pilot deployment has `PUBLIC_SIGNUP=false`; no public registration, password or GitHub flow is offered to pilot invitees; existing password behavior for non-pilot users is unchanged |
+| #10 / s01 registration and login-provider scope | 1.3, 1.4 | pilot deployment has `PUBLIC_SIGNUP=false`; no public registration, password or GitHub flow is offered to pilot invitees; the first successful use of a valid invitation link creates one account; existing password behavior for non-pilot users is unchanged |
 | #10 / s04 magic-link verification | 1.2, 1.3, 1.4 | UI tests cover loading and generic server-error states; valid token succeeds once and expires after 15 minutes; expired/reused tokens return the generic 401 with a request-new-link path; success redirects immediately, without a success screen; the token is removed from the URL |
 | #10 / s04 and s08 safe return after sign-in | 1.2, 1.4 | same-origin return path is preserved only while still authorized; external, malformed or newly unauthorized destinations fall back to the user's default page; tokens and sensitive form content never enter the return path or client storage |
 | #10 / s01 account conflicts | 1.2, 1.3 | an existing account without a valid pilot invitation receives the same request response; no automatic account or sign-in-method linking occurs |
-| #10 / s05 and s06 combined seeker/mentor capability | 1.2, 1.4, 2.3 | a single accepted mentor invitation yields one `user.id` that can use both seeker and mentor flows; default destination is `/mentor/bookings`; a seeker-only invitation defaults to `/mentors`; an operator's allowlist entry is required for operator access; operator destination takes precedence |
+| #10 / s05 and s06 combined seeker/mentor capability | 1.2, 1.4, 2.3 | the product calls the seeker capability “seeker” (not “mentee”); a single accepted mentor invitation yields one `user.id` that can use both seeker and mentor flows; default destination is `/mentor/bookings`; a seeker-only invitation defaults to `/mentors`; an operator's allowlist entry is required for operator access; operator destination takes precedence |
 | #10 / s05 seeker home | 2.2, 2.3 | seeker-only login defaults to the invited-mentor list; list responses include listed mentors only; loading, empty and error states have UI/service tests |
 | #10 / s06 mentor home | 2.3, 4.1 | mentor login defaults to that mentor's bookings; loading, empty and error states have UI tests; the list and actions expose only bookings belonging to that mentor |
 | #10 / s07 operator home | 1.4, 4.3 | allowlisted operator login defaults to approvals; loading, empty and error states have UI tests; a non-operator cannot read or act on the approval queue |
@@ -304,7 +304,19 @@ Validation after each step: `npm run type-check && npm run lint && npm test && n
 | s02 | No public registration screen or flow in the pilot. The account is created on first successful use of an invitation link; `PUBLIC_SIGNUP=false` in the pilot deployment. |
 | s03 | No separate registration-verification or success screen. Link-sent feedback is part of s01; successful verification redirects from s04. |
 
-No separate design-system component is added for excluded GitHub/password providers or registration. Use seeker as the product term, not mentee. No account linking is done automatically; login responses must not reveal whether an address has an account or invitation.
+No separate design-system component is added for excluded GitHub/password providers or registration. The s01 login uses the existing `Card` composition; unifying the existing `LoginView` is deferred. The s07 and s08 compositions use existing components locally; no shared operator-page or access-denied primitive is added. No account linking is done automatically; login responses must not reveal whether an address has an account or invitation.
+
+The grey prototype's sample availability slots are illustrative only. E01 has no availability-slot feature: the mentor proposes a session start when accepting a booking (Q6), so the sample slots and their validation are not product requirements.
+
+### Research questions to validate (not acceptance criteria)
+
+The synthetic walkthroughs are hypotheses for follow-up with invited mentors, not evidence of a barrier and not product requirements:
+
+- **E01 / mentor profile:** Can invited mentors omit the public-work link, and who do they understand can see it? Does the invitation explain the later setup steps, and can a mentor resume setup after deferring or return from the profile step?
+- **E01 / mentor profile:** Can mentors inspect a profile before completing all required fields? Does the grey prototype's no-sample-slot message help them understand that simulated step? This does not add availability slots to E01.
+- **E01 / keyboard access:** Is focus and keyboard navigation through the invitation and profile steps clear to invited mentors? The walkthrough observed a focus outline but did not test keyboard behavior.
+
+Sources: [walkthrough session 001](research/walkthroughs/2026-10-31-mentor-onboarding-session-001/report.md) and [walkthrough session 002](research/walkthroughs/2026-10-31-mentor-onboarding-session-002/report.md). No prototype-feedback export was available for this review.
 
 ### Close-out
 Update the primitives catalogue with anything learned, lesson entry for non-obvious findings, and move both specs to `.ai/specs/implemented/` after Phase 5 merges.
