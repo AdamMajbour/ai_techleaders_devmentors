@@ -1,5 +1,6 @@
 /** @jest-environment node */
 import { apiHandler } from './apiHandler';
+import { StatusTransitionConflictError } from '@devmentor/db';
 import { ForbiddenError, ValidationError } from './errors';
 
 const request = new Request('http://localhost/api/things?secret=1', { method: 'GET' });
@@ -42,6 +43,20 @@ describe('apiHandler', () => {
       throw new ForbiddenError();
     }, logger)(request, undefined);
 
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('maps database transition conflicts to HTTP 409 without logging them', async () => {
+    const logger = loggerSpy();
+    const response = await apiHandler(async () => {
+      throw new StatusTransitionConflictError();
+    }, logger)(request, undefined);
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      ok: false,
+      error: { code: 'conflict', message: 'The request conflicts with the current state.' },
+    });
     expect(logger.error).not.toHaveBeenCalled();
   });
 

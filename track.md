@@ -23,7 +23,8 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 ### Phase P1 — Workflow core
 
 - [x] P1.1 Add the pure state machine and unit tests for legal transitions and actor rules.
-- [ ] P1.2 Add `status_transitions`, a reversible migration, atomic `transitionStatus`, and DB exports; prove concurrent transitions are race-safe.
+- [x] P1.2 Add `status_transitions`, a reversible migration, atomic `transitionStatus`, and DB exports; prove concurrent transitions are race-safe.
+- Verification note: the DB integration suite is implemented but could not run here because PostgreSQL password authentication failed; run it against the configured test database before the P1 manual test gate.
 - [ ] P1.3 Extend logger redaction for `question` and `body`, with regression coverage.
 
 **Manual test gate:** verify the workflow unit/integration behavior, migration rollback, and unchanged app behavior.

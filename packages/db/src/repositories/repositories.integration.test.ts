@@ -3,8 +3,9 @@ import path from 'node:path';
 import type { MikroORM } from '@mikro-orm/core';
 import type { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { closeORM, initializeORM } from '../config';
+import { StatusTransition } from '../entities';
 import { isUniqueConstraintViolation } from '../errors';
-import { ArticleRepository, UserRepository } from './index';
+import { ArticleRepository, UserRepository, transitionStatus } from './index';
 
 let orm: MikroORM<PostgreSqlDriver>;
 
@@ -38,6 +39,8 @@ beforeAll(async () => {
   // Start from an empty database and build the schema with the real migrations.
   await orm.schema.dropSchema({ dropMigrationsTable: true });
   await orm.migrator.up();
+  // Articles provide an existing mapped target table for exercising the generic transition runner.
+  await orm.em.getConnection().execute('alter table "articles" add column "status" varchar(255)');
 });
 
 afterAll(async () => {
@@ -46,7 +49,7 @@ afterAll(async () => {
 
 describe('migrations', () => {
   it('create the application tables', async () => {
-    expect(await publicTables()).toEqual(['articles', 'mikro_orm_migrations', 'users']);
+    expect(await publicTables()).toEqual(['articles', 'mikro_orm_migrations', 'status_transitions', 'users']);
   });
 });
 
@@ -162,6 +165,95 @@ describe('ArticleRepository paging, update and delete', () => {
   });
 });
 
+describe('transitionStatus', () => {
+  async function createPendingArticle(): Promise<string> {
+    const article = await new ArticleRepository(orm.em.fork()).create({
+      title: 'Workflow target',
+      content: 'Transition test',
+      authorId: '00000000-0000-4000-8000-0000000000a4',
+    });
+    await orm.em.getConnection().execute(
+      'update "articles" set "status" = ? where "id" = ?',
+      ['pending', article.id],
+      'run',
+    );
+    return article.id;
+  }
+
+  it('allows only one concurrent transition and writes exactly one history row', async () => {
+    const articleId = await createPendingArticle();
+    const attempts = await Promise.all([
+      transitionStatus(orm.em.fork(), {
+        entityType: 'Article',
+        entityId: articleId,
+        from: ['pending'],
+        to: 'accepted',
+        actor: { kind: 'user', userId: '00000000-0000-4000-8000-0000000000a5' },
+      }).then(() => 'success', (error: unknown) => error),
+      transitionStatus(orm.em.fork(), {
+        entityType: 'Article',
+        entityId: articleId,
+        from: ['pending'],
+        to: 'declined',
+        actor: { kind: 'system' },
+      }).then(() => 'success', (error: unknown) => error),
+    ]);
+
+    expect(attempts.filter((result) => result === 'success')).toHaveLength(1);
+    const conflict = attempts.find((result) => result !== 'success');
+    expect(conflict).toMatchObject({ name: 'ConflictError', code: 'conflict' });
+    const transitions = await orm.em.find(StatusTransition, { entityType: 'Article', entityId: articleId });
+    expect(transitions).toHaveLength(1);
+  });
+
+  it('joins a caller transaction so its rollback also removes the history row', async () => {
+    const articleId = await createPendingArticle();
+    const em = orm.em.fork();
+
+    await expect(
+      em.transactional(async (transactionalEm) => {
+        await new UserRepository(transactionalEm).create({
+          email: 'transition-composition-rollback@example.com',
+          name: 'Rollback',
+        });
+        await transitionStatus(transactionalEm, {
+          entityType: 'Article',
+          entityId: articleId,
+          from: ['pending'],
+          to: 'accepted',
+          actor: { kind: 'system' },
+        });
+        throw new Error('roll back composition');
+      }),
+    ).rejects.toThrow('roll back composition');
+
+    const row = (await orm.em.getConnection().execute(
+      'select "status" from "articles" where "id" = ?',
+      [articleId],
+      'get',
+    )) as { status: string } | undefined;
+    expect(row?.status).toBe('pending');
+    expect(await orm.em.count(StatusTransition, { entityType: 'Article', entityId: articleId })).toBe(0);
+    expect(await new UserRepository(orm.em.fork()).findByEmail('transition-composition-rollback@example.com')).toBeNull();
+  });
+
+  it('treats a replay as a no-op when ifAlready is enabled', async () => {
+    const articleId = await createPendingArticle();
+    const em = orm.em.fork();
+    const input = {
+      entityType: 'Article',
+      entityId: articleId,
+      from: ['pending'],
+      to: 'accepted',
+      actor: { kind: 'webhook' as const },
+    };
+
+    await expect(transitionStatus(em, input)).resolves.toBe(true);
+    await expect(transitionStatus(em.fork(), { ...input, ifAlready: true })).resolves.toBe(false);
+    expect(await orm.em.count(StatusTransition, { entityType: 'Article', entityId: articleId })).toBe(1);
+  });
+});
+
 describe('User password hash', () => {
   it('is stored, loaded, and left out of the serialized entity', async () => {
     const created = await new UserRepository(orm.em.fork()).create({
@@ -177,9 +269,12 @@ describe('User password hash', () => {
 });
 
 describe('migrations (down)', () => {
-  it('rename the tables back and keep their rows when the last migration is reverted', async () => {
+  it('reverts the history table and renames the remaining tables back without losing rows', async () => {
     const created = await new UserRepository(orm.em.fork()).create({ email: 'rename@example.com', name: 'Rename' });
 
+    await orm.migrator.down(); // status_transitions
+    expect(await publicTables()).toEqual(['articles', 'mikro_orm_migrations', 'users']);
+    await orm.migrator.up();
     await orm.migrator.down(); // add_user_password_hash
     await orm.migrator.down(); // plural_table_names
     expect(await publicTables()).toEqual(['article', 'mikro_orm_migrations', 'user']);
@@ -188,7 +283,8 @@ describe('migrations (down)', () => {
 
     await orm.migrator.up();
     await orm.migrator.up();
-    expect(await publicTables()).toEqual(['articles', 'mikro_orm_migrations', 'users']);
+    await orm.migrator.up();
+    expect(await publicTables()).toEqual(['articles', 'mikro_orm_migrations', 'status_transitions', 'users']);
   });
 
   it('remove the application tables when everything is reverted', async () => {
