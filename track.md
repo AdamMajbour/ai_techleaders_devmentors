@@ -16,6 +16,41 @@ Spec: `.ai/specs/2026-10-26-pilot-booking-flow.md`
 
 - [x] Read the E01 spec and break it into implementation-sized tasks.
 
+## Prerequisite — Pilot primitives
+
+The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md` to be implemented first.
+
+### Phase P1 — Workflow core
+
+- [ ] P1.1 Add the pure state machine and unit tests for legal transitions and actor rules.
+- [ ] P1.2 Add `status_transitions`, a reversible migration, atomic `transitionStatus`, and DB exports; prove concurrent transitions are race-safe.
+- [ ] P1.3 Extend logger redaction for `question` and `body`, with regression coverage.
+
+**Manual test gate:** verify the workflow unit/integration behavior, migration rollback, and unchanged app behavior.
+
+### Phase P2 — HTTP and auth primitives
+
+- [ ] P2.1 Add `Clock`, `OPERATOR_USER_IDS`, `requireOperator`, `assertParticipant`, and resolver-based `requirePilotMember`; extend tests.
+- [ ] P2.2 Add `makeActionRoute` and tests for validation, CSRF, session, and handler behavior.
+- [ ] P2.3 Add `makeWebhookRoute` and tests for raw-body signature verification and generic bad-signature response.
+
+**Manual test gate:** verify the route behavior and existing CRUD/auth flows remain unchanged.
+
+### Phase P3 — Ports and services
+
+- [ ] P3.1 Add `PaymentGateway` and mock adapter; provide adapter contract tests.
+- [ ] P3.2 Add `Mailer`, console adapter, mail event subscriber, and failure-isolation tests.
+- [ ] P3.3 Add approval entity/migration and `ApprovalService`; register dependencies and test operator-only, single-use decisions.
+
+**Manual test gate:** verify mock payments, non-fatal mail failures, and approval lifecycle behavior.
+
+### Phase P4 — Frontend primitives
+
+- [ ] P4.1 Add `usePolling`, including hidden-tab pause, visibility refresh, error backoff, and terminal stop.
+- [ ] P4.2 Add `StatusBadge` and `ActionButton`, then showcase all states on `ui-preview`.
+
+**Manual test gate:** manually exercise the UI preview, action errors/retry, and polling visibility/terminal behavior.
+
 ## Phase 1 — Sign-in (#10)
 
 - [ ] 1.1 Record D24 by founder A and update the product brief.
@@ -67,5 +102,5 @@ Spec: `.ai/specs/2026-10-26-pilot-booking-flow.md`
 ## Current gates
 
 - Pilot primitives spec Phases 1–4 are not present in the current source tree; E01 implementation is blocked until they are merged.
-- D24 has not been recorded in the repository; Phase 1 code must not merge before founder A records it.
+- Founder A confirmed D24 (invitation-based e-mail magic link) on 2026-10-31; the decision record and product-brief update remain to be committed.
 - D25, operator bootstrap, E03-T02, E03-S01, mentor interviews (D20), and the rehearsal remain explicit operational gates.
