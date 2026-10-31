@@ -22,7 +22,7 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 ### Phase P1 — Workflow core
 
-- [ ] P1.1 Add the pure state machine and unit tests for legal transitions and actor rules.
+- [x] P1.1 Add the pure state machine and unit tests for legal transitions and actor rules.
 - [ ] P1.2 Add `status_transitions`, a reversible migration, atomic `transitionStatus`, and DB exports; prove concurrent transitions are race-safe.
 - [ ] P1.3 Extend logger redaction for `question` and `body`, with regression coverage.
 

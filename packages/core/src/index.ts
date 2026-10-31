@@ -4,6 +4,7 @@
 export * from './types';
 export * from './utils';
 export * from './constants';
+export * from './workflow/state-machine';
 export * from './http/errors';
 export type { ApiEnvelope } from './http/envelope';
 export * from './validators/parse';
