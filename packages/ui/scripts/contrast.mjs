@@ -8,7 +8,9 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Comments are stripped first: the header comment mentions the selectors.
-const css = readFileSync(path.join(root, 'src/styles/tokens.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const css = readFileSync(path.join(root, 'src/styles/tokens.css'), 'utf8')
+  .replace(/\r\n?/g, '\n')
+  .replace(/\/\*[\s\S]*?\*\//g, '');
 
 // Thresholds: WCAG 1.4.3 text 4.5:1, WCAG 1.4.11 interface elements 3:1.
 const TEXT = 4.5;

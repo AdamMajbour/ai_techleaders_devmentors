@@ -85,6 +85,9 @@
   --message-meta-foreground: var(--muted-foreground); /* R02.3 author and time */
   --composer-border: var(--input); /* R02.2 message box */
   --vignette-edge: var(--palette-shade-on-dark); /* darkening at the edges of the starter page backdrop. Decoration: no contrast requirement */
+  --vignette-center: transparent;
+  --cta-border-clear: transparent;
+  --mask-clear: transparent;
   --mask-opaque: var(--palette-mask-solid); /* alpha masks only: the colour is never shown, only its alpha channel is read */
   --mask-partial: var(--palette-mask-partial);
 
@@ -158,6 +161,9 @@
   --link: var(--foreground); /* decision (a): links in text colour, underlined */
   --status-success: var(--palette-emerald-700); /* 5.04:1 on --background, 5.48:1 on --card. Proposal approved 2026-10-28 */
   --vignette-edge: var(--palette-shade-on-light);
+  --vignette-center: transparent;
+  --cta-border-clear: transparent;
+  --mask-clear: transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {

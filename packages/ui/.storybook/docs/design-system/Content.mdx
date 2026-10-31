@@ -42,6 +42,8 @@ Templates for any list with filters. `noun` is the plural of what the list holds
 | Chip of an active filter | `Status: Accepted`: the label of the filter, a colon, the value. Hidden words: ", remove filter" |
 | Nothing yet | Title `No sessions yet`, then why and the next step |
 | No results for the filters | Title `No sessions with status "Accepted"`, then "No session has this status. Choose another status or clear the filter." and a **Clear filter** button (`variant="outline"`) |
+| Favorite mentors: nothing yet | "No favorite mentors yet. Browse mentors and save the ones you want to find again." with a **Find mentors** button |
+| Favorite mentors: no filter results | "No favorite mentors match {technology}. Choose another technology or clear the filter." with a **Clear filter** button (`variant="outline"`) |
 | Price in a row of a list (`ul`) | Whole amount without decimals: `25 EUR`, in tabular figures. `25.00 EUR` only in a table. The length of a session is added only where the seeker can choose between lengths (the pilot has one length). In a booking's row the price is the booking's own (`priceMinor`, `currency`), shown for **every status**: whether money was taken is told by the status badge and the refund line ("Payment failed", "Refunded"), never by hiding the price. It is never the mentor's current price. Style in a session row: `text-body font-strong tabular-nums text-headline`. The mentor's name in that row is plain text; the row's link is "Open" |
 | Date of an accepted session in a row | `3 Nov 2026, 14:25`: `formatDate` and `formatClock`, one line under the technologies, `text-label tabular-nums text-foreground`. The zone is the seeker's (`timeZone` of the profile, passed to both functions) and its name is not shown. A booking that has no start time shows no date |
 
@@ -78,6 +80,7 @@ An error about money always says whether money was taken. No blame, no exclamati
 | Notes | "No notes yet. Write down what you explain again and again. A note feeds AI answers only after you publish it." |
 | Answers to review | "Nothing to review. When an answer cites one of your notes, it appears here and we email you." |
 | Credits | "No credits yet. You earn a share when a vault answer that cites your note is released." |
+| Favorite mentors | Removing a favorite takes effect immediately, without confirmation or an undo; the seeker can save the mentor again from their profile |
 
 No illustration, no icon tile: the words and the next step are the content (A01).
 

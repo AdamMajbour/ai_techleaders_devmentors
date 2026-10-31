@@ -44,6 +44,7 @@ A calm, dense tool for a developer with a concrete blocker and a mentor who has 
 | `DataTable` | A list of records with columns, pagination or row actions. | A handful of fixed rows (Table). |
 | `BookingRow` | The mentor's and the seeker's list of bookings. | One booking in full (Detail view). |
 | `BookingStatus` | Next to a booking. | A status that is not a booking's (StatusBadge). |
+| `SessionRow` | One session in the seeker's "My sessions" list: mentor details, booking status, charged price and an "Open" link. | A booking in the mentor's list (`BookingRow`) or one session in full (Detail view). |
 | `PriceNotice` | Above any field that leads to a payment (R04). | A price inside a row or a table. |
 | `QuestionForm` | Asking a mentor or the vault a question for a price. | A form without a price (CrudForm), a message in a session (Composer). |
 | `TermsConsent` | Before a payment. | Any other yes or no (Checkbox in a Field). |
@@ -111,7 +112,7 @@ Themes: dark is the default, light is `[data-theme='light']` on the document roo
 | The one main action of a region leads to another page | `Button asChild` around an `a`. Every other way to another page is a `TextLink` |
 | A list with filters whose rows have a link or an action | A `ul` of rows with the filter bar of the List with filters pattern, not a `DataTable` |
 
-No component exists yet for: action menu, radio group, combobox, switch, side panel, popover, tooltip, tabs, toast. Also missing, each with a workaround in "What is missing": pagination outside `DataTable`, a filter bar, a page shell, a row for the seeker's session. Do not add one on the side: see "Contributing".
+No component exists yet for: action menu, radio group, combobox, switch, side panel, popover, tooltip, tabs, toast. Pagination outside `DataTable` is also missing. `FilterBar`, `Page` and `SessionRow` already exist; see Storybook > Design system > What is missing for remaining gaps and workarounds. Do not add a replacement on the side: see "Contributing".
 
 ## What to avoid
 
