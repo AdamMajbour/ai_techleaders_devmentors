@@ -1,5 +1,7 @@
 # Pilot booking flow (E01): find a mentor, prepay, hold a 25-minute text session
 
+Screen-map prototype (reference): [`prototypes/konta-i-role/`](../../prototypes/konta-i-role/); screen decisions: [`lekcja-07/mapa-ekranow.md`](../../lekcja-07/mapa-ekranow.md).
+
 Status: Ready for implementation, conditional (second pre-implement audit `.ai/analysis/pre-implement-2026-10-26-pilot-specs-2.md`, fixes applied; Phase 1 waits for D24, auto-refund waits for D25). Spec 2 of 2; **depends on** `2026-10-26-pilot-primitives.md` (its Phases 1–4 merge first). Source: issue #7 (E01) with #10–#14; design authority `.ai/specs/product-brief.md`.
 
 ## 📝 TLDR
@@ -15,6 +17,7 @@ A developer with an urgent blocker needs to find a mentor, see the price, prepay
 | Q5 | Port + Stripe adapter + mock | Stripe Checkout adapter lives here; live mode stays off until E03-T02 is recorded |
 | Q6 | Mentor proposes the start on accept | `starts_at` set at accept (default now, max +7 days); no availability concept |
 | Q7 | Polling and e-mail; reading confirmed 2026-10-26 | Session thread and bookings pages poll; mail for magic links and "paid question" |
+| Screen-map account model | All accepted pilot invitations grant seeker capability; `role=mentor` adds mentor capability to the same user; operator access remains a separate allowlist (requester, 2026-10-31) | No general RBAC; a combined seeker/mentor account defaults to `/mentor/bookings`, with the seeker list still directly available |
 | Scope | Cut to fit the pilot start 2026-11-02; D24, the 24 h response window (superseded below), the unchosen mail vendor (default HTTP API via `fetch`) and the code-fence default approved by the requester 2026-10-26 | See "Scope for 2026-11-02"; D24 itself is still to be recorded by founder A (Phase 1 step 1) |
 | Grill 1 | Refunds after a mentor decline or an unanswered booking are **not** held for approval (requester, 2026-10-26) | Auto-approved by the system actor. This **contradicts D17** ("refunds approved by founder A"), so it is only live once founder A records **D25** superseding D17 for these reasons; until then the code fails closed to approval for every reason. Operator-initiated refunds (no-show) still need approval |
 | Grill 2 | If the schedule slips, the in-product thread (Phase 5) is cut first | Confirmed cut order; stopgap defined in Risks |
@@ -41,7 +44,7 @@ Alternatives: password plus invite code (rejected by Q3); authorize-then-capture
 
 ## 📝 Architecture
 
-New concepts: `auth` (invitations, login tokens, extends existing), `mentors`, `bookings`, `payments`, `messages`. Reused primitives: state machine and `transitionStatus`, `makeActionRoute`, `makeWebhookRoute`, `requirePilotMember`/`requireOperator`/`assertParticipant`, `PaymentGateway`, `Mailer`, `Clock`, `ApprovalService`, and the UI set. Cross-system effects: Stripe Checkout and webhooks (new external dependency), a mail provider (new, behind the port; default an HTTP API called with `fetch`, vendor replaceable), the register route can be closed by configuration (`PUBLIC_SIGNUP`, open by default in code). Consumers of this spec: E02/E03 (#15–#23) reuse bookings, payments and the status history.
+New concepts: `auth` (invitations, login tokens, extends existing), `mentors`, `bookings`, `payments`, `messages`. Reused primitives: state machine and `transitionStatus`, `makeActionRoute`, `makeWebhookRoute`, `requirePilotMember`/`requireOperator`/`assertParticipant`, `PaymentGateway`, `Mailer`, `Clock`, `ApprovalService`, and the UI set. Every accepted pilot invitation grants seeker capability; an invitation with `role=mentor` adds mentor capability to that same user identity. Operator access remains a separate `OPERATOR_USER_IDS` allowlist, not a general RBAC system. Cross-system effects: Stripe Checkout and webhooks (new external dependency), a mail provider (new, behind the port; default an HTTP API called with `fetch`, vendor replaceable), the register route can be closed by configuration (`PUBLIC_SIGNUP`, open by default in code). Consumers of this spec: E02/E03 (#15–#23) reuse bookings, payments and the status history.
 
 ```mermaid
 flowchart LR
@@ -64,7 +67,7 @@ Conventions as in the primitives spec. Tables from that spec (`status_transition
 
 | Table (concept) | Columns (beyond id, created_at, updated_at) | Constraints / notes |
 |---|---|---|
-| `invitations` (auth) | `email` (lowercased), `display_name` (set by the invite script, copied to `users.name` on first sign-in, since `users.name` is required), `role` (`seeker`\|`mentor`), `invited_by` (nullable: script), `accepted_by_user_id`, `accepted_at`, `revoked_at` | unique `email`; accepted and unrevoked = pilot member (D19) |
+| `invitations` (auth) | `email` (lowercased), `display_name` (set by the invite script, copied to `users.name` on first sign-in, since `users.name` is required), `role` (`seeker`\|`mentor`), `invited_by` (nullable: script), `accepted_by_user_id`, `accepted_at`, `revoked_at` | unique `email`; accepted and unrevoked = pilot member (D19) with seeker capability; `role=mentor` adds mentor capability to the same user, so a mentor can also book as a seeker; operator access remains separately configured |
 | `login_tokens` (auth) | `email`, `token_hash` (SHA-256 of 32 random bytes), `expires_at` (15 min), `consumed_at` | unique `token_hash`; only the hash is stored; single use via conditional update |
 | `mentor_profiles` (mentors) | `user_id`, `slug`, `headline`, `bio`, `technologies` (space-separated normalized slugs), `public_work_url`, `is_listed`, `last_active_at` (nullable) | unique `user_id`, unique `slug`; no rating fields (N02); the list is a handful of mentors, so the technology filter runs in the service over listed profiles (move to a join table when the list outgrows that) |
 | `bookings` (bookings) | `seeker_id`, `mentor_id`, `question` (≤4000, sensitive; shown to the mentor only while the booking is `paid` or `accepted`), `duration_minutes` (25), `price_minor`, `currency`, `status`, `source` (`link`\|`list`), `landed_at`, `starts_at`, `ends_at` | indexes (`mentor_id`,`status`), `seeker_id`; **exclusion constraint** on accepted rows: `EXCLUDE USING gist (mentor_id WITH =, tstzrange(starts_at, ends_at) WITH &&) WHERE (status = 'accepted')` (migration runs `CREATE EXTENSION IF NOT EXISTS btree_gist`, its `down()` drops the constraint and leaves the extension) |
@@ -106,7 +109,7 @@ All routes are `apiHandler`-wrapped (envelope `{ ok, data | error }`). Mutations
 | Method, path | Builder | Auth | Request → response |
 |---|---|---|---|
 | `POST /api/auth/magic-link/request` | `apiHandler` | none; limited per client+email | `{ email }` → always `200 { sent: true }`; mail only if the e-mail has an accepted, unrevoked invitation (an existing password user without one is not a pilot member) |
-| `POST /api/auth/magic-link/consume` | `apiHandler` | none; limited | `{ token }` → session cookie + `{ user }`; every failure is `401 invalid or expired link`; first use by an invitee creates the user and emits `auth.user.registered` |
+| `POST /api/auth/magic-link/consume` | `apiHandler` | none; limited | `{ token }` → session cookie + `{ user }`; every failure is `401 invalid or expired link`; first use by an invitee creates one user identity and emits `auth.user.registered`; an accepted `mentor` invitation grants both seeker and mentor capabilities |
 | `GET /api/mentors?technology=&page=` | `makeCrudRoute.list` | pilot member | `Page<MentorCardDto>`, listed mentors only; each card and profile carries `activity`: `within_hour` \| `today` \| `earlier` \| `never`, computed server-side from `last_active_at` and `Clock` (no precise timestamp is exposed). `last_active_at` is touched only by deliberate mentor actions: consuming a magic link, opening a booking, accept, decline, profile update; never by list polling, so a left-open tab does not look like presence |
 | `GET /api/mentors/[id]` | `makeCrudRoute.read` | pilot member | `MentorProfileDto` by UUID (the builder's `id` param is a UUID); unknown or non-member → 404. The page `/m/[slug]` resolves a slug with `GET /api/mentors?slug=` (the list query also accepts `slug`; returns at most one profile, listed or not, to a pilot member) |
 | `PUT /api/mentors/[id]` | `makeCrudRoute.update` | owner | profile fields, technologies, `isListed` |
@@ -130,6 +133,9 @@ New env (zod, lazy): `PAYMENTS_MODE` (`mock` default | `stripe`), `STRIPE_SECRET
 Pages: `(auth)/login` (e-mail form), `(auth)/auth/verify` (POSTs the token, strips it from the URL, `Referrer-Policy: no-referrer`), `(marketing)/mentors` (plain technology filter + DataTable, no ratings), `(marketing)/m/[slug]` (profile + booking form), `(student)/bookings` and `/bookings/[id]`, `(mentor)/mentor/bookings` and `/mentor/profile`, `(operator)/operator/approvals`.
 
 Only what is unique:
+- **Screen-map entry and role destinations:** a safe same-origin return path wins when the signed-in user is authorized for it; otherwise an operator lands on `/operator/approvals`, a mentor on `/mentor/bookings`, and a seeker on `/mentors`. A user with both seeker and mentor capabilities defaults to `/mentor/bookings` (owner-approved 2026-10-31); the seeker list remains directly available. These are existing destinations, not new dashboards.
+- **Access denial and expired sessions:** unauthenticated protected-page requests go to login with only a same-origin return path; an expired session is identified without exposing protected data. After sign-in, return only if the user still has access, otherwise use their default destination. Authenticated users without access see a neutral denial; resources whose existence is hidden retain 404. Sensitive form content and tokens are never retained in the return path or client storage.
+- **Design-system scope:** use existing `Page`, `Card`, `Field`, `Input`, `Button`, `Alert`, `TextLink`, and feedback components; add no shared primitive or login-provider component. Use `Card` on login per the design-system guide; unifying the existing `LoginView` is deferred. Do not add calendar, messages, ratings, coupons, or other unlisted features to the role home pages.
 - **Price before the first keystroke (R04):** the price notice renders above the question field; the form cannot show without it.
 - **Under five minutes to booking:** link → e-mail → inbox → one tap → profile → question → Checkout; no password, no profile form for a seeker.
 - **Session thread:** polling every 3 s, countdown from `serverTime`, composer disabled outside the window with the reason stated; read-only after `endsAt`. Text only (N01): no attachments, no video links offered.
@@ -206,6 +212,16 @@ Relied on: D04, D05/D08/D13, D15, D16, D17, D19, R01, R04, R05, N01, N02 (R02, D
 | #14 non-participant sees nothing | 5.1 | 404 test |
 | #14 session ends after 25 minutes | 5.1, 5.2 | post after `ends_at` rejected; page read-only |
 | #10 decision record and brief names the method | 1.1 | D24 file exists, brief line updated |
+| #10 / s01 invitation-only magic-link request | 1.1, 1.3, 1.4 | invited and uninvited valid addresses receive the same `200 { sent: true }` response; only an accepted, unrevoked invitation causes mail; UI tests cover invalid email, loading, neutral confirmation, rate limit and generic request failure without account enumeration. Mail transport failure is logged and remains indistinguishable from success |
+| #10 / s01 registration and login-provider scope | 1.3, 1.4 | pilot deployment has `PUBLIC_SIGNUP=false`; no public registration, password or GitHub flow is offered to pilot invitees; existing password behavior for non-pilot users is unchanged |
+| #10 / s04 magic-link verification | 1.2, 1.3, 1.4 | UI tests cover loading and generic server-error states; valid token succeeds once and expires after 15 minutes; expired/reused tokens return the generic 401 with a request-new-link path; success redirects immediately, without a success screen; the token is removed from the URL |
+| #10 / s04 and s08 safe return after sign-in | 1.2, 1.4 | same-origin return path is preserved only while still authorized; external, malformed or newly unauthorized destinations fall back to the user's default page; tokens and sensitive form content never enter the return path or client storage |
+| #10 / s01 account conflicts | 1.2, 1.3 | an existing account without a valid pilot invitation receives the same request response; no automatic account or sign-in-method linking occurs |
+| #10 / s05 and s06 combined seeker/mentor capability | 1.2, 1.4, 2.3 | a single accepted mentor invitation yields one `user.id` that can use both seeker and mentor flows; default destination is `/mentor/bookings`; a seeker-only invitation defaults to `/mentors`; an operator's allowlist entry is required for operator access; operator destination takes precedence |
+| #10 / s05 seeker home | 2.2, 2.3 | seeker-only login defaults to the invited-mentor list; list responses include listed mentors only; loading, empty and error states have UI/service tests |
+| #10 / s06 mentor home | 2.3, 4.1 | mentor login defaults to that mentor's bookings; loading, empty and error states have UI tests; the list and actions expose only bookings belonging to that mentor |
+| #10 / s07 operator home | 1.4, 4.3 | allowlisted operator login defaults to approvals; loading, empty and error states have UI tests; a non-operator cannot read or act on the approval queue |
+| #10 / s08 access denial | 1.3, 1.4, 2.2, 4.1, 4.3 | unauthenticated requests go to s01; expired-session notice offers sign-in; authenticated denial is neutral and links to the user's permitted home; protected hidden resources preserve 404; after sign-in, access is rechecked before return and unauthorized destinations fall back to the user's home |
 
 ## 📋 Phasing
 
@@ -280,6 +296,15 @@ Validation after each step: `npm run type-check && npm run lint && npm test && n
 | `OPERATOR_USER_IDS` set after founder A's first sign-in | any approval-gated refund; invitations of other participants |
 | Phase 6 rehearsal record, D24, D25, E03-T02, E03-S01 | founder A's go-live flip (`sk_live_` + `PAYMENTS_LIVE_ENABLED=true`) |
 | Mentor interviews (D20) mention the activity label | showing the label to seekers |
+
+### Screen-map decisions without acceptance criteria
+
+| Screen | Recorded decision |
+|---|---|
+| s02 | No public registration screen or flow in the pilot. The account is created on first successful use of an invitation link; `PUBLIC_SIGNUP=false` in the pilot deployment. |
+| s03 | No separate registration-verification or success screen. Link-sent feedback is part of s01; successful verification redirects from s04. |
+
+No separate design-system component is added for excluded GitHub/password providers or registration. Use seeker as the product term, not mentee. No account linking is done automatically; login responses must not reveal whether an address has an account or invitation.
 
 ### Close-out
 Update the primitives catalogue with anything learned, lesson entry for non-obvious findings, and move both specs to `.ai/specs/implemented/` after Phase 5 merges.
