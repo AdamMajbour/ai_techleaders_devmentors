@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<!-- Ekran "Lista mentorów" zbudowany bez design systemu i bez komponentów projektu (ćwiczenie z lekcji 06).
+     Treść z .ai/specs/product-brief.md: D04 (lista filtrowana po technologii), D16 (25 EUR za sesję 25 min),
+     D19 (lista tylko dla zaproszonych), R04 (cena przed pytaniem, zwrot przy nieobecności mentora),
+     R05 (mentor widzi pytanie przed akceptacją), N01 (tekst, bez wideo), N02 (bez ocen).
+     Profile mentorów to przykłady: brief nie zawiera nazwisk mentorów. -->
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Znajdź mentora – DevMentor</title>
+  <style>
+    :root {
+      --accent: #4f46e5;
+      --accent-dark: #4338ca;
+      --text: #111827;
+      --muted: #6b7280;
+      --bg: #f9fafb;
+      --card: #ffffff;
+      --border: #e5e7eb;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    a { color: var(--accent); }
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+    }
+    .bar {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand { font-weight: 700; font-size: 20px; color: var(--text); text-decoration: none; }
+    .brand span { color: var(--accent); }
+    nav { display: flex; gap: 24px; font-size: 15px; }
+    nav a { color: var(--muted); text-decoration: none; }
+    nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
+    main { max-width: 1000px; margin: 0 auto; padding: 40px 24px 64px; }
+    h1 { font-size: 34px; line-height: 1.2; margin-bottom: 8px; }
+    .lead { color: var(--muted); font-size: 17px; max-width: 640px; margin-bottom: 24px; }
+    .notice {
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+    .field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .field select {
+      font: inherit;
+      padding: 10px 12px;
+      border: 1px solid #9ca3af;
+      border-radius: 8px;
+      background: #fff;
+      min-width: 240px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+    .chips button {
+      font: inherit;
+      font-size: 14px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .chips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .count { font-size: 14px; color: var(--muted); margin-bottom: 12px; }
+    ul.list { list-style: none; display: grid; gap: 16px; }
+    .mentor {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px 32px;
+    }
+    .mentor h2 { font-size: 20px; }
+    .tag-example {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      background: #fef3c7;
+      color: #92400e;
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .headline { color: var(--muted); font-size: 15px; margin: 4px 0 12px; }
+    .techs { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin-bottom: 12px; }
+    .techs li { font-size: 13px; background: #f3f4f6; border-radius: 4px; padding: 2px 8px; }
+    .bio { font-size: 15px; max-width: 560px; margin-bottom: 8px; }
+    .work { font-size: 14px; }
+    .side { text-align: right; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; gap: 16px; }
+    .price { font-size: 24px; font-weight: 700; }
+    .price small { display: block; font-size: 13px; font-weight: 400; color: var(--muted); }
+    .btn {
+      font: inherit;
+      font-weight: 600;
+      padding: 10px 20px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn:hover { background: var(--accent-dark); }
+    .empty { text-align: center; padding: 48px 16px; color: var(--muted); background: var(--card); border: 1px dashed #9ca3af; border-radius: 12px; }
+    .rules { margin-top: 40px; font-size: 14px; color: var(--muted); max-width: 720px; }
+    .rules h2 { font-size: 16px; color: var(--text); margin-bottom: 8px; }
+    .rules ul { padding-left: 20px; }
+    .rules li { margin-bottom: 4px; }
+    footer { border-top: 1px solid var(--border); padding: 24px; text-align: center; font-size: 13px; color: var(--muted); }
+    @media (max-width: 700px) {
+      h1 { font-size: 28px; }
+      .mentor { grid-template-columns: 1fr; }
+      .side { align-items: stretch; text-align: left; }
+      .field select { width: 100%; min-width: 0; }
+      .bar { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <a class="brand" href="#">Dev<span>Mentor</span></a>
+      <nav aria-label="Główna nawigacja">
+        <a href="#" aria-current="page">Mentorzy</a>
+        <a href="#">Moje pytania</a>
+        <a href="#">Wyloguj się</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>Znajdź mentora</h1>
+    <p class="lead">Utknąłeś na konkretnym problemie i nie masz kogo zapytać? Wybierz technologię, wybierz mentora z listy i napisz pytanie. Mentor odpowiada tekstem w 25‑minutowej sesji.</p>
+
+    <p class="notice">Pilotaż (2 listopada – 14 grudnia 2026): lista jest widoczna tylko dla zaproszonych uczestników.</p>
+
+    <div class="filters">
+      <div class="field">
+        <label for="tech">Technologia</label>
+        <select id="tech">
+          <option value="">Wszystkie technologie</option>
+          <option>Python</option>
+          <option>React</option>
+          <option>TypeScript</option>
+          <option>Kubernetes</option>
+          <option>PostgreSQL</option>
+        </select>
+      </div>
+    </div>
+    <div class="chips" role="group" aria-label="Szybki wybór technologii">
+      <button type="button" data-tech="Python" aria-pressed="false">Python</button>
+      <button type="button" data-tech="React" aria-pressed="false">React</button>
+      <button type="button" data-tech="TypeScript" aria-pressed="false">TypeScript</button>
+      <button type="button" data-tech="Kubernetes" aria-pressed="false">Kubernetes</button>
+      <button type="button" data-tech="PostgreSQL" aria-pressed="false">PostgreSQL</button>
+    </div>
+
+    <p class="count" id="count" aria-live="polite"></p>
+
+    <ul class="list" id="list">
+      <li class="mentor" data-techs="Python,PostgreSQL">
+        <div>
+          <h2>Senior inżynier Python <span class="tag-example">Przykładowy profil</span></h2>
+          <p class="headline">Backend, mówca na meetupach</p>
+          <ul class="techs"><li>Python</li><li>PostgreSQL</li></ul>
+          <p class="bio">Odpowiada na te same pytania o Pythona od lat i ma na to własne notatki. Pisze zwięźle i podaje przykład kodu.</p>
+          <p class="work">Publiczna praca: <a href="#">prezentacje z meetupów</a></p>
+        </div>
+        <div class="side">
+          <div class="price">25 EUR<small>za sesję 25 min, tekst</small></div>
+          <a class="btn" href="#">Napisz pytanie</a>
+        </div>
+      </li>
+
+      <li class="mentor" data-techs="React,TypeScript">
+        <div>
+          <h2>Inżynier frontend <span class="tag-example">Przykładowy profil</span></h2>
+          <p class="headline">React i TypeScript w produkcji</p>
+          <ul class="techs"><li>React</li><li>TypeScript</li></ul>
+          <p class="bio">Pomaga przy błędach w interfejsie i architekturze komponentów. Najpierw czyta pytanie, potem decyduje, czy może pomóc.</p>
+          <p class="work">Publiczna praca: <a href="#">repozytoria na GitHubie</a></p>
+        </div>
+        <div class="side">
+          <div class="price">25 EUR<small>za sesję 25 min, tekst</small></div>
+          <a class="btn" href="#">Napisz pytanie</a>
+        </div>
+      </li>
+
+      <li class="mentor" data-techs="Kubernetes,Python">
+        <div>
+          <h2>Inżynier platformowy <span class="tag-example">Przykładowy profil</span></h2>
+          <p class="headline">Infrastruktura i wdrożenia</p>
+          <ul class="techs"><li>Kubernetes</li><li>Python</li></ul>
+          <p class="bio">Rozwiązuje problemy ze stagingiem i wdrożeniami, także w piątek po południu.</p>
+          <p class="work">Publiczna praca: <a href="#">artykuły techniczne</a></p>
+        </div>
+        <div class="side">
+          <div class="price">25 EUR<small>za sesję 25 min, tekst</small></div>
+          <a class="btn" href="#">Napisz pytanie</a>
+        </div>
+      </li>
+
+      <li class="mentor" data-techs="PostgreSQL,TypeScript">
+        <div>
+          <h2>Inżynier backend <span class="tag-example">Przykładowy profil</span></h2>
+          <p class="headline">Bazy danych i API</p>
+          <ul class="techs"><li>PostgreSQL</li><li>TypeScript</li></ul>
+          <p class="bio">Pomaga z zapytaniami, migracjami i projektowaniem API, w tym w systemach finansowych.</p>
+          <p class="work">Publiczna praca: <a href="#">wystąpienia i notatki</a></p>
+        </div>
+        <div class="side">
+          <div class="price">25 EUR<small>za sesję 25 min, tekst</small></div>
+          <a class="btn" href="#">Napisz pytanie</a>
+        </div>
+      </li>
+    </ul>
+
+    <div class="empty" id="empty" hidden>
+      <p><strong>Brak mentorów dla tej technologii.</strong></p>
+      <p>Wybierz inną technologię albo wyczyść filtr.</p>
+    </div>
+
+    <section class="rules" aria-labelledby="rules-title">
+      <h2 id="rules-title">Jak to działa</h2>
+      <ul>
+        <li>Cenę widzisz przed napisaniem pytania i płacisz z góry.</li>
+        <li>Mentor czyta Twoje pytanie, zanim je zaakceptuje.</li>
+        <li>Jeśli mentor nie pojawi się na sesji, zwrot trafia do Ciebie tego samego dnia.</li>
+        <li>Sesje są tekstowe, bez wideo. Mentorów nie oceniamy gwiazdkami, zamiast tego pokazujemy link do ich publicznej pracy.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>DevMentor · pilotaż dla zaproszonych uczestników</footer>
+
+  <script>
+    const select = document.getElementById('tech');
+    const chips = document.querySelectorAll('.chips button');
+    const items = document.querySelectorAll('#list > li');
+    const count = document.getElementById('count');
+    const empty = document.getElementById('empty');
+    const list = document.getElementById('list');
+
+    function apply(tech) {
+      let shown = 0;
+      items.forEach(li => {
+        const match = !tech || li.dataset.techs.split(',').includes(tech);
+        li.hidden = !match;
+        if (match) shown++;
+      });
+      select.value = tech;
+      chips.forEach(c => c.setAttribute('aria-pressed', String(c.dataset.tech === tech)));
+      list.hidden = shown === 0;
+      empty.hidden = shown !== 0;
+      count.textContent = shown === 1 ? 'Znaleziono 1 mentora' : `Znaleziono mentorów: ${shown}`;
+    }
+
+    select.addEventListener('change', () => apply(select.value));
+    chips.forEach(c => c.addEventListener('click', () => apply(c.getAttribute('aria-pressed') === 'true' ? '' : c.dataset.tech)));
+    apply('');
+  </script>
+</body>
+</html>

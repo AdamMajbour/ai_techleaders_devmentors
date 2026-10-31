@@ -1,0 +1,130 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as TableStories from '../../../src/components/ui/table.stories';
+import { DoDont } from '../../blocks/DoDont';
+
+<Meta of={TableStories} />
+
+# Table
+
+## 1. What it is for
+
+A table shows records that share the same attributes, so the reader can scan down a column and compare.
+
+<Canvas of={TableStories.Playground} />
+
+## 2. When to use it
+
+- The mentor list: role, technologies, public work, price (D04, N02: no ratings).
+- A seeker's questions with their status and amount; a mentor's incoming bookings.
+- The operator's list of approvals and the pilot counts.
+
+Tables are for dense lists (K1). The component is the base: `DataTable` adds loading, error, empty states and pagination on top of it.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A single record's details | A detail view with labelled values | There is nothing to compare across rows |
+| Content that is mostly prose | A list of sections | A table squeezes long text into narrow columns |
+| Rows that each need several actions and a long description | A row list pattern (planned) | A wide table scrolls sideways on a phone |
+| Layout | CSS | A table is for data, not for arranging the page |
+
+## 4. Anatomy
+
+1. **Caption** (recommended): names the table for assistive technology.
+2. **Header row**: one clear header per column (R01.3).
+3. **Body rows**: divided by a hairline, never wrapped in cards (R01.1).
+4. **Footer** (optional): totals.
+
+## 5. Variants
+
+One density, the compact one: 12 px sideways and 8 px up and down inside a cell (K1). Numbers are right-aligned and use tabular figures. There are no zebra stripes and no heavy header fill.
+
+<Canvas of={TableStories.WithStatusAndFooter} />
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Default | Clear header, hairline between rows | R01.1, R01.3 |
+| Hover | No row hover style. A row is not a button. Put the link in a cell | Proposal |
+| Selected row | A `--muted` surface (`data-state="selected"`). Pair it with a visible "Chosen" column or mark, never colour alone | WCAG 1.4.1 |
+| Focus | The focus ring of a link or a button in a cell | WCAG 2.4.7 |
+| Loading | `aria-busy`, a loading text and skeleton rows under the same header (see Skeleton) | Proposal |
+| Empty, error | `DataTable` swaps the table for an empty or error state (see EmptyState and ErrorMessage) | Proposal |
+| Disabled, pressed | Not applicable | |
+
+<Canvas of={TableStories.SelectedRow} />
+
+## 7. Behavior and accessibility
+
+- **Caption or label:** every table has a `<caption>` or an `aria-label`.
+- **Headers:** `TableHead` is a real `<th scope="col">`, so a screen reader announces the column header with each cell. Use `scope="row"` for a header at the start of a row.
+- **Keyboard:** a table is not focusable by itself. Links and buttons inside cells are, in reading order.
+- **Narrow screens:** the table scrolls sideways inside its container. The page never does (WCAG 1.4.10).
+
+<Canvas of={TableStories.HeadersAnnounceEachCell} />
+
+## 8. Content
+
+- **Headers:** a noun, short: "Mentor", "Price". Sentence case, no colon.
+- **Cells:** short values. Long text wraps in its cell.
+- **Numbers:** right-aligned, with the currency ("25.00 EUR"), tabular figures.
+- **Empty cell:** an en dash with a visually hidden "none", never a blank.
+
+<Canvas of={TableStories.LongContentNarrow} />
+
+## 9. Responsiveness
+
+| Width | Behaviour |
+|---|---|
+| 320 px | The table scrolls sideways in its container. Keep the first column the most important |
+| 768 px | Usually fits |
+| 1440 px | Fits. The content width is capped at `--layout-content-max` (72 rem) |
+
+## 10. API
+
+<ArgTypes of={TableStories} />
+
+## 11. Code
+
+```tsx
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@devmentor/ui';
+
+<Table>
+  <TableCaption>Your questions</TableCaption>
+  <TableHeader>
+    <TableRow>
+      <TableHead>Question</TableHead>
+      <TableHead>Status</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>…</TableBody>
+</Table>
+```
+
+```tsx
+// Typical: let DataTable build it, with loading, error, empty and pagination included.
+<DataTable
+  columns={[{ key: 'question', header: 'Question', cell: (row) => row.question }]}
+  rows={questions}
+  getRowId={(row) => row.id}
+  isLoading={isLoading}
+  error={error}
+  onRetry={reload}
+/>
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | A header row with "Mentor", "Technologies", "Price", a hairline between rows | The reader scans columns (R01.3, R01.1) |
+| Don't | A card around each row with a shadow | Boxed rows are a generic look and waste space (A01) |
+| Do | "25.00 EUR" right-aligned with tabular figures | Digits line up for comparison |
+| Don't | A rating column with stars | Ratings are not part of the product (N02) |
+
+## 13. Related
+
+- **Confused with:** a list of rows (planned) and a detail view.
+- **Used in patterns:** List with filters (`DataTable`), Review queue, Operator lists.

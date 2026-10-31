@@ -1,0 +1,115 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as TextLinkStories from '../../../src/components/ui/text-link.stories';
+import { TextLink } from '../../../src/components/ui/text-link';
+import { Button } from '../../../src/components/ui/button';
+import { DoDont } from '../../blocks/DoDont';
+
+<Meta of={TextLinkStories} />
+
+# TextLink
+
+## 1. What it is for
+
+A text link takes the user to another page or place, inside a sentence or on its own line.
+
+<Canvas of={TextLinkStories.InSentence} />
+
+## 2. When to use it
+
+- Point to the pilot terms next to the payment button.
+- Open a mentor's public work from the mentor list.
+- Go back to a list from a detail view.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| Starting an action such as paying or sending | `Button` | A link does not announce an action (WAI-ARIA APG) |
+| Choosing between options | `Select` or `Checkbox` | A choice is state, not navigation |
+| A link that must look like the page's main action | `Button` with `asChild` | It keeps the button's focus and size and still navigates |
+
+## 4. Anatomy
+
+1. **Text** (required): says where it goes, not "click here".
+2. **Underline** (always): part of the link, not a hover effect.
+
+## 5. Variants
+
+There is one variant on purpose. A link in a sentence inherits the size and weight of the sentence. Colour comes from `--link`: the accent in the dark theme, the text colour in the light theme (decision (a), 2026-10-27).
+
+## 6. States
+
+<Canvas of={TextLinkStories.States} />
+
+| State | What the user sees | Source |
+|---|---|---|
+| Default | Underlined text in `--link` | WCAG 1.4.1 |
+| Hover | The underline becomes thicker. No colour change | Proposal |
+| Focus | A 2 px ring in `--ring`, 2 px gap | WCAG 2.4.7 |
+| Pressed | No separate style | Proposal |
+| Blocked | Does not exist. If a destination is not available, show plain text and say why | Proposal |
+| Loading, error | Not link states. The destination page handles them | |
+
+## 7. Behavior and accessibility
+
+- **Keyboard:** `Tab` reaches it, `Enter` follows it.
+- **Role:** a real `<a href>`: a screen reader announces "link". Use `asChild` to pass the styles to a framework `Link`.
+- **Colour:** the underline means colour is never the only sign (WCAG 1.4.1).
+- **Target size:** an inline link in a sentence is exempt from 24 × 24 px (WCAG 2.5.8). A link on its own line has a roomy line height.
+
+<Canvas of={TextLinkStories.KeyboardFocus} />
+
+## 8. Content
+
+- **Text:** the destination or the action's object: "Read the pilot terms", "Back to mentors". Never "here" or "click here".
+- **Length:** up to about 6 words. A longer link wraps with the sentence.
+- **External:** if it leaves the product, say so in the text.
+
+<Canvas of={TextLinkStories.LongTextNarrow} />
+
+## 9. Responsiveness
+
+It wraps with the text at every width, so it never causes sideways scrolling at 320 px.
+
+## 10. API
+
+<ArgTypes of={TextLinkStories} />
+
+## 11. Code
+
+```tsx
+import { TextLink } from '@devmentor/ui';
+
+<TextLink href="/terms">pilot terms</TextLink>
+```
+
+```tsx
+// Typical: next to the pay button, using the framework's Link.
+<p>
+  By paying you accept the{' '}
+  <TextLink asChild>
+    <Link href="/terms">pilot terms</Link>
+  </TextLink>
+  .
+</p>
+```
+
+## 12. Do and don't
+
+<DoDont
+  doExample={<TextLink href="#terms">Read the pilot terms</TextLink>}
+  doWhy="The text says where the link goes."
+  dontExample={<TextLink href="#terms">Click here</TextLink>}
+  dontWhy="'Click here' means nothing when read out of context by a screen reader."
+/>
+<DoDont
+  doExample={<TextLink href="#terms">Back to mentors</TextLink>}
+  doWhy="Going back is navigation, so it is a link."
+  dontExample={<Button variant="ghost">Back to mentors</Button>}
+  dontWhy="A button that only navigates cannot be opened in a new tab."
+/>
+
+## 13. Related
+
+- **Confused with:** `Button` (an action).
+- **Used in patterns:** Form (terms next to submit), Detail view (back link), Paid action flow (terms notice).

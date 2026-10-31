@@ -1,0 +1,59 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Product/Epics/E03 Terms and pilot counts" />
+
+# E03 Terms and pilot counts
+
+The minimal pilot terms, the seeker's acceptance of them at payment, and the numbers the founders read at the two reviews (backlog: E03, issue #9). Each state below is one story in **Product > Screens > E03 Terms and pilot counts**.
+
+Sources: the backlog, the booking spec (Grill 9, the pilot-count query), the vault spec, and decisions D08, D15, D16, D17, D18 and D19. The screens are examples built from the design system, with example data and no routing.
+
+## Steps of the flow
+
+1. The pilot terms are written for review and checked by the verifier before the first payment (E03-T01, E03-T02).
+2. A seeker reads the terms and accepts them at payment, with a box that is never ticked in advance (E03-S01).
+3. At the two reviews, on 30 November and 14 December 2026, the founders read the pilot counts and decide whether to stop or revise (E03-S03, D08).
+4. Thirty days after the pilot ends, session text and notes are deleted (E03-T03). This is a job and has no screen.
+
+## Screens and their states
+
+| Screen | Stories | States shown | Main components |
+|---|---|---|---|
+| **1. Accepting the terms at payment** (E03-S01) | Consent at payment not yet accepted, server wants the current terms | the form with the unticked box and a blocked button that says why, a refusal of the consent by the server with focus on the box and the question kept | `QuestionForm`, `TermsConsent` |
+| **2. Pilot terms page** | Pilot terms page | the working text in sections | `Alert`, `TextLink` |
+| **3. Pilot counts** (E03-S03) | Counts at the start, at the first review, no condition met, loading, error, not for you | windows open, conditions met, nothing met, loading, error, no access | `PilotCountsTable`, `Alert`, `ErrorMessage` |
+
+## Rules this epic relies on
+
+| Rule | Where it shows | Source |
+|---|---|---|
+| The seeker accepts the terms before paying, and the box is never ticked in advance | Accepting the terms | E03-S01 |
+| Opening the terms does not accept them | Accepting the terms | Consent pattern |
+| Test payments are not counted | Pilot counts | Booking spec, Grill 9 |
+| A vault answer counts when it is released, refunded purchases do not | Pilot counts | Vault spec |
+| Thresholds are provisional targets with no baseline | Pilot counts | D08 |
+| The counts are for the operator only: others see "does not exist or no access" | Pilot counts | Booking spec (operator routes), Security |
+
+## Source files
+
+| What | Where (`packages/ui/src`) |
+|---|---|
+| Components | `components/consents/TermsConsent.tsx`, `components/pilot/PilotCountsTable.tsx` |
+| Screen compositions | `screens/e03-views.tsx` |
+| Screen stories | `screens/e03.stories.tsx` |
+| Example data and the working terms | `.storybook/blocks/sampleData.ts` |
+
+## Work still to do in the product
+
+- **The pilot-count query** of E03-S03: live payments only, a vault answer counted when released.
+- **Pages:** the terms page (`/terms`) and an operator page for the counts. Neither exists.
+- **The terms text** after the legal review, and the version of the terms sent with the consent.
+
+## What is not covered yet
+
+- **The wording of the terms is a working text**, waiting for the legal review (E03-T01, E03-T02). The page shows it as such and states only facts of the decision records.
+- **Payout of mentors through Stripe (E03-S02) is not built.** It has no specification.
+- **The retention sweep (E03-T03)** has no screen.
+- **The operator's refund approvals** (`/operator/approvals` of the booking spec) have no screen yet.
+- **The criteria measured outside the app** (mentor availability, notes coverage) are not in the table. They are read from other sources at the reviews.
+- **The numbers are examples,** not pilot results.

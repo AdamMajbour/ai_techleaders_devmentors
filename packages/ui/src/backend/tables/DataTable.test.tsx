@@ -80,3 +80,36 @@ describe('DataTable', () => {
     expect(screen.queryByRole('navigation', { name: 'Pagination' })).not.toBeInTheDocument();
   });
 });
+
+describe('DataTable, states and tokens', () => {
+  const columns = [{ key: 'title', header: 'Title', cell: (row: { id: string; title: string }) => row.title }];
+  const getRowId = (row: { id: string }) => row.id;
+
+  it('names the table with its caption', () => {
+    render(<DataTable columns={columns} rows={[{ id: '1', title: 'First' }]} getRowId={getRowId} caption="Your questions" />);
+    expect(screen.getByRole('table', { name: 'Your questions' })).toBeInTheDocument();
+  });
+
+  it('offers a next step in the empty state, for example clearing the filter', async () => {
+    const onClear = jest.fn();
+    render(
+      <DataTable
+        columns={columns}
+        rows={[]}
+        getRowId={getRowId}
+        emptyTitle="No mentors for Kubernetes"
+        emptyDescription="Try another technology or clear the filter."
+        emptyAction={<button onClick={onClear}>Clear filter</button>}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Clear filter' }));
+    expect(onClear).toHaveBeenCalledTimes(1);
+  });
+
+  it('marks the loading region busy and shows skeleton blocks hidden from assistive technology', () => {
+    const { container } = render(<DataTable columns={columns} rows={undefined} getRowId={getRowId} isLoading />);
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
+    expect(container.querySelectorAll('[data-slot="skeleton"][aria-hidden="true"]')).toHaveLength(3);
+    expect(screen.getByRole('status')).toHaveTextContent('Loading');
+  });
+});

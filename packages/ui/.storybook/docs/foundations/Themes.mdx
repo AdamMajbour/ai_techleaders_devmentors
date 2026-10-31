@@ -1,0 +1,33 @@
+import { Meta, Unstyled } from '@storybook/addon-docs/blocks';
+import { ThemeTokens } from '../../blocks/ThemeTokens';
+
+<Meta title="Foundations/Themes" />
+
+# Themes
+
+DevMentor has two themes: **dark** (the default, existing) and **light** (approved on 2026-10-27, no reference gives its values).
+
+## How a theme is chosen
+
+1. The theme is the `data-theme` attribute on the document root (`html`). Dark is the default when the attribute is missing.
+2. Dialogs, menus and popovers render outside the story's tree. Because the attribute sits on the root, they inherit the theme too.
+3. In Storybook the toolbar switches the theme and sets that attribute.
+4. `data-theme` also works on a single element, which is how Foundations pages show both themes side by side.
+5. Every colour pair is measured in both themes (`npm run tokens:contrast`), and story tests run in both (`npm run test:stories`).
+
+## Differences between the themes
+
+| Token | Dark | Light | Why |
+|---|---|---|---|
+| `--primary` | lime fill | lime fill | The accent is the same in both themes (R01.5) |
+| `--link` | `--primary` | `--foreground` | Lime is 1.11:1 on the light page (decision (a)) |
+| `--ring` | `--primary` | `--foreground` | Same reason |
+| `--destructive` | brighter red | darker red | Contrast on each background |
+| `--destructive-foreground` | dark ink | white | Contrast on each destructive fill |
+| `--input` | darker stone | lighter stone | Control outlines need 3:1 on each background |
+
+## Every colour token
+
+<Unstyled>
+  <ThemeTokens />
+</Unstyled>

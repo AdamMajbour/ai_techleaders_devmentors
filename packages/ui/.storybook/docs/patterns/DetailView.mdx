@@ -1,0 +1,108 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as DetailStories from '../../../src/patterns/detail-view.stories';
+
+<Meta of={DetailStories} />
+
+# Detail view
+
+## 1. What it is for
+
+A detail view shows one record: what it is, where it stands and what the user can do next.
+
+<Canvas of={DetailStories.Accepted} />
+
+## 2. When to use it
+
+- A seeker's question and its status.
+- A booking for the mentor, with the question to read before accepting (R05).
+- A vault answer, a note.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| Many records to compare | A table or list | A detail view shows one |
+| Editing the fields | Form | A detail view reads, a form changes |
+
+## 4. Anatomy
+
+1. **Title and status**: the title and a `StatusBadge`, first on the page.
+2. **Main action**: one `Button`, directly under the title.
+3. **Details**: labelled values (`dl`), with the long text (`MarkdownView`) in its own section.
+4. **Messages**: an `Alert` for what the user must know (for example a refund).
+
+## 5. Behavior rules
+
+| Rule | Why | Source |
+|---|---|---|
+| The status and the main action are **visible without scrolling** and come before the details | The user sees where it stands and what to do | R01.3 (what matters most), K1 |
+| A blocked main action says **why** and what to do (`disabledReason`) | A silent disabled button hides the cause | Decision 2026-10-27 |
+| **Not found and no access look the same**: "does not exist or you do not have access", with a way back and no retry | It does not reveal that a record exists | Security, WCAG 3.3.3 |
+| A load failure offers **retry** | Trying again can work | WCAG 3.3.3 |
+| Loading shows a skeleton with `aria-busy` and a loading text | The layout does not jump | Proposal |
+| Values are labelled with `dt` and `dd` | A screen reader reads the pairs | WCAG 1.3.1 |
+| Prices are right-aligned digits with tabular figures and the currency | Easy to read | R01.3 |
+
+## 6. States, one story each
+
+| State | Story |
+|---|---|
+| Accepted: the main action is available | Accepted |
+| Waiting for the mentor: the action is blocked with a reason | WaitingForTheMentor |
+| Declined: a refund message | Declined |
+| Loading | Loading |
+| Not found or no access | NotFoundOrNoAccess |
+| Load failed, with retry | LoadFailed |
+| Long text, narrow screen | LongTextNarrow |
+
+<Canvas of={DetailStories.WaitingForTheMentor} />
+<Canvas of={DetailStories.Declined} />
+<Canvas of={DetailStories.Loading} />
+<Canvas of={DetailStories.NotFoundOrNoAccess} />
+<Canvas of={DetailStories.LoadFailed} />
+
+## 7. Accessibility
+
+- One `h1` names the record; sections have `h2`. The page is an `article` named by its title.
+- The blocked button is `aria-disabled` and described by its reason, and stays in the keyboard order.
+- Not-found and error messages are `role="alert"`.
+
+## 8. Content
+
+- **Title:** the record's own name, not "Details".
+- **Status:** one to three words ("Waiting for the mentor").
+- **Reason on a blocked action:** why and what happens: "Waiting for the mentor to accept. You are refunded if they do not."
+- **Refund message:** says the amount and where it goes.
+
+<Canvas of={DetailStories.LongTextNarrow} />
+
+## 9. Responsiveness
+
+At 768 px and above the labelled values sit in two columns. At 320 px they stack. The title wraps; the status badge and the action wrap with it.
+
+## 10. Code
+
+```tsx
+<article aria-labelledby="title">
+  <header>
+    <h1 id="title">Ingress upgrade fails on staging</h1>
+    <StatusBadge tone="neutral">Waiting for the mentor</StatusBadge>
+    <Button disabledReason="Waiting for the mentor to accept. You are refunded if they do not.">Open the session</Button>
+  </header>
+  <dl>…</dl>
+</article>
+```
+
+## 11. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | The status and the main action right under the title | Seen without scrolling |
+| Don't | The main action at the bottom of a long page | The user scrolls to find it |
+| Do | "This question does not exist or you do not have access to it." | It does not reveal whether it exists |
+| Don't | "You are not allowed to view question 41." | It confirms that question 41 exists |
+
+## 12. Related
+
+- **Components:** `StatusBadge`, `Button`, `Alert`, `MarkdownView`, `ErrorMessage`, `Skeleton`.
+- **Patterns:** List with filters (the list that leads here), Confirm destructive action.

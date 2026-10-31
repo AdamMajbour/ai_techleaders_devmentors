@@ -1,0 +1,123 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Design system/What is missing" />
+
+# What is missing
+
+What is ready, what is not, and how the backlog is covered. "Ready" means built, tested in jsdom and documented. **Nothing here has been seen in a browser**, and no route of the product is built: every screen is an example with example data.
+
+Priority is the author's proposal, taken from the order of the backlog (dependencies) and from what blocks the pilot.
+
+## Coverage of the backlog
+
+| Backlog item | Component or screen | State | Priority (proposal) |
+|---|---|---|---|
+| E01-T01 (#10) account and login method | Screens E01: login, verify the link | Screen stories built. The login routes and pages are not built | High: everything waits for it |
+| E01-S01 (#11) find a mentor | `MentorRow`, mentors list with a technology filter | Components and screen built. Open: table or list (R01.3). The mentor's own link page is the mentor page | High |
+| E01-S02 (#12) question, price, prepay | `PriceNotice`, `QuestionForm`, payment return | Built, with the Paid action flow. Payment pages not built | High |
+| E01-S03 (#13) mentor decides, refund | `BookingRow`, `BookingStatus` | Built. Open: `allowedActions` from the server. The operator's refund approvals have no screen | High |
+| Seeker's list "My sessions" (S08 in the engineering standards, `/bookings` in the booking spec) | `SessionRow` and `List with filters`; the screen state examples are in `src/screens/my-sessions.stories.tsx` | UI composition and states built. The product page and API route are not built; the story uses example data | High |
+| E01-S04 (#14) the session | `SessionThread`, `MessageItem`, `Composer` | Built, with the Session thread pattern. No route | High |
+| Mentor profile page (`/mentor/profile`, booking spec) | `CrudForm` could build it | **No screen story** | Medium |
+| E02-S01 (#15) publish notes with the notice | `NoteEditor`, `PublishNoticePanel` | Built. The notice text is a working draft | High |
+| E02-S02 (#16) preview before release | `ReviewItem`, Review queue | Built. Open: a confirmation before Reject | High |
+| E02-S03 (#17) buy a vault answer, credit mentors | `QuestionForm` (vault), `VaultAnswerView`, `CreditsPanel` | Built | High |
+| E03-T01 (#18), E03-T02 (#19) terms text and its review | Pilot terms page | A working text. The legal review is not done | Blocks the first payment |
+| E03-T03 (#20) delete data after the pilot | none | No screen. It is a job, not an interface | Low for the design system |
+| E03-S01 (#21) accept the terms at payment | `TermsConsent` in `QuestionForm` | Built | High |
+| E03-S02 (#22) mentor terms and payout | none | **No specification, nothing built** | Not planned |
+| E03-S03 (#23) pilot counts | `PilotCountsTable` | Built, with example numbers. The query does not exist | Medium |
+| E04 (later) | none | Reserved in the backlog, not filed | Not planned |
+
+## Components that do not exist
+
+| Missing | Used for | Until then | Source |
+|---|---|---|---|
+| Action menu | Three or more actions for one row | Two actions per row | How to choose |
+| Radio group | Two or three visible options | `Select` | How to choose |
+| Search field (combobox) | A long list | A filter with `Select` | Booking spec: the list is a handful of mentors |
+| Switch | A setting that applies at once | None needed in the backlog | How to choose |
+| Side panel, popover, tooltip | Detail beside a list, small explanations | A page, text on the page | How to choose |
+| Tabs | Views of the same record | Separate pages | How to choose |
+| Toast | Short confirmations | Plain status text. An error is never a toast | WCAG 2.2.1 |
+| Shared pagination control outside `DataTable` | A `ul` list with many rows | The caller provides pagination and passes at most 25 rows per page; do not render an unpaginated list that can exceed 25 rows | Owner decision 2026-10-31 |
+| Action slot of `Alert` (a button beside or under the message) | Refresh failed after a list loaded | A `Button` as a child of the `Alert` | Agent test 2026-10-28, round 2 |
+| A runtime list of the booking statuses. `BookingStatusValue` is only a type, so a filter repeats the list | The status filter | Repeat the six values in the order of the type | Agent test 2026-10-28, round 2 |
+| The E01 mentors list does not yet follow **List with filters**: no count, no chip, no "Clear all filters" | The mentors list | It keeps the plain `Select` | Agent test 2026-10-28, round 2 |
+| Success tone of `StatusBadge`, and a warning colour | Statuses | Three tones. `--status-success` exists as a token but no component uses it yet except the starter page | K3 settled for the colour on 2026-10-28; the component is not changed |
+`FilterBar`, `Page` and `SessionRow` are built and are not missing components. Use `FilterBar` for the filter/chip/count order and filter behaviour in Patterns > List with filters; use `Page` for the page landmark and heading; use `SessionRow` for the seeker's session row, including its responsive layout and accepted-session date. Their component and screen stories are the examples of their anatomy.
+
+## States and behaviours that are missing
+
+Workarounds approved by the owner on 2026-10-28. Source: the agent test of that day (screen "My sessions").
+
+| Missing | Until then | Where it shows |
+|---|---|---|
+| **Refresh failed after the list loaded.** `SessionThread` has `refreshFailed`, a list has nothing | Keep the last result and put a `destructive` `Alert` directly above the list, below the filter bar and the count: "The list could not be refreshed. It shows the last result." The "Try again" button (`variant="outline"`, `size="sm"`, `className="w-fit"`, because `Alert` stacks its children in a column) is a child of the `Alert`, because `Alert` has no action slot | Lists that poll or reload |
+| **Error while a filter is active** | The error replaces the filter and the list. The filter value is kept and comes back after "Try again" | List with filters |
+| **A next step per booking status.** `BookingRow` has only `href`, so `payment_failed` and `pending_payment` have no "pay again" | One "Open" link for every status. A "pay again" action waits for a spec of payment retry | Seeker's list |
+| **The date of an accepted session in the row.** Decided to show it ("3 Nov 2026, 14:25", `formatDate` and `formatClock`), but `BookingRowData`, the type of `BookingRow`, has no `startsAt` | A screen with its own row type shows the date from `startsAt` (the API carries it). `BookingRow` gets the prop together with the row component | Seeker's list |
+| **Session time stage** (upcoming, in progress, ended). A status filter cannot tell them apart: `accepted` covers all three | No filter by time stage | Seeker's list |
+| **Retry in progress.** `ErrorMessage` has no "retrying" state | The page swaps the error for the loading state; in an `Alert` the button is disabled and reads "Trying again…" | Lists |
+| **A private list that answers 401** (session expired) | `ErrorMessage` without retry ("Your session has expired. Sign in again.") and a `TextLink` "Sign in" | Seeker's list |
+| **Filter kept in the address** (a link to a filtered list). `List with filters` points here | The filter is local state and is lost on reload | List with filters |
+| **A list of rows for phones instead of a table that scrolls sideways.** `List with filters` and `DataTable` point here | A `ul` of rows (`MentorRow`, `BookingRow`) wraps by itself, a `DataTable` scrolls | Lists |
+| **Production page and data integration for "My sessions".** The UI screen is a prop-driven example and its story uses sample data. The booking spec describes `/bookings` and `GET /api/bookings?role=seeker`, but those app routes are not built. The row's `href` and the empty state's `#mentors` target are example links, not production destinations; the destination for opening an individual session is not specified here | Keep data and `timeZone` supplied by the caller; connect the real page to the booking API and pass real navigation targets only when the app route is implemented. Do not treat story/sample links as route decisions | Seeker's list; booking spec and app routing |
+| **Initial source and update policy for the seeker's time zone.** The row accepts an IANA `timeZone`; the booking spec says to use the seeker's profile time zone, but the profile field and its initial value are not implemented | Pass an explicit time zone to the UI; do not guess a browser-derived or default zone. Decide how the profile value is collected and updated before implementing the app route | Seeker's list; booking spec |
+| **Sort key and tie-breaker for newest-first order.** The list contract says the server sends rows newest first, but the booking data contract does not identify which timestamp defines "newest" or how equal timestamps are ordered | Preserve the order supplied by the server in the UI. Decide and document the timestamp and stable tie-breaker in the booking/API contract before implementing server ordering | Seeker's list; booking spec |
+
+## Decided on 2026-10-31 (owner, favorites screen)
+
+| Decision | Consequence |
+|---|---|
+| The screen title is **"Favorite mentors"** | Use this wording for the page heading |
+| With no saved mentors, show **"No favorite mentors yet"**, "Browse mentors and save the ones you want to find again." and a **"Find mentors"** button | `Content` > "Empty states"; the containing app supplies the destination |
+| With no results for a technology, show **"No favorite mentors match {technology}"**, "Choose another technology or clear the filter." and a **"Clear filter"** button | `Content` > "Empty states" |
+| Removing a favorite is immediate, without confirmation or undo; it can be saved again from the mentor's profile | Do not use `ConfirmDialog` for this action |
+| The caller owns pagination and passes at most 25 rows per page | `List with filters` > "Behavior rules"; `FavoriteMentors` renders the provided page |
+
+## Decided on 2026-10-28 (owner, agent test)
+
+| Decision | Consequence |
+|---|---|
+| The seeker's list is called **"My sessions"**. Every booking, whatever its status, is a session for its seeker | Words in Content, "Words" section. E01 screens updated |
+| The status filter lists **all six booking statuses**, in the seeker's wording | `bookingStatusLabel(status, 'seeker')` is the one source of the words |
+| The row shows **date and time for an accepted session** | Needs `startsAt` in the data, see above |
+| **"Specialization" is the mentor's `headline`.** There is no separate field | A seniority label alone is not a headline (A05) |
+| The seeker's list is a `ul` of rows, not a `Table` (R01.3 for the **mentors** list stays open, below) | `List with filters`, `DataTable` and `How to choose` say so |
+| The filter bar is shown only when the list has items; the filter field is `max-w-session`; the skeleton of a row is three lines (`h-6 w-1/3`, `h-4 w-2/3`, `h-4 w-1/3`), scale values without tokens | `List with filters` §5. The pattern story follows it |
+| A list is in the order the server sends, newest first, with no sortable columns in the pilot. The status filter follows the order of the status type, "All statuses" first | `List with filters` §5 |
+| The seeker's list lives at `/bookings` (booking spec) and is labelled "My sessions" | `/sessions` of the standards (S08) is not used |
+| `GET /api/bookings` carries the mentor's `name`, `headline` and `technologies`, and `startsAt` for an accepted booking | Written into the booking spec (API table) |
+| The price in a row is the price of the booking (`priceMinor`, `currency` from the API), not the mentor's current price | Written into the booking spec and into Content |
+| The status filter runs in the client over the seeker's whole list: `GET /api/bookings?role=seeker` returns all of the seeker's bookings in one response in the pilot | Written into the booking spec. A list longer than 25 rows needs pagination first |
+| Dates shown to a seeker use the `timeZone` of the seeker's profile (an IANA name) | Written into the booking spec. **The spec has no seeker profile yet**, so the field must be added |
+| Which production URL opens a session from the "Open" link | No detail route is specified by the booking spec; the story's example link is not a route decision | App routing |
+| `refundStatus` has four values (`none`, `pending_approval`, `processing`, `refunded`), the same as `RefundState` | The booking spec said three. It now says four |
+
+## Open decisions that change the design system
+
+| Decision | Waiting for | Where |
+|---|---|---|
+| Whether `StatusBadge` gets a success tone now that `--status-success` exists (K3 itself is settled) | The owner | Color |
+| Mentors list as a `Table` (R01.3) | The owner | `MentorRow` |
+| Where the first value of the seeker's `timeZone` comes from: the browser at the first sign-in, or a field the seeker fills in | The owner | Booking spec |
+| Which timestamp defines "newest first" for the seeker's list, and how equal timestamps are ordered | The owner | Booking/API contract |
+| `BookingRow` reads `allowedActions` from the server | The owner | `BookingRow` |
+| A stable wrapper for `Button` with `disabledReason`, so focus is kept when the reason disappears | The owner | POSTEP.md |
+| A confirmation before Reject | The owner | `ReviewItem` |
+| A monospace font in the note editor | The owner | `NoteEditor` |
+| Formats of dates, times and money | The owner | Content |
+| `jsdom` as a declared dependency | The owner | POSTEP.md |
+
+## Not done or not checked
+
+| What | State |
+|---|---|
+| Browser checks at 320, 768 and 1440 px, both themes, keyboard and overlays | **Partially checked.** Story interaction and accessibility tests pass in Chromium in both themes at the default viewport. Manual responsive, keyboard and overlay review is still needed |
+| Browser tests of the stories (`npm run test:stories`) and the E2E tests of the app | Existing stories passed locally on 2026-10-31 in both themes. The fresh-agent favorites stories initially exposed an accessible-name mismatch; rerun after the fix. App E2E tests have not run |
+| The existing pages of the app (`login`, `register`, `articles`) | Not migrated to the new rules. The articles page wraps rows in cards, which R01.1 does not allow |
+| Checking or looking at a screen outside `packages/ui/src` | **Not possible with the project's tools.** `check:tokens` takes no path argument, Storybook does not see the folder (Contributing), and `storybook/test` and `@storybook/react-vite` resolve only from `packages/ui/node_modules`. A `--path` argument and a note on running exercise stories would close it |
+| Testing with an agent: a subagent sees `CLAUDE.md` and `AGENTS.md` **as they were when the session started**. A change to them does not reach it, and it reads them only if told to | Start a new session to test a change to `AGENTS.md`. Found in rounds 3 and 4: the agent reported the old text |
+| Components without a page of their own | `AlertDialog` (parts of `ConfirmDialog`), `SessionWindow` (in `SessionThread`), `RefundStatusLine` (in `BookingStatus`) |
+| The test with an agent | Fresh-session run completed 2026-10-31: REGUŁA 12, PRZYKŁAD 2, ZGADUJĘ 5. All five guesses (screen title, both empty-state copy choices, removal behaviour and pagination responsibility) were resolved by the owner and recorded above. The 768 px filter guidance is reconciled in Spacing and layout |

@@ -1,0 +1,104 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as SkeletonStories from '../../../src/components/ui/skeleton.stories';
+import { DoDont } from '../../blocks/DoDont';
+
+<Meta of={SkeletonStories} />
+
+# Skeleton and loading
+
+## 1. What it is for
+
+A skeleton keeps the layout of content that is still loading, so the page does not jump, and a loading message tells everyone that it is loading.
+
+<Canvas of={SkeletonStories.TableWhileLoading} />
+
+## 2. When to use it
+
+- A table or a list whose shape is known (rows, columns) while its data loads.
+- A detail view while its record loads.
+- Always with a text message (`LoadingMessage`) that says what is loading.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A short wait for a button action | The button's label ("Sending…") and `disabled` | There is no layout to hold |
+| The shape of the content is unknown | `LoadingMessage` alone | Wrong blocks mislead |
+| A wait that can fail | `ErrorMessage` after the timeout | The user must see the failure |
+| Decoration while content is already there | Nothing | A skeleton is only for loading |
+
+## 4. Anatomy
+
+1. **Blocks** (`Skeleton`): grey placeholders sized like the content.
+2. **Message** (`LoadingMessage`): the text "Loading questions…", announced politely.
+3. **Region** with `aria-busy="true"`: marks what is loading.
+
+## 5. Variants
+
+One block style. Size it with the width and height of the content it stands for. The blocks **do not pulse**: an endless animation is decorative motion (A01, WCAG 2.2.2).
+
+<Canvas of={SkeletonStories.Playground} />
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Loading | `--muted` blocks in the final layout and the loading text | WCAG 4.1.3 |
+| Loaded | The blocks are replaced by content in the same place | Proposal |
+| Failed | The blocks are replaced by `ErrorMessage` | WCAG 3.3.1 |
+| Hover, focus, pressed, disabled | Not applicable: a skeleton is not interactive | |
+
+## 7. Behavior and accessibility
+
+- **Blocks are hidden** from assistive technology (`aria-hidden`). Nothing is read for them.
+- **The text is the announcement:** `LoadingMessage` is `role="status"` with `aria-live="polite"`.
+- **Busy region:** set `aria-busy="true"` on the container while it loads and remove it afterwards.
+- **No motion:** nothing moves, so there is nothing to pause (WCAG 2.2.2) and nothing to turn off for reduced motion.
+
+## 8. Content
+
+- **Message:** says what is loading: "Loading questions…", not "Please wait".
+- **Length:** one short phrase.
+- **Do not promise a time** you cannot keep.
+
+<Canvas of={SkeletonStories.LoadingMessageAlone} />
+
+## 9. Responsiveness
+
+Blocks use the same widths as the real content, so at 320 px they stay inside the container. A table skeleton scrolls with its table.
+
+<Canvas of={SkeletonStories.NarrowList} />
+
+## 10. API
+
+<ArgTypes of={SkeletonStories} />
+
+## 11. Code
+
+```tsx
+import { LoadingMessage, Skeleton } from '@devmentor/ui';
+
+<div aria-busy="true">
+  <LoadingMessage message="Loading questions…" />
+  <Skeleton className="h-4 w-56" />
+</div>
+```
+
+```tsx
+// Typical: DataTable already shows the loading message while isLoading is true.
+<DataTable isLoading={isLoading} rows={rows} columns={columns} getRowId={(row) => row.id} />
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | Blocks in the layout of the table, with the text "Loading questions…" | The page does not jump and the state is announced |
+| Don't | Blocks that pulse endlessly with no text | Decorative motion and silent for screen readers (A01, WCAG 2.2.2) |
+| Do | Replace the skeleton with the error state if the request fails | The user learns what happened |
+| Don't | Keep the skeleton forever | The user waits for something that will never arrive |
+
+## 13. Related
+
+- **Confused with:** `EmptyState` (loaded, but nothing there) and `ErrorMessage` (failed).
+- **Used in patterns:** List with filters, Detail view, Form (a loading form).
