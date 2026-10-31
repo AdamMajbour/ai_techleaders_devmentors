@@ -1,0 +1,38 @@
+@layer theme, base, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import '@devmentor/ui/styles';
+@import 'tailwindcss/utilities.css' layer(utilities);
+@source '../../../packages/ui/src';
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  html {
+    color-scheme: dark;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--family-sans);
+  }
+
+  html[data-theme='light'] {
+    color-scheme: light;
+  }
+
+  body {
+    min-height: 100vh;
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--family-sans);
+  }
+}

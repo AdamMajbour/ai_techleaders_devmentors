@@ -1,0 +1,66 @@
+{
+  "format": "discovery-prototype-v1",
+  "skill": "om-mockup-prototype",
+  "slug": "mentor-onboarding",
+  "revision": 1,
+  "revisionPath": ".ai/prototypes/discovery/mentor-onboarding/revision-001",
+  "previousRevision": null,
+  "brief": ".ai/specs/product-brief.md",
+  "flow": "mentor onboarding",
+  "panelReport": null,
+  "verification": "passed",
+  "files": [
+    {
+      "path": "index.html",
+      "sha256": "0adc9309805118c04c3b7b6b61ad5d950ff9da726ac8a36d7f5a33ac0c70cac9"
+    },
+    {
+      "path": "README.md",
+      "sha256": "ffa44bedbc72b267ec85962f0a40648ebe930380ae6fb9146c267c338fa40d96"
+    },
+    {
+      "path": "evidence/01-invitation.png",
+      "sha256": "134699dc0df03d480017cb1d9d610d167ad657fe6ee21cdb703deb3a523e33d3"
+    },
+    {
+      "path": "evidence/02-profile-validation.png",
+      "sha256": "5cba617d3fb608c4af6c36c78cf415df434418d220e781926768bfa7b1ed543d"
+    },
+    {
+      "path": "evidence/03-availability-error.png",
+      "sha256": "9d8928152b51ed097fec0c9e211ca32c7762cb74ba611bc0a5b251ec1307b90e"
+    },
+    {
+      "path": "evidence/04-availability-selected.png",
+      "sha256": "f800cb624f1ca205cbc29ad46093f0cd954b8a80340682e9f4e2339865808fa0"
+    },
+    {
+      "path": "evidence/05-review.png",
+      "sha256": "0c85908b88ca86fe1cc41c62ab5514ffa66deceb5623fb6dfeca05d722052aff"
+    },
+    {
+      "path": "evidence/06-complete.png",
+      "sha256": "23834910db2ecd9dd89eb7ad743a981387705665fa8783074cb1c0a083b91be8"
+    },
+    {
+      "path": "evidence/07-keyboard-focus.png",
+      "sha256": "05e42e2097c945cf5315daa0dfb875a0c7303a0d96cf2342fefe369daea27def"
+    },
+    {
+      "path": "evidence/08-review-narrow.png",
+      "sha256": "9c2fbb80656ddb1c26654651d053b33286462d41e157462f56a425d253e53979"
+    },
+    {
+      "path": "evidence/09-reset-start.png",
+      "sha256": "28fbf1fee0b1532806b705f14d6ae433bce3521e11578ae03617f99fa38eb67f"
+    },
+    {
+      "path": "evidence/10-unknown-fragment.png",
+      "sha256": "d123b90b6ca18e67cb059fd67b29e83fc707bc5145b93544503fd5be29aabe70"
+    },
+    {
+      "path": "evidence/11-availability-validation.png",
+      "sha256": "29403a2dcc2ae9d0c7e0116f34efe371e27020ad5e0d7a89769fc11fcb17507e"
+    }
+  ]
+}
