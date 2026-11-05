@@ -22,6 +22,7 @@ import type { InvitationService } from '../services/auth/invitation.service';
 import type { MagicLinkService } from '../services/auth/magic-link.service';
 import type { MentorService } from '../services/mentors/mentor.service';
 import type { BookingService } from '../services/bookings/booking.service';
+import type { PaymentService } from '../services/payments/payment.service';
 
 /** Every dependency the container can provide. A new service is one line here and one in container.ts. */
 export interface Cradle {
@@ -46,6 +47,7 @@ export interface Cradle {
   magicLinkService: MagicLinkService;
   mentorService: MentorService;
   bookingService: BookingService;
+  paymentService: PaymentService;
   approverResolvers: ApproverResolvers;
   paymentGateway: PaymentGateway;
   mailer: Mailer;

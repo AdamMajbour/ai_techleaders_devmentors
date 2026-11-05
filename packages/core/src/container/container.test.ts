@@ -14,6 +14,7 @@ import { InvitationService } from '../services/auth/invitation.service';
 import { MagicLinkService } from '../services/auth/magic-link.service';
 import { MentorService } from '../services/mentors/mentor.service';
 import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
+import { PaymentService } from '../services/payments/payment.service';
 import { ConfiguredMailer } from '../services/notifications/adapters/configured-mailer';
 import { systemClock } from '../utils/clock';
 import { buildContainer } from './container';
@@ -44,6 +45,7 @@ describe('buildContainer', () => {
     expect(cradle.invitationService).toBeInstanceOf(InvitationService);
     expect(cradle.magicLinkService).toBeInstanceOf(MagicLinkService);
     expect(cradle.mentorService).toBeInstanceOf(MentorService);
+    expect(cradle.paymentService).toBeInstanceOf(PaymentService);
     expect(cradle.paymentGateway).toBeInstanceOf(MockPaymentGateway);
     expect(cradle.mailer).toBeInstanceOf(ConfiguredMailer);
     expect(cradle.clock).toBe(systemClock);

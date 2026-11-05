@@ -20,6 +20,7 @@ import {
   InvitationRepository,
   LoginTokenRepository,
   MentorProfileRepository,
+  PaymentRepository,
   UserRepository,
   transitionStatus,
 } from './index';
@@ -258,6 +259,194 @@ describe('booking and payment constraints', () => {
     await expect(insertPayment(randomUUID(), 'orphan-session')).rejects.toThrow();
     await expect(insertPayment(anotherBooking, 'invalid-status', { status: 'captured' })).rejects.toThrow();
     await expect(insertPayment(anotherBooking, 'invalid-amount', { amountMinor: 0 })).rejects.toThrow();
+  });
+});
+
+describe('PaymentRepository webhook settlement', () => {
+  async function createPendingPair(options: {
+    bookingPrice?: number;
+    bookingCurrency?: string;
+    paymentAmount?: number;
+    paymentCurrency?: string;
+  } = {}) {
+    const seeker = await new UserRepository(orm.em.fork()).create({
+      email: `webhook-seeker-${randomUUID()}@example.com`,
+      name: 'Webhook Seeker',
+    });
+    const mentor = await new UserRepository(orm.em.fork()).create({
+      email: `webhook-mentor-${randomUUID()}@example.com`,
+      name: 'Webhook Mentor',
+    });
+    const bookingId = randomUUID();
+    const paymentId = randomUUID();
+    const providerSessionId = `session-${randomUUID()}`;
+    const now = new Date();
+    await orm.em.getConnection().execute(
+      `insert into "bookings" (
+        "id", "seeker_id", "mentor_id", "question", "duration_minutes", "price_minor",
+        "currency", "status", "source", "landed_at", "starts_at", "ends_at", "created_at", "updated_at"
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        bookingId,
+        seeker.id,
+        mentor.id,
+        'Question',
+        25,
+        options.bookingPrice ?? 2500,
+        options.bookingCurrency ?? 'EUR',
+        'pending_payment',
+        'link',
+        now,
+        null,
+        null,
+        now,
+        now,
+      ],
+      'run',
+    );
+    await orm.em.getConnection().execute(
+      `insert into "payments" (
+        "id", "booking_id", "provider", "livemode", "provider_session_id", "provider_payment_id",
+        "amount_minor", "currency", "status", "created_at", "updated_at"
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        paymentId,
+        bookingId,
+        'mock',
+        false,
+        providerSessionId,
+        null,
+        options.paymentAmount ?? 2500,
+        options.paymentCurrency ?? 'EUR',
+        'pending',
+        now,
+        now,
+      ],
+      'run',
+    );
+    return { bookingId, paymentId, providerSessionId };
+  }
+
+  it('commits both status transitions once and treats a replay as a no-op', async () => {
+    const pair = await createPendingPair();
+    const repository = new PaymentRepository(orm.em.fork());
+    const event = {
+      ...pair,
+      status: 'succeeded' as const,
+      amountMinor: 2500,
+      currency: 'EUR',
+      providerPaymentId: 'provider-payment-1',
+      livemode: true,
+    };
+
+    await expect(repository.settleWebhookEvent(event)).resolves.toEqual({
+      status: 'transitioned',
+      paymentId: pair.paymentId,
+      bookingId: pair.bookingId,
+    });
+    await expect(repository.settleWebhookEvent(event)).resolves.toEqual({ status: 'noop' });
+
+    const rows = (await orm.em.getConnection().execute(
+      `select b.status as "bookingStatus", p.status as "paymentStatus", p.provider_payment_id as "providerPaymentId",
+        p.livemode as "livemode"
+       from "bookings" b join "payments" p on p.booking_id = b.id where b.id = ?`,
+      [pair.bookingId],
+      'get',
+    )) as { bookingStatus: string; paymentStatus: string; providerPaymentId: string; livemode: boolean };
+    expect(rows).toEqual({
+      bookingStatus: 'paid',
+      paymentStatus: 'succeeded',
+      providerPaymentId: 'provider-payment-1',
+      livemode: true,
+    });
+    expect(await orm.em.count(StatusTransition, { entityId: pair.bookingId })).toBe(1);
+    expect(await orm.em.count(StatusTransition, { entityId: pair.paymentId })).toBe(1);
+  });
+
+  it('does not transition on amount, currency, session, or booking mismatches', async () => {
+    const pair = await createPendingPair();
+    const persistedAmountMismatch = await createPendingPair({ paymentAmount: 2400 });
+    const persistedCurrencyMismatch = await createPendingPair({ paymentCurrency: 'USD' });
+    const repository = new PaymentRepository(orm.em.fork());
+    const baseEvent = {
+      ...pair,
+      status: 'succeeded' as const,
+      amountMinor: 2500,
+      currency: 'EUR',
+      providerPaymentId: 'provider-payment-2',
+      livemode: false,
+    };
+
+    await expect(repository.settleWebhookEvent({ ...baseEvent, amountMinor: 2501 })).resolves.toMatchObject({
+      status: 'mismatch',
+      fields: ['amountMinor'],
+    });
+    await expect(repository.settleWebhookEvent({ ...baseEvent, currency: 'USD' })).resolves.toMatchObject({
+      status: 'mismatch',
+      fields: ['currency'],
+    });
+    await expect(repository.settleWebhookEvent({ ...baseEvent, providerSessionId: 'another-session' })).resolves.toMatchObject({
+      status: 'mismatch',
+    });
+    await expect(repository.settleWebhookEvent({ ...baseEvent, bookingId: randomUUID() })).resolves.toMatchObject({
+      status: 'mismatch',
+    });
+    await expect(repository.settleWebhookEvent({
+      ...persistedAmountMismatch,
+      status: 'succeeded',
+      amountMinor: 2500,
+      currency: 'EUR',
+      providerPaymentId: 'provider-payment-3',
+      livemode: false,
+    })).resolves.toMatchObject({ status: 'mismatch', fields: ['amountMinor'] });
+    await expect(repository.settleWebhookEvent({
+      ...persistedCurrencyMismatch,
+      status: 'succeeded',
+      amountMinor: 2500,
+      currency: 'EUR',
+      providerPaymentId: 'provider-payment-4',
+      livemode: false,
+    })).resolves.toMatchObject({ status: 'mismatch', fields: ['currency'] });
+
+    expect(await orm.em.count(StatusTransition, { entityId: pair.bookingId })).toBe(0);
+    expect(await orm.em.count(StatusTransition, { entityId: pair.paymentId })).toBe(0);
+    expect(await orm.em.count(StatusTransition, { entityId: persistedAmountMismatch.bookingId })).toBe(0);
+    expect(await orm.em.count(StatusTransition, { entityId: persistedAmountMismatch.paymentId })).toBe(0);
+    expect(await orm.em.count(StatusTransition, { entityId: persistedCurrencyMismatch.bookingId })).toBe(0);
+    expect(await orm.em.count(StatusTransition, { entityId: persistedCurrencyMismatch.paymentId })).toBe(0);
+  });
+
+  it('keeps failure terminal when a later completion arrives', async () => {
+    const pair = await createPendingPair();
+    const repository = new PaymentRepository(orm.em.fork());
+
+    await expect(
+      repository.settleWebhookEvent({ ...pair, status: 'failed', providerPaymentId: 'failed-payment-1' }),
+    ).resolves.toEqual({
+      status: 'transitioned',
+      paymentId: pair.paymentId,
+      bookingId: pair.bookingId,
+    });
+    await expect(
+      repository.settleWebhookEvent({
+        ...pair,
+        status: 'succeeded',
+        amountMinor: 2500,
+        currency: 'EUR',
+        providerPaymentId: 'late-payment',
+        livemode: false,
+      }),
+    ).resolves.toEqual({ status: 'noop' });
+
+    const statuses = (await orm.em.getConnection().execute(
+      `select b.status as "bookingStatus", p.status as "paymentStatus"
+       from "bookings" b join "payments" p on p.booking_id = b.id where b.id = ?`,
+      [pair.bookingId],
+      'get',
+    )) as { bookingStatus: string; paymentStatus: string };
+    expect(statuses).toEqual({ bookingStatus: 'payment_failed', paymentStatus: 'failed' });
+    expect(await orm.em.count(StatusTransition, { entityId: pair.bookingId })).toBe(1);
+    expect(await orm.em.count(StatusTransition, { entityId: pair.paymentId })).toBe(1);
   });
 });
 

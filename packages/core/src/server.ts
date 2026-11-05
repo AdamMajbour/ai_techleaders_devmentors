@@ -16,6 +16,11 @@ export {
   type WebhookRouteConfig,
   type WebhookVerification,
 } from './http/makeWebhookRoute';
+export {
+  MOCK_PAYMENT_SIGNATURE_HEADER,
+  MOCK_PAYMENT_SIGNATURE_VALUE,
+  verifyMockPaymentWebhook,
+} from './services/payments/mock-webhook-verifier';
 
 export {
   requireSession,
@@ -71,6 +76,7 @@ export {
   type MentorProfileInput,
 } from './services/mentors/mentor.service';
 export { BookingService, type BookingCreationResult } from './services/bookings/booking.service';
+export { PaymentService } from './services/payments/payment.service';
 export { AuthService } from './services/auth/auth.service';
 export { UserService } from './services/auth/user.service';
 export {

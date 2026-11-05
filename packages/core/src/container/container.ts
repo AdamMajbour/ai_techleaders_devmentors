@@ -25,6 +25,7 @@ import { UserService } from '../services/auth/user.service';
 import { InvitationService } from '../services/auth/invitation.service';
 import { MagicLinkService } from '../services/auth/magic-link.service';
 import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
+import { PaymentService } from '../services/payments/payment.service';
 import { ConfiguredMailer } from '../services/notifications/adapters/configured-mailer';
 import { ApprovalService, defaultApproverResolvers } from '../services/approvals/approval.service';
 import { MentorService } from '../services/mentors/mentor.service';
@@ -61,6 +62,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     approvalService: asClass(ApprovalService).scoped(),
     mentorService: asClass(MentorService).scoped(),
     bookingService: asClass(BookingService).scoped(),
+    paymentService: asClass(PaymentService).scoped(),
     invitationService: asClass(InvitationService).scoped(),
     magicLinkService: asClass(MagicLinkService).scoped(),
     approverResolvers: asValue(defaultApproverResolvers),

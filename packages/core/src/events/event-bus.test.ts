@@ -85,4 +85,27 @@ describe('event bus', () => {
       approvalId: 'approval-2',
     });
   });
+
+  it('logs payment lifecycle events with ID-only payloads', async () => {
+    const log = logger();
+    const bus = createEventBus(log);
+    registerLoggingSubscriber(bus, log);
+
+    await bus.emit('payments.payment.succeeded', { paymentId: 'payment-1' });
+    await bus.emit('payments.payment.failed', { paymentId: 'payment-2' });
+    await bus.emit('bookings.booking.paid', { bookingId: 'booking-1' });
+
+    expect(log.info).toHaveBeenCalledWith('Domain event', {
+      event: 'payments.payment.succeeded',
+      paymentId: 'payment-1',
+    });
+    expect(log.info).toHaveBeenCalledWith('Domain event', {
+      event: 'payments.payment.failed',
+      paymentId: 'payment-2',
+    });
+    expect(log.info).toHaveBeenCalledWith('Domain event', {
+      event: 'bookings.booking.paid',
+      bookingId: 'booking-1',
+    });
+  });
 });

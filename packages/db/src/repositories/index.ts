@@ -2,7 +2,7 @@
 // Repositories receive an EntityManager instead of reaching for the global one:
 // MikroORM forbids using the global EM for context-specific work, so callers pass
 // a fork (`orm.em.fork()`) per request / script / test.
-import type { EntityManager, RequiredEntityData } from '@mikro-orm/core';
+import { LockMode, type EntityManager, type RequiredEntityData } from '@mikro-orm/core';
 import {
   User,
   Article,
@@ -180,7 +180,105 @@ export class PaymentRepository {
     await this.em.flush();
     return payment;
   }
+
+  async settleWebhookEvent(
+    input: PaymentWebhookSettlementInput,
+  ): Promise<PaymentWebhookSettlementResult> {
+    return this.em.transactional(async (transactionalEm) => {
+      const payment = await transactionalEm.findOne(
+        Payment,
+        { bookingId: input.bookingId, providerSessionId: input.providerSessionId },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+      if (!payment) {
+        return { status: 'mismatch', paymentId: null, fields: ['bookingId', 'providerSessionId'] };
+      }
+
+      const booking = await transactionalEm.findOne(
+        Booking,
+        { id: input.bookingId },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+      if (!booking) {
+        return { status: 'mismatch', paymentId: payment.id, fields: ['bookingId'] };
+      }
+
+      if (input.status === 'succeeded') {
+        const fields: Array<'amountMinor' | 'currency'> = [];
+        if (
+          input.amountMinor !== payment.amountMinor ||
+          input.amountMinor !== booking.priceMinor ||
+          payment.amountMinor !== booking.priceMinor
+        ) {
+          fields.push('amountMinor');
+        }
+        if (
+          input.currency !== payment.currency ||
+          input.currency !== booking.currency ||
+          payment.currency !== booking.currency
+        ) {
+          fields.push('currency');
+        }
+        if (fields.length > 0) {
+          return { status: 'mismatch', paymentId: payment.id, fields };
+        }
+      }
+
+      if (payment.status !== 'pending' || booking.status !== 'pending_payment') {
+        return { status: 'noop' };
+      }
+
+      const paymentPatch =
+        input.status === 'succeeded'
+          ? { providerPaymentId: input.providerPaymentId, livemode: input.livemode }
+          : input.providerPaymentId === undefined
+            ? undefined
+            : { providerPaymentId: input.providerPaymentId };
+      const paymentChanged = await transitionStatus(transactionalEm, {
+        entityType: 'Payment',
+        entityId: payment.id,
+        from: ['pending'],
+        to: input.status,
+        actor: { kind: 'webhook' },
+        ...(paymentPatch ? { patch: paymentPatch } : {}),
+      });
+      const bookingChanged = await transitionStatus(transactionalEm, {
+        entityType: 'Booking',
+        entityId: booking.id,
+        from: ['pending_payment'],
+        to: input.status === 'succeeded' ? 'paid' : 'payment_failed',
+        actor: { kind: 'webhook' },
+      });
+      if (!paymentChanged || !bookingChanged) {
+        throw new Error('Locked pending payment and booking did not transition together.');
+      }
+
+      return { status: 'transitioned', paymentId: payment.id, bookingId: booking.id };
+    });
+  }
 }
+
+export type PaymentWebhookSettlementInput =
+  | {
+      bookingId: string;
+      providerSessionId: string;
+      status: 'succeeded';
+      amountMinor: number;
+      currency: string;
+      providerPaymentId: string;
+      livemode: boolean;
+    }
+  | {
+      bookingId: string;
+      providerSessionId: string;
+      status: 'failed';
+      providerPaymentId?: string;
+    };
+
+export type PaymentWebhookSettlementResult =
+  | { status: 'transitioned'; paymentId: string; bookingId: string }
+  | { status: 'noop' }
+  | { status: 'mismatch'; paymentId: string | null; fields: string[] };
 
 export type ArticlePage = { items: Article[]; total: number };
 

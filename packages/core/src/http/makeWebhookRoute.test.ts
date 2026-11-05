@@ -8,6 +8,11 @@ const withScope = jest.fn(async (fn: (c: Cradle) => Promise<unknown>) => fn(crad
 jest.mock('../container/container', () => ({ withScope: (fn: never) => withScope(fn) }));
 
 import { makeWebhookRoute } from './makeWebhookRoute';
+import {
+  MOCK_PAYMENT_SIGNATURE_HEADER,
+  MOCK_PAYMENT_SIGNATURE_VALUE,
+  verifyMockPaymentWebhook,
+} from '../services/payments/mock-webhook-verifier';
 
 const json = (response: Response) => response.json();
 
@@ -20,6 +25,33 @@ afterEach(() => {
 });
 
 describe('makeWebhookRoute', () => {
+  it('accepts a signed mock webhook and rejects a missing or invalid mock signature', async () => {
+    const handler = jest.fn(async () => ({ received: true }));
+    const route = makeWebhookRoute({ verify: verifyMockPaymentWebhook, handler });
+    const rawBody = '{"type":"checkout.completed"}';
+    const signedRequest = new Request('http://localhost/api/payments/webhook', {
+      method: 'POST',
+      headers: { [MOCK_PAYMENT_SIGNATURE_HEADER]: MOCK_PAYMENT_SIGNATURE_VALUE },
+      body: rawBody,
+    });
+
+    const signedResponse = await route.POST(signedRequest, undefined);
+    expect(signedResponse.status).toBe(200);
+    expect(handler).toHaveBeenCalledWith(rawBody, signedRequest.headers, { cradle });
+
+    handler.mockClear();
+    const invalidResponse = await route.POST(
+      new Request('http://localhost/api/payments/webhook', {
+        method: 'POST',
+        headers: { [MOCK_PAYMENT_SIGNATURE_HEADER]: 'invalid' },
+        body: rawBody,
+      }),
+      undefined,
+    );
+    expect(invalidResponse.status).toBe(400);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
   it('returns a generic 400 for a bad signature without exposing or logging the body', async () => {
     const rawBody = '{"private":"sensitive-payload"}';
     const verify = jest.fn(async () => false);
