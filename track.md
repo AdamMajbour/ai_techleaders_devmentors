@@ -64,9 +64,11 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 ## Phase 1 — Sign-in (#10)
 
 - [x] 1.1 Record D24 by founder A and update the product brief.
-- [ ] 1.2 Add invitation and login-token entities/migrations, services, env settings, and the pilot-member resolver.
+- [x] 1.2 Add invitation and login-token entities/migrations, services, env settings, and the pilot-member resolver.
 - [ ] 1.3 Add magic-link request/consume routes, rate limiting, and the `PUBLIC_SIGNUP` registration guard.
 - [ ] 1.4 Add login/verify pages, HTTP mailer, `pilot:invite` CLI, env documentation, and invite-to-sign-in E2E coverage.
+
+**1.2 validation:** full unit suite passed (76 suites / 513 tests), workspace type-check, production build, and repository ESLint passed. The DB integration suite was attempted but could not connect because PostgreSQL password authentication failed for `postgres`; migration, constraints, expiry, and atomic concurrent-consumption integration checks remain unverified until the configured `devmentor_test` credentials work.
 
 **Manual test gate:** invite a user, request and consume a magic link, verify single-use behavior, and confirm public signup behavior.
 
@@ -111,6 +113,6 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 ## Current gates
 
-- Pilot primitives spec Phases 1–4 are not present in the current source tree; E01 implementation is blocked until they are merged.
+- Pilot primitives P1–P4 are implemented and accepted; their DB integration checks remain subject to the PostgreSQL authentication limitation recorded above.
 - D24 (invitation-based e-mail magic link) was confirmed by founder A and recorded in the decision log and product brief.
 - D25, operator bootstrap, E03-T02, E03-S01, mentor interviews (D20), and the rehearsal remain explicit operational gates.

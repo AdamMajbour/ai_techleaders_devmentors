@@ -3,7 +3,7 @@
 // MikroORM forbids using the global EM for context-specific work, so callers pass
 // a fork (`orm.em.fork()`) per request / script / test.
 import type { EntityManager, RequiredEntityData } from '@mikro-orm/core';
-import { User, Article, ApprovalRequest } from '../entities';
+import { User, Article, ApprovalRequest, Invitation, LoginToken } from '../entities';
 import { PendingApprovalConflictError, isUniqueConstraintViolation } from '../errors';
 import { transitionStatus } from './transition';
 export { transitionStatus };
@@ -148,5 +148,84 @@ export class ApprovalRequestRepository {
       actor: { kind: 'user', userId: decidedBy },
       patch: { decidedBy, decidedAt },
     });
+  }
+}
+
+export type NewInvitation = Pick<
+  Invitation,
+  'email' | 'displayName' | 'role' | 'invitedBy' | 'acceptedByUserId' | 'acceptedAt' | 'revokedAt'
+>;
+
+export class InvitationRepository {
+  constructor(private readonly em: EntityManager) {}
+
+  async findByEmail(email: string): Promise<Invitation | null> {
+    return this.em.findOne(Invitation, { email });
+  }
+
+  async findUnrevokedByEmail(email: string): Promise<Invitation | null> {
+    return this.em.findOne(Invitation, { email, revokedAt: null });
+  }
+
+  async create(data: NewInvitation): Promise<Invitation> {
+    const invitation = this.em.create(Invitation, data as RequiredEntityData<Invitation>);
+    this.em.persist(invitation);
+    await this.em.flush();
+    return invitation;
+  }
+
+  async accept(email: string, userId: string, acceptedAt: Date): Promise<boolean> {
+    const updated = await this.em.nativeUpdate(
+      Invitation,
+      { email, acceptedByUserId: null, acceptedAt: null, revokedAt: null },
+      { acceptedByUserId: userId, acceptedAt, updatedAt: acceptedAt },
+    );
+    return updated === 1;
+  }
+
+  async revoke(email: string, revokedAt: Date): Promise<boolean> {
+    const updated = await this.em.nativeUpdate(
+      Invitation,
+      { email, revokedAt: null },
+      { revokedAt, updatedAt: revokedAt },
+    );
+    return updated === 1;
+  }
+
+  async isPilotMember(userId: string): Promise<boolean> {
+    return (
+      (await this.em.count(Invitation, {
+        acceptedByUserId: userId,
+        acceptedAt: { $ne: null },
+        revokedAt: null,
+      })) > 0
+    );
+  }
+}
+
+export type NewLoginToken = Pick<LoginToken, 'email' | 'tokenHash' | 'expiresAt' | 'consumedAt'>;
+
+export class LoginTokenRepository {
+  constructor(private readonly em: EntityManager) {}
+
+  async create(data: NewLoginToken): Promise<void> {
+    const token = this.em.create(LoginToken, data as RequiredEntityData<LoginToken>);
+    this.em.persist(token);
+    await this.em.flush();
+  }
+
+  /** One conditional statement wins even when multiple requests consume the same token concurrently. */
+  async consume(tokenHash: string, now: Date): Promise<string | null> {
+    const transactionContext = this.em.getTransactionContext();
+    const row = await this.em.getConnection().execute<{ email: string }>(
+      `update "login_tokens"
+       set "consumed_at" = ?, "updated_at" = ?
+       where "token_hash" = ? and "consumed_at" is null and "expires_at" > ?
+       returning "email"`,
+      [now, now, tokenHash, now],
+      'get',
+      transactionContext,
+    );
+    return row?.email ?? null;
   }
 }

@@ -1,8 +1,16 @@
 /** @jest-environment node */
-import { ApprovalRequestRepository, ArticleRepository, UserRepository } from '@devmentor/db';
+import {
+  ApprovalRequestRepository,
+  ArticleRepository,
+  InvitationRepository,
+  LoginTokenRepository,
+  UserRepository,
+} from '@devmentor/db';
 import { ArticleService } from '../services/articles/article.service';
 import { ApprovalService } from '../services/approvals/approval.service';
 import { UserService } from '../services/auth/user.service';
+import { InvitationService } from '../services/auth/invitation.service';
+import { MagicLinkService } from '../services/auth/magic-link.service';
 import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
 import { ConsoleMailer } from '../services/notifications/adapters/console-mailer';
 import { systemClock } from '../utils/clock';
@@ -25,9 +33,13 @@ describe('buildContainer', () => {
     expect(cradle.userRepository).toBeInstanceOf(UserRepository);
     expect(cradle.articleRepository).toBeInstanceOf(ArticleRepository);
     expect(cradle.approvalRequestRepository).toBeInstanceOf(ApprovalRequestRepository);
+    expect(cradle.invitationRepository).toBeInstanceOf(InvitationRepository);
+    expect(cradle.loginTokenRepository).toBeInstanceOf(LoginTokenRepository);
     expect(cradle.userService).toBeInstanceOf(UserService);
     expect(cradle.articleService).toBeInstanceOf(ArticleService);
     expect(cradle.approvalService).toBeInstanceOf(ApprovalService);
+    expect(cradle.invitationService).toBeInstanceOf(InvitationService);
+    expect(cradle.magicLinkService).toBeInstanceOf(MagicLinkService);
     expect(cradle.paymentGateway).toBeInstanceOf(MockPaymentGateway);
     expect(cradle.mailer).toBeInstanceOf(ConsoleMailer);
     expect(cradle.clock).toBe(systemClock);

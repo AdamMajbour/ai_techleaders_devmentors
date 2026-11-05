@@ -3,6 +3,16 @@ import { z } from 'zod';
 /** A secret shorter than this cannot hold 32 random bytes in any common encoding. */
 const MIN_SECRET_LENGTH = 32;
 
+const publicSignupSchema = z.preprocess(
+  (value) => {
+    if (value === undefined) return true;
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  },
+  z.boolean(),
+);
+
 const envSchema = z.object({
   // Generate with: openssl rand -base64 48
   JWT_SECRET: z.string().min(MIN_SECRET_LENGTH, `JWT_SECRET must be at least ${MIN_SECRET_LENGTH} characters (use 32+ random bytes)`),
@@ -10,6 +20,8 @@ const envSchema = z.object({
     (value) => parseOperatorUserIds(typeof value === 'string' ? value : undefined),
     z.array(z.string()),
   ),
+  // Default preserves existing deployments; the pilot deployment can disable sign-up later.
+  PUBLIC_SIGNUP: publicSignupSchema,
   NODE_ENV: z.string().optional(),
 });
 

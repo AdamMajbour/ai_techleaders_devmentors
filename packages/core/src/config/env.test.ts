@@ -4,6 +4,13 @@ describe('parseEnv', () => {
   it('accepts a long enough JWT secret', () => {
     expect(parseEnv({ JWT_SECRET: 'x'.repeat(32) }).JWT_SECRET).toHaveLength(32);
     expect(parseEnv({ JWT_SECRET: 'x'.repeat(32) }).OPERATOR_USER_IDS).toEqual([]);
+    expect(parseEnv({ JWT_SECRET: 'x'.repeat(32) }).PUBLIC_SIGNUP).toBe(true);
+  });
+
+  it('parses PUBLIC_SIGNUP lazily from environment strings', () => {
+    expect(parseEnv({ JWT_SECRET: 'x'.repeat(32), PUBLIC_SIGNUP: 'false' }).PUBLIC_SIGNUP).toBe(false);
+    expect(parseEnv({ JWT_SECRET: 'x'.repeat(32), PUBLIC_SIGNUP: 'true' }).PUBLIC_SIGNUP).toBe(true);
+    expect(() => parseEnv({ JWT_SECRET: 'x'.repeat(32), PUBLIC_SIGNUP: 'no' })).toThrow(/PUBLIC_SIGNUP/);
   });
 
   it('rejects a missing or short secret and names the variable, never its value', () => {

@@ -3,9 +3,16 @@ import path from 'node:path';
 import type { MikroORM } from '@mikro-orm/core';
 import type { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { closeORM, initializeORM } from '../config';
-import { ApprovalRequest, StatusTransition } from '../entities';
+import { ApprovalRequest, Invitation, LoginToken, StatusTransition } from '../entities';
 import { isUniqueConstraintViolation, PendingApprovalConflictError } from '../errors';
-import { ArticleRepository, ApprovalRequestRepository, UserRepository, transitionStatus } from './index';
+import {
+  ArticleRepository,
+  ApprovalRequestRepository,
+  InvitationRepository,
+  LoginTokenRepository,
+  UserRepository,
+  transitionStatus,
+} from './index';
 
 let orm: MikroORM<PostgreSqlDriver>;
 
@@ -52,6 +59,8 @@ describe('migrations', () => {
     expect(await publicTables()).toEqual([
       'approval_requests',
       'articles',
+      'invitations',
+      'login_tokens',
       'mikro_orm_migrations',
       'status_transitions',
       'users',
@@ -71,6 +80,121 @@ describe('migrations', () => {
 
     await orm.migrator.up();
     expect(await publicTables()).toContain('approval_requests');
+  });
+
+  it('reverses and reapplies the invitation and login-token migration', async () => {
+    await orm.migrator.down('Migration20261105190000_pilot_invitations_login_tokens');
+    expect(await publicTables()).not.toContain('invitations');
+    expect(await publicTables()).not.toContain('login_tokens');
+
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('invitations');
+    expect(await publicTables()).toContain('login_tokens');
+  });
+});
+
+describe('InvitationRepository', () => {
+  it('enforces lowercase unique e-mails and only accepted, unrevoked invitations are members', async () => {
+    const user = await new UserRepository(orm.em.fork()).create({
+      email: 'pilot-member@example.com',
+      name: 'Pilot Member',
+    });
+    const invitations = new InvitationRepository(orm.em.fork());
+    const unaccepted = await invitations.create({
+      email: 'not-accepted@example.com',
+      displayName: 'Not Accepted',
+      role: 'seeker',
+      invitedBy: null,
+      acceptedByUserId: null,
+      acceptedAt: null,
+      revokedAt: null,
+    });
+    expect(await invitations.isPilotMember(user.id)).toBe(false);
+    expect(await invitations.accept(unaccepted.email, user.id, new Date())).toBe(true);
+    expect(await invitations.isPilotMember(user.id)).toBe(true);
+    expect(await invitations.revoke(unaccepted.email, new Date())).toBe(true);
+    expect(await invitations.isPilotMember(user.id)).toBe(false);
+
+    const revoked = await invitations.create({
+      email: 'revoked@example.com',
+      displayName: 'Revoked',
+      role: 'mentor',
+      invitedBy: null,
+      acceptedByUserId: null,
+      acceptedAt: null,
+      revokedAt: null,
+    });
+    await invitations.revoke(revoked.email, new Date());
+    expect(await invitations.accept(revoked.email, user.id, new Date())).toBe(false);
+    expect(await invitations.isPilotMember(user.id)).toBe(false);
+
+    const invalidEmail = new InvitationRepository(orm.em.fork()).create({
+      email: 'UPPERCASE@example.com',
+      displayName: 'Invalid',
+      role: 'seeker',
+      invitedBy: null,
+      acceptedByUserId: null,
+      acceptedAt: null,
+      revokedAt: null,
+    });
+    await expect(invalidEmail).rejects.toThrow();
+    const duplicateEmail = new InvitationRepository(orm.em.fork()).create({
+      email: 'not-accepted@example.com',
+      displayName: 'Duplicate',
+      role: 'mentor',
+      invitedBy: null,
+      acceptedByUserId: null,
+      acceptedAt: null,
+      revokedAt: null,
+    });
+    await expect(duplicateEmail).rejects.toThrow();
+
+    expect(await orm.em.fork().findOne(Invitation, { email: 'not-accepted@example.com' })).toMatchObject({
+      role: 'seeker',
+    });
+  });
+});
+
+describe('LoginTokenRepository', () => {
+  it('stores the opaque hash and consumes a valid token once under concurrent reuse', async () => {
+    const rawToken = Buffer.alloc(32, 7).toString('base64url');
+    const tokenHash = await import('node:crypto').then(({ createHash }) =>
+      createHash('sha256').update(Buffer.from(rawToken, 'base64url')).digest('hex'),
+    );
+    const now = new Date('2026-11-05T12:00:00.000Z');
+    const expiresAt = new Date(now.getTime() + 15 * 60 * 1000);
+    await new LoginTokenRepository(orm.em.fork()).create({
+      email: 'token@example.com',
+      tokenHash,
+      expiresAt,
+      consumedAt: null,
+    });
+
+    const stored = await orm.em.fork().findOne(LoginToken, { tokenHash });
+    expect(stored?.tokenHash).toBe(tokenHash);
+    expect(JSON.stringify(stored)).not.toContain(rawToken);
+
+    const results = await Promise.all([
+      new LoginTokenRepository(orm.em.fork()).consume(tokenHash, now),
+      new LoginTokenRepository(orm.em.fork()).consume(tokenHash, now),
+    ]);
+    expect(results.filter(Boolean)).toEqual(['token@example.com']);
+    await expect(new LoginTokenRepository(orm.em.fork()).consume(tokenHash, now)).resolves.toBeNull();
+  });
+
+  it('does not consume an expired token', async () => {
+    const tokenHash = 'a'.repeat(64);
+    const expiredAt = new Date('2026-11-05T11:59:59.999Z');
+    await new LoginTokenRepository(orm.em.fork()).create({
+      email: 'expired@example.com',
+      tokenHash,
+      expiresAt: expiredAt,
+      consumedAt: null,
+    });
+
+    await expect(
+      new LoginTokenRepository(orm.em.fork()).consume(tokenHash, new Date('2026-11-05T12:00:00.000Z')),
+    ).resolves.toBeNull();
   });
 });
 
