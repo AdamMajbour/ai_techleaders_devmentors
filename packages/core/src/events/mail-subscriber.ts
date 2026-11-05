@@ -6,7 +6,7 @@ import type { EventMap, EventName } from './event-map';
 export interface MailEventRegistrar {
   <TName extends EventName>(
     event: TName,
-    createMessage: (payload: EventMap[TName]) => MailMessage,
+    createMessage: (payload: EventMap[TName]) => MailMessage | null | Promise<MailMessage | null>,
   ): void;
 }
 
@@ -23,7 +23,8 @@ export function registerMailSubscriber(
   const onMail: MailEventRegistrar = (event, createMessage) => {
     bus.on(event, async (payload) => {
       try {
-        await mailer.send(createMessage(payload));
+        const message = await createMessage(payload);
+        if (message) await mailer.send(message);
       } catch {
         logger.error('Mail subscriber failed', { event });
       }

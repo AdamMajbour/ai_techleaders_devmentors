@@ -1,3 +1,4 @@
+import { ExclusionConstraintViolationError } from '@devmentor/db';
 import type {
   Booking,
   BookingRepository,
@@ -8,11 +9,12 @@ import type {
 import { CURRENCY, SESSION_25_PRICE_MINOR, SESSION_DURATION_MINUTES } from '../../constants';
 import type { EventBus } from '../../events/event-bus';
 import { assertOwns, assertParticipant } from '../../http/auth';
-import { ForbiddenError, NotFoundError, UnauthorizedError } from '../../http/errors';
+import { ConflictError, ForbiddenError, NotFoundError, UnauthorizedError, ValidationError } from '../../http/errors';
 import type { Session } from '../../security/session';
 import type { Clock } from '../../utils/clock';
 import { parseOrThrow } from '../../validators/parse';
 import { bookingCreateSchema, type BookingCreateInput } from '../../validators/bookings/booking-create.schema';
+import { bookingAcceptSchema, type BookingAcceptInput } from '../../validators/bookings/booking-accept.schema';
 import type { BookingListQuery } from '../../validators/bookings/booking-list.schema';
 import type { InvitationService } from '../auth/invitation.service';
 import type { PaymentGateway } from '../payments/payment-gateway.port';
@@ -31,6 +33,8 @@ type Dependencies = {
   eventBus: EventBus;
   clock: Clock;
 };
+
+const ACCEPT_START_MAX_AHEAD_MS = 7 * 24 * 60 * 60 * 1000;
 
 export interface BookingCreationResult {
   booking: BookingDto;
@@ -226,6 +230,59 @@ export class BookingService {
       : this.paymentGateway.failCheckout(payment.providerSessionId);
     await this.paymentService.handleEvent(event);
     return this.getById(session, id);
+  }
+
+  async accept(session: Session, id: string, untrustedInput: unknown): Promise<BookingReadDto> {
+    const input: BookingAcceptInput = parseOrThrow(bookingAcceptSchema, untrustedInput);
+    await this.requireMentorBooking(session, id);
+    const now = this.clock.now();
+    const startsAt = input.startsAt ? new Date(input.startsAt) : now;
+    if (
+      !Number.isFinite(startsAt.getTime()) ||
+      startsAt.getTime() < now.getTime() ||
+      startsAt.getTime() > now.getTime() + ACCEPT_START_MAX_AHEAD_MS
+    ) {
+      throw new ValidationError('Choose a start time from now through the next 7 days.', {
+        startsAt: ['Start time must not be in the past or more than 7 days ahead.'],
+      });
+    }
+
+    try {
+      await this.bookingRepository.transitionStatus(id, 'accepted', session.userId, {
+        startsAt,
+        endsAt: new Date(startsAt.getTime() + SESSION_DURATION_MINUTES * 60 * 1000),
+      });
+    } catch (error) {
+      if (error instanceof ExclusionConstraintViolationError) {
+        throw new ConflictError('That time is no longer available. Please choose another time.');
+      }
+      throw error;
+    }
+    await this.updateMentorActivity(session.userId, now);
+    await this.eventBus.emit('bookings.booking.accepted', { bookingId: id });
+    return this.getById(session, id);
+  }
+
+  async decline(session: Session, id: string): Promise<BookingReadDto> {
+    const booking = await this.requireMentorBooking(session, id);
+    const now = this.clock.now();
+    await this.bookingRepository.transitionStatus(id, 'declined', session.userId);
+    await this.updateMentorActivity(session.userId, now);
+    await this.eventBus.emit('bookings.booking.declined', { bookingId: booking.id });
+    return this.getById(session, id);
+  }
+
+  private async requireMentorBooking(session: Session, id: string): Promise<Booking> {
+    if (!session?.userId) throw new UnauthorizedError();
+    if (!(await this.invitationService.isAcceptedMentor(session.userId))) throw new NotFoundError('Booking not found.');
+    const booking = await this.bookingRepository.findById(id);
+    if (!booking || booking.mentorId !== session.userId) throw new NotFoundError('Booking not found.');
+    return booking;
+  }
+
+  private async updateMentorActivity(userId: string, activeAt: Date): Promise<void> {
+    const profile = await this.mentorProfileRepository.findByUserId(userId);
+    if (profile) await this.mentorProfileRepository.update(profile.id, { lastActiveAt: activeAt });
   }
 
   private async toParticipantDto(

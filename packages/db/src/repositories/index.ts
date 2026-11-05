@@ -13,7 +13,12 @@ import {
   Booking,
   Payment,
 } from '../entities';
-import { PendingApprovalConflictError, isUniqueConstraintViolation } from '../errors';
+import {
+  ExclusionConstraintViolationError,
+  PendingApprovalConflictError,
+  isExclusionConstraintViolation,
+  isUniqueConstraintViolation,
+} from '../errors';
 import { transitionStatus } from './transition';
 export { transitionStatus };
 export type { TransitionActor, TransitionStatusInput } from './transition';
@@ -145,6 +150,29 @@ export class BookingRepository {
         ? { mentorId: userId }
         : { $or: [{ seekerId: userId }, { mentorId: userId }] };
     return this.em.find(Booking, where, { orderBy: { createdAt: 'desc', id: 'asc' } });
+  }
+
+  async transitionStatus(
+    id: string,
+    status: 'accepted' | 'declined',
+    actorUserId: string,
+    patch: Record<string, unknown> = {},
+  ): Promise<boolean> {
+    try {
+      return await transitionStatus(this.em, {
+        entityType: 'Booking',
+        entityId: id,
+        from: ['paid'],
+        to: status,
+        actor: { kind: 'user', userId: actorUserId },
+        patch,
+      });
+    } catch (error) {
+      if (isExclusionConstraintViolation(error)) {
+        throw new ExclusionConstraintViolationError();
+      }
+      throw error;
+    }
   }
 
   /** Persists the booking and its pending payment together before contacting the gateway. */

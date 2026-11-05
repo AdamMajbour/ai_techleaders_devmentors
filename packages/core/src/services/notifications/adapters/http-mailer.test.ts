@@ -51,6 +51,7 @@ describe('HttpMailer', () => {
       void init;
       return new Response(null);
     });
+
     const mailer = new HttpMailer({ apiKey: 'secret-provider-key', from: 'hello@example.com', fetcher });
 
     await expect(mailer.send({ ...message, template: 'other' })).rejects.toThrow('Unsupported e-mail template');
@@ -58,6 +59,45 @@ describe('HttpMailer', () => {
       'Invalid sign-in link',
     );
     expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it('sends paid-question and accepted-booking templates with escaped content and exact time', async () => {
+    const fetcher = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      void input;
+      void init;
+      return new Response(null, { status: 202 });
+    });
+    const mailer = new HttpMailer({
+      apiKey: 'secret-provider-key',
+      from: 'DevMentor <hello@example.com>',
+      fetcher,
+    });
+
+    await mailer.send({
+      to: 'mentor@example.com',
+      template: 'booking-question',
+      data: { question: '<script>private</script> How can I help?' },
+    });
+    await mailer.send({
+      to: 'seeker@example.com',
+      template: 'booking-accepted',
+      data: { mentorName: 'Ada <Mentor>', startsAt: '2026-11-06T12:00:00.000Z' },
+    });
+
+    const first = JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+    const second = JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+    expect(first).toMatchObject({
+      to: ['mentor@example.com'],
+      subject: 'A paid question is waiting for you',
+      html: expect.stringContaining('&lt;script&gt;private&lt;/script&gt;'),
+    });
+    expect(first.html).not.toContain('<script>');
+    expect(second).toMatchObject({
+      to: ['seeker@example.com'],
+      subject: 'Your DevMentor session is accepted',
+      text: expect.stringContaining('2026-11-06T12:00:00.000Z (UTC)'),
+      html: expect.stringContaining('Ada &lt;Mentor&gt;'),
+    });
   });
 
   it('does not include response bodies or secrets in provider errors', async () => {

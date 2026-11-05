@@ -9,6 +9,8 @@ const ALL_EVENTS: EventName[] = [
   'articles.article.deleted',
   'bookings.booking.created',
   'bookings.booking.paid',
+  'bookings.booking.accepted',
+  'bookings.booking.declined',
   'payments.payment.succeeded',
   'payments.payment.failed',
   'approvals.approval.requested',

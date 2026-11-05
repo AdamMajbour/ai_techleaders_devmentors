@@ -9,6 +9,8 @@ export interface EventMap {
   'articles.article.deleted': { articleId: string; authorId: string };
   'bookings.booking.created': { bookingId: string; seekerId: string; mentorId: string };
   'bookings.booking.paid': { bookingId: string };
+  'bookings.booking.accepted': { bookingId: string };
+  'bookings.booking.declined': { bookingId: string };
   'payments.payment.succeeded': { paymentId: string };
   'payments.payment.failed': { paymentId: string };
   'approvals.approval.requested': { approvalId: string };

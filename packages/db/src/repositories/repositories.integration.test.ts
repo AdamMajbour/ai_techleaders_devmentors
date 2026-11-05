@@ -13,10 +13,16 @@ import {
   Payment,
   StatusTransition,
 } from '../entities';
-import { isUniqueConstraintViolation, PendingApprovalConflictError } from '../errors';
+import {
+  ExclusionConstraintViolationError,
+  isExclusionConstraintViolation,
+  isUniqueConstraintViolation,
+  PendingApprovalConflictError,
+} from '../errors';
 import {
   ArticleRepository,
   ApprovalRequestRepository,
+  BookingRepository,
   InvitationRepository,
   LoginTokenRepository,
   MentorProfileRepository,
@@ -129,6 +135,24 @@ describe('migrations', () => {
       expect.arrayContaining(['bookings_mentor_status_index', 'bookings_seeker_id_index']),
     );
   });
+
+  it('reverses only the overlap constraint and leaves btree_gist installed', async () => {
+    await orm.migrator.down('Migration20261105210000_booking_overlap');
+    const constraint = await orm.em.getConnection().execute(
+      `select conname from pg_constraint where conname = 'bookings_accepted_mentor_time_excl'`,
+    );
+    const extension = await orm.em.getConnection().execute(
+      `select extname from pg_extension where extname = 'btree_gist'`,
+    );
+    expect(constraint).toHaveLength(0);
+    expect(extension).toHaveLength(1);
+
+    await orm.migrator.up();
+    const restored = await orm.em.getConnection().execute(
+      `select conname from pg_constraint where conname = 'bookings_accepted_mentor_time_excl'`,
+    );
+    expect(restored).toHaveLength(1);
+  });
 });
 
 describe('booking and payment constraints', () => {
@@ -207,6 +231,7 @@ describe('booking and payment constraints', () => {
       email: 'booking-seeker@example.com',
       name: 'Booking Seeker',
     });
+
     const mentorUser = await new UserRepository(orm.em.fork()).create({
       email: 'booking-mentor@example.com',
       name: 'Booking Mentor',
@@ -259,6 +284,65 @@ describe('booking and payment constraints', () => {
     await expect(insertPayment(randomUUID(), 'orphan-session')).rejects.toThrow();
     await expect(insertPayment(anotherBooking, 'invalid-status', { status: 'captured' })).rejects.toThrow();
     await expect(insertPayment(anotherBooking, 'invalid-amount', { amountMinor: 0 })).rejects.toThrow();
+  });
+
+  describe('accepted booking overlap exclusion', () => {
+    async function fixtures() {
+      const users = new UserRepository(orm.em.fork());
+      const seeker1 = await users.create({ email: `${randomUUID()}@example.com`, name: 'Seeker 1' });
+      const seeker2 = await users.create({ email: `${randomUUID()}@example.com`, name: 'Seeker 2' });
+      const mentor = await users.create({ email: `${randomUUID()}@example.com`, name: 'Mentor' });
+      await new MentorProfileRepository(orm.em.fork()).create({
+        userId: mentor.id,
+        slug: `mentor-${randomUUID()}`,
+        headline: 'Mentor',
+        bio: 'Bio',
+        technologies: 'typescript',
+        publicWorkUrl: 'https://example.com',
+        isListed: true,
+        lastActiveAt: null,
+      });
+      return {
+        mentorId: mentor.id,
+        first: await insertBooking({ seekerId: seeker1.id, mentorId: mentor.id, status: 'paid' }),
+        second: await insertBooking({ seekerId: seeker2.id, mentorId: mentor.id, status: 'paid' }),
+      };
+    }
+
+    const startsAt = new Date('2026-11-06T12:00:00.000Z');
+    const endsAt = new Date(startsAt.getTime() + 25 * 60 * 1000);
+    const accept = (bookingId: string, mentorId: string) =>
+      new BookingRepository(orm.em.fork()).transitionStatus(bookingId, 'accepted', mentorId, {
+        startsAt,
+        endsAt,
+      });
+
+    it('rejects a sequential overlapping acceptance with the db-layer conflict error', async () => {
+      const { mentorId, first, second } = await fixtures();
+      await accept(first, mentorId);
+
+      await expect(accept(second, mentorId)).rejects.toBeInstanceOf(ExclusionConstraintViolationError);
+      expect(await orm.em.count(Booking, { id: second, status: 'paid' })).toBe(1);
+    });
+
+    it('allows only one concurrent overlapping acceptance', async () => {
+      const { mentorId, first, second } = await fixtures();
+      const attempts = await Promise.all([
+        accept(first, mentorId).then(() => 'accepted', (error: unknown) => error),
+        accept(second, mentorId).then(() => 'accepted', (error: unknown) => error),
+      ]);
+
+      expect(attempts.filter((result) => result === 'accepted')).toHaveLength(1);
+      const conflict = attempts.find((result) => result !== 'accepted');
+      expect(conflict).toBeInstanceOf(ExclusionConstraintViolationError);
+      expect(await orm.em.count(Booking, { mentorId, status: 'accepted' })).toBe(1);
+    });
+
+    it('recognizes SQLSTATE 23P01 through a wrapped PostgreSQL error cause', () => {
+      expect(isExclusionConstraintViolation({ cause: { code: '23P01' } })).toBe(true);
+      expect(isExclusionConstraintViolation({ code: '23505' })).toBe(false);
+      expect(isExclusionConstraintViolation(new Error('not a database error'))).toBe(false);
+    });
   });
 });
 

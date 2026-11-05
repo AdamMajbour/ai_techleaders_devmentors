@@ -18,6 +18,7 @@ import {
 import { createEventBus } from '../events/event-bus';
 import { registerLoggingSubscriber } from '../events/logging-subscriber';
 import { registerMailSubscriber } from '../events/mail-subscriber';
+import { registerBookingMailMappings } from '../events/booking-mail';
 import { createLogger, type Logger } from '../logger';
 import { ArticleService } from '../services/articles/article.service';
 import { AuthService } from '../services/auth/auth.service';
@@ -40,7 +41,27 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
   const eventBus = createEventBus(logger);
   registerLoggingSubscriber(eventBus, logger);
   const mailer = new ConfiguredMailer();
-  registerMailSubscriber(eventBus, mailer, logger);
+  registerMailSubscriber(eventBus, mailer, logger, (onMail) => {
+    registerBookingMailMappings(onMail, {
+      paidQuestion: (bookingId) => withScope(async ({ bookingRepository, userRepository }) => {
+        const booking = await bookingRepository.findById(bookingId);
+        if (!booking || booking.status !== 'paid') return null;
+        const mentor = await userRepository.findById(booking.mentorId);
+        if (!mentor) return null;
+        return { to: mentor.email, question: booking.question };
+      }),
+      acceptedBooking: (bookingId) => withScope(async ({ bookingRepository, userRepository }) => {
+        const booking = await bookingRepository.findById(bookingId);
+        if (!booking || booking.status !== 'accepted' || !booking.startsAt) return null;
+        const [seeker, mentor] = await Promise.all([
+          userRepository.findById(booking.seekerId),
+          userRepository.findById(booking.mentorId),
+        ]);
+        if (!seeker || !mentor) return null;
+        return { to: seeker.email, mentorName: mentor.name, startsAt: booking.startsAt.toISOString() };
+      }),
+    });
+  });
 
   container.register({
     logger: asValue(logger),

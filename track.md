@@ -112,11 +112,13 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 ## Phase 4 — Accept, decline, refund (#13)
 
-- [ ] 4.1 Add the accepted-booking overlap constraint and database conflict mapping; implement accept/decline actions and mentor booking UI/email.
+- [x] 4.1 Add the accepted-booking overlap constraint and database conflict mapping; implement accept/decline actions and mentor booking UI/email.
 - [ ] 4.2 Implement decline/expiry approvals, lazy settlement, `bookings:settle`, and operator-initiated refund requests.
 - [ ] 4.3 Implement retry-safe refund execution, operator approvals UI, and refund status DTO behavior.
 
-**Manual test gate:** accept/decline bookings, reject overlapping sessions, exercise expiry and both refund approval paths, and verify retry safety. Do not enable live payments.
+**4.1 validation:** focused booking, API, mailer/event, and mentor-page checks passed (7 suites / 55 tests); workspace type-check, repository lint (`npm run lint -- --quiet`), production build, and `git diff --check` passed. Added dedicated-test-database integration coverage for migration rollback and sequential/concurrent overlaps, but it could not execute because PostgreSQL rejected the configured `postgres` password (`28P01`). No development database was used.
+
+**Manual test gate:** ⏳ pending. Verify accept/decline and overlap rejection after 4.1; expiry, refund approvals, and retry safety remain pending 4.2/4.3. D25 is still unrecorded and no `REFUND_AUTO_APPROVE_REASONS` has been set. Do not enable live payments.
 
 ## Phase 5 — Text session (#14)
 

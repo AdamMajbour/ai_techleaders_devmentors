@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import type { Booking, MentorProfile, NewBooking } from '@devmentor/db';
+import { ExclusionConstraintViolationError, type Booking, type MentorProfile, type NewBooking } from '@devmentor/db';
 import { CURRENCY, SESSION_25_PRICE_MINOR, SESSION_DURATION_MINUTES } from '../../constants';
 import { ForbiddenError, NotFoundError, UnauthorizedError, ValidationError } from '../../http/errors';
 import type { Clock } from '../../utils/clock';
@@ -57,6 +57,7 @@ function setup(options: {
   failCheckoutError?: Error;
   sessionSaveFails?: boolean;
   checkoutEvent?: NormalizedPaymentEvent | null;
+  transitionError?: Error;
 } = {}) {
   const booking = makeBooking();
   const payment = { status: 'pending', providerSessionId: 'session-1' };
@@ -73,12 +74,25 @@ function setup(options: {
   const findById = jest.fn(async () => options.profile === undefined ? makeProfile() : options.profile);
   const findBookingById = jest.fn(async () => booking);
   const findForParticipant = jest.fn(async () => [booking]);
+  const transitionBooking = jest.fn(async (
+    _id: string,
+    status: 'accepted' | 'declined',
+    _actorUserId: string,
+    patch: Record<string, unknown> = {},
+  ) => {
+    if (options.transitionError) throw options.transitionError;
+    booking.status = status;
+    Object.assign(booking, patch);
+    return true;
+  });
   const findByBookingId = jest.fn(async () => payment);
   const findUserById = jest.fn(async (id: string) => ({
     id,
     name: id === MENTOR_ID ? 'Ada Mentor' : 'Sam Seeker',
     email: id === MENTOR_ID ? 'mentor@example.com' : 'seeker@example.com',
   }));
+  const findMentorProfileByUserId = jest.fn(async () => makeProfile());
+  const updateMentorProfile = jest.fn(async () => makeProfile({ lastActiveAt: NOW }));
   const getCheckout = jest.fn(async () => options.checkoutEvent ?? null);
   const handleEvent = jest.fn(async (event: NormalizedPaymentEvent) => {
     if (booking.status !== 'pending_payment') return;
@@ -96,8 +110,18 @@ function setup(options: {
   const emit = jest.fn(async () => undefined);
   const clock: Clock = { now: () => new Date(NOW) };
   const service = new BookingService({
-    bookingRepository: { createWithPayment, failCheckout, findById: findBookingById, findForParticipant } as never,
-    mentorProfileRepository: { findById, findByUserId: jest.fn(async () => makeProfile()) } as never,
+    bookingRepository: {
+      createWithPayment,
+      failCheckout,
+      findById: findBookingById,
+      findForParticipant,
+      transitionStatus: transitionBooking,
+    } as never,
+    mentorProfileRepository: {
+      findById,
+      findByUserId: findMentorProfileByUserId,
+      update: updateMentorProfile,
+    } as never,
     paymentRepository: { setProviderSession, findByBookingId } as never,
     userRepository: { findById: findUserById } as never,
     invitationService,
@@ -127,8 +151,11 @@ function setup(options: {
     emit,
     findBookingById,
     findForParticipant,
+    transitionBooking,
     findByBookingId,
     findUserById,
+    findMentorProfileByUserId,
+    updateMentorProfile,
     getCheckout,
     handleEvent,
   };
@@ -171,6 +198,7 @@ describe('BookingService.create', () => {
       currency: CURRENCY,
       idempotencyKey: 'booking:booking-1:checkout',
     });
+
     expect(deps.setProviderSession).toHaveBeenCalledWith('booking-1', 'session-1');
     expect(result).toMatchObject({
       booking: { status: 'pending_payment', priceMinor: 2500, currency: 'EUR', durationMinutes: 25 },
@@ -180,6 +208,94 @@ describe('BookingService.create', () => {
       bookingId: 'booking-1',
       seekerId: SEEKER_ID,
       mentorId: MENTOR_ID,
+    });
+  });
+
+  describe('BookingService mentor actions', () => {
+    it('accepts at the server clock by default, sets the 25-minute end atomically, and exposes seeker e-mail only after acceptance', async () => {
+      const deps = setup();
+      deps.booking.status = 'paid';
+
+      const accepted = await deps.service.accept({ userId: MENTOR_ID }, 'booking-1', {});
+
+      expect(deps.transitionBooking).toHaveBeenCalledWith('booking-1', 'accepted', MENTOR_ID, {
+        startsAt: NOW,
+        endsAt: new Date(NOW.getTime() + 25 * 60 * 1000),
+      });
+      expect(deps.updateMentorProfile).toHaveBeenCalledWith(PROFILE_ID, { lastActiveAt: NOW });
+      expect(deps.emit).toHaveBeenCalledWith('bookings.booking.accepted', { bookingId: 'booking-1' });
+      expect(accepted).toMatchObject({
+        status: 'accepted',
+        question: 'How do I fix this?',
+        counterpartEmail: 'seeker@example.com',
+        startsAt: NOW.toISOString(),
+        endsAt: new Date(NOW.getTime() + 25 * 60 * 1000).toISOString(),
+      });
+    });
+
+    it('accepts a requested start within seven days and derives the end from it', async () => {
+      const deps = setup();
+      deps.booking.status = 'paid';
+      const startsAt = new Date(NOW.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      await deps.service.accept({ userId: MENTOR_ID }, 'booking-1', { startsAt: startsAt.toISOString() });
+
+      expect(deps.transitionBooking).toHaveBeenCalledWith('booking-1', 'accepted', MENTOR_ID, {
+        startsAt,
+        endsAt: new Date(startsAt.getTime() + 25 * 60 * 1000),
+      });
+    });
+
+    it.each([
+      ['in the past', new Date(NOW.getTime() - 1).toISOString()],
+      ['more than seven days ahead', new Date(NOW.getTime() + 7 * 24 * 60 * 60 * 1000 + 1).toISOString()],
+    ])('rejects an acceptance time %s', async (_label, startsAt) => {
+      const deps = setup();
+      deps.booking.status = 'paid';
+
+      await expect(deps.service.accept({ userId: MENTOR_ID }, 'booking-1', { startsAt }))
+        .rejects.toBeInstanceOf(ValidationError);
+      expect(deps.transitionBooking).not.toHaveBeenCalled();
+      expect(deps.updateMentorProfile).not.toHaveBeenCalled();
+    });
+
+    it('maps a database overlap conflict to an actionable core conflict', async () => {
+      const deps = setup({ transitionError: new ExclusionConstraintViolationError() });
+      deps.booking.status = 'paid';
+
+      await expect(deps.service.accept({ userId: MENTOR_ID }, 'booking-1', {}))
+        .rejects.toMatchObject({
+          name: 'ConflictError',
+          message: 'That time is no longer available. Please choose another time.',
+        });
+      expect(deps.updateMentorProfile).not.toHaveBeenCalled();
+      expect(deps.emit).not.toHaveBeenCalled();
+    });
+
+    it('declines paid bookings without exposing the question and records deliberate mentor activity', async () => {
+      const deps = setup();
+      deps.booking.status = 'paid';
+
+      const declined = await deps.service.decline({ userId: MENTOR_ID }, 'booking-1');
+
+      expect(deps.transitionBooking).toHaveBeenCalledWith('booking-1', 'declined', MENTOR_ID);
+      expect(deps.updateMentorProfile).toHaveBeenCalledWith(PROFILE_ID, { lastActiveAt: NOW });
+      expect(deps.emit).toHaveBeenCalledWith('bookings.booking.declined', { bookingId: 'booking-1' });
+      expect(declined.status).toBe('declined');
+      expect(declined).not.toHaveProperty('question');
+      expect(declined).not.toHaveProperty('counterpartEmail');
+    });
+
+    it('fails closed for non-mentors and bookings not owned by the session user', async () => {
+      const nonMentor = setup({ isAcceptedMentor: false });
+      nonMentor.booking.status = 'paid';
+      await expect(nonMentor.service.accept({ userId: MENTOR_ID }, 'booking-1', {})).rejects.toBeInstanceOf(NotFoundError);
+      expect(nonMentor.findBookingById).not.toHaveBeenCalled();
+
+      const wrongOwner = setup();
+      wrongOwner.booking.status = 'paid';
+      await expect(wrongOwner.service.decline({ userId: SEEKER_ID }, 'booking-1')).rejects.toBeInstanceOf(NotFoundError);
+      expect(wrongOwner.transitionBooking).not.toHaveBeenCalled();
     });
   });
 

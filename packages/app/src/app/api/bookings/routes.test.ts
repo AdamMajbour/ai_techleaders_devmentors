@@ -9,6 +9,8 @@ const mockBookingService = {
   getById: jest.fn(async () => ({ id: 'booking', status: 'pending_payment' })),
   reconcilePayment: jest.fn(async () => ({ id: 'booking', status: 'paid' })),
   completeMockCheckout: jest.fn(async () => ({ id: 'booking', status: 'paid' })),
+  accept: jest.fn(async () => ({ id: 'booking', status: 'accepted' })),
+  decline: jest.fn(async () => ({ id: 'booking', status: 'declined' })),
 };
 const mockCradle = { bookingService: mockBookingService } as unknown as Cradle;
 const mockWithScope = jest.fn(async (fn: (cradle: Cradle) => Promise<unknown>) => fn(mockCradle));
@@ -22,6 +24,8 @@ import { GET as getBookings, POST as createBooking } from './route';
 import { GET as getBookingById } from './[id]/route';
 import { POST as reconcilePayment } from './[id]/reconcile-payment/route';
 import { POST as mockPayment } from './[id]/mock-payment/route';
+import { POST as acceptBooking } from './[id]/accept/route';
+import { POST as declineBooking } from './[id]/decline/route';
 
 const SECRET = 'b'.repeat(48);
 const BOOKING_ID = '0c0b2f5a-6f6e-4b53-9f0e-6b1f3b0a7a11';
@@ -141,5 +145,56 @@ describe('/api/bookings CRUD routes', () => {
       BOOKING_ID,
       'complete',
     );
+  });
+
+  it('routes mentor accept and decline actions through the authenticated action builder', async () => {
+    const accept = await acceptBooking(
+      new Request(`http://localhost/api/bookings/${BOOKING_ID}/accept`, {
+        method: 'POST',
+        headers: mutationHeaders(await memberHeaders()),
+        body: '{}',
+      }),
+      context,
+    );
+    const decline = await declineBooking(
+      new Request(`http://localhost/api/bookings/${BOOKING_ID}/decline`, {
+        method: 'POST',
+        headers: mutationHeaders(await memberHeaders()),
+        body: '{}',
+      }),
+      context,
+    );
+
+    expect(accept.status).toBe(200);
+    expect(mockBookingService.accept).toHaveBeenCalledWith(
+      { userId: 'seeker-id' },
+      BOOKING_ID,
+      {},
+    );
+    expect(decline.status).toBe(200);
+    expect(mockBookingService.decline).toHaveBeenCalledWith({ userId: 'seeker-id' }, BOOKING_ID);
+  });
+
+  it('requires CSRF and rejects malformed acceptance start times before the service call', async () => {
+    const missingCsrf = await acceptBooking(
+      new Request(`http://localhost/api/bookings/${BOOKING_ID}/accept`, {
+        method: 'POST',
+        headers: await memberHeaders(),
+        body: '{}',
+      }),
+      context,
+    );
+    const invalidBody = await acceptBooking(
+      new Request(`http://localhost/api/bookings/${BOOKING_ID}/accept`, {
+        method: 'POST',
+        headers: mutationHeaders(await memberHeaders()),
+        body: '{"startsAt":"not-a-time"}',
+      }),
+      context,
+    );
+
+    expect(missingCsrf.status).toBe(403);
+    expect(invalidBody.status).toBe(400);
+    expect(mockBookingService.accept).not.toHaveBeenCalled();
   });
 });

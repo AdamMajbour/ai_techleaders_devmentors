@@ -1,5 +1,6 @@
 import { createEventBus } from './event-bus';
 import { registerMailSubscriber } from './mail-subscriber';
+import { registerBookingMailMappings } from './booking-mail';
 import type { Mailer } from '../services/notifications/mailer.port';
 
 const makeLogger = () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() });
@@ -50,5 +51,39 @@ describe('mail subscriber', () => {
     expect(JSON.stringify(logger.error.mock.calls)).not.toContain('private message');
     expect(JSON.stringify(logger.error.mock.calls)).not.toContain('secret-token');
     expect(JSON.stringify(logger.error.mock.calls)).not.toContain('https://private.test/link');
+  });
+
+  it('sends booking messages from id-only paid and accepted events', async () => {
+    const logger = makeLogger();
+    const bus = createEventBus(logger);
+    const mailer: Mailer = { send: jest.fn().mockResolvedValue(undefined) };
+    const loader = {
+      paidQuestion: jest.fn(async () => ({
+        to: 'mentor@example.com',
+        question: 'How do I fix a deployment issue?',
+      })),
+      acceptedBooking: jest.fn(async () => ({
+        to: 'seeker@example.com',
+        mentorName: 'Ada Mentor',
+        startsAt: '2026-11-06T12:00:00.000Z',
+      })),
+    };
+    registerMailSubscriber(bus, mailer, logger, (onMail) => registerBookingMailMappings(onMail, loader));
+
+    await bus.emit('bookings.booking.paid', { bookingId: 'booking-1' });
+    await bus.emit('bookings.booking.accepted', { bookingId: 'booking-1' });
+
+    expect(mailer.send).toHaveBeenNthCalledWith(1, {
+      to: 'mentor@example.com',
+      template: 'booking-question',
+      data: { question: 'How do I fix a deployment issue?' },
+    });
+    expect(mailer.send).toHaveBeenNthCalledWith(2, {
+      to: 'seeker@example.com',
+      template: 'booking-accepted',
+      data: { mentorName: 'Ada Mentor', startsAt: '2026-11-06T12:00:00.000Z' },
+    });
+    expect(loader.paidQuestion).toHaveBeenCalledWith('booking-1');
+    expect(loader.acceptedBooking).toHaveBeenCalledWith('booking-1');
   });
 });

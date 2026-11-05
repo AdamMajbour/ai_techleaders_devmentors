@@ -48,6 +48,37 @@ function magicLinkContent(message: MailMessage): { subject: string; text: string
   };
 }
 
+function bookingQuestionContent(message: MailMessage): { subject: string; text: string; html: string } {
+  if (message.template !== 'booking-question' || typeof message.data.question !== 'string') {
+    throw new Error('Unsupported e-mail template.');
+  }
+  const question = message.data.question;
+  return {
+    subject: 'A paid question is waiting for you',
+    text: `A seeker has sent you a paid question:\n\n${question}\n\nSign in to DevMentor to review and respond.`,
+    html: `<p>A seeker has sent you a paid question:</p><blockquote>${escapeHtml(question)}</blockquote><p>Sign in to DevMentor to review and respond.</p>`,
+  };
+}
+
+function bookingAcceptedContent(message: MailMessage): { subject: string; text: string; html: string } {
+  if (
+    message.template !== 'booking-accepted' ||
+    typeof message.data.mentorName !== 'string' ||
+    typeof message.data.startsAt !== 'string'
+  ) {
+    throw new Error('Unsupported e-mail template.');
+  }
+  const startsAt = new Date(message.data.startsAt);
+  if (!Number.isFinite(startsAt.getTime())) throw new Error('Invalid booking start time.');
+  const mentorName = message.data.mentorName;
+  const startsAtLabel = `${startsAt.toISOString()} (UTC)`;
+  return {
+    subject: 'Your DevMentor session is accepted',
+    text: `${mentorName} accepted your booking. Your 25-minute session starts at ${startsAtLabel}.`,
+    html: `<p>${escapeHtml(mentorName)} accepted your booking.</p><p>Your 25-minute session starts at ${escapeHtml(startsAtLabel)}.</p>`,
+  };
+}
+
 export class HttpMailer implements Mailer {
   private readonly fetcher: typeof fetch;
 
@@ -56,7 +87,11 @@ export class HttpMailer implements Mailer {
   }
 
   async send(message: MailMessage): Promise<void> {
-    const content = magicLinkContent(message);
+    const content = message.template === 'magic-link'
+      ? magicLinkContent(message)
+      : message.template === 'booking-question'
+        ? bookingQuestionContent(message)
+        : bookingAcceptedContent(message);
     const response = await this.fetcher(RESEND_EMAILS_ENDPOINT, {
       method: 'POST',
       redirect: 'error',
