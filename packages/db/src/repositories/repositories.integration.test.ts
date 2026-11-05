@@ -3,9 +3,9 @@ import path from 'node:path';
 import type { MikroORM } from '@mikro-orm/core';
 import type { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { closeORM, initializeORM } from '../config';
-import { StatusTransition } from '../entities';
-import { isUniqueConstraintViolation } from '../errors';
-import { ArticleRepository, UserRepository, transitionStatus } from './index';
+import { ApprovalRequest, StatusTransition } from '../entities';
+import { isUniqueConstraintViolation, PendingApprovalConflictError } from '../errors';
+import { ArticleRepository, ApprovalRequestRepository, UserRepository, transitionStatus } from './index';
 
 let orm: MikroORM<PostgreSqlDriver>;
 
@@ -49,7 +49,28 @@ afterAll(async () => {
 
 describe('migrations', () => {
   it('create the application tables', async () => {
-    expect(await publicTables()).toEqual(['articles', 'mikro_orm_migrations', 'status_transitions', 'users']);
+    expect(await publicTables()).toEqual([
+      'approval_requests',
+      'articles',
+      'mikro_orm_migrations',
+      'status_transitions',
+      'users',
+    ]);
+  });
+
+  it('removes the approval table and its partial index on migration down', async () => {
+    await orm.migrator.down('Migration20261105183000_approval_requests');
+    expect(await publicTables()).not.toContain('approval_requests');
+
+    const index = (await orm.em.getConnection().execute(
+      `select to_regclass('public.approval_requests_one_pending_per_subject') as name`,
+      [],
+      'get',
+    )) as unknown as { name: string | null } | undefined;
+    expect(index?.name).toBeNull();
+
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('approval_requests');
   });
 });
 
@@ -100,6 +121,39 @@ describe('UserRepository', () => {
     expect(await new UserRepository(orm.em.fork()).delete(created.id)).toBe(true);
     expect(await new UserRepository(orm.em.fork()).findById(created.id)).toBeNull();
     expect(await new UserRepository(orm.em.fork()).delete(created.id)).toBe(false);
+  });
+});
+
+describe('ApprovalRequestRepository', () => {
+  it('allows only one pending request per subject and permits a new request after a decision', async () => {
+    const data = {
+      kind: 'refund',
+      subjectType: 'booking',
+      subjectId: '00000000-0000-4000-8000-0000000000b1',
+      reason: 'Mentor declined.',
+    };
+    const created = await new ApprovalRequestRepository(orm.em.fork()).create(data);
+    const duplicate = new ApprovalRequestRepository(orm.em.fork()).create(data).catch((error: unknown) => error);
+
+    await expect(duplicate).resolves.toBeInstanceOf(PendingApprovalConflictError);
+    const decidedAt = new Date('2026-11-05T12:00:00.000Z');
+    await new ApprovalRequestRepository(orm.em.fork()).transitionStatus(
+      created.id,
+      'rejected',
+      '00000000-0000-4000-8000-0000000000b2',
+      decidedAt,
+    );
+
+    const decided = await new ApprovalRequestRepository(orm.em.fork()).findById(created.id);
+    expect(decided).toMatchObject({
+      status: 'rejected',
+      decidedBy: '00000000-0000-4000-8000-0000000000b2',
+      decidedAt,
+    });
+    await expect(new ApprovalRequestRepository(orm.em.fork()).create(data)).resolves.toMatchObject({
+      status: 'pending',
+      subjectId: data.subjectId,
+    });
   });
 });
 
@@ -162,6 +216,67 @@ describe('ArticleRepository paging, update and delete', () => {
     expect(await new ArticleRepository(orm.em.fork()).delete(created.id)).toBe(true);
     expect(await new ArticleRepository(orm.em.fork()).findById(created.id)).toBeNull();
     expect(await new ArticleRepository(orm.em.fork()).delete(created.id)).toBe(false);
+  });
+});
+
+describe('ApprovalRequestRepository', () => {
+  it('enforces one pending approval per kind and typed subject, then persists a terminal decision', async () => {
+    const approvals = new ApprovalRequestRepository(orm.em.fork());
+    const subject = '00000000-0000-4000-8000-0000000000b1';
+    const created = await approvals.create({
+      kind: 'refund',
+      subjectType: 'payment',
+      subjectId: subject,
+      reason: 'Customer request',
+    });
+
+    const duplicate = await new ApprovalRequestRepository(orm.em.fork())
+      .create({ kind: 'refund', subjectType: 'payment', subjectId: subject, reason: 'Duplicate' })
+      .catch((error: unknown) => error);
+    expect(duplicate).toMatchObject({ name: 'PendingApprovalConflictError' });
+
+    await expect(
+      new ApprovalRequestRepository(orm.em.fork()).create({
+        kind: 'refund',
+        subjectType: 'booking',
+        subjectId: subject,
+        reason: 'Different subject type',
+      }),
+    ).resolves.toBeDefined();
+
+    const decidedAt = new Date('2026-11-05T12:00:00.000Z');
+    await expect(
+      new ApprovalRequestRepository(orm.em.fork()).transitionStatus(
+        created.id,
+        'approved',
+        '00000000-0000-4000-8000-0000000000b2',
+        decidedAt,
+      ),
+    ).resolves.toBe(true);
+
+    const stored = await new ApprovalRequestRepository(orm.em.fork()).findById(created.id);
+    expect(stored).toMatchObject({
+      status: 'approved',
+      decidedBy: '00000000-0000-4000-8000-0000000000b2',
+      decidedAt,
+    });
+    expect(await orm.em.count(StatusTransition, { entityType: 'ApprovalRequest', entityId: created.id })).toBe(1);
+    await expect(
+      new ApprovalRequestRepository(orm.em.fork()).create({
+        kind: 'refund',
+        subjectType: 'payment',
+        subjectId: subject,
+        reason: 'Retry after prior decision',
+      }),
+    ).resolves.toBeDefined();
+    await expect(
+      orm.em.getConnection().execute(
+        'update "approval_requests" set "decided_by" = null where "id" = ?',
+        [created.id],
+        'run',
+      ),
+    ).rejects.toThrow();
+    expect(await orm.em.count(ApprovalRequest, { id: created.id, status: 'approved' })).toBe(1);
   });
 });
 

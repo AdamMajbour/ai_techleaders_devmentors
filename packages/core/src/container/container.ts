@@ -4,7 +4,7 @@
 //   logger, eventBus, orm                      - singletons (one connection pool per process)
 //   em, repositories, services                 - scoped: a fresh EntityManager fork per scope
 import { asClass, asFunction, asValue, createContainer, InjectionMode, type AwilixContainer } from 'awilix';
-import { ArticleRepository, initializeORM, UserRepository } from '@devmentor/db';
+import { ApprovalRequestRepository, ArticleRepository, initializeORM, UserRepository } from '@devmentor/db';
 import { createEventBus } from '../events/event-bus';
 import { registerLoggingSubscriber } from '../events/logging-subscriber';
 import { registerMailSubscriber } from '../events/mail-subscriber';
@@ -14,6 +14,7 @@ import { AuthService } from '../services/auth/auth.service';
 import { UserService } from '../services/auth/user.service';
 import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
 import { ConsoleMailer } from '../services/notifications/adapters/console-mailer';
+import { ApprovalService, defaultApproverResolvers } from '../services/approvals/approval.service';
 import { systemClock } from '../utils/clock';
 import type { Cradle, OrmLike } from './cradle';
 
@@ -34,9 +35,12 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     em: asFunction(({ orm }: Cradle) => orm.em.fork()).scoped(),
     userRepository: asFunction(({ em }: Cradle) => new UserRepository(em)).scoped(),
     articleRepository: asFunction(({ em }: Cradle) => new ArticleRepository(em)).scoped(),
+    approvalRequestRepository: asFunction(({ em }: Cradle) => new ApprovalRequestRepository(em)).scoped(),
     userService: asClass(UserService).scoped(),
     authService: asClass(AuthService).scoped(),
     articleService: asClass(ArticleService).scoped(),
+    approvalService: asClass(ApprovalService).scoped(),
+    approverResolvers: asValue(defaultApproverResolvers),
     paymentGateway: asValue(new MockPaymentGateway()),
     mailer: asValue(mailer),
   });

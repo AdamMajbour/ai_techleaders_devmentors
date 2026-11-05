@@ -43,9 +43,10 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 - [x] P3.1 Add `PaymentGateway` and mock adapter; provide adapter contract tests.
 - [x] P3.2 Add `Mailer`, console adapter, mail event subscriber, and failure-isolation tests.
-- [ ] P3.3 Add approval entity/migration and `ApprovalService`; register dependencies and test operator-only, single-use decisions.
+- [x] P3.3 Add approval entity/migration and `ApprovalService`; register dependencies and test operator-only, single-use decisions.
+- Verification note: approval migration/repository integration coverage is present, but not verified against PostgreSQL because the configured database rejects authentication for `postgres`.
 
-**Manual test gate:** verify mock payments, non-fatal mail failures, and approval lifecycle behavior.
+**Manual test gate:** ⏳ awaiting requester confirmation. Verify mock checkout/reconciliation, mail failure isolation, and operator-only approval decisions; confirm the approval migration applies and rolls back cleanly when PostgreSQL access is available.
 
 ### Phase P4 — Frontend primitives
 

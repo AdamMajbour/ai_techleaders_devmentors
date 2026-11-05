@@ -51,4 +51,27 @@ describe('event bus', () => {
 
     expect(log.info).toHaveBeenCalledWith('Domain event', { event: 'articles.article.created', articleId: 'a1', authorId: 'u1' });
   });
+
+  it('logs the approval lifecycle event names with id-only payloads', async () => {
+    const log = logger();
+    const bus = createEventBus(log);
+    registerLoggingSubscriber(bus, log);
+
+    await bus.emit('approvals.approval.requested', { approvalId: 'approval-1' });
+    await bus.emit('approvals.approval.approved', { approvalId: 'approval-1' });
+    await bus.emit('approvals.approval.rejected', { approvalId: 'approval-2' });
+
+    expect(log.info).toHaveBeenCalledWith('Domain event', {
+      event: 'approvals.approval.requested',
+      approvalId: 'approval-1',
+    });
+    expect(log.info).toHaveBeenCalledWith('Domain event', {
+      event: 'approvals.approval.approved',
+      approvalId: 'approval-1',
+    });
+    expect(log.info).toHaveBeenCalledWith('Domain event', {
+      event: 'approvals.approval.rejected',
+      approvalId: 'approval-2',
+    });
+  });
 });

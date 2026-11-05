@@ -30,6 +30,16 @@ export type { Cradle, OrmLike } from './container/cradle';
 export { ArticleService } from './services/articles/article.service';
 export { AuthService } from './services/auth/auth.service';
 export { UserService } from './services/auth/user.service';
+export {
+  ApprovalService,
+  defaultApproverResolvers,
+  type ApprovalDecision,
+  type ApprovalStatus,
+  type ApprovalRequestDetails,
+  type ApprovalSubject,
+  type ApproverResolver,
+  type ApproverResolvers,
+} from './services/approvals/approval.service';
 export type {
   CheckoutCompletedEvent,
   CheckoutExpiredEvent,

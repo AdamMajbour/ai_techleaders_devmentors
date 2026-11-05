@@ -3,9 +3,12 @@
 // MikroORM forbids using the global EM for context-specific work, so callers pass
 // a fork (`orm.em.fork()`) per request / script / test.
 import type { EntityManager, RequiredEntityData } from '@mikro-orm/core';
-import { User, Article } from '../entities';
-export { transitionStatus } from './transition';
+import { User, Article, ApprovalRequest } from '../entities';
+import { PendingApprovalConflictError, isUniqueConstraintViolation } from '../errors';
+import { transitionStatus } from './transition';
+export { transitionStatus };
 export type { TransitionActor, TransitionStatusInput } from './transition';
+export { PendingApprovalConflictError };
 
 /** `passwordHash` is hidden from serialization, which makes the type system require it; here it is optional. */
 export type NewUser = Omit<RequiredEntityData<User>, 'passwordHash'> & { passwordHash?: string | null };
@@ -90,5 +93,60 @@ export class ArticleRepository {
     this.em.remove(article);
     await this.em.flush();
     return true;
+  }
+}
+
+export type NewApprovalRequest = Pick<ApprovalRequest, 'kind' | 'subjectType' | 'subjectId' | 'reason'>;
+export type ApprovalDecisionStatus = 'approved' | 'rejected';
+
+const PENDING_APPROVAL_INDEX = 'approval_requests_one_pending_per_subject';
+
+function isPendingApprovalUniqueViolation(error: unknown): boolean {
+  return (
+    isUniqueConstraintViolation(error) &&
+    (error as { constraint?: unknown }).constraint === PENDING_APPROVAL_INDEX
+  );
+}
+
+export class ApprovalRequestRepository {
+  constructor(private readonly em: EntityManager) {}
+
+  async findById(id: string): Promise<ApprovalRequest | null> {
+    return this.em.findOne(ApprovalRequest, { id });
+  }
+
+  async create(data: NewApprovalRequest): Promise<ApprovalRequest> {
+    const approval = this.em.create(ApprovalRequest, {
+      ...data,
+      status: 'pending',
+      decidedBy: null,
+      decidedAt: null,
+    });
+    this.em.persist(approval);
+
+    try {
+      await this.em.flush();
+    } catch (error) {
+      if (isPendingApprovalUniqueViolation(error)) throw new PendingApprovalConflictError();
+      throw error;
+    }
+
+    return approval;
+  }
+
+  transitionStatus(
+    id: string,
+    status: ApprovalDecisionStatus,
+    decidedBy: string,
+    decidedAt: Date,
+  ): Promise<boolean> {
+    return transitionStatus(this.em, {
+      entityType: 'ApprovalRequest',
+      entityId: id,
+      from: ['pending'],
+      to: status,
+      actor: { kind: 'user', userId: decidedBy },
+      patch: { decidedBy, decidedAt },
+    });
   }
 }

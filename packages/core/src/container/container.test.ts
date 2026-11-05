@@ -1,6 +1,7 @@
 /** @jest-environment node */
-import { ArticleRepository, UserRepository } from '@devmentor/db';
+import { ApprovalRequestRepository, ArticleRepository, UserRepository } from '@devmentor/db';
 import { ArticleService } from '../services/articles/article.service';
+import { ApprovalService } from '../services/approvals/approval.service';
 import { UserService } from '../services/auth/user.service';
 import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
 import { ConsoleMailer } from '../services/notifications/adapters/console-mailer';
@@ -23,8 +24,10 @@ describe('buildContainer', () => {
 
     expect(cradle.userRepository).toBeInstanceOf(UserRepository);
     expect(cradle.articleRepository).toBeInstanceOf(ArticleRepository);
+    expect(cradle.approvalRequestRepository).toBeInstanceOf(ApprovalRequestRepository);
     expect(cradle.userService).toBeInstanceOf(UserService);
     expect(cradle.articleService).toBeInstanceOf(ArticleService);
+    expect(cradle.approvalService).toBeInstanceOf(ApprovalService);
     expect(cradle.paymentGateway).toBeInstanceOf(MockPaymentGateway);
     expect(cradle.mailer).toBeInstanceOf(ConsoleMailer);
     expect(cradle.clock).toBe(systemClock);

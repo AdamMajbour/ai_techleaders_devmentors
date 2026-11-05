@@ -2,7 +2,7 @@
 import { Migrator } from '@mikro-orm/migrations';
 import { MikroORM, type Options } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { Article, StatusTransition, User } from '../entities';
+import { ApprovalRequest, Article, StatusTransition, User } from '../entities';
 
 export const mikroOrmConfig: Options<PostgreSqlDriver> = {
   driver: PostgreSqlDriver,
@@ -11,7 +11,7 @@ export const mikroOrmConfig: Options<PostgreSqlDriver> = {
   password: process.env.DATABASE_PASSWORD || 'postgres',
   host: process.env.DATABASE_HOST || 'localhost',
   port: parseInt(process.env.DATABASE_PORT || '5432'),
-  entities: [User, Article, StatusTransition],
+  entities: [User, Article, ApprovalRequest, StatusTransition],
   extensions: [Migrator],
   migrations: {
     path: './src/migrations',
