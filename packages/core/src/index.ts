@@ -18,6 +18,7 @@ export * from './validators/articles/article-create.schema';
 export * from './validators/articles/article-update.schema';
 export * from './validators/articles/article-list.schema';
 export * from './validators/mentors/mentor-profile.schema';
-export type { ArticleDto, UserDto, Page } from './services/dto';
+export * from './validators/bookings/booking-create.schema';
+export type { ArticleDto, BookingDto, UserDto, Page } from './services/dto';
 export { CLIENT_HEADER_NAME, CLIENT_HEADER_VALUE } from './security/csrf';
 export type { Session } from './security/session';

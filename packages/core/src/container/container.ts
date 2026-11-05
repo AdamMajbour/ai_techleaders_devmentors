@@ -7,10 +7,12 @@ import { asClass, asFunction, asValue, createContainer, InjectionMode, type Awil
 import {
   ApprovalRequestRepository,
   ArticleRepository,
+  BookingRepository,
   initializeORM,
   InvitationRepository,
   LoginTokenRepository,
   MentorProfileRepository,
+  PaymentRepository,
   UserRepository,
 } from '@devmentor/db';
 import { createEventBus } from '../events/event-bus';
@@ -26,6 +28,7 @@ import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-g
 import { ConfiguredMailer } from '../services/notifications/adapters/configured-mailer';
 import { ApprovalService, defaultApproverResolvers } from '../services/approvals/approval.service';
 import { MentorService } from '../services/mentors/mentor.service';
+import { BookingService } from '../services/bookings/booking.service';
 import { systemClock } from '../utils/clock';
 import type { Cradle, OrmLike } from './cradle';
 
@@ -50,11 +53,14 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     invitationRepository: asFunction(({ em }: Cradle) => new InvitationRepository(em)).scoped(),
     loginTokenRepository: asFunction(({ em }: Cradle) => new LoginTokenRepository(em)).scoped(),
     mentorProfileRepository: asFunction(({ em }: Cradle) => new MentorProfileRepository(em)).scoped(),
+    bookingRepository: asFunction(({ em }: Cradle) => new BookingRepository(em)).scoped(),
+    paymentRepository: asFunction(({ em }: Cradle) => new PaymentRepository(em)).scoped(),
     userService: asClass(UserService).scoped(),
     authService: asClass(AuthService).scoped(),
     articleService: asClass(ArticleService).scoped(),
     approvalService: asClass(ApprovalService).scoped(),
     mentorService: asClass(MentorService).scoped(),
+    bookingService: asClass(BookingService).scoped(),
     invitationService: asClass(InvitationService).scoped(),
     magicLinkService: asClass(MagicLinkService).scoped(),
     approverResolvers: asValue(defaultApproverResolvers),

@@ -93,14 +93,16 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 ## Phase 3 — Question, price, prepay (#12)
 
 - [x] 3.1 Add booking/payment entities, migrations, and state machines.
-- [ ] 3.2 Implement booking creation, server-priced checkout, and attribution handling.
+- [x] 3.2 Implement booking creation, server-priced checkout, and attribution handling.
 - [ ] 3.3 Add payment webhook handling with amount validation and idempotent transitions.
 - [ ] 3.4 Add the Stripe Checkout adapter and payment-mode wiring; validate against gateway contract tests.
 - [ ] 3.5 Add payment reconciliation, booking/return pages, polling, and mock-payment E2E coverage.
 
 **3.1 validation:** booking/payment state-machine tests passed (2 suites / 6 tests); full unit suite passed (85 suites / 577 tests); workspace type-check, changed-file ESLint, repository lint, and production build passed. Repository lint reported 11,720 warnings, largely from the existing untracked `packages/ui/.storybook/public/` output. DB migration/constraint integration coverage was added and attempted, but could not execute because PostgreSQL password authentication failed for `postgres`; migration up/down and schema constraints remain unverified until `devmentor_test` credentials work.
 
-**Manual test gate:** create a booking, inspect the displayed price and attribution, complete mock checkout, and verify failed/abandoned payments are not visible as paid bookings.
+**3.2 validation:** focused booking/event tests passed (2 suites / 18 tests); the full unit suite passed (86 suites / 590 tests); all-workspace type-check, changed-file ESLint, full repository lint, and production build passed. Repository lint still reports warnings from the existing untracked `packages/ui/.storybook/public/` output. DB integration was not run: PostgreSQL authentication is known to fail in this environment, and no development database was used.
+
+**Manual test gate:** ⏳ pending: manually create a booking, inspect the displayed price and attribution, complete mock checkout, and verify failed/abandoned payments are not visible as paid bookings. Automated service tests do not satisfy this gate.
 
 ## Phase 4 — Accept, decline, refund (#13)
 

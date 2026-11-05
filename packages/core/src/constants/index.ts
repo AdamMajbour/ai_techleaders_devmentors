@@ -28,3 +28,7 @@ export const ERROR_MESSAGES = {
 
 /** bcrypt ignores everything after 72 bytes, so longer passwords are rejected up front. Lives here so client code can validate without pulling in bcrypt. */
 export const PASSWORD_MAX_LENGTH = 72;
+
+export const SESSION_25_PRICE_MINOR = 2500;
+export const CURRENCY = 'EUR';
+export const SESSION_DURATION_MINUTES = 25;

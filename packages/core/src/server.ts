@@ -70,6 +70,7 @@ export {
   type MentorProfileDto,
   type MentorProfileInput,
 } from './services/mentors/mentor.service';
+export { BookingService, type BookingCreationResult } from './services/bookings/booking.service';
 export { AuthService } from './services/auth/auth.service';
 export { UserService } from './services/auth/user.service';
 export {

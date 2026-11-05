@@ -7,6 +7,7 @@ export interface EventMap {
   'articles.article.created': { articleId: string; authorId: string };
   'articles.article.updated': { articleId: string; authorId: string };
   'articles.article.deleted': { articleId: string; authorId: string };
+  'bookings.booking.created': { bookingId: string; seekerId: string; mentorId: string };
   'approvals.approval.requested': { approvalId: string };
   'approvals.approval.approved': { approvalId: string };
   'approvals.approval.rejected': { approvalId: string };

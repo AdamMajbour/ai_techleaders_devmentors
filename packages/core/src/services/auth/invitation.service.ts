@@ -93,4 +93,8 @@ export class InvitationService {
   isAcceptedMentor(userId: string): Promise<boolean> {
     return this.invitationRepository.hasAcceptedRole(userId, 'mentor');
   }
+
+  isAcceptedSeeker(userId: string): Promise<boolean> {
+    return this.invitationRepository.hasAcceptedRole(userId, 'seeker');
+  }
 }

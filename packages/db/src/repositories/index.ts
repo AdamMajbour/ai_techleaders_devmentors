@@ -3,7 +3,16 @@
 // MikroORM forbids using the global EM for context-specific work, so callers pass
 // a fork (`orm.em.fork()`) per request / script / test.
 import type { EntityManager, RequiredEntityData } from '@mikro-orm/core';
-import { User, Article, ApprovalRequest, Invitation, LoginToken, MentorProfile } from '../entities';
+import {
+  User,
+  Article,
+  ApprovalRequest,
+  Invitation,
+  LoginToken,
+  MentorProfile,
+  Booking,
+  Payment,
+} from '../entities';
 import { PendingApprovalConflictError, isUniqueConstraintViolation } from '../errors';
 import { transitionStatus } from './transition';
 export { transitionStatus };
@@ -89,6 +98,87 @@ export class MentorProfileRepository {
     Object.assign(profile, data);
     await this.em.flush();
     return profile;
+  }
+}
+
+export type NewBooking = Pick<
+  Booking,
+  | 'seekerId'
+  | 'mentorId'
+  | 'question'
+  | 'durationMinutes'
+  | 'priceMinor'
+  | 'currency'
+  | 'status'
+  | 'source'
+  | 'landedAt'
+  | 'startsAt'
+  | 'endsAt'
+>;
+
+export type NewPayment = Pick<
+  Payment,
+  | 'bookingId'
+  | 'provider'
+  | 'livemode'
+  | 'providerSessionId'
+  | 'providerPaymentId'
+  | 'amountMinor'
+  | 'currency'
+  | 'status'
+>;
+
+export class BookingRepository {
+  constructor(private readonly em: EntityManager) {}
+
+  /** Persists the booking and its pending payment together before contacting the gateway. */
+  async createWithPayment(
+    bookingData: NewBooking,
+    paymentData: Omit<NewPayment, 'bookingId'>,
+  ): Promise<{ booking: Booking; payment: Payment }> {
+    return this.em.transactional(async (transactionalEm) => {
+      const booking = transactionalEm.create(Booking, bookingData);
+      transactionalEm.persist(booking);
+      await transactionalEm.flush();
+      const payment = transactionalEm.create(Payment, { ...paymentData, bookingId: booking.id });
+      transactionalEm.persist(payment);
+      await transactionalEm.flush();
+      return { booking, payment };
+    });
+  }
+
+  /** A failed checkout is terminal and remains invisible to mentor booking lists. */
+  async failCheckout(bookingId: string): Promise<void> {
+    await this.em.transactional(async (transactionalEm) => {
+      const payment = await transactionalEm.findOne(Payment, { bookingId });
+      if (!payment) throw new Error('Pending booking payment was not found.');
+      await transitionStatus(transactionalEm, {
+        entityType: 'Payment',
+        entityId: payment.id,
+        from: ['pending'],
+        to: 'failed',
+        actor: { kind: 'system' },
+      });
+      await transitionStatus(transactionalEm, {
+        entityType: 'Booking',
+        entityId: bookingId,
+        from: ['pending_payment'],
+        to: 'payment_failed',
+        actor: { kind: 'system' },
+      });
+    });
+  }
+}
+
+export class PaymentRepository {
+  constructor(private readonly em: EntityManager) {}
+
+  async setProviderSession(bookingId: string, providerSessionId: string): Promise<Payment | null> {
+    const payment = await this.em.findOne(Payment, { bookingId });
+    if (!payment) return null;
+    payment.providerSessionId = providerSessionId;
+    await this.em.flush();
+    return payment;
   }
 }
 

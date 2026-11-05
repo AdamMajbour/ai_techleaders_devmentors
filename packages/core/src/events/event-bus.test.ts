@@ -57,10 +57,21 @@ describe('event bus', () => {
     const bus = createEventBus(log);
     registerLoggingSubscriber(bus, log);
 
+    await bus.emit('bookings.booking.created', {
+      bookingId: 'booking-1',
+      seekerId: 'seeker-1',
+      mentorId: 'mentor-1',
+    });
     await bus.emit('approvals.approval.requested', { approvalId: 'approval-1' });
     await bus.emit('approvals.approval.approved', { approvalId: 'approval-1' });
     await bus.emit('approvals.approval.rejected', { approvalId: 'approval-2' });
 
+    expect(log.info).toHaveBeenCalledWith('Domain event', {
+      event: 'bookings.booking.created',
+      bookingId: 'booking-1',
+      seekerId: 'seeker-1',
+      mentorId: 'mentor-1',
+    });
     expect(log.info).toHaveBeenCalledWith('Domain event', {
       event: 'approvals.approval.requested',
       approvalId: 'approval-1',
