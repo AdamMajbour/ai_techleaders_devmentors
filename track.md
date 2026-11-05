@@ -88,7 +88,7 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 **2.3 validation:** focused mentor service/API/page tests passed (5 suites / 30 tests); workspace type-check and production build passed; changed-file ESLint passed. Repository `npm run lint` exited 0 with 11,720 pre-existing warnings from the untracked Storybook output. The UI token checker reports 549 color values from that same untracked `packages/ui/.storybook/public/` output; a focused scan of the new screen files found no palette classes, arbitrary values, or color literals. E2E was not run: the repository harness requires its dedicated `devmentor_e2e` PostgreSQL database, and earlier attempts in this environment failed password authentication (`28P01`). The editor uses a mentor-only self-profile API and leaves update authorization to the service; list and slug reads continue to enforce pilot membership, unlisted profiles are absent from the list but available to pilot members through direct slug reads, and UUID reads remain owner-scoped.
 
-**Manual test gate (pending):** sign in as a pilot member, browse/filter mentors, open a listed and unlisted profile, and update a mentor profile. Task 2.3 is implemented; the Phase 2 manual gate remains pending.
+**Manual test gate:** ✅ requester accepted the automated Phase 2 checks as the phase gate. Browser/E2E verification remains available after the `devmentor_e2e` PostgreSQL credentials are restored; DB migration integration checks from 2.1 also remain unverified.
 
 ## Phase 3 — Question, price, prepay (#12)
 
