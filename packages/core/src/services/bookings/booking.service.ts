@@ -2,6 +2,7 @@ import { ExclusionConstraintViolationError, StatusTransitionConflictError } from
 import type {
   Booking,
   BookingRepository,
+  ApprovalRequestRepository,
   MentorProfileRepository,
   PaymentRepository,
   UserRepository,
@@ -19,6 +20,7 @@ import { bookingAcceptSchema, type BookingAcceptInput } from '../../validators/b
 import type { BookingListQuery } from '../../validators/bookings/booking-list.schema';
 import type { InvitationService } from '../auth/invitation.service';
 import type { ApprovalService } from '../approvals/approval.service';
+import type { RefundService } from '../refunds/refund.service';
 import type { PaymentGateway } from '../payments/payment-gateway.port';
 import type { PaymentService } from '../payments/payment.service';
 import { MockPaymentGateway } from '../payments/adapters/mock-payment-gateway';
@@ -35,6 +37,8 @@ type Dependencies = {
   eventBus: EventBus;
   clock: Clock;
   approvalService: Pick<ApprovalService, 'request'>;
+  approvalRequestRepository: Pick<ApprovalRequestRepository, 'findBySubjectStatuses'>;
+  refundService: Pick<RefundService, 'approveAutomatically'>;
   bookingSettings?: typeof getBookingSettings;
 };
 
@@ -58,6 +62,8 @@ export class BookingService {
   private readonly eventBus: EventBus;
   private readonly clock: Clock;
   private readonly approvalService: Dependencies['approvalService'];
+  private readonly approvalRequestRepository: Dependencies['approvalRequestRepository'];
+  private readonly refundService: Dependencies['refundService'];
   private readonly bookingSettings: NonNullable<Dependencies['bookingSettings']>;
 
   constructor({
@@ -71,6 +77,8 @@ export class BookingService {
     eventBus,
     clock,
     approvalService,
+    approvalRequestRepository,
+    refundService,
     bookingSettings = getBookingSettings,
   }: Dependencies) {
     this.bookingRepository = bookingRepository;
@@ -83,6 +91,8 @@ export class BookingService {
     this.eventBus = eventBus;
     this.clock = clock;
     this.approvalService = approvalService;
+    this.approvalRequestRepository = approvalRequestRepository;
+    this.refundService = refundService;
     this.bookingSettings = bookingSettings;
   }
 
@@ -390,6 +400,12 @@ export class BookingService {
       { type: 'payment', id: payment.id },
       reason,
     );
+    if (
+      reason !== 'operator_initiated' &&
+      this.bookingSettings().REFUND_AUTO_APPROVE_REASONS.includes(reason)
+    ) {
+      await this.refundService.approveAutomatically(approval.id);
+    }
     return approval.id;
   }
 
@@ -408,6 +424,23 @@ export class BookingService {
     const counterpartId = isSeeker ? booking.mentorId : booking.seekerId;
     const counterpart = await this.userRepository.findById(counterpartId);
     const { question, source, landedAt, ...sharedFields } = toBookingDto(booking);
+    const payment = await this.paymentRepository.findByBookingId(booking.id);
+    let refundStatus: BookingReadDto['refundStatus'] = 'none';
+    if (payment?.status === 'refunded') {
+      refundStatus = 'refunded';
+    } else if (payment?.status === 'refund_pending') {
+      refundStatus = 'processing';
+    } else if (payment) {
+      const approval = await this.approvalRequestRepository.findBySubjectStatuses(
+        'refund',
+        'payment',
+        payment.id,
+        ['pending', 'approved'],
+      );
+      if (approval?.status === 'pending') refundStatus = 'pending_approval';
+      else if (approval?.status === 'approved') refundStatus = 'processing';
+    }
+
     const dto: BookingReadDto = {
       ...sharedFields,
       ...(isSeeker || booking.status === 'paid' || booking.status === 'accepted'
@@ -416,7 +449,7 @@ export class BookingService {
       ...(isSeeker ? { source, landedAt } : {}),
       counterpartName: counterpart?.name ?? (isSeeker ? 'Mentor' : 'Seeker'),
       ...(booking.status === 'accepted' && counterpart ? { counterpartEmail: counterpart.email } : {}),
-      refundStatus: 'none',
+      refundStatus,
       allowedActions: isSeeker
         ? booking.status === 'pending_payment' ? ['reconcile_payment'] : []
         : booking.status === 'paid' ? ['accept', 'decline'] : [],

@@ -114,7 +114,7 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 - [x] 4.1 Add the accepted-booking overlap constraint and database conflict mapping; implement accept/decline actions and mentor booking UI/email.
 - [x] 4.2 Implement decline/expiry approvals, lazy settlement, `bookings:settle`, and operator-initiated refund requests.
-- [ ] 4.3 Implement retry-safe refund execution, operator approvals UI, and refund status DTO behavior.
+- [x] 4.3 Implement retry-safe refund execution, operator approvals UI, and refund status DTO behavior.
 
 **4.1 validation:** focused booking, API, mailer/event, and mentor-page checks passed (7 suites / 55 tests); workspace type-check, repository lint (`npm run lint -- --quiet`), production build, and `git diff --check` passed. Added dedicated-test-database integration coverage for migration rollback and sequential/concurrent overlaps, but it could not execute because PostgreSQL rejected the configured `postgres` password (`28P01`). No development database was used.
 
@@ -122,7 +122,9 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 **4.2 correctness follow-up:** aligned the operator request reason with the spec (`operator_initiated`) and added a reversible migration replacing the full per-refund unique index with pending-only uniqueness. Approval requests now dedupe pending requests only, allowing a new request after approval or rejection. This follow-up has focused unit coverage and dedicated-DB integration coverage; PostgreSQL authentication remains blocked, so the migration/integration checks are not yet runtime-verified. Phase 4.3 remains untouched.
 
-**Manual test gate:** ⏳ pending. Verify accept/decline, overlap rejection, lazy expiry, and operator refund-request authorization after 4.2. Phase 4.3's refund execution, retry safety, operator approvals UI, and refund-status DTO remain pending; approved refunds must not be represented as executed until the real executor is implemented. D25 remains outstanding; do not enable live payments.
+**4.3 validation:** focused refund, booking DTO, operator API, and approvals UI tests passed (4 suites / 52 tests); workspace type-check and production build passed; targeted ESLint passed with two existing warnings in `booking.service.test.ts`. Refund execution uses the approval id as the gateway idempotency key, preserves approved requests and `refund_pending` status after gateway failure for retry, and emits one refunded event on the atomic transition. The operator queue/API tests cover authorization, approve/reject, and retry behavior. The dedicated DB integration suite was attempted but could not connect because PostgreSQL rejected the configured `postgres` password (`28P01`); migration and repository integration behavior remain unverified.
+
+**Manual test gate:** ⏳ pending. Manually verify accept/decline, overlap rejection, lazy expiry, operator refund-request authorization, approval/rejection, successful refund, and retry after a simulated gateway failure. Automated DB integration coverage could not be verified because PostgreSQL authentication failed (`28P01`). D25 remains outstanding; automatic refunds stay disabled unless explicitly enabled after D25, and live payments remain off.
 
 ## Phase 5 — Text session (#14)
 

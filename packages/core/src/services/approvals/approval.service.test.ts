@@ -42,7 +42,9 @@ function setup(
     create: jest.fn(async () => approval),
     findById: jest.fn(async () => approval),
     findPendingBySubject: jest.fn(async () => null),
+    findBySubjectStatuses: jest.fn(async () => null),
     transitionStatus: jest.fn(async () => true),
+    transitionSystemStatus: jest.fn(async () => true),
     ...repositoryOverrides,
   } as unknown as ApprovalRequestRepository;
   const clock: Clock = { now: jest.fn(() => DECIDED_AT) };
@@ -76,7 +78,6 @@ describe('ApprovalService.request', () => {
   it('returns an existing refund request on duplicate calls and preserves unrelated failures', async () => {
     const duplicateCall = setup({
       findPendingBySubject: jest.fn()
-        .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(pendingApproval()),
       create: jest.fn(async () => Promise.reject(new PendingApprovalConflictError())),
     });
@@ -87,7 +88,9 @@ describe('ApprovalService.request', () => {
     await expect(duplicate.service.request('refund', { type: 'payment', id: SUBJECT_ID }, 'Reason'))
       .rejects.toBeInstanceOf(ConflictError);
 
-    const existing = setup({ findPendingBySubject: jest.fn(async () => pendingApproval()) });
+    const existing = setup({
+      findBySubjectStatuses: jest.fn(async () => pendingApproval()),
+    });
     await expect(existing.service.request('refund', { type: 'payment', id: SUBJECT_ID }, 'Different reason'))
       .resolves.toEqual({ id: APPROVAL_ID });
     expect(existing.repository.create).not.toHaveBeenCalled();
@@ -97,9 +100,7 @@ describe('ApprovalService.request', () => {
       .rejects.toThrow('database unavailable');
   });
 
-  it.each(['rejected', 'approved'] as const)(
-    'creates a new request after the previous refund was %s',
-    async (terminalStatus) => {
+  it('reuses an approved refund request for retry, but creates a new request after rejection', async () => {
       const firstApproval = pendingApproval();
       const secondApproval = { ...pendingApproval(), id: '00000000-0000-4000-8000-000000000105' };
       let priorStatus: 'pending' | 'rejected' | 'approved' = 'pending';
@@ -107,6 +108,12 @@ describe('ApprovalService.request', () => {
       const findPendingBySubject = jest.fn(async () =>
         priorStatus === 'pending' ? nextPending : null,
       );
+      const findBySubjectStatuses = jest.fn(async (
+        _kind: string,
+        _subjectType: string,
+        _subjectId: string,
+        statuses: readonly string[],
+      ) => statuses.includes(priorStatus) ? nextPending : null);
       const create = jest.fn()
         .mockImplementationOnce(async () => {
           nextPending = firstApproval;
@@ -117,16 +124,18 @@ describe('ApprovalService.request', () => {
           nextPending = secondApproval;
           return secondApproval;
         });
-      const { service } = setup({ findPendingBySubject, create });
+      const { service } = setup({ findPendingBySubject, findBySubjectStatuses, create });
 
       await expect(service.request('refund', { type: 'payment', id: SUBJECT_ID }, 'First reason'))
         .resolves.toEqual({ id: firstApproval.id });
-      priorStatus = terminalStatus;
+      priorStatus = 'approved';
       await expect(service.request('refund', { type: 'payment', id: SUBJECT_ID }, 'Retry reason'))
+        .resolves.toEqual({ id: firstApproval.id });
+      priorStatus = 'rejected';
+      await expect(service.request('refund', { type: 'payment', id: SUBJECT_ID }, 'New request'))
         .resolves.toEqual({ id: secondApproval.id });
       expect(create).toHaveBeenCalledTimes(2);
-    },
-  );
+  });
 });
 
 describe('ApprovalService.decide', () => {
@@ -212,5 +221,16 @@ describe('ApprovalService.decide', () => {
       { refund: () => undefined },
     );
     await expect(service.decide({ userId: OTHER_ID }, APPROVAL_ID, 'approve')).rejects.toThrow('database unavailable');
+  });
+
+  it('records an automatic approval as a system actor and emits only the approval id', async () => {
+    const { service, repository, approved } = setup();
+    await expect(service.decideAsSystem(APPROVAL_ID)).resolves.toEqual({
+      id: APPROVAL_ID,
+      status: 'approved',
+    });
+    expect(repository.transitionSystemStatus).toHaveBeenCalledWith(APPROVAL_ID, 'approved', DECIDED_AT);
+    expect(approved).toHaveBeenCalledWith({ approvalId: APPROVAL_ID });
+    expect(repository.transitionStatus).not.toHaveBeenCalled();
   });
 });

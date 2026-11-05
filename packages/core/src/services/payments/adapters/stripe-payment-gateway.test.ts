@@ -144,6 +144,7 @@ describe('StripePaymentGateway', () => {
       providerSessionId: 'cs_test_contract',
       url: 'https://checkout.stripe.com/c/pay/cs_test_contract',
     });
+
     expect(state.create).toHaveBeenCalledTimes(2);
     expect(state.create.mock.calls[0][0]).toMatchObject({
       mode: 'payment',
@@ -156,12 +157,29 @@ describe('StripePaymentGateway', () => {
         },
       }],
     });
+
     expect(state.create.mock.calls[0][1].idempotencyKey)
       .toBe(state.create.mock.calls[1][1].idempotencyKey);
     expect(state.create.mock.calls[0][1].idempotencyKey).not.toContain(input.idempotencyKey);
     expect(state.getSession()).toMatchObject({ metadata: { bookingId: input.bookingId } });
     expect(state.create.mock.calls[0][0].success_url)
       .toBe(`https://app.example.test/bookings/${input.bookingId}/return?session_id={CHECKOUT_SESSION_ID}`);
+  });
+
+  it('passes the approval id unchanged as the refund idempotency key', async () => {
+    const state = createFakeGateway();
+    const refund = state.gateway.refund({
+      providerPaymentId: 'pi_test_refund',
+      amountMinor: 2500,
+      idempotencyKey: '00000000-0000-4000-8000-000000000101',
+    });
+
+    await expect(refund).resolves.toBeUndefined();
+    const client = state.gateway as unknown as { stripeClient: { refunds: { create: jest.Mock } } };
+    expect(client.stripeClient.refunds.create).toHaveBeenCalledWith(
+      { payment_intent: 'pi_test_refund', amount: 2500 },
+      { idempotencyKey: '00000000-0000-4000-8000-000000000101' },
+    );
   });
 
   it('fails on first payment use when required credentials are missing or invalid', async () => {

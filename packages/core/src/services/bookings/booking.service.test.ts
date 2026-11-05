@@ -62,9 +62,17 @@ function setup(options: {
   paidAt?: Date;
   responseWindowMinutes?: number;
   autoApproveReasons?: Array<'mentor_declined' | 'mentor_unresponsive'>;
+  paymentStatus?: string;
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
 } = {}) {
   const booking = makeBooking();
-  const payment = { id: 'payment-1', status: 'pending', providerSessionId: 'session-1' };
+  const payment = {
+    id: 'payment-1',
+    status: options.paymentStatus ?? 'pending',
+    providerPaymentId: 'provider-payment-1',
+    amountMinor: SESSION_25_PRICE_MINOR,
+    providerSessionId: 'session-1',
+  };
   const createWithPayment = jest.fn(async (data: NewBooking) => {
     booking.landedAt = data.landedAt;
     return { booking, payment };
@@ -123,7 +131,10 @@ function setup(options: {
     : jest.fn(async () => ({ providerSessionId: 'session-1', url: 'https://checkout.example/session-1' }));
   const refund = jest.fn(async () => undefined);
   const emit = jest.fn(async () => undefined);
-  const approvalRequests = new Map<string, { id: string; status: 'pending' }>();
+  const approvalRequests = new Map<string, { id: string; status: 'pending' | 'approved' | 'rejected' }>();
+  if (options.approvalStatus) {
+    approvalRequests.set('refund:payment:payment-1', { id: 'approval-1', status: options.approvalStatus });
+  }
   const requestApproval = jest.fn(async (
     kind: string,
     subject: { type: string; id: string },
@@ -134,6 +145,20 @@ function setup(options: {
     const approval = { id: 'approval-1', status: 'pending' as const };
     approvalRequests.set(key, approval);
     return approval;
+  });
+  const findBySubjectStatuses = jest.fn(async (
+    kind: string,
+    subjectType: string,
+    subjectId: string,
+    statuses: readonly string[],
+  ) => {
+    const approval = approvalRequests.get(`${kind}:${subjectType}:${subjectId}`);
+    return approval && statuses.includes(approval.status) ? approval : null;
+  });
+  const approveAutomatically = jest.fn(async () => {
+    const approval = approvalRequests.get('refund:payment:payment-1');
+    if (approval) approval.status = 'approved';
+    return { id: 'approval-1', status: 'refunded' as const };
   });
   const clock: Clock = { now: () => new Date(NOW) };
   const service = new BookingService({
@@ -164,6 +189,8 @@ function setup(options: {
     },
     paymentService: { handleEvent } as never,
     approvalService: { request: requestApproval } as never,
+    approvalRequestRepository: { findBySubjectStatuses } as never,
+    refundService: { approveAutomatically } as never,
     bookingSettings: () => ({
       MENTOR_RESPONSE_WINDOW_MINUTES: options.responseWindowMinutes ?? 120,
       REFUND_AUTO_APPROVE_REASONS: options.autoApproveReasons ?? [],
@@ -190,6 +217,8 @@ function setup(options: {
     expirePaid,
     approvalRequests,
     requestApproval,
+    findBySubjectStatuses,
+    approveAutomatically,
     refund,
     findByBookingId,
     findUserById,
@@ -345,6 +374,20 @@ describe('BookingService.create', () => {
       expect(deps.refund).not.toHaveBeenCalled();
     });
 
+    it('auto-approves and executes only reasons explicitly configured for automatic approval', async () => {
+      const auto = setup({ autoApproveReasons: ['mentor_declined'] });
+      auto.booking.status = 'paid';
+      auto.payment.status = 'succeeded';
+      await auto.service.decline({ userId: MENTOR_ID }, 'booking-1');
+      expect(auto.approveAutomatically).toHaveBeenCalledWith('approval-1');
+
+      const disabled = setup();
+      disabled.booking.status = 'paid';
+      disabled.payment.status = 'succeeded';
+      await disabled.service.decline({ userId: MENTOR_ID }, 'booking-1');
+      expect(disabled.approveAutomatically).not.toHaveBeenCalled();
+    });
+
     it('fails closed for non-mentors and bookings not owned by the session user', async () => {
       const nonMentor = setup({ isAcceptedMentor: false });
       nonMentor.booking.status = 'paid';
@@ -393,6 +436,22 @@ describe('BookingService.create', () => {
       deps.booking.status = 'payment_failed';
       const mentorList = await deps.service.list({ userId: MENTOR_ID }, { role: 'mentor', page: 1 });
       expect(mentorList.items).toHaveLength(0);
+    });
+
+    it.each([
+      ['none', 'succeeded', undefined],
+      ['pending_approval', 'succeeded', 'pending'],
+      ['processing', 'refund_pending', 'approved'],
+      ['refunded', 'refunded', 'approved'],
+    ] as const)('derives refundStatus=%s identically for seeker and mentor', async (refundStatus, paymentStatus, approvalStatus) => {
+      const deps = setup({ paymentStatus, approvalStatus });
+      deps.booking.status = 'paid';
+      const [seeker, mentor] = await Promise.all([
+        deps.service.getById({ userId: SEEKER_ID }, 'booking-1'),
+        deps.service.getById({ userId: MENTOR_ID }, 'booking-1'),
+      ]);
+      expect(seeker.refundStatus).toBe(refundStatus);
+      expect(mentor.refundStatus).toBe(refundStatus);
     });
 
     it('uses the same idempotent payment handler to recover a lost webhook', async () => {
@@ -483,8 +542,9 @@ describe('BookingService.create', () => {
           'mentor_unresponsive',
         );
         expect([...deps.approvalRequests.values()]).toEqual([
-          { id: 'approval-1', status: 'pending' },
+          { id: 'approval-1', status: shouldExpire ? 'approved' : 'pending' },
         ]);
+        expect(deps.approveAutomatically).toHaveBeenCalledTimes(shouldExpire ? 1 : 0);
       }
       expect(deps.refund).not.toHaveBeenCalled();
     });

@@ -32,6 +32,7 @@ import { ConfiguredMailer } from '../services/notifications/adapters/configured-
 import { ApprovalService, defaultApproverResolvers } from '../services/approvals/approval.service';
 import { MentorService } from '../services/mentors/mentor.service';
 import { BookingService } from '../services/bookings/booking.service';
+import { RefundService } from '../services/refunds/refund.service';
 import { systemClock } from '../utils/clock';
 import type { Cradle, OrmLike } from './cradle';
 
@@ -85,6 +86,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     approvalService: asClass(ApprovalService).scoped(),
     mentorService: asClass(MentorService).scoped(),
     bookingService: asClass(BookingService).scoped(),
+    refundService: asClass(RefundService).scoped(),
     paymentService: asClass(PaymentService).scoped(),
     invitationService: asClass(InvitationService).scoped(),
     magicLinkService: asClass(MagicLinkService).scoped(),

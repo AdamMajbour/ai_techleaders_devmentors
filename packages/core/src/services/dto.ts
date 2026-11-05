@@ -30,12 +30,27 @@ export type BookingReadDto = Omit<BookingDto, 'question' | 'source' | 'landedAt'
   counterpartName: string;
   counterpartEmail?: string;
   mentor?: { id: string; slug: string; name: string; headline: string; technologies: string };
-  refundStatus: 'none';
+  refundStatus: 'none' | 'pending_approval' | 'processing' | 'refunded';
   allowedActions: Array<'reconcile_payment' | 'accept' | 'decline'>;
   serverTime: string;
 };
 
 export type BookingPage = Page<BookingReadDto> & { serverTime: string };
+
+export interface RefundApprovalDto {
+  approvalId: string;
+  paymentId: string;
+  bookingId: string;
+  reason: string;
+  status: 'pending' | 'approved';
+  createdAt: string;
+  paymentStatus: 'succeeded' | 'refund_pending' | 'refunded';
+  amountMinor: number;
+  currency: string;
+  seekerName: string;
+  mentorName: string;
+  allowedActions: Array<'approve' | 'reject' | 'retry_refund'>;
+}
 
 export function toUserDto(user: User): UserDto {
   return {

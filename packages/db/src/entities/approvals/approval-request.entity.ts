@@ -10,6 +10,7 @@ export const ApprovalRequest = defineDomainEntity({
     reason: p.text(),
     status: p.string(),
     decidedBy: p.uuid().nullable(),
+    decidedBySystem: p.boolean(),
     decidedAt: p.datetime().nullable(),
   },
 });

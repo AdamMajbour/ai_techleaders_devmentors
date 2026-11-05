@@ -83,6 +83,7 @@ export {
 } from './services/mentors/mentor.service';
 export { BookingService, type BookingCreationResult } from './services/bookings/booking.service';
 export { PaymentService } from './services/payments/payment.service';
+export { RefundService } from './services/refunds/refund.service';
 export { AuthService } from './services/auth/auth.service';
 export { UserService } from './services/auth/user.service';
 export {

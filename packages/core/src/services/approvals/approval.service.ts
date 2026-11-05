@@ -37,7 +37,12 @@ export const defaultApproverResolvers: ApproverResolvers = {
 interface Dependencies {
   approvalRequestRepository: Pick<
     ApprovalRequestRepository,
-    'create' | 'findById' | 'findPendingBySubject' | 'transitionStatus'
+    | 'create'
+    | 'findById'
+    | 'findPendingBySubject'
+    | 'findBySubjectStatuses'
+    | 'transitionStatus'
+    | 'transitionSystemStatus'
   >;
   eventBus: EventBus;
   clock: Clock;
@@ -64,7 +69,12 @@ export class ApprovalService {
 
   async request(kind: string, subject: ApprovalSubject, reason: string): Promise<{ id: string }> {
     if (kind === 'refund') {
-      const existing = await this.approvalRequestRepository.findPendingBySubject(kind, subject.type, subject.id);
+      const existing = await this.approvalRequestRepository.findBySubjectStatuses(
+        kind,
+        subject.type,
+        subject.id,
+        ['pending', 'approved'],
+      );
       if (existing) return { id: existing.id };
     }
 
@@ -130,5 +140,24 @@ export class ApprovalService {
       status === 'approved' ? 'approvals.approval.approved' : 'approvals.approval.rejected';
     await this.eventBus.emit(event, { approvalId: id });
     return { id, status };
+  }
+
+  async decideAsSystem(id: string): Promise<{ id: string; status: 'approved' }> {
+    const approval = await this.approvalRequestRepository.findById(id);
+    if (!approval) throw new NotFoundError('Approval request not found.');
+    if (approval.status !== 'pending') throw new ConflictError();
+
+    const decidedAt = this.clock.now();
+    try {
+      if (!(await this.approvalRequestRepository.transitionSystemStatus(id, 'approved', decidedAt))) {
+        throw new ConflictError();
+      }
+    } catch (error) {
+      if (error instanceof StatusTransitionConflictError) throw new ConflictError();
+      throw error;
+    }
+
+    await this.eventBus.emit('approvals.approval.approved', { approvalId: id });
+    return { id, status: 'approved' };
   }
 }

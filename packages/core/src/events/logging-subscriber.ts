@@ -14,6 +14,7 @@ const ALL_EVENTS: EventName[] = [
   'bookings.booking.expired',
   'payments.payment.succeeded',
   'payments.payment.failed',
+  'payments.payment.refunded',
   'approvals.approval.requested',
   'approvals.approval.approved',
   'approvals.approval.rejected',

@@ -280,6 +280,25 @@ export class PaymentRepository {
     return this.em.findOne(Payment, { bookingId });
   }
 
+  async findById(id: string): Promise<Payment | null> {
+    return this.em.findOne(Payment, { id });
+  }
+
+  transitionRefundStatus(
+    id: string,
+    from: readonly string[],
+    to: string,
+    actor: import('./transition').TransitionActor,
+  ): Promise<boolean> {
+    return transitionStatus(this.em, {
+      entityType: 'Payment',
+      entityId: id,
+      from,
+      to,
+      actor,
+    });
+  }
+
   async setProviderSession(bookingId: string, providerSessionId: string): Promise<Payment | null> {
     const payment = await this.em.findOne(Payment, { bookingId });
     if (!payment) return null;
@@ -465,11 +484,53 @@ export class ApprovalRequestRepository {
     return this.em.findOne(ApprovalRequest, { kind, subjectType, subjectId, status: 'pending' });
   }
 
+  async findBySubjectStatuses(
+    kind: string,
+    subjectType: string,
+    subjectId: string,
+    statuses: readonly string[],
+  ): Promise<ApprovalRequest | null> {
+    return this.em.findOne(ApprovalRequest, {
+      kind,
+      subjectType,
+      subjectId,
+      status: { $in: [...statuses] },
+    }, { orderBy: { createdAt: 'desc' } });
+  }
+
+  async findOperatorRefundQueue(): Promise<OperatorRefundQueueRow[]> {
+    return this.em.getConnection().execute<OperatorRefundQueueRow[]>(
+      `select
+         a.id as "approvalId",
+         a.subject_id as "paymentId",
+         p.booking_id as "bookingId",
+         a.reason as "reason",
+         a.status as "status",
+         a.created_at as "createdAt",
+         p.status as "paymentStatus",
+         p.amount_minor as "amountMinor",
+         p.currency as "currency",
+         seeker.name as "seekerName",
+         mentor.name as "mentorName"
+       from approval_requests a
+       join payments p on p.id = a.subject_id
+       join bookings b on b.id = p.booking_id
+       join users seeker on seeker.id = b.seeker_id
+       join users mentor on mentor.id = b.mentor_id
+       where a.kind = 'refund'
+         and a.subject_type = 'payment'
+         and (a.status = 'pending' or (a.status = 'approved' and p.status = 'refund_pending'))
+       order by a.created_at asc`,
+      [],
+    );
+  }
+
   async create(data: NewApprovalRequest): Promise<ApprovalRequest> {
     const approval = this.em.create(ApprovalRequest, {
       ...data,
       status: 'pending',
       decidedBy: null,
+      decidedBySystem: false,
       decidedAt: null,
     });
     this.em.persist(approval);
@@ -496,9 +557,38 @@ export class ApprovalRequestRepository {
       from: ['pending'],
       to: status,
       actor: { kind: 'user', userId: decidedBy },
-      patch: { decidedBy, decidedAt },
+      patch: { decidedBy, decidedBySystem: false, decidedAt },
     });
   }
+
+  transitionSystemStatus(
+    id: string,
+    status: ApprovalDecisionStatus,
+    decidedAt: Date,
+  ): Promise<boolean> {
+    return transitionStatus(this.em, {
+      entityType: 'ApprovalRequest',
+      entityId: id,
+      from: ['pending'],
+      to: status,
+      actor: { kind: 'system' },
+      patch: { decidedBy: null, decidedBySystem: true, decidedAt },
+    });
+  }
+}
+
+export interface OperatorRefundQueueRow {
+  approvalId: string;
+  paymentId: string;
+  bookingId: string;
+  reason: string;
+  status: string;
+  createdAt: Date;
+  paymentStatus: string;
+  amountMinor: number;
+  currency: string;
+  seekerName: string;
+  mentorName: string;
 }
 
 export type NewInvitation = Pick<

@@ -22,6 +22,15 @@ export * from './validators/bookings/booking-create.schema';
 export * from './validators/bookings/booking-list.schema';
 export * from './validators/bookings/booking-action.schema';
 export * from './validators/bookings/booking-accept.schema';
-export type { ArticleDto, BookingDto, BookingReadDto, BookingPage, UserDto, Page } from './services/dto';
+export * from './validators/approvals/refund-approval-action.schema';
+export type {
+  ArticleDto,
+  BookingDto,
+  BookingReadDto,
+  BookingPage,
+  RefundApprovalDto,
+  UserDto,
+  Page,
+} from './services/dto';
 export { CLIENT_HEADER_NAME, CLIENT_HEADER_VALUE } from './security/csrf';
 export type { Session } from './security/session';

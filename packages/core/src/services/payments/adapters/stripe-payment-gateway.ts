@@ -124,7 +124,7 @@ export class StripePaymentGateway implements PaymentGateway {
     const { stripe } = this.getStripe();
     await stripe.refunds.create(
       { payment_intent: input.providerPaymentId, amount: input.amountMinor },
-      { idempotencyKey: `devmentor-refund-${createHash('sha256').update(input.idempotencyKey).digest('hex')}` },
+      { idempotencyKey: input.idempotencyKey },
     );
   }
 
