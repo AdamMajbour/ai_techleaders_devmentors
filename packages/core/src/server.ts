@@ -4,6 +4,11 @@ export { apiHandler, jsonResponse } from './http/apiHandler';
 export { makeCrudRoute, type CrudRouteConfig } from './http/makeCrudRoute';
 export { makeActionRoute, type ActionRouteConfig } from './http/makeActionRoute';
 export {
+  makeWebhookRoute,
+  type WebhookRouteConfig,
+  type WebhookVerification,
+} from './http/makeWebhookRoute';
+export {
   requireSession,
   optionalSession,
   assertOwns,
