@@ -85,8 +85,10 @@ function setup(options: {
     paymentRepository: { setProviderSession } as never,
     invitationService,
     paymentGateway: {
+      provider: 'mock',
       createCheckout,
       refund: jest.fn(),
+      verifyWebhook: jest.fn(async () => true),
       parseWebhook: jest.fn(),
       getCheckout: jest.fn(),
     },

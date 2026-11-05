@@ -9,6 +9,7 @@ import type {
   PaymentGateway,
   RefundInput,
 } from '../payment-gateway.port';
+import { verifyMockPaymentWebhook } from '../mock-webhook-verifier';
 
 interface StoredCheckout {
   input: CreateCheckoutInput;
@@ -35,7 +36,14 @@ function isNormalizedPaymentEvent(value: unknown): value is NormalizedPaymentEve
   }
 
   if (value.type === 'checkout.expired' || value.type === 'checkout.failed') {
-    return value.providerPaymentId === undefined || typeof value.providerPaymentId === 'string';
+    return (
+      (value.providerPaymentId === undefined || typeof value.providerPaymentId === 'string') &&
+      typeof value.amountMinor === 'number' &&
+      Number.isSafeInteger(value.amountMinor) &&
+      value.amountMinor >= 0 &&
+      typeof value.currency === 'string' &&
+      typeof value.livemode === 'boolean'
+    );
   }
 
   return false;
@@ -46,6 +54,7 @@ function stableIdempotencyHash(key: string): string {
 }
 
 export class MockPaymentGateway implements PaymentGateway {
+  readonly provider = 'mock' as const;
   private readonly checkouts = new Map<string, StoredCheckout>();
   private readonly checkoutByIdempotencyKey = new Map<string, StoredCheckout>();
   private readonly checkoutEvents = new Map<string, NormalizedPaymentEvent>();
@@ -87,7 +96,11 @@ export class MockPaymentGateway implements PaymentGateway {
     this.refunds.set(input.idempotencyKey, { ...input });
   }
 
-  parseWebhook(raw: string, headers: Headers): NormalizedPaymentEvent {
+  async verifyWebhook(_raw: string, headers: Headers): Promise<boolean> {
+    return verifyMockPaymentWebhook(_raw, headers);
+  }
+
+  parseWebhook(raw: string, headers: Headers): NormalizedPaymentEvent | null {
     void headers;
     const event: unknown = JSON.parse(raw);
     if (!isNormalizedPaymentEvent(event)) {
@@ -124,6 +137,9 @@ export class MockPaymentGateway implements PaymentGateway {
       type: 'checkout.expired',
       bookingId: checkout.input.bookingId,
       providerSessionId,
+      amountMinor: checkout.input.amountMinor,
+      currency: checkout.input.currency,
+      livemode: false,
     };
     this.storeTerminalEvent(event);
     return event;
@@ -136,6 +152,9 @@ export class MockPaymentGateway implements PaymentGateway {
       bookingId: checkout.input.bookingId,
       providerSessionId,
       ...(providerPaymentId === undefined ? {} : { providerPaymentId }),
+      amountMinor: checkout.input.amountMinor,
+      currency: checkout.input.currency,
+      livemode: false,
     };
     this.storeTerminalEvent(event);
     return event;

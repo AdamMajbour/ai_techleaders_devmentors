@@ -85,7 +85,7 @@ export class BookingService {
         endsAt: null,
       },
       {
-        provider: 'mock',
+        provider: this.paymentGateway.provider,
         livemode: false,
         providerSessionId: null,
         providerPaymentId: null,

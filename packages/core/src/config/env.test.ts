@@ -1,10 +1,54 @@
-import { parseEnv, parseMailerSettings, parseOperatorUserIds } from './env';
+import { parseEnv, parseMailerSettings, parseOperatorUserIds, parsePaymentSettings } from './env';
 
 describe('parseEnv', () => {
   it('accepts a long enough JWT secret', () => {
     expect(parseEnv({ JWT_SECRET: 'x'.repeat(32) }).JWT_SECRET).toHaveLength(32);
     expect(parseEnv({ JWT_SECRET: 'x'.repeat(32) }).OPERATOR_USER_IDS).toEqual([]);
     expect(parseEnv({ JWT_SECRET: 'x'.repeat(32) }).PUBLIC_SIGNUP).toBe(true);
+  });
+
+  describe('parsePaymentSettings', () => {
+    it('defaults to mock mode without requiring Stripe credentials', () => {
+      expect(parsePaymentSettings({})).toEqual({
+        PAYMENTS_MODE: 'mock',
+        STRIPE_SECRET_KEY: undefined,
+        STRIPE_WEBHOOK_SECRET: undefined,
+        PAYMENTS_LIVE_ENABLED: false,
+      });
+    });
+
+    it('accepts test keys and defaults live payments to disabled', () => {
+      expect(parsePaymentSettings({
+        PAYMENTS_MODE: 'stripe',
+        STRIPE_SECRET_KEY: 'sk_test_valid123',
+        STRIPE_WEBHOOK_SECRET: 'whsec_valid123',
+      })).toMatchObject({
+        PAYMENTS_MODE: 'stripe',
+        PAYMENTS_LIVE_ENABLED: false,
+      });
+    });
+
+    it('rejects invalid keys, invalid webhook secrets, and live keys without the explicit flag', () => {
+      expect(() => parsePaymentSettings({ PAYMENTS_MODE: 'stripe', STRIPE_SECRET_KEY: 'not-a-key' }))
+        .toThrow(/STRIPE_SECRET_KEY/);
+      expect(() => parsePaymentSettings({ STRIPE_WEBHOOK_SECRET: 'not-a-secret' }))
+        .toThrow(/STRIPE_WEBHOOK_SECRET/);
+      expect(() => parsePaymentSettings({
+        PAYMENTS_MODE: 'stripe',
+        STRIPE_SECRET_KEY: 'sk_live_secret123',
+      })).toThrow(/PAYMENTS_LIVE_ENABLED/);
+    });
+
+    it('allows a live key only with PAYMENTS_LIVE_ENABLED=true', () => {
+      expect(parsePaymentSettings({
+        PAYMENTS_MODE: 'stripe',
+        STRIPE_SECRET_KEY: 'sk_live_secret123',
+        PAYMENTS_LIVE_ENABLED: 'true',
+      }).PAYMENTS_LIVE_ENABLED).toBe(true);
+      expect(() => parsePaymentSettings({
+        PAYMENTS_LIVE_ENABLED: 'yes',
+      })).toThrow(/PAYMENTS_LIVE_ENABLED/);
+    });
   });
 
   it('parses PUBLIC_SIGNUP lazily from environment strings', () => {

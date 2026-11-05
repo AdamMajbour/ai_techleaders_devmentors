@@ -68,8 +68,59 @@ const mailerEnvSchema = z.object({
   }
 });
 
+const optionalPaymentValue = z.preprocess(
+  (value) => (typeof value === 'string' && !value.trim() ? undefined : value),
+  z.string().trim().min(1).optional(),
+);
+
+const paymentBooleanSchema = z.preprocess((value) => {
+  if (value === undefined || value === '') return false;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return value;
+}, z.boolean());
+
+const paymentSettingsSchema = z.object({
+  PAYMENTS_MODE: z.enum(['mock', 'stripe']).default('mock'),
+  STRIPE_SECRET_KEY: optionalPaymentValue,
+  STRIPE_WEBHOOK_SECRET: optionalPaymentValue,
+  PAYMENTS_LIVE_ENABLED: paymentBooleanSchema,
+}).superRefine((settings, context) => {
+  if (
+    settings.STRIPE_SECRET_KEY &&
+    !/^sk_(test|live)_[A-Za-z0-9]+$/.test(settings.STRIPE_SECRET_KEY)
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['STRIPE_SECRET_KEY'],
+      message: 'Must be a valid Stripe secret key',
+    });
+  }
+  if (
+    settings.STRIPE_WEBHOOK_SECRET &&
+    !/^whsec_[A-Za-z0-9]+$/.test(settings.STRIPE_WEBHOOK_SECRET)
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['STRIPE_WEBHOOK_SECRET'],
+      message: 'Must be a valid Stripe webhook secret',
+    });
+  }
+  if (
+    settings.STRIPE_SECRET_KEY?.startsWith('sk_live_') &&
+    !settings.PAYMENTS_LIVE_ENABLED
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['PAYMENTS_LIVE_ENABLED'],
+      message: 'Must be true to use a live Stripe secret key',
+    });
+  }
+});
+
 export type Env = z.infer<typeof envSchema>;
 export type MailerSettings = z.infer<typeof mailerEnvSchema>;
+export type PaymentSettings = z.infer<typeof paymentSettingsSchema>;
 
 /** Validates an environment; throws a message that names the offending variables, never their values. */
 export function parseEnv(source: Record<string, string | undefined>): Env {
@@ -110,6 +161,19 @@ export function parseMailerSettings(source: Record<string, string | undefined>):
 
 export function getMailerSettings(): MailerSettings {
   return parseMailerSettings(process.env);
+}
+
+export function parsePaymentSettings(source: Record<string, string | undefined>): PaymentSettings {
+  const result = paymentSettingsSchema.safeParse(source);
+  if (result.success) return result.data;
+
+  const names = Object.keys(z.flattenError(result.error).fieldErrors).join(', ');
+  throw new Error(`Invalid payment configuration: ${names}. See .env.example.`);
+}
+
+/** Payment settings stay independent of the required app secrets and are read only when needed. */
+export function getPaymentSettings(): PaymentSettings {
+  return parsePaymentSettings(process.env);
 }
 
 /** Invalid or empty operator configuration grants no operator access. */

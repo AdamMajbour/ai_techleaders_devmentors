@@ -302,6 +302,8 @@ MAIL_FROM=
 
 `APP_BASE_URL` is the public HTTP(S) origin used for verification links; it is required when a magic-link request is made and is never inferred from request headers. `MAILER_MODE` defaults to `console` for local development. For deployed mail, set `MAILER_MODE=http`, `MAILER_API_KEY` (Resend API key), and `MAIL_FROM` (for example `DevMentor <no-reply@example.com>`). Keep provider keys and `JWT_SECRET` in deployment secrets, never in source control. The console mailer is for local development only.
 
+Payments default to `PAYMENTS_MODE=mock`. To use Stripe Checkout, set `PAYMENTS_MODE=stripe`, provide `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and keep `PAYMENTS_LIVE_ENABLED=false` for test keys. A live `sk_live_` key is refused unless `PAYMENTS_LIVE_ENABLED=true`; do not enable live payments before the pilot launch gates are complete. Stripe credentials are validated only when a payment operation or payment webhook is used, so builds and unrelated routes do not need them.
+
 The pilot uses invitation-based, one-time e-mail sign-in. Close public password registration with `PUBLIC_SIGNUP=false`. Invite founder A first with `npm run pilot:invite -- --email <email> --name <name> --role seeker`, have them request and consume a sign-in link, then run `npm run pilot:invite -- --list` to get their accepted user id. Set that id in `OPERATOR_USER_IDS` before inviting any other participants. Until it is set, no user has operator access.
 
 ## 🚀 Deployment

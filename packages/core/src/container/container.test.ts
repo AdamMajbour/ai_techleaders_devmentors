@@ -14,6 +14,7 @@ import { InvitationService } from '../services/auth/invitation.service';
 import { MagicLinkService } from '../services/auth/magic-link.service';
 import { MentorService } from '../services/mentors/mentor.service';
 import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
+import { StripePaymentGateway } from '../services/payments/adapters/stripe-payment-gateway';
 import { PaymentService } from '../services/payments/payment.service';
 import { ConfiguredMailer } from '../services/notifications/adapters/configured-mailer';
 import { systemClock } from '../utils/clock';
@@ -29,6 +30,36 @@ function fakeOrm() {
 const silentLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
 describe('buildContainer', () => {
+  it('selects Stripe lazily when payment mode is configured, without requiring credentials at boot', async () => {
+    const previous = {
+      PAYMENTS_MODE: process.env.PAYMENTS_MODE,
+      STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+      STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+      PAYMENTS_LIVE_ENABLED: process.env.PAYMENTS_LIVE_ENABLED,
+    };
+    process.env.PAYMENTS_MODE = 'stripe';
+    delete process.env.STRIPE_SECRET_KEY;
+    delete process.env.STRIPE_WEBHOOK_SECRET;
+    delete process.env.PAYMENTS_LIVE_ENABLED;
+
+    try {
+      const { orm } = fakeOrm();
+      const { cradle } = buildContainer(orm, silentLogger).createScope();
+      expect(cradle.paymentGateway).toBeInstanceOf(StripePaymentGateway);
+      await expect(cradle.paymentGateway.createCheckout({
+        bookingId: 'booking-1',
+        amountMinor: 2500,
+        currency: 'EUR',
+        idempotencyKey: 'checkout-1',
+      })).rejects.toThrow(/STRIPE_SECRET_KEY/);
+    } finally {
+      for (const [key, value] of Object.entries(previous)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+  });
+
   it('resolves repositories and services built on an EntityManager fork', () => {
     const { orm, fork } = fakeOrm();
     const { cradle } = buildContainer(orm, silentLogger).createScope();

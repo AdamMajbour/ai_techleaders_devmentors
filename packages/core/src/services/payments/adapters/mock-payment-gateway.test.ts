@@ -2,6 +2,10 @@
 import { MockPaymentGateway } from './mock-payment-gateway';
 import { registerPaymentGatewayContractTests } from '../payment-gateway.contract';
 import type { NormalizedPaymentEvent } from '../payment-gateway.port';
+import {
+  MOCK_PAYMENT_SIGNATURE_HEADER,
+  MOCK_PAYMENT_SIGNATURE_VALUE,
+} from '../mock-webhook-verifier';
 
 registerPaymentGatewayContractTests('MockPaymentGateway', {
   createGateway: () => new MockPaymentGateway(),
@@ -13,7 +17,10 @@ registerPaymentGatewayContractTests('MockPaymentGateway', {
   },
   createWebhookPayload: (event: NormalizedPaymentEvent) => ({
     raw: JSON.stringify(event),
-    headers: new Headers({ 'content-type': 'application/json' }),
+    headers: new Headers({
+      'content-type': 'application/json',
+      [MOCK_PAYMENT_SIGNATURE_HEADER]: MOCK_PAYMENT_SIGNATURE_VALUE,
+    }),
   }),
 });
 

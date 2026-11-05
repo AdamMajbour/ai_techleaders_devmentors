@@ -32,12 +32,18 @@ const webhookEvents: NormalizedPaymentEvent[] = [
     type: 'checkout.expired',
     bookingId: checkoutInput.bookingId,
     providerSessionId: 'session-contract',
+    amountMinor: checkoutInput.amountMinor,
+    currency: checkoutInput.currency,
+    livemode: false,
   },
   {
     type: 'checkout.failed',
     bookingId: checkoutInput.bookingId,
     providerSessionId: 'session-contract',
     providerPaymentId: 'payment-contract',
+    amountMinor: checkoutInput.amountMinor,
+    currency: checkoutInput.currency,
+    livemode: false,
   },
 ];
 
@@ -53,7 +59,7 @@ export function registerPaymentGatewayContractTests<Gateway extends PaymentGatew
 
       expect(retry).toEqual(first);
       expect(first.providerSessionId).toBeTruthy();
-      expect(first.url).toMatch(/^https?:\/\//);
+      expect(first.url).toMatch(/^https:\/\//);
       await expect(gateway.getCheckout(first.providerSessionId)).resolves.toBeNull();
     });
 
@@ -75,10 +81,11 @@ export function registerPaymentGatewayContractTests<Gateway extends PaymentGatew
       await expect(gateway.getCheckout(checkout.providerSessionId)).resolves.toEqual(event);
     });
 
-    it.each(webhookEvents)('normalizes the $type webhook event', (event) => {
+    it.each(webhookEvents)('normalizes the $type webhook event', async (event) => {
       const gateway = harness.createGateway();
       const payload = harness.createWebhookPayload(event);
 
+      await expect(gateway.verifyWebhook(payload.raw, payload.headers)).resolves.toBe(true);
       expect(gateway.parseWebhook(payload.raw, payload.headers)).toEqual(event);
     });
 

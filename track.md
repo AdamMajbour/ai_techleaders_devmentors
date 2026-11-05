@@ -95,14 +95,16 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 - [x] 3.1 Add booking/payment entities, migrations, and state machines.
 - [x] 3.2 Implement booking creation, server-priced checkout, and attribution handling.
 - [x] 3.3 Add payment webhook handling with amount validation and idempotent transitions.
-- [ ] 3.4 Add the Stripe Checkout adapter and payment-mode wiring; validate against gateway contract tests.
+- [x] 3.4 Add the Stripe Checkout adapter and payment-mode wiring; validate against gateway contract tests.
 - [ ] 3.5 Add payment reconciliation, booking/return pages, polling, and mock-payment E2E coverage.
 
 **3.1 validation:** booking/payment state-machine tests passed (2 suites / 6 tests); full unit suite passed (85 suites / 577 tests); workspace type-check, changed-file ESLint, repository lint, and production build passed. Repository lint reported 11,720 warnings, largely from the existing untracked `packages/ui/.storybook/public/` output. DB migration/constraint integration coverage was added and attempted, but could not execute because PostgreSQL password authentication failed for `postgres`; migration up/down and schema constraints remain unverified until `devmentor_test` credentials work.
 
 **3.2 validation:** focused booking/event tests passed (2 suites / 18 tests) before the checkout-failure follow-up; the follow-up booking-service suite passed (14 tests), including coverage that both gateway and persistence errors are surfaced. The full unit suite passed (86 suites / 590 tests) before that follow-up; core type-check and changed-file ESLint passed afterward. Full-repository lint and production build passed before the follow-up. Repository lint still reports warnings from the existing untracked `packages/ui/.storybook/public/` output. DB integration was not run: PostgreSQL authentication is known to fail in this environment, and no development database was used.
 
-**3.3 validation:** focused webhook/service/event/DI tests passed (4 suites / 23 tests); workspace type-check, production build, repository lint, and changed-file ESLint passed. DB integration coverage was added for atomic paired transitions, mismatches, replay, and terminal ordering, but its run is blocked before test setup because PostgreSQL rejects the configured `postgres` password (`28P01`). Stripe adapter/wiring (3.4), reconciliation/pages (3.5), and the Phase 3 manual test gate remain pending.
+**3.3 validation:** focused webhook/service/event/DI tests passed (4 suites / 23 tests); workspace type-check, production build, repository lint, and changed-file ESLint passed. DB integration coverage was added for atomic paired transitions, mismatches, replay, and terminal ordering, but its run is blocked before test setup because PostgreSQL rejects the configured `postgres` password (`28P01`).
+
+**3.4 validation:** focused payment adapter/config/DI/webhook/booking tests passed (7 suites / 62 tests); workspace type-check, repository lint (`npm run lint -- --quiet`), and production build passed. Stripe contract tests use a mocked SDK client and SDK-generated local signature fixtures; no live payment requests or secrets were used. No database or E2E tests were run. Reconciliation/pages (3.5) and the Phase 3 manual test gate remain pending.
 
 **Manual test gate:** ⏳ pending: manually create a booking, inspect the displayed price and attribution, complete mock checkout, and verify failed/abandoned payments are not visible as paid bookings. Automated service tests do not satisfy this gate.
 

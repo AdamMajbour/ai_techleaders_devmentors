@@ -24,7 +24,7 @@ import { AuthService } from '../services/auth/auth.service';
 import { UserService } from '../services/auth/user.service';
 import { InvitationService } from '../services/auth/invitation.service';
 import { MagicLinkService } from '../services/auth/magic-link.service';
-import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
+import { createConfiguredPaymentGateway } from '../services/payments/payment-gateway.factory';
 import { PaymentService } from '../services/payments/payment.service';
 import { ConfiguredMailer } from '../services/notifications/adapters/configured-mailer';
 import { ApprovalService, defaultApproverResolvers } from '../services/approvals/approval.service';
@@ -66,7 +66,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     invitationService: asClass(InvitationService).scoped(),
     magicLinkService: asClass(MagicLinkService).scoped(),
     approverResolvers: asValue(defaultApproverResolvers),
-    paymentGateway: asValue(new MockPaymentGateway()),
+    paymentGateway: asFunction(createConfiguredPaymentGateway).singleton(),
     mailer: asValue(mailer),
   });
 

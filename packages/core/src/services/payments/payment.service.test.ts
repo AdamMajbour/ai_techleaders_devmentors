@@ -89,6 +89,9 @@ describe('PaymentService.handleEvent', () => {
       type: 'checkout.failed',
       bookingId: 'booking-1',
       providerSessionId: 'session-1',
+      amountMinor: 2500,
+      currency: 'EUR',
+      livemode: false,
     });
 
     expect(emit).not.toHaveBeenCalled();
@@ -101,6 +104,9 @@ describe('PaymentService.handleEvent', () => {
         type: 'checkout.expired',
         bookingId: 'booking-1',
         providerSessionId: 'session-1',
+        amountMinor: 2500,
+        currency: 'EUR',
+        livemode: false,
       } satisfies NormalizedPaymentEvent,
     ],
     [
@@ -110,6 +116,9 @@ describe('PaymentService.handleEvent', () => {
         bookingId: 'booking-1',
         providerSessionId: 'session-1',
         providerPaymentId: 'failed-payment-1',
+        amountMinor: 2500,
+        currency: 'EUR',
+        livemode: false,
       } satisfies NormalizedPaymentEvent,
     ],
   ])('marks %s as failed without marking the booking paid', async (_type, event) => {

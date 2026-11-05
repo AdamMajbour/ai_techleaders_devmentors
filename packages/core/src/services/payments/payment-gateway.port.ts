@@ -31,6 +31,9 @@ export interface CheckoutExpiredEvent {
   bookingId: string;
   providerSessionId: string;
   providerPaymentId?: string;
+  amountMinor: number;
+  currency: string;
+  livemode: boolean;
 }
 
 export interface CheckoutFailedEvent {
@@ -38,6 +41,9 @@ export interface CheckoutFailedEvent {
   bookingId: string;
   providerSessionId: string;
   providerPaymentId?: string;
+  amountMinor: number;
+  currency: string;
+  livemode: boolean;
 }
 
 export type NormalizedPaymentEvent =
@@ -46,8 +52,10 @@ export type NormalizedPaymentEvent =
   | CheckoutFailedEvent;
 
 export interface PaymentGateway {
+  readonly provider: 'mock' | 'stripe';
   createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult>;
   refund(input: RefundInput): Promise<void>;
-  parseWebhook(raw: string, headers: Headers): NormalizedPaymentEvent;
+  verifyWebhook(raw: string, headers: Headers): Promise<boolean>;
+  parseWebhook(raw: string, headers: Headers): NormalizedPaymentEvent | null;
   getCheckout(providerSessionId: string): Promise<NormalizedPaymentEvent | null>;
 }

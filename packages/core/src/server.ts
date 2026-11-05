@@ -21,6 +21,8 @@ export {
   MOCK_PAYMENT_SIGNATURE_VALUE,
   verifyMockPaymentWebhook,
 } from './services/payments/mock-webhook-verifier';
+export { verifyConfiguredPaymentWebhook } from './services/payments/payment-gateway.factory';
+export { StripePaymentGateway } from './services/payments/adapters/stripe-payment-gateway';
 
 export {
   requireSession,
@@ -56,7 +58,9 @@ export {
   getAppBaseUrl,
   getEnv,
   getMailerSettings,
+  getPaymentSettings,
   parseEnv,
+  parsePaymentSettings,
   getOperatorUserIds,
   parseOperatorUserIds,
 } from './config/env';
