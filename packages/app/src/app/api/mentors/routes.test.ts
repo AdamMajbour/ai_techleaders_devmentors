@@ -7,6 +7,8 @@ const mockMentorService = {
   list: jest.fn(async () => ({ items: [], page: 1, pageSize: 10, total: 0, pageCount: 1 })),
   getBySlug: jest.fn(async () => ({ id: 'profile' })),
   getById: jest.fn(async () => ({ id: 'profile' })),
+  getOwnProfile: jest.fn(async () => null),
+  create: jest.fn(async () => ({ id: 'profile' })),
   update: jest.fn(async () => ({ id: 'profile' })),
 };
 const mockCradle = { mentorService: mockMentorService } as unknown as Cradle;
@@ -18,7 +20,8 @@ jest.mock('../../../../../core/src/container/container', () => ({
 }));
 
 import { GET as getMentorById, PUT as updateMentor } from './[id]/route';
-import { GET as getMentors } from './route';
+import { GET as getMentors, POST as createMentor } from './route';
+import { GET as getOwnMentorProfile } from './me/route';
 
 const SECRET = 'm'.repeat(48);
 const ID = '0c0b2f5a-6f6e-4b53-9f0e-6b1f3b0a7a11';
@@ -39,6 +42,8 @@ beforeEach(() => {
   mockMentorService.list.mockClear();
   mockMentorService.getBySlug.mockClear();
   mockMentorService.getById.mockClear();
+  mockMentorService.getOwnProfile.mockClear();
+  mockMentorService.create.mockClear();
   mockMentorService.update.mockClear();
   mockWithScope.mockClear().mockImplementation(async (fn) => fn(mockCradle));
 });
@@ -71,6 +76,53 @@ describe('GET /api/mentors', () => {
     expect(await json(response)).toEqual({ ok: true, data: { id: 'profile' } });
     expect(mockMentorService.getBySlug).toHaveBeenCalledWith({ userId: 'member-id' }, 'ada-lovelace');
     expect(mockMentorService.list).not.toHaveBeenCalled();
+  });
+
+  it('creates a profile through the accepted-mentor service after CSRF and session checks', async () => {
+    const headers = await memberHeaders({
+      'x-requested-with': 'devmentor',
+      origin: 'http://localhost',
+      host: 'localhost',
+      'content-type': 'application/json',
+    });
+    const response = await createMentor(
+      new Request('http://localhost/api/mentors', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          slug: 'ada-lovelace',
+          headline: 'Backend mentor',
+          bio: 'A helpful mentor.',
+          technologies: 'typescript',
+          publicWorkUrl: 'https://example.com',
+          isListed: false,
+        }),
+      }),
+      collectionContext,
+    );
+
+    expect(response.status).toBe(201);
+    expect(mockMentorService.create).toHaveBeenCalledWith(
+      { userId: 'member-id' },
+      {
+        slug: 'ada-lovelace',
+        headline: 'Backend mentor',
+        bio: 'A helpful mentor.',
+        technologies: 'typescript',
+        publicWorkUrl: 'https://example.com',
+        isListed: false,
+      },
+    );
+  });
+
+  it('resolves profile setup through the signed-in mentor service', async () => {
+    const response = await getOwnMentorProfile(
+      new Request('http://localhost/api/mentors/me', { headers: await memberHeaders() }),
+      collectionContext,
+    );
+
+    expect(await json(response)).toEqual({ ok: true, data: null });
+    expect(mockMentorService.getOwnProfile).toHaveBeenCalledWith({ userId: 'member-id' });
   });
 });
 

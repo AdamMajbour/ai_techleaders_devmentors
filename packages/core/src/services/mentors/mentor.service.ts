@@ -118,6 +118,12 @@ export class MentorService {
     return toMentorProfile(profile, this.clock.now());
   }
 
+  async getOwnProfile(session: Session): Promise<MentorProfileDto | null> {
+    await this.requireMentorInvitation(session.userId);
+    const profile = await this.mentorProfileRepository.findByUserId(session.userId);
+    return profile ? toMentorProfile(profile, this.clock.now()) : null;
+  }
+
   async create(session: Session, input: MentorProfileInput): Promise<MentorProfileDto> {
     await this.requireMentorInvitation(session.userId);
     const profile = await this.mentorProfileRepository.create({

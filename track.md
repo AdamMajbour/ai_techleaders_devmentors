@@ -80,13 +80,15 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 - [x] 2.1 Add mentor profile entity/migration, repository, and technology-filtering service.
 - [x] 2.2 Add mentor API routes and DTOs; verify membership, listing, and unlisted-link access rules.
-- [ ] 2.3 Add mentor list, profile/link, and mentor profile pages; capture booking source.
+- [x] 2.3 Add mentor list, profile/link, and mentor profile pages; capture booking source.
 
 **2.1 validation:** focused mentor/InvitationService/DI tests passed (15 tests); full unit suite passed (79 suites / 546 tests); workspace type-check and production build passed. Changed-file ESLint passed. Repository `npm run lint` exited 0 with 11,720 warnings, predominantly from the pre-existing untracked `packages/ui/.storybook/public/` output. The DB integration suite was attempted but could not connect: PostgreSQL password authentication failed for `postgres`; migration up/down, uniqueness, invitation-role, and repository filter integration checks remain unverified until the configured `devmentor_test` credentials work.
 
 **2.2 validation:** focused mentor API/service/auth tests passed; the full unit suite passed (80 suites / 559 tests); workspace type-check, changed-file ESLint, and production build passed. Mentor reads return DTOs with bucketed activity only; API/DTO tests cover membership concealment, listed/unlisted access, technology filtering, UUID routes, owner/mentor checks, and DTO keys. Sign-in activity updates are best-effort; profile updates always refresh activity. The existing PostgreSQL integration-test credential blocker from 2.1 remains.
 
-**Manual test gate (pending):** sign in as a pilot member, browse/filter mentors, open a listed and unlisted profile, and update a mentor profile. Task 2.3 and the manual Phase 2 gate remain pending.
+**2.3 validation:** focused mentor service/API/page tests passed (5 suites / 30 tests); workspace type-check and production build passed; changed-file ESLint passed. Repository `npm run lint` exited 0 with 11,720 pre-existing warnings from the untracked Storybook output. The UI token checker reports 549 color values from that same untracked `packages/ui/.storybook/public/` output; a focused scan of the new screen files found no palette classes, arbitrary values, or color literals. E2E was not run: the repository harness requires its dedicated `devmentor_e2e` PostgreSQL database, and earlier attempts in this environment failed password authentication (`28P01`). The editor uses a mentor-only self-profile API and leaves update authorization to the service; list and slug reads continue to enforce pilot membership, unlisted profiles are absent from the list but available to pilot members through direct slug reads, and UUID reads remain owner-scoped.
+
+**Manual test gate (pending):** sign in as a pilot member, browse/filter mentors, open a listed and unlisted profile, and update a mentor profile. Task 2.3 is implemented; the Phase 2 manual gate remains pending.
 
 ## Phase 3 — Question, price, prepay (#12)
 

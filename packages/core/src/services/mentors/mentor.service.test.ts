@@ -103,6 +103,24 @@ describe('MentorService reads', () => {
     await expect(service.getById({ userId: 'other-member' }, IDS[0])).rejects.toBeInstanceOf(NotFoundError);
   });
 
+  it('lets an accepted mentor read only their own profile or an empty result before creation', async () => {
+    const findByUserId = jest.fn(async () => profile());
+    const { service } = setup({ findByUserId });
+
+    await expect(service.getOwnProfile(SESSION)).resolves.toMatchObject({ id: IDS[0], slug: 'ada-lovelace' });
+    expect(findByUserId).toHaveBeenCalledWith(SESSION.userId);
+
+    const { service: noProfile } = setup({ findByUserId: jest.fn(async () => null) });
+    await expect(noProfile.getOwnProfile(SESSION)).resolves.toBeNull();
+
+    const { service: nonMentor, mentorProfileRepository } = setup(
+      { findByUserId: jest.fn(async () => profile()) },
+      { isAcceptedMentor: false },
+    );
+    await expect(nonMentor.getOwnProfile(SESSION)).rejects.toBeInstanceOf(ForbiddenError);
+    expect(mentorProfileRepository.findByUserId).not.toHaveBeenCalled();
+  });
+
   it('returns 404 for an unknown profile', async () => {
     const { service } = setup({
       findBySlug: jest.fn(async () => null),

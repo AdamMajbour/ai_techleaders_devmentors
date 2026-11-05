@@ -1,5 +1,6 @@
 import {
   mentorListQuerySchema,
+  mentorProfileInputSchema,
   mentorProfileUpdateSchema,
   NotFoundError,
 } from '@devmentor/core';
@@ -21,6 +22,10 @@ export const mentorsCrud = makeCrudRoute({
       if (!session) throw new NotFoundError();
       return cradle.mentorService.getById(session, id);
     },
+  },
+  create: {
+    body: mentorProfileInputSchema,
+    handler: (input, { cradle, session }) => cradle.mentorService.create(session, input),
   },
   update: {
     body: mentorProfileUpdateSchema,
