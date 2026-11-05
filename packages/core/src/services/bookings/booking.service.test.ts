@@ -53,6 +53,7 @@ function setup(options: {
   isAcceptedMentor?: boolean;
   profile?: MentorProfile | null;
   gatewayError?: Error;
+  failCheckoutError?: Error;
   sessionSaveFails?: boolean;
 } = {}) {
   const booking = makeBooking();
@@ -62,6 +63,7 @@ function setup(options: {
     return { booking, payment };
   });
   const failCheckout = jest.fn(async () => {
+    if (options.failCheckoutError) throw options.failCheckoutError;
     booking.status = 'payment_failed';
     payment.status = 'failed';
   });
@@ -213,6 +215,25 @@ describe('BookingService.create', () => {
     expect(deps.booking.status).toBe('payment_failed');
     expect(deps.booking.status).not.toBe('paid');
     expect(deps.payment.status).toBe('failed');
+    expect(deps.emit).not.toHaveBeenCalled();
+  });
+
+  it('surfaces both the gateway failure and failure to persist payment_failed', async () => {
+    const gatewayError = new Error('Checkout unavailable');
+    const persistenceError = new Error('Database unavailable');
+    const deps = setup({ gatewayError, failCheckoutError: persistenceError });
+
+    let caught: unknown;
+    try {
+      await deps.service.create({ userId: SEEKER_ID }, input());
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBeInstanceOf(AggregateError);
+    expect((caught as AggregateError).errors).toEqual([gatewayError, persistenceError]);
+    expect(deps.booking.status).toBe('pending_payment');
+    expect(deps.booking.status).not.toBe('paid');
     expect(deps.emit).not.toHaveBeenCalled();
   });
 

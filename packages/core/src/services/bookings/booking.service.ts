@@ -110,8 +110,11 @@ export class BookingService {
     } catch (error) {
       try {
         await this.bookingRepository.failCheckout(booking.id);
-      } catch {
-        // Keep the gateway failure as the actionable error; the booking is still never marked paid.
+      } catch (persistenceError) {
+        throw new AggregateError(
+          [error, persistenceError],
+          'Checkout failed and the booking could not be marked as payment_failed.',
+        );
       }
       throw error;
     }
