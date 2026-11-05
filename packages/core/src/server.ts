@@ -64,7 +64,11 @@ export {
   type InviteInput,
   type InvitationRole,
 } from './services/auth/invitation.service';
-export { MAGIC_LINK_TTL_MS, MagicLinkService } from './services/auth/magic-link.service';
+export {
+  INVALID_MAGIC_LINK_MESSAGE,
+  MAGIC_LINK_TTL_MS,
+  MagicLinkService,
+} from './services/auth/magic-link.service';
 export {
   ApprovalService,
   defaultApproverResolvers,
@@ -101,5 +105,10 @@ export {
 export { assertCsrfSafe } from './security/csrf';
 export { createRateLimiter, clientKey, type RateLimiter } from './security/rate-limit';
 export { withFailureLimit } from './security/guarded';
-export { loginLimiter, registerLimiter } from './security/limiters';
+export {
+  loginLimiter,
+  magicLinkConsumeLimiter,
+  magicLinkRequestLimiter,
+  registerLimiter,
+} from './security/limiters';
 export { systemClock, type Clock } from './utils/clock';

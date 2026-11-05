@@ -1,9 +1,13 @@
 import { createHash, randomBytes } from 'node:crypto';
 import type { LoginTokenRepository } from '@devmentor/db';
+import type { Logger } from '../../logger';
+import type { Mailer } from '../notifications/mailer.port';
 import type { Clock } from '../../utils/clock';
 import type { InvitationService } from './invitation.service';
+import { INVALID_MAGIC_LINK_MESSAGE } from './magic-link.constants';
 
 export const MAGIC_LINK_TTL_MS = 15 * 60 * 1000;
+export { INVALID_MAGIC_LINK_MESSAGE };
 
 function tokenHash(bytes: Uint8Array): string {
   return createHash('sha256').update(bytes).digest('hex');
@@ -19,19 +23,44 @@ export class MagicLinkService {
   private readonly loginTokenRepository: LoginTokenRepository;
   private readonly invitationService: InvitationService;
   private readonly clock: Clock;
+  private readonly mailer: Mailer;
+  private readonly logger: Logger;
 
   constructor({
     loginTokenRepository,
     invitationService,
     clock,
+    mailer,
+    logger,
   }: {
     loginTokenRepository: LoginTokenRepository;
     invitationService: InvitationService;
     clock: Clock;
+    mailer: Mailer;
+    logger: Logger;
   }) {
     this.loginTokenRepository = loginTokenRepository;
     this.invitationService = invitationService;
     this.clock = clock;
+    this.mailer = mailer;
+    this.logger = logger;
+  }
+
+  async request(email: string, appUrl: string): Promise<void> {
+    const issued = await this.issue(email);
+    if (!issued) return;
+
+    const verificationUrl = new URL('/auth/verify', appUrl);
+    verificationUrl.searchParams.set('token', issued.token);
+    try {
+      await this.mailer.send({
+        to: email.trim().toLowerCase(),
+        template: 'magic-link',
+        data: { url: verificationUrl.toString() },
+      });
+    } catch {
+      this.logger.warn('Magic-link delivery failed', { event: 'auth.magic_link.requested' });
+    }
   }
 
   async issue(email: string): Promise<{ token: string; expiresAt: Date } | null> {

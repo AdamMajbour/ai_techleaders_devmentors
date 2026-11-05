@@ -11,6 +11,7 @@ export * from './validators/parse';
 export * from './validators/id.schema';
 export * from './validators/auth/register.schema';
 export * from './validators/auth/login.schema';
+export * from './validators/auth/magic-link.schema';
 export * from './validators/articles/article-create.schema';
 export * from './validators/articles/article-update.schema';
 export * from './validators/articles/article-list.schema';

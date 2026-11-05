@@ -65,12 +65,14 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 - [x] 1.1 Record D24 by founder A and update the product brief.
 - [x] 1.2 Add invitation and login-token entities/migrations, services, env settings, and the pilot-member resolver.
-- [ ] 1.3 Add magic-link request/consume routes, rate limiting, and the `PUBLIC_SIGNUP` registration guard.
+- [x] 1.3 Add magic-link request/consume routes, rate limiting, and the `PUBLIC_SIGNUP` registration guard.
 - [ ] 1.4 Add login/verify pages, HTTP mailer, `pilot:invite` CLI, env documentation, and invite-to-sign-in E2E coverage.
 
 **1.2 validation:** full unit suite passed (76 suites / 513 tests), workspace type-check, production build, and repository ESLint passed. The DB integration suite was attempted but could not connect because PostgreSQL password authentication failed for `postgres`; migration, constraints, expiry, and atomic concurrent-consumption integration checks remain unverified until the configured `devmentor_test` credentials work.
 
-**Manual test gate:** invite a user, request and consume a magic link, verify single-use behavior, and confirm public signup behavior.
+**1.3 validation:** `npm test` (77 suites / 528 tests), `npm run type-check`, ESLint on changed files, and `npm run build` passed. Added route/service coverage for response parity, validation/CSRF/rate limits, first and repeat sign-in, revoked/expired/reused links, and both registration-guard states. The PostgreSQL integration suite was not rerun; its 1.2 verification blocker remains above.
+
+**Manual test gate:** [ ] Invite a user, request and consume a magic link, verify single-use behavior, and confirm public signup behavior.
 
 ## Phase 2 — Find a mentor (#11)
 
