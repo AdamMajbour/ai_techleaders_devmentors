@@ -79,12 +79,14 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 ## Phase 2 — Find a mentor (#11)
 
 - [x] 2.1 Add mentor profile entity/migration, repository, and technology-filtering service.
-- [ ] 2.2 Add mentor API routes and DTOs; verify membership, listing, and unlisted-link access rules.
+- [x] 2.2 Add mentor API routes and DTOs; verify membership, listing, and unlisted-link access rules.
 - [ ] 2.3 Add mentor list, profile/link, and mentor profile pages; capture booking source.
 
 **2.1 validation:** focused mentor/InvitationService/DI tests passed (15 tests); full unit suite passed (79 suites / 546 tests); workspace type-check and production build passed. Changed-file ESLint passed. Repository `npm run lint` exited 0 with 11,720 warnings, predominantly from the pre-existing untracked `packages/ui/.storybook/public/` output. The DB integration suite was attempted but could not connect: PostgreSQL password authentication failed for `postgres`; migration up/down, uniqueness, invitation-role, and repository filter integration checks remain unverified until the configured `devmentor_test` credentials work.
 
-**Manual test gate (pending):** sign in as a pilot member, browse/filter mentors, open a listed and unlisted profile, and update a mentor profile. Tasks 2.2 and 2.3 remain pending.
+**2.2 validation:** focused mentor API/service/auth tests passed; the full unit suite passed (80 suites / 559 tests); workspace type-check, changed-file ESLint, and production build passed. Mentor reads return DTOs with bucketed activity only; API/DTO tests cover membership concealment, listed/unlisted access, technology filtering, UUID routes, owner/mentor checks, and DTO keys. Sign-in activity updates are best-effort; profile updates always refresh activity. The existing PostgreSQL integration-test credential blocker from 2.1 remains.
+
+**Manual test gate (pending):** sign in as a pilot member, browse/filter mentors, open a listed and unlisted profile, and update a mentor profile. Task 2.3 and the manual Phase 2 gate remain pending.
 
 ## Phase 3 — Question, price, prepay (#12)
 

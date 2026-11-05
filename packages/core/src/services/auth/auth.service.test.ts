@@ -26,15 +26,19 @@ function setup(repository: Partial<Record<keyof UserRepository, jest.Mock>>) {
     acceptForUser: jest.fn<Promise<boolean>, [string, string, Date]>(async () => true),
   };
   const clock: Clock = { now: () => new Date('2026-11-05T12:00:00.000Z') };
+  const mentorService = { recordSignInActivity: jest.fn(async () => undefined) };
   return {
     service: new AuthService({
       userRepository: repository as unknown as UserRepository,
       eventBus,
       invitationService: invitationService as never,
+      mentorService: mentorService as never,
       clock,
+      logger: silent,
     }),
     registered,
     invitationService,
+    mentorService,
   };
 }
 
@@ -73,9 +77,10 @@ describe('AuthService.register', () => {
 describe('AuthService.login', () => {
   it('returns the user for the right password', async () => {
     const hash = await hashPassword('correct horse battery');
-    const { service } = setup({ findByEmail: jest.fn(async () => userWith(hash)) });
+    const { service, mentorService } = setup({ findByEmail: jest.fn(async () => userWith(hash)) });
 
     expect((await service.login({ email: 'ada@example.com', password: 'correct horse battery' })).id).toBe('u1');
+    expect(mentorService.recordSignInActivity).toHaveBeenCalledWith('u1');
   }, 20_000);
 
   it('gives the identical error for a wrong password, an unknown e-mail and an account without a password', async () => {
@@ -140,7 +145,7 @@ describe('AuthService.signInWithMagicLink', () => {
   it('signs in an existing invited user without creating a duplicate account', async () => {
     const existing = userWith(null);
     const create = jest.fn();
-    const { service, registered, invitationService } = setup({
+    const { service, registered, invitationService, mentorService } = setup({
       findByEmail: jest.fn(async () => existing),
       create,
     });
@@ -158,7 +163,21 @@ describe('AuthService.signInWithMagicLink', () => {
       new Date('2026-11-05T12:00:00.000Z'),
     );
     expect(registered).not.toHaveBeenCalled();
+    expect(mentorService.recordSignInActivity).toHaveBeenCalledWith('u1');
   });
+
+  it('does not fail sign-in if mentor activity cannot be recorded', async () => {
+    const hash = await hashPassword('correct horse battery');
+    const { service, mentorService } = setup({ findByEmail: jest.fn(async () => userWith(hash)) });
+    mentorService.recordSignInActivity.mockRejectedValue(new Error('activity storage unavailable'));
+
+    await expect(service.login({ email: 'ada@example.com', password: 'correct horse battery' }))
+      .resolves.toMatchObject({ id: 'u1' });
+    expect(silent.warn).toHaveBeenCalledWith(
+      'Could not update mentor activity after sign-in.',
+      expect.objectContaining({ userId: 'u1' }),
+    );
+  }, 20_000);
 
   it('rejects a revoked invitation and an invitation that cannot be accepted', async () => {
     const { service, invitationService } = setup({

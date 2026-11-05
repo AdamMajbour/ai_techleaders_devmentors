@@ -1,29 +1,27 @@
-import type { MentorProfileRepository, MentorProfileUpdate } from '@devmentor/db';
+import type { MentorProfile, MentorProfileRepository, MentorProfileUpdate } from '@devmentor/db';
 import { assertOwns } from '../../http/auth';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../http/errors';
 import type { Session } from '../../security/session';
+import type { Clock } from '../../utils/clock';
 import type { InvitationService } from '../auth/invitation.service';
+import type { Page } from '../dto';
+import {
+  MENTOR_PAGE_SIZE,
+  mentorProfileDtoSchema,
+  type MentorActivity,
+  type MentorListQuery,
+  type MentorProfileDto,
+  type MentorProfileInput,
+  type MentorProfileUpdateInput,
+} from '../../validators/mentors/mentor-profile.schema';
 
-export type MentorProfileData = {
-  id: string;
-  userId: string;
-  slug: string;
-  headline: string;
-  bio: string;
-  technologies: string;
-  publicWorkUrl: string;
-  isListed: boolean;
-  lastActiveAt: Date | null;
-};
-
-export type MentorProfileInput = Omit<MentorProfileData, 'id' | 'userId' | 'lastActiveAt' | 'isListed'> & {
-  isListed?: boolean;
-};
-export type MentorProfileChanges = Partial<MentorProfileInput>;
+export type { MentorProfileDto, MentorProfileInput };
+export type MentorProfileChanges = MentorProfileUpdateInput;
 
 type Dependencies = {
   mentorProfileRepository: MentorProfileRepository;
-  invitationService: Pick<InvitationService, 'isAcceptedMentor'>;
+  invitationService: Pick<InvitationService, 'isAcceptedMentor' | 'isPilotMember'>;
+  clock: Clock;
 };
 
 export function normalizeTechnologySlugs(technologies: string | readonly string[]): string {
@@ -44,48 +42,83 @@ export function normalizeMentorSlug(slug: string): string {
   return normalized;
 }
 
-function toMentorProfile(profile: Awaited<ReturnType<MentorProfileRepository['findBySlug']>>): MentorProfileData {
-  if (!profile) throw new NotFoundError('Mentor profile not found.');
-  return {
+function activityFor(lastActiveAt: Date | null | undefined, now: Date): MentorActivity {
+  if (!lastActiveAt) return 'never';
+
+  const age = now.getTime() - lastActiveAt.getTime();
+  if (age >= 0 && age < 60 * 60 * 1000) return 'within_hour';
+  if (
+    lastActiveAt.getUTCFullYear() === now.getUTCFullYear() &&
+    lastActiveAt.getUTCMonth() === now.getUTCMonth() &&
+    lastActiveAt.getUTCDate() === now.getUTCDate()
+  ) {
+    return 'today';
+  }
+  return 'earlier';
+}
+
+function toMentorProfile(profile: MentorProfile, now: Date): MentorProfileDto {
+  return mentorProfileDtoSchema.parse({
     id: profile.id,
-    userId: profile.userId,
     slug: profile.slug,
     headline: profile.headline,
     bio: profile.bio,
     technologies: profile.technologies,
     publicWorkUrl: profile.publicWorkUrl,
     isListed: profile.isListed,
-    lastActiveAt: profile.lastActiveAt ?? null,
-  };
+    activity: activityFor(profile.lastActiveAt, now),
+  });
 }
 
 export class MentorService {
   private readonly mentorProfileRepository: MentorProfileRepository;
-  private readonly invitationService: Pick<InvitationService, 'isAcceptedMentor'>;
+  private readonly invitationService: Pick<InvitationService, 'isAcceptedMentor' | 'isPilotMember'>;
+  private readonly clock: Clock;
 
-  constructor({ mentorProfileRepository, invitationService }: Dependencies) {
+  constructor({ mentorProfileRepository, invitationService, clock }: Dependencies) {
     this.mentorProfileRepository = mentorProfileRepository;
     this.invitationService = invitationService;
+    this.clock = clock;
   }
 
-  async list(technology?: string): Promise<MentorProfileData[]> {
+  async list(session: Session, { technology, page }: MentorListQuery): Promise<Page<MentorProfileDto>> {
+    await this.requirePilotMember(session);
     const profiles = await this.mentorProfileRepository.findListed();
     const filter = technology?.trim() ? normalizeTechnologySlugs(technology) : null;
-    if (filter === '') return [];
-    return profiles
-      .filter((profile) => filter === null || normalizeTechnologySlugs(profile.technologies).split(' ').includes(filter))
-      .map((profile) => toMentorProfile(profile));
+    const filtered = filter === ''
+      ? []
+      : profiles.filter((profile) =>
+        profile.isListed &&
+        (filter === null || normalizeTechnologySlugs(profile.technologies).split(' ').includes(filter)),
+      );
+    const pageSize = MENTOR_PAGE_SIZE;
+    const items = filtered.slice((page - 1) * pageSize, page * pageSize);
+    const now = this.clock.now();
+    return {
+      items: items.map((profile) => toMentorProfile(profile, now)),
+      page,
+      pageSize,
+      total: filtered.length,
+      pageCount: Math.max(1, Math.ceil(filtered.length / pageSize)),
+    };
   }
 
-  async getBySlug(slug: string): Promise<MentorProfileData> {
-    return toMentorProfile(await this.mentorProfileRepository.findBySlug(normalizeMentorSlug(slug)));
+  async getBySlug(session: Session, slug: string): Promise<MentorProfileDto> {
+    await this.requirePilotMember(session);
+    const profile = await this.findBySlug(slug);
+    return toMentorProfile(profile, this.clock.now());
   }
 
-  async getById(id: string): Promise<MentorProfileData> {
-    return toMentorProfile(await this.mentorProfileRepository.findById(id));
+  async getById(session: Session, id: string): Promise<MentorProfileDto> {
+    await this.requirePilotMember(session);
+    const profile = await this.mentorProfileRepository.findById(id);
+    if (!profile || (!profile.isListed && profile.userId !== session.userId)) {
+      throw new NotFoundError('Mentor profile not found.');
+    }
+    return toMentorProfile(profile, this.clock.now());
   }
 
-  async create(session: Session, input: MentorProfileInput): Promise<MentorProfileData> {
+  async create(session: Session, input: MentorProfileInput): Promise<MentorProfileDto> {
     await this.requireMentorInvitation(session.userId);
     const profile = await this.mentorProfileRepository.create({
       userId: session.userId,
@@ -97,10 +130,16 @@ export class MentorService {
       isListed: input.isListed ?? false,
       lastActiveAt: null,
     });
-    return toMentorProfile(profile);
+    return toMentorProfile(profile, this.clock.now());
   }
 
-  async update(session: Session, id: string, changes: MentorProfileChanges): Promise<MentorProfileData> {
+  async recordSignInActivity(userId: string): Promise<void> {
+    if (!(await this.invitationService.isAcceptedMentor(userId))) return;
+    const profile = await this.mentorProfileRepository.findByUserId(userId);
+    if (profile) await this.mentorProfileRepository.update(profile.id, { lastActiveAt: this.clock.now() });
+  }
+
+  async update(session: Session, id: string, changes: MentorProfileChanges): Promise<MentorProfileDto> {
     await this.requireMentorInvitation(session.userId);
     const existing = await this.mentorProfileRepository.findById(id);
     if (!existing) throw new NotFoundError('Mentor profile not found.');
@@ -113,8 +152,20 @@ export class MentorService {
     if (changes.technologies !== undefined) normalized.technologies = normalizeTechnologySlugs(changes.technologies);
     if (changes.publicWorkUrl !== undefined) normalized.publicWorkUrl = changes.publicWorkUrl;
     if (changes.isListed !== undefined) normalized.isListed = changes.isListed;
+    normalized.lastActiveAt = this.clock.now();
     const updated = await this.mentorProfileRepository.update(id, normalized);
-    return toMentorProfile(updated);
+    if (!updated) throw new NotFoundError('Mentor profile not found.');
+    return toMentorProfile(updated, this.clock.now());
+  }
+
+  private async findBySlug(slug: string): Promise<MentorProfile> {
+    const profile = await this.mentorProfileRepository.findBySlug(normalizeMentorSlug(slug));
+    if (!profile) throw new NotFoundError('Mentor profile not found.');
+    return profile;
+  }
+
+  private async requirePilotMember(session: Session): Promise<void> {
+    if (!(await this.invitationService.isPilotMember(session.userId))) throw new NotFoundError();
   }
 
   private async requireMentorInvitation(userId: string): Promise<void> {

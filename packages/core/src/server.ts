@@ -67,7 +67,7 @@ export {
   normalizeMentorSlug,
   normalizeTechnologySlugs,
   type MentorProfileChanges,
-  type MentorProfileData,
+  type MentorProfileDto,
   type MentorProfileInput,
 } from './services/mentors/mentor.service';
 export { AuthService } from './services/auth/auth.service';

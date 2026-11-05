@@ -3,17 +3,21 @@ import type { EventBus } from '../../events/event-bus';
 import { ConflictError, UnauthorizedError } from '../../http/errors';
 import { hashPassword, verifyAgainstDummy, verifyPassword } from '../../security/password';
 import type { Clock } from '../../utils/clock';
+import type { Logger } from '../../logger';
 import type { LoginInput } from '../../validators/auth/login.schema';
 import type { RegisterInput } from '../../validators/auth/register.schema';
 import { toUserDto, type UserDto } from '../dto';
 import type { InvitationService } from './invitation.service';
+import type { MentorService } from '../mentors/mentor.service';
 import { INVALID_MAGIC_LINK_MESSAGE } from './magic-link.constants';
 
 type Dependencies = {
   userRepository: UserRepository;
   eventBus: EventBus;
   invitationService: InvitationService;
+  mentorService: Pick<MentorService, 'recordSignInActivity'>;
   clock: Clock;
+  logger: Logger;
 };
 
 /** One message for every failed login, so the response never says whether the e-mail has an account. */
@@ -23,13 +27,17 @@ export class AuthService {
   private readonly userRepository: UserRepository;
   private readonly eventBus: EventBus;
   private readonly invitationService: InvitationService;
+  private readonly mentorService: Pick<MentorService, 'recordSignInActivity'>;
   private readonly clock: Clock;
+  private readonly logger: Logger;
 
-  constructor({ userRepository, eventBus, invitationService, clock }: Dependencies) {
+  constructor({ userRepository, eventBus, invitationService, mentorService, clock, logger }: Dependencies) {
     this.userRepository = userRepository;
     this.eventBus = eventBus;
     this.invitationService = invitationService;
+    this.mentorService = mentorService;
     this.clock = clock;
+    this.logger = logger;
   }
 
   async register(input: RegisterInput): Promise<UserDto> {
@@ -55,6 +63,7 @@ export class AuthService {
       : await verifyAgainstDummy(input.password);
     if (!user || !isValid) throw new UnauthorizedError(INVALID_CREDENTIALS);
 
+    await this.recordMentorSignIn(user.id);
     return toUserDto(user);
   }
 
@@ -87,6 +96,15 @@ export class AuthService {
     if (!accepted) throw new UnauthorizedError(INVALID_MAGIC_LINK_MESSAGE);
 
     if (created) await this.eventBus.emit('auth.user.registered', { userId: user.id });
+    await this.recordMentorSignIn(user.id);
     return toUserDto(user);
+  }
+
+  private async recordMentorSignIn(userId: string): Promise<void> {
+    try {
+      await this.mentorService.recordSignInActivity(userId);
+    } catch (error) {
+      this.logger.warn('Could not update mentor activity after sign-in.', { error, userId });
+    }
   }
 }
