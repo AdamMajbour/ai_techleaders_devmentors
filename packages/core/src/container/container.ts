@@ -7,11 +7,13 @@ import { asClass, asFunction, asValue, createContainer, InjectionMode, type Awil
 import { ArticleRepository, initializeORM, UserRepository } from '@devmentor/db';
 import { createEventBus } from '../events/event-bus';
 import { registerLoggingSubscriber } from '../events/logging-subscriber';
+import { registerMailSubscriber } from '../events/mail-subscriber';
 import { createLogger, type Logger } from '../logger';
 import { ArticleService } from '../services/articles/article.service';
 import { AuthService } from '../services/auth/auth.service';
 import { UserService } from '../services/auth/user.service';
 import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
+import { ConsoleMailer } from '../services/notifications/adapters/console-mailer';
 import { systemClock } from '../utils/clock';
 import type { Cradle, OrmLike } from './cradle';
 
@@ -21,6 +23,8 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
   const container = createContainer<Cradle>({ injectionMode: InjectionMode.PROXY, strict: true });
   const eventBus = createEventBus(logger);
   registerLoggingSubscriber(eventBus, logger);
+  const mailer = new ConsoleMailer();
+  registerMailSubscriber(eventBus, mailer, logger);
 
   container.register({
     logger: asValue(logger),
@@ -34,6 +38,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     authService: asClass(AuthService).scoped(),
     articleService: asClass(ArticleService).scoped(),
     paymentGateway: asValue(new MockPaymentGateway()),
+    mailer: asValue(mailer),
   });
 
   return container;

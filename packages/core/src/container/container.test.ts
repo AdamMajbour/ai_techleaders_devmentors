@@ -3,6 +3,7 @@ import { ArticleRepository, UserRepository } from '@devmentor/db';
 import { ArticleService } from '../services/articles/article.service';
 import { UserService } from '../services/auth/user.service';
 import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
+import { ConsoleMailer } from '../services/notifications/adapters/console-mailer';
 import { systemClock } from '../utils/clock';
 import { buildContainer } from './container';
 import type { OrmLike } from './cradle';
@@ -25,6 +26,7 @@ describe('buildContainer', () => {
     expect(cradle.userService).toBeInstanceOf(UserService);
     expect(cradle.articleService).toBeInstanceOf(ArticleService);
     expect(cradle.paymentGateway).toBeInstanceOf(MockPaymentGateway);
+    expect(cradle.mailer).toBeInstanceOf(ConsoleMailer);
     expect(cradle.clock).toBe(systemClock);
     expect(fork).toHaveBeenCalledTimes(1);
   });

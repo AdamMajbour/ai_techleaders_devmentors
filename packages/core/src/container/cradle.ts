@@ -5,6 +5,7 @@ import type { ArticleService } from '../services/articles/article.service';
 import type { AuthService } from '../services/auth/auth.service';
 import type { UserService } from '../services/auth/user.service';
 import type { PaymentGateway } from '../services/payments/payment-gateway.port';
+import type { Mailer } from '../services/notifications/mailer.port';
 import type { Clock } from '../utils/clock';
 
 /** Every dependency the container can provide. A new service is one line here and one in container.ts. */
@@ -20,6 +21,7 @@ export interface Cradle {
   authService: AuthService;
   articleService: ArticleService;
   paymentGateway: PaymentGateway;
+  mailer: Mailer;
 }
 
 /** The part of the ORM the container needs (lets tests pass a fake). */

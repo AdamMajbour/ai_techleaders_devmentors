@@ -42,7 +42,7 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 ### Phase P3 — Ports and services
 
 - [x] P3.1 Add `PaymentGateway` and mock adapter; provide adapter contract tests.
-- [ ] P3.2 Add `Mailer`, console adapter, mail event subscriber, and failure-isolation tests.
+- [x] P3.2 Add `Mailer`, console adapter, mail event subscriber, and failure-isolation tests.
 - [ ] P3.3 Add approval entity/migration and `ApprovalService`; register dependencies and test operator-only, single-use decisions.
 
 **Manual test gate:** verify mock payments, non-fatal mail failures, and approval lifecycle behavior.

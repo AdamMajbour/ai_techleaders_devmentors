@@ -24,6 +24,7 @@ export { getEnv, parseEnv, getOperatorUserIds, parseOperatorUserIds } from './co
 export { createLogger, redact, type Logger, type LogContext } from './logger';
 export { createEventBus, type EventBus } from './events/event-bus';
 export type { EventMap, EventName } from './events/event-map';
+export { registerMailSubscriber, type MailEventRegistrar } from './events/mail-subscriber';
 export { buildContainer, getContainer, withScope, type AppContainer } from './container/container';
 export type { Cradle, OrmLike } from './container/cradle';
 export { ArticleService } from './services/articles/article.service';
@@ -40,6 +41,8 @@ export type {
   RefundInput,
 } from './services/payments/payment-gateway.port';
 export { MockPaymentGateway } from './services/payments/adapters/mock-payment-gateway';
+export { ConsoleMailer } from './services/notifications/adapters/console-mailer';
+export type { Mailer, MailMessage } from './services/notifications/mailer.port';
 export { hashPassword, verifyPassword, BCRYPT_COST } from './security/password';
 export {
   signSession,
