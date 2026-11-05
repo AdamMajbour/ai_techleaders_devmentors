@@ -43,6 +43,21 @@ describe('InvitationService', () => {
     expect(invitationRepository.isPilotMember).toHaveBeenCalledWith('accepted');
   });
 
+  it('checks mentor eligibility separately without changing pilot membership semantics', async () => {
+    const invitationRepository = {
+      hasAcceptedRole: jest.fn(async () => false),
+      isPilotMember: jest.fn(async () => true),
+    };
+    const service = new InvitationService({ invitationRepository: invitationRepository as never });
+
+    await expect(service.isAcceptedMentor('seeker-id')).resolves.toBe(false);
+    await expect(service.isPilotMember('seeker-id')).resolves.toBe(true);
+    invitationRepository.hasAcceptedRole.mockResolvedValueOnce(true);
+    await expect(service.isAcceptedMentor('mentor-id')).resolves.toBe(true);
+    expect(invitationRepository.hasAcceptedRole).toHaveBeenNthCalledWith(1, 'seeker-id', 'mentor');
+    expect(invitationRepository.hasAcceptedRole).toHaveBeenNthCalledWith(2, 'mentor-id', 'mentor');
+  });
+
   it('does not make revoked invitations eligible for login links', async () => {
     const invitationRepository = { findUnrevokedByEmail: jest.fn(async () => null) };
     const service = new InvitationService({ invitationRepository: invitationRepository as never });

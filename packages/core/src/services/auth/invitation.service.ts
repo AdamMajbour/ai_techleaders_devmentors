@@ -89,4 +89,8 @@ export class InvitationService {
   isPilotMember(userId: string): Promise<boolean> {
     return this.invitationRepository.isPilotMember(userId);
   }
+
+  isAcceptedMentor(userId: string): Promise<boolean> {
+    return this.invitationRepository.hasAcceptedRole(userId, 'mentor');
+  }
 }

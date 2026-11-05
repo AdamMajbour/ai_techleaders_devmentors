@@ -3,7 +3,7 @@
 // MikroORM forbids using the global EM for context-specific work, so callers pass
 // a fork (`orm.em.fork()`) per request / script / test.
 import type { EntityManager, RequiredEntityData } from '@mikro-orm/core';
-import { User, Article, ApprovalRequest, Invitation, LoginToken } from '../entities';
+import { User, Article, ApprovalRequest, Invitation, LoginToken, MentorProfile } from '../entities';
 import { PendingApprovalConflictError, isUniqueConstraintViolation } from '../errors';
 import { transitionStatus } from './transition';
 export { transitionStatus };
@@ -45,6 +45,50 @@ export class UserRepository {
     this.em.remove(user);
     await this.em.flush();
     return true;
+  }
+}
+
+export type NewMentorProfile = Pick<
+  MentorProfile,
+  'userId' | 'slug' | 'headline' | 'bio' | 'technologies' | 'publicWorkUrl' | 'isListed' | 'lastActiveAt'
+>;
+
+export type MentorProfileUpdate = Partial<
+  Pick<MentorProfile, 'slug' | 'headline' | 'bio' | 'technologies' | 'publicWorkUrl' | 'isListed' | 'lastActiveAt'>
+>;
+
+export class MentorProfileRepository {
+  constructor(private readonly em: EntityManager) {}
+
+  async findById(id: string): Promise<MentorProfile | null> {
+    return this.em.findOne(MentorProfile, { id });
+  }
+
+  async findByUserId(userId: string): Promise<MentorProfile | null> {
+    return this.em.findOne(MentorProfile, { userId });
+  }
+
+  async findBySlug(slug: string): Promise<MentorProfile | null> {
+    return this.em.findOne(MentorProfile, { slug });
+  }
+
+  async findListed(): Promise<MentorProfile[]> {
+    return this.em.find(MentorProfile, { isListed: true }, { orderBy: { slug: 'asc' } });
+  }
+
+  async create(data: NewMentorProfile): Promise<MentorProfile> {
+    const profile = this.em.create(MentorProfile, data);
+    this.em.persist(profile);
+    await this.em.flush();
+    return profile;
+  }
+
+  async update(id: string, data: MentorProfileUpdate): Promise<MentorProfile | null> {
+    const profile = await this.findById(id);
+    if (!profile) return null;
+    Object.assign(profile, data);
+    await this.em.flush();
+    return profile;
   }
 }
 
@@ -202,6 +246,17 @@ export class InvitationRepository {
         acceptedByUserId: userId,
         acceptedAt: { $ne: null },
         revokedAt: null,
+      })) > 0
+    );
+  }
+
+  async hasAcceptedRole(userId: string, role: string): Promise<boolean> {
+    return (
+      (await this.em.count(Invitation, {
+        acceptedByUserId: userId,
+        acceptedAt: { $ne: null },
+        revokedAt: null,
+        role,
       })) > 0
     );
   }

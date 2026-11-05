@@ -78,11 +78,13 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 ## Phase 2 — Find a mentor (#11)
 
-- [ ] 2.1 Add mentor profile entity/migration, repository, and technology-filtering service.
+- [x] 2.1 Add mentor profile entity/migration, repository, and technology-filtering service.
 - [ ] 2.2 Add mentor API routes and DTOs; verify membership, listing, and unlisted-link access rules.
 - [ ] 2.3 Add mentor list, profile/link, and mentor profile pages; capture booking source.
 
-**Manual test gate:** sign in as a pilot member, browse/filter mentors, open a listed and unlisted profile, and update a mentor profile.
+**2.1 validation:** focused mentor/InvitationService/DI tests passed (15 tests); full unit suite passed (79 suites / 546 tests); workspace type-check and production build passed. Changed-file ESLint passed. Repository `npm run lint` exited 0 with 11,720 warnings, predominantly from the pre-existing untracked `packages/ui/.storybook/public/` output. The DB integration suite was attempted but could not connect: PostgreSQL password authentication failed for `postgres`; migration up/down, uniqueness, invitation-role, and repository filter integration checks remain unverified until the configured `devmentor_test` credentials work.
+
+**Manual test gate (pending):** sign in as a pilot member, browse/filter mentors, open a listed and unlisted profile, and update a mentor profile. Tasks 2.2 and 2.3 remain pending.
 
 ## Phase 3 — Question, price, prepay (#12)
 

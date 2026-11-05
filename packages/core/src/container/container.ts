@@ -10,6 +10,7 @@ import {
   initializeORM,
   InvitationRepository,
   LoginTokenRepository,
+  MentorProfileRepository,
   UserRepository,
 } from '@devmentor/db';
 import { createEventBus } from '../events/event-bus';
@@ -24,6 +25,7 @@ import { MagicLinkService } from '../services/auth/magic-link.service';
 import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
 import { ConfiguredMailer } from '../services/notifications/adapters/configured-mailer';
 import { ApprovalService, defaultApproverResolvers } from '../services/approvals/approval.service';
+import { MentorService } from '../services/mentors/mentor.service';
 import { systemClock } from '../utils/clock';
 import type { Cradle, OrmLike } from './cradle';
 
@@ -47,10 +49,12 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     approvalRequestRepository: asFunction(({ em }: Cradle) => new ApprovalRequestRepository(em)).scoped(),
     invitationRepository: asFunction(({ em }: Cradle) => new InvitationRepository(em)).scoped(),
     loginTokenRepository: asFunction(({ em }: Cradle) => new LoginTokenRepository(em)).scoped(),
+    mentorProfileRepository: asFunction(({ em }: Cradle) => new MentorProfileRepository(em)).scoped(),
     userService: asClass(UserService).scoped(),
     authService: asClass(AuthService).scoped(),
     articleService: asClass(ArticleService).scoped(),
     approvalService: asClass(ApprovalService).scoped(),
+    mentorService: asClass(MentorService).scoped(),
     invitationService: asClass(InvitationService).scoped(),
     magicLinkService: asClass(MagicLinkService).scoped(),
     approverResolvers: asValue(defaultApproverResolvers),

@@ -62,6 +62,14 @@ export { registerMailSubscriber, type MailEventRegistrar } from './events/mail-s
 export { buildContainer, getContainer, withScope, type AppContainer } from './container/container';
 export type { Cradle, OrmLike } from './container/cradle';
 export { ArticleService } from './services/articles/article.service';
+export {
+  MentorService,
+  normalizeMentorSlug,
+  normalizeTechnologySlugs,
+  type MentorProfileChanges,
+  type MentorProfileData,
+  type MentorProfileInput,
+} from './services/mentors/mentor.service';
 export { AuthService } from './services/auth/auth.service';
 export { UserService } from './services/auth/user.service';
 export {

@@ -3,13 +3,14 @@ import path from 'node:path';
 import type { MikroORM } from '@mikro-orm/core';
 import type { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { closeORM, initializeORM } from '../config';
-import { ApprovalRequest, Invitation, LoginToken, StatusTransition } from '../entities';
+import { ApprovalRequest, Invitation, LoginToken, MentorProfile, StatusTransition } from '../entities';
 import { isUniqueConstraintViolation, PendingApprovalConflictError } from '../errors';
 import {
   ArticleRepository,
   ApprovalRequestRepository,
   InvitationRepository,
   LoginTokenRepository,
+  MentorProfileRepository,
   UserRepository,
   transitionStatus,
 } from './index';
@@ -61,6 +62,7 @@ describe('migrations', () => {
       'articles',
       'invitations',
       'login_tokens',
+      'mentor_profiles',
       'mikro_orm_migrations',
       'status_transitions',
       'users',
@@ -91,6 +93,14 @@ describe('migrations', () => {
     expect(await publicTables()).toContain('invitations');
     expect(await publicTables()).toContain('login_tokens');
   });
+
+  it('reverses and reapplies the mentor-profile migration', async () => {
+    await orm.migrator.down('Migration20261105192000_mentor_profiles');
+    expect(await publicTables()).not.toContain('mentor_profiles');
+
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('mentor_profiles');
+  });
 });
 
 describe('InvitationRepository', () => {
@@ -112,8 +122,11 @@ describe('InvitationRepository', () => {
     expect(await invitations.isPilotMember(user.id)).toBe(false);
     expect(await invitations.accept(unaccepted.email, user.id, new Date())).toBe(true);
     expect(await invitations.isPilotMember(user.id)).toBe(true);
+    expect(await invitations.hasAcceptedRole(user.id, 'seeker')).toBe(true);
+    expect(await invitations.hasAcceptedRole(user.id, 'mentor')).toBe(false);
     expect(await invitations.revoke(unaccepted.email, new Date())).toBe(true);
     expect(await invitations.isPilotMember(user.id)).toBe(false);
+    expect(await invitations.hasAcceptedRole(user.id, 'seeker')).toBe(false);
 
     const revoked = await invitations.create({
       email: 'revoked@example.com',
@@ -123,6 +136,103 @@ describe('InvitationRepository', () => {
       acceptedByUserId: null,
       acceptedAt: null,
       revokedAt: null,
+    });
+
+    describe('MentorProfileRepository', () => {
+      it('enforces unique user and slug values, returns listed profiles, and resolves unlisted profiles by slug', async () => {
+        const user = await new UserRepository(orm.em.fork()).create({
+          email: 'mentor-profile@example.com',
+          name: 'Mentor',
+        });
+        const repository = new MentorProfileRepository(orm.em.fork());
+        const saved = await repository.create({
+          userId: user.id,
+          slug: 'mentor-one',
+          headline: 'Backend mentor',
+          bio: 'Bio',
+          technologies: 'node-js typescript',
+          publicWorkUrl: 'https://example.com',
+          isListed: true,
+          lastActiveAt: null,
+        });
+        const otherUser = await new UserRepository(orm.em.fork()).create({
+          email: 'other-mentor-profile@example.com',
+          name: 'Other Mentor',
+        });
+
+        await expect(
+          new MentorProfileRepository(orm.em.fork()).create({
+            userId: user.id,
+            slug: 'different-slug',
+            headline: 'Duplicate owner',
+            bio: 'Bio',
+            technologies: 'typescript',
+            publicWorkUrl: 'https://example.com',
+            isListed: true,
+            lastActiveAt: null,
+          }),
+        ).rejects.toThrow();
+        await expect(
+          new MentorProfileRepository(orm.em.fork()).create({
+            userId: otherUser.id,
+            slug: 'mentor-one',
+            headline: 'Duplicate slug',
+            bio: 'Bio',
+            technologies: 'typescript',
+            publicWorkUrl: 'https://example.com',
+            isListed: false,
+            lastActiveAt: null,
+          }),
+        ).rejects.toThrow();
+
+        await repository.create({
+          userId: otherUser.id,
+          slug: 'mentor-two',
+          headline: 'Unlisted mentor',
+          bio: 'Bio',
+          technologies: 'python',
+          publicWorkUrl: 'https://example.com',
+          isListed: false,
+          lastActiveAt: null,
+        });
+        expect((await new MentorProfileRepository(orm.em.fork()).findListed()).map(({ id }) => id)).toEqual([saved.id]);
+        expect((await new MentorProfileRepository(orm.em.fork()).findBySlug('mentor-two'))).toMatchObject({
+          isListed: false,
+        });
+        expect(await orm.em.fork().findOne(MentorProfile, { id: saved.id })).toMatchObject({
+          technologies: 'node-js typescript',
+        });
+      });
+
+      it('allows only accepted, unrevoked mentor-role invitations to qualify for mentor profiles', async () => {
+        const users = new UserRepository(orm.em.fork());
+        const uninvited = await users.create({ email: 'uninvited@example.com', name: 'Uninvited' });
+        const seeker = await users.create({ email: 'seeker-profile@example.com', name: 'Seeker' });
+        const revokedMentor = await users.create({ email: 'revoked-mentor@example.com', name: 'Revoked Mentor' });
+        const mentor = await users.create({ email: 'accepted-mentor@example.com', name: 'Accepted Mentor' });
+        const invitations = new InvitationRepository(orm.em.fork());
+        const acceptedAt = new Date();
+        const createInvitation = (email: string, role: string, acceptedByUserId: string | null, revokedAt: Date | null) =>
+          invitations.create({
+            email,
+            displayName: email,
+            role,
+            invitedBy: null,
+            acceptedByUserId,
+            acceptedAt: acceptedByUserId ? acceptedAt : null,
+            revokedAt,
+          });
+
+        await createInvitation('seeker-profile-invite@example.com', 'seeker', seeker.id, null);
+        await createInvitation('revoked-mentor-invite@example.com', 'mentor', revokedMentor.id, acceptedAt);
+        await createInvitation('accepted-mentor-invite@example.com', 'mentor', mentor.id, null);
+
+        expect(await invitations.hasAcceptedRole(uninvited.id, 'mentor')).toBe(false);
+        expect(await invitations.hasAcceptedRole(seeker.id, 'mentor')).toBe(false);
+        expect(await invitations.hasAcceptedRole(revokedMentor.id, 'mentor')).toBe(false);
+        expect(await invitations.hasAcceptedRole(mentor.id, 'mentor')).toBe(true);
+        expect(await invitations.isPilotMember(seeker.id)).toBe(true);
+      });
     });
     await invitations.revoke(revoked.email, new Date());
     expect(await invitations.accept(revoked.email, user.id, new Date())).toBe(false);
