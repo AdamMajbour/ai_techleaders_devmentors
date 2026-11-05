@@ -35,7 +35,10 @@ export const defaultApproverResolvers: ApproverResolvers = {
 };
 
 interface Dependencies {
-  approvalRequestRepository: Pick<ApprovalRequestRepository, 'create' | 'findById' | 'findBySubject' | 'transitionStatus'>;
+  approvalRequestRepository: Pick<
+    ApprovalRequestRepository,
+    'create' | 'findById' | 'findPendingBySubject' | 'transitionStatus'
+  >;
   eventBus: EventBus;
   clock: Clock;
   approverResolvers?: ApproverResolvers;
@@ -61,7 +64,7 @@ export class ApprovalService {
 
   async request(kind: string, subject: ApprovalSubject, reason: string): Promise<{ id: string }> {
     if (kind === 'refund') {
-      const existing = await this.approvalRequestRepository.findBySubject(kind, subject.type, subject.id);
+      const existing = await this.approvalRequestRepository.findPendingBySubject(kind, subject.type, subject.id);
       if (existing) return { id: existing.id };
     }
 
@@ -75,7 +78,7 @@ export class ApprovalService {
       });
     } catch (error) {
       if (error instanceof PendingApprovalConflictError && kind === 'refund') {
-        const existing = await this.approvalRequestRepository.findBySubject(kind, subject.type, subject.id);
+        const existing = await this.approvalRequestRepository.findPendingBySubject(kind, subject.type, subject.id);
         if (existing) return { id: existing.id };
       }
       if (error instanceof PendingApprovalConflictError) throw new ConflictError();

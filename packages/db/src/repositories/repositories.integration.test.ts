@@ -88,6 +88,7 @@ describe('migrations', () => {
   });
 
   it('removes the approval table and its partial index on migration down', async () => {
+    await orm.migrator.down('Migration20261105214000_pending_refund_approval_uniqueness');
     await orm.migrator.down('Migration20261105212000_refund_approval_uniqueness');
     await orm.migrator.down('Migration20261105183000_approval_requests');
     expect(await publicTables()).not.toContain('approval_requests');
@@ -103,22 +104,23 @@ describe('migrations', () => {
     expect(await publicTables()).toContain('approval_requests');
   });
 
-  it('reverses and reapplies the single-refund-approval constraint', async () => {
-    await orm.migrator.down('Migration20261105212000_refund_approval_uniqueness');
+  it('replaces the full refund uniqueness index with pending-only uniqueness reversibly', async () => {
+    await orm.migrator.down('Migration20261105214000_pending_refund_approval_uniqueness');
     let rows = await orm.em.getConnection().execute(
-      `select to_regclass('public.approval_requests_one_refund_per_subject') as name`,
+      `select indexdef from pg_indexes where indexname = 'approval_requests_one_refund_per_subject'`,
       [],
       'get',
-    ) as unknown as { name: string | null } | undefined;
-    expect(rows?.name).toBeNull();
+    ) as unknown as { indexdef: string } | undefined;
+    expect(rows?.indexdef).toContain('WHERE');
+    expect(rows?.indexdef).not.toContain(`status = 'pending'`);
 
     await orm.migrator.up();
     rows = await orm.em.getConnection().execute(
-      `select to_regclass('public.approval_requests_one_refund_per_subject') as name`,
+      `select indexdef from pg_indexes where indexname = 'approval_requests_one_refund_per_subject'`,
       [],
       'get',
-    ) as unknown as { name: string | null } | undefined;
-    expect(rows?.name).toBe('approval_requests_one_refund_per_subject');
+    ) as unknown as { indexdef: string } | undefined;
+    expect(rows?.indexdef).toContain(`status = 'pending'`);
   });
 
   it('reverses and reapplies the invitation and login-token migration', async () => {
@@ -876,7 +878,7 @@ describe('ApprovalRequestRepository', () => {
     expect(await orm.em.count(ApprovalRequest, data)).toBe(1);
   });
 
-  it('allows only one refund request per payment, including after a decision', async () => {
+  it('allows one pending refund per payment and a fresh request after a decision', async () => {
     const data = {
       kind: 'refund',
       subjectType: 'booking',
@@ -901,15 +903,16 @@ describe('ApprovalRequestRepository', () => {
       decidedBy: '00000000-0000-4000-8000-0000000000b2',
       decidedAt,
     });
-    await expect(new ApprovalRequestRepository(orm.em.fork()).create(data))
-      .rejects.toBeInstanceOf(PendingApprovalConflictError);
+    const retried = await new ApprovalRequestRepository(orm.em.fork()).create(data);
+    expect(retried).toMatchObject({ status: 'pending', subjectId: data.subjectId });
     await expect(
-      new ApprovalRequestRepository(orm.em.fork()).findBySubject(
-        'refund',
-        'booking',
-        data.subjectId,
+      new ApprovalRequestRepository(orm.em.fork()).findPendingBySubject(
+        'refund', 'booking', data.subjectId,
       ),
-    ).resolves.toMatchObject({ id: created.id, status: 'rejected' });
+    ).resolves.toMatchObject({ id: retried.id, status: 'pending' });
+    expect(retried.id).not.toBe(created.id);
+    expect(await new ApprovalRequestRepository(orm.em.fork()).findById(created.id))
+      .toMatchObject({ id: created.id, status: 'rejected' });
   });
 });
 

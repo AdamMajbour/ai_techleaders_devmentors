@@ -316,7 +316,7 @@ export class BookingService {
     const booking = await this.bookingRepository.findById(id);
     if (!booking) throw new NotFoundError('Booking not found.');
     if (booking.status !== 'paid' && booking.status !== 'accepted') throw new ConflictError();
-    const approvalId = await this.requestRefundApproval(booking, 'operator_requested');
+    const approvalId = await this.requestRefundApproval(booking, 'operator_initiated');
     return { approvalId };
   }
 
@@ -378,7 +378,7 @@ export class BookingService {
 
   private async requestRefundApproval(
     booking: Booking,
-    reason: 'mentor_declined' | 'mentor_unresponsive' | 'operator_requested',
+    reason: 'mentor_declined' | 'mentor_unresponsive' | 'operator_initiated',
   ): Promise<string> {
     // Refund execution and auto-approval wait for the real executor in Phase 4.3.
     const payment = await this.paymentRepository.findByBookingId(booking.id);

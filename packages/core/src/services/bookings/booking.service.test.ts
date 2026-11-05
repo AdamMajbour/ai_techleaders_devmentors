@@ -530,7 +530,7 @@ describe('BookingService.create', () => {
         expect(deps.requestApproval).toHaveBeenCalledWith(
           'refund',
           { type: 'payment', id: 'payment-1' },
-          'operator_requested',
+          'operator_initiated',
         );
         expect(deps.refund).not.toHaveBeenCalled();
       } finally {

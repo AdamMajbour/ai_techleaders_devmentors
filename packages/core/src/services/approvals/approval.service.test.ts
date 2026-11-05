@@ -41,7 +41,7 @@ function setup(
   const repository = {
     create: jest.fn(async () => approval),
     findById: jest.fn(async () => approval),
-    findBySubject: jest.fn(async () => null),
+    findPendingBySubject: jest.fn(async () => null),
     transitionStatus: jest.fn(async () => true),
     ...repositoryOverrides,
   } as unknown as ApprovalRequestRepository;
@@ -75,7 +75,7 @@ describe('ApprovalService.request', () => {
 
   it('returns an existing refund request on duplicate calls and preserves unrelated failures', async () => {
     const duplicateCall = setup({
-      findBySubject: jest.fn()
+      findPendingBySubject: jest.fn()
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(pendingApproval()),
       create: jest.fn(async () => Promise.reject(new PendingApprovalConflictError())),
@@ -87,7 +87,7 @@ describe('ApprovalService.request', () => {
     await expect(duplicate.service.request('refund', { type: 'payment', id: SUBJECT_ID }, 'Reason'))
       .rejects.toBeInstanceOf(ConflictError);
 
-    const existing = setup({ findBySubject: jest.fn(async () => pendingApproval()) });
+    const existing = setup({ findPendingBySubject: jest.fn(async () => pendingApproval()) });
     await expect(existing.service.request('refund', { type: 'payment', id: SUBJECT_ID }, 'Different reason'))
       .resolves.toEqual({ id: APPROVAL_ID });
     expect(existing.repository.create).not.toHaveBeenCalled();
@@ -96,6 +96,37 @@ describe('ApprovalService.request', () => {
     await expect(databaseFailure.service.request('refund', { type: 'payment', id: SUBJECT_ID }, 'Reason'))
       .rejects.toThrow('database unavailable');
   });
+
+  it.each(['rejected', 'approved'] as const)(
+    'creates a new request after the previous refund was %s',
+    async (terminalStatus) => {
+      const firstApproval = pendingApproval();
+      const secondApproval = { ...pendingApproval(), id: '00000000-0000-4000-8000-000000000105' };
+      let priorStatus: 'pending' | 'rejected' | 'approved' = 'pending';
+      let nextPending: typeof firstApproval | null = null;
+      const findPendingBySubject = jest.fn(async () =>
+        priorStatus === 'pending' ? nextPending : null,
+      );
+      const create = jest.fn()
+        .mockImplementationOnce(async () => {
+          nextPending = firstApproval;
+          return firstApproval;
+        })
+        .mockImplementationOnce(async () => {
+          priorStatus = 'pending';
+          nextPending = secondApproval;
+          return secondApproval;
+        });
+      const { service } = setup({ findPendingBySubject, create });
+
+      await expect(service.request('refund', { type: 'payment', id: SUBJECT_ID }, 'First reason'))
+        .resolves.toEqual({ id: firstApproval.id });
+      priorStatus = terminalStatus;
+      await expect(service.request('refund', { type: 'payment', id: SUBJECT_ID }, 'Retry reason'))
+        .resolves.toEqual({ id: secondApproval.id });
+      expect(create).toHaveBeenCalledTimes(2);
+    },
+  );
 });
 
 describe('ApprovalService.decide', () => {

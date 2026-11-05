@@ -457,8 +457,12 @@ export class ApprovalRequestRepository {
     return this.em.findOne(ApprovalRequest, { id });
   }
 
-  async findBySubject(kind: string, subjectType: string, subjectId: string): Promise<ApprovalRequest | null> {
-    return this.em.findOne(ApprovalRequest, { kind, subjectType, subjectId });
+  async findPendingBySubject(
+    kind: string,
+    subjectType: string,
+    subjectId: string,
+  ): Promise<ApprovalRequest | null> {
+    return this.em.findOne(ApprovalRequest, { kind, subjectType, subjectId, status: 'pending' });
   }
 
   async create(data: NewApprovalRequest): Promise<ApprovalRequest> {
