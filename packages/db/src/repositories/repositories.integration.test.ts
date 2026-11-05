@@ -15,6 +15,7 @@ import {
 } from '../entities';
 import {
   ExclusionConstraintViolationError,
+  StatusTransitionConflictError,
   isExclusionConstraintViolation,
   isUniqueConstraintViolation,
   PendingApprovalConflictError,
@@ -60,11 +61,18 @@ beforeAll(async () => {
     logger: () => undefined,
     migrations: { migrationsList: await loadMigrations() },
   });
+});
+
+async function resetDatabase(): Promise<void> {
   // Start from an empty database and build the schema with the real migrations.
   await orm.schema.dropSchema({ dropMigrationsTable: true });
   await orm.migrator.up();
   // Articles provide an existing mapped target table for exercising the generic transition runner.
   await orm.em.getConnection().execute('alter table "articles" add column "status" varchar(255)');
+}
+
+beforeEach(async () => {
+  await resetDatabase();
 });
 
 afterAll(async () => {
@@ -107,20 +115,25 @@ describe('migrations', () => {
   it('replaces the full refund uniqueness index with pending-only uniqueness reversibly', async () => {
     await orm.migrator.down('Migration20261105214000_pending_refund_approval_uniqueness');
     let rows = await orm.em.getConnection().execute(
-      `select indexdef from pg_indexes where indexname = 'approval_requests_one_refund_per_subject'`,
+      `select pg_get_expr(i.indpred, i.indrelid) as predicate
+       from pg_index i
+       join pg_class c on c.oid = i.indexrelid
+       where c.relname = 'approval_requests_one_refund_per_subject'`,
       [],
       'get',
-    ) as unknown as { indexdef: string } | undefined;
-    expect(rows?.indexdef).toContain('WHERE');
-    expect(rows?.indexdef).not.toContain(`status = 'pending'`);
+    ) as unknown as { predicate: string | null } | undefined;
+    expect(rows?.predicate).not.toContain('pending');
 
     await orm.migrator.up();
     rows = await orm.em.getConnection().execute(
-      `select indexdef from pg_indexes where indexname = 'approval_requests_one_refund_per_subject'`,
+      `select pg_get_expr(i.indpred, i.indrelid) as predicate
+       from pg_index i
+       join pg_class c on c.oid = i.indexrelid
+       where c.relname = 'approval_requests_one_refund_per_subject'`,
       [],
       'get',
-    ) as unknown as { indexdef: string } | undefined;
-    expect(rows?.indexdef).toContain(`status = 'pending'`);
+    ) as unknown as { predicate: string | null } | undefined;
+    expect(rows?.predicate).toContain("'pending'");
   });
 
   it('reverses and reapplies the invitation and login-token migration', async () => {
@@ -276,10 +289,16 @@ describe('booking and payment constraints', () => {
     });
 
     const repository = new BookingRepository(orm.em.fork());
-    const paidJustNow = new Date();
-    expect(await repository.findForSettlement({ before: new Date(paidJustNow.getTime() - 1) }))
+    const transition = (await orm.em.getConnection().execute(
+      `select "created_at" from "status_transitions"
+       where "entity_type" = 'Booking' and "entity_id" = ? and "to_status" = 'paid'`,
+      [id],
+      'get',
+    )) as { created_at: Date };
+    const paidAt = new Date(transition.created_at);
+    expect(await repository.findForSettlement({ before: new Date(paidAt.getTime() - 1) }))
       .toEqual([]);
-    expect(await repository.findForSettlement({ before: new Date(paidJustNow.getTime() + 1) }))
+    expect(await repository.findForSettlement({ before: paidAt }))
       .toHaveLength(1);
     const transitions = await Promise.all([
       new BookingRepository(orm.em.fork()).expirePaid(id),
@@ -288,7 +307,7 @@ describe('booking and payment constraints', () => {
     expect(transitions.filter(Boolean)).toHaveLength(1);
     expect(transitions.filter((value) => !value)).toHaveLength(1);
     await expect(repository.expirePaid(id)).resolves.toBe(false);
-    expect(await orm.em.count(Booking, { id, status: 'expired' })).toBe(1);
+    expect(await orm.em.fork().count(Booking, { id, status: 'expired' })).toBe(1);
   });
 
   it('enforces participant foreign keys, booking checks, and payment uniqueness', async () => {
@@ -313,7 +332,7 @@ describe('booking and payment constraints', () => {
     });
     const bookingId = await insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id });
 
-    expect(await orm.em.count(Booking, { id: bookingId })).toBe(1);
+    expect(await orm.em.fork().count(Booking, { id: bookingId })).toBe(1);
     await expect(
       insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, question: 'q'.repeat(4001) }),
     ).rejects.toThrow();
@@ -341,7 +360,7 @@ describe('booking and payment constraints', () => {
     ).rejects.toThrow();
 
     const paymentId = await insertPayment(bookingId, 'session-one');
-    expect(await orm.em.count(Payment, { id: paymentId })).toBe(1);
+    expect(await orm.em.fork().count(Payment, { id: paymentId })).toBe(1);
     await expect(insertPayment(bookingId, 'session-two')).rejects.toThrow();
 
     const anotherBooking = await insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id });
@@ -387,7 +406,7 @@ describe('booking and payment constraints', () => {
       await accept(first, mentorId);
 
       await expect(accept(second, mentorId)).rejects.toBeInstanceOf(ExclusionConstraintViolationError);
-      expect(await orm.em.count(Booking, { id: second, status: 'paid' })).toBe(1);
+      expect(await orm.em.fork().count(Booking, { id: second, status: 'paid' })).toBe(1);
     });
 
     it('allows only one concurrent overlapping acceptance', async () => {
@@ -400,7 +419,7 @@ describe('booking and payment constraints', () => {
       expect(attempts.filter((result) => result === 'accepted')).toHaveLength(1);
       const conflict = attempts.find((result) => result !== 'accepted');
       expect(conflict).toBeInstanceOf(ExclusionConstraintViolationError);
-      expect(await orm.em.count(Booking, { mentorId, status: 'accepted' })).toBe(1);
+      expect(await orm.em.fork().count(Booking, { mentorId, status: 'accepted' })).toBe(1);
     });
 
     it('recognizes SQLSTATE 23P01 through a wrapped PostgreSQL error cause', () => {
@@ -425,6 +444,16 @@ describe('PaymentRepository webhook settlement', () => {
     const mentor = await new UserRepository(orm.em.fork()).create({
       email: `webhook-mentor-${randomUUID()}@example.com`,
       name: 'Webhook Mentor',
+    });
+    await new MentorProfileRepository(orm.em.fork()).create({
+      userId: mentor.id,
+      slug: `webhook-mentor-${randomUUID()}`,
+      headline: 'Webhook mentor',
+      bio: 'Bio',
+      technologies: 'typescript',
+      publicWorkUrl: 'https://example.com',
+      isListed: true,
+      lastActiveAt: null,
     });
     const bookingId = randomUUID();
     const paymentId = randomUUID();
@@ -508,8 +537,8 @@ describe('PaymentRepository webhook settlement', () => {
       providerPaymentId: 'provider-payment-1',
       livemode: true,
     });
-    expect(await orm.em.count(StatusTransition, { entityId: pair.bookingId })).toBe(1);
-    expect(await orm.em.count(StatusTransition, { entityId: pair.paymentId })).toBe(1);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: pair.bookingId })).toBe(1);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: pair.paymentId })).toBe(1);
   });
 
   it('does not transition on amount, currency, session, or booking mismatches', async () => {
@@ -557,12 +586,12 @@ describe('PaymentRepository webhook settlement', () => {
       livemode: false,
     })).resolves.toMatchObject({ status: 'mismatch', fields: ['currency'] });
 
-    expect(await orm.em.count(StatusTransition, { entityId: pair.bookingId })).toBe(0);
-    expect(await orm.em.count(StatusTransition, { entityId: pair.paymentId })).toBe(0);
-    expect(await orm.em.count(StatusTransition, { entityId: persistedAmountMismatch.bookingId })).toBe(0);
-    expect(await orm.em.count(StatusTransition, { entityId: persistedAmountMismatch.paymentId })).toBe(0);
-    expect(await orm.em.count(StatusTransition, { entityId: persistedCurrencyMismatch.bookingId })).toBe(0);
-    expect(await orm.em.count(StatusTransition, { entityId: persistedCurrencyMismatch.paymentId })).toBe(0);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: pair.bookingId })).toBe(0);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: pair.paymentId })).toBe(0);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: persistedAmountMismatch.bookingId })).toBe(0);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: persistedAmountMismatch.paymentId })).toBe(0);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: persistedCurrencyMismatch.bookingId })).toBe(0);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: persistedCurrencyMismatch.paymentId })).toBe(0);
   });
 
   it('keeps failure terminal when a later completion arrives', async () => {
@@ -594,8 +623,8 @@ describe('PaymentRepository webhook settlement', () => {
       'get',
     )) as { bookingStatus: string; paymentStatus: string };
     expect(statuses).toEqual({ bookingStatus: 'payment_failed', paymentStatus: 'failed' });
-    expect(await orm.em.count(StatusTransition, { entityId: pair.bookingId })).toBe(1);
-    expect(await orm.em.count(StatusTransition, { entityId: pair.paymentId })).toBe(1);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: pair.bookingId })).toBe(1);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: pair.paymentId })).toBe(1);
   });
 });
 
@@ -634,102 +663,6 @@ describe('InvitationRepository', () => {
       revokedAt: null,
     });
 
-    describe('MentorProfileRepository', () => {
-      it('enforces unique user and slug values, returns listed profiles, and resolves unlisted profiles by slug', async () => {
-        const user = await new UserRepository(orm.em.fork()).create({
-          email: 'mentor-profile@example.com',
-          name: 'Mentor',
-        });
-        const repository = new MentorProfileRepository(orm.em.fork());
-        const saved = await repository.create({
-          userId: user.id,
-          slug: 'mentor-one',
-          headline: 'Backend mentor',
-          bio: 'Bio',
-          technologies: 'node-js typescript',
-          publicWorkUrl: 'https://example.com',
-          isListed: true,
-          lastActiveAt: null,
-        });
-        const otherUser = await new UserRepository(orm.em.fork()).create({
-          email: 'other-mentor-profile@example.com',
-          name: 'Other Mentor',
-        });
-
-        await expect(
-          new MentorProfileRepository(orm.em.fork()).create({
-            userId: user.id,
-            slug: 'different-slug',
-            headline: 'Duplicate owner',
-            bio: 'Bio',
-            technologies: 'typescript',
-            publicWorkUrl: 'https://example.com',
-            isListed: true,
-            lastActiveAt: null,
-          }),
-        ).rejects.toThrow();
-        await expect(
-          new MentorProfileRepository(orm.em.fork()).create({
-            userId: otherUser.id,
-            slug: 'mentor-one',
-            headline: 'Duplicate slug',
-            bio: 'Bio',
-            technologies: 'typescript',
-            publicWorkUrl: 'https://example.com',
-            isListed: false,
-            lastActiveAt: null,
-          }),
-        ).rejects.toThrow();
-
-        await repository.create({
-          userId: otherUser.id,
-          slug: 'mentor-two',
-          headline: 'Unlisted mentor',
-          bio: 'Bio',
-          technologies: 'python',
-          publicWorkUrl: 'https://example.com',
-          isListed: false,
-          lastActiveAt: null,
-        });
-        expect((await new MentorProfileRepository(orm.em.fork()).findListed()).map(({ id }) => id)).toEqual([saved.id]);
-        expect((await new MentorProfileRepository(orm.em.fork()).findBySlug('mentor-two'))).toMatchObject({
-          isListed: false,
-        });
-        expect(await orm.em.fork().findOne(MentorProfile, { id: saved.id })).toMatchObject({
-          technologies: 'node-js typescript',
-        });
-      });
-
-      it('allows only accepted, unrevoked mentor-role invitations to qualify for mentor profiles', async () => {
-        const users = new UserRepository(orm.em.fork());
-        const uninvited = await users.create({ email: 'uninvited@example.com', name: 'Uninvited' });
-        const seeker = await users.create({ email: 'seeker-profile@example.com', name: 'Seeker' });
-        const revokedMentor = await users.create({ email: 'revoked-mentor@example.com', name: 'Revoked Mentor' });
-        const mentor = await users.create({ email: 'accepted-mentor@example.com', name: 'Accepted Mentor' });
-        const invitations = new InvitationRepository(orm.em.fork());
-        const acceptedAt = new Date();
-        const createInvitation = (email: string, role: string, acceptedByUserId: string | null, revokedAt: Date | null) =>
-          invitations.create({
-            email,
-            displayName: email,
-            role,
-            invitedBy: null,
-            acceptedByUserId,
-            acceptedAt: acceptedByUserId ? acceptedAt : null,
-            revokedAt,
-          });
-
-        await createInvitation('seeker-profile-invite@example.com', 'seeker', seeker.id, null);
-        await createInvitation('revoked-mentor-invite@example.com', 'mentor', revokedMentor.id, acceptedAt);
-        await createInvitation('accepted-mentor-invite@example.com', 'mentor', mentor.id, null);
-
-        expect(await invitations.hasAcceptedRole(uninvited.id, 'mentor')).toBe(false);
-        expect(await invitations.hasAcceptedRole(seeker.id, 'mentor')).toBe(false);
-        expect(await invitations.hasAcceptedRole(revokedMentor.id, 'mentor')).toBe(false);
-        expect(await invitations.hasAcceptedRole(mentor.id, 'mentor')).toBe(true);
-        expect(await invitations.isPilotMember(seeker.id)).toBe(true);
-      });
-    });
     await invitations.revoke(revoked.email, new Date());
     expect(await invitations.accept(revoked.email, user.id, new Date())).toBe(false);
     expect(await invitations.isPilotMember(user.id)).toBe(false);
@@ -760,6 +693,104 @@ describe('InvitationRepository', () => {
     });
   });
 });
+
+describe('MentorProfileRepository', () => {
+  it('enforces unique user and slug values, returns listed profiles, and resolves unlisted profiles by slug', async () => {
+    const user = await new UserRepository(orm.em.fork()).create({
+      email: 'mentor-profile@example.com',
+      name: 'Mentor',
+    });
+    const repository = new MentorProfileRepository(orm.em.fork());
+    const saved = await repository.create({
+      userId: user.id,
+      slug: 'mentor-one',
+      headline: 'Backend mentor',
+      bio: 'Bio',
+      technologies: 'node-js typescript',
+      publicWorkUrl: 'https://example.com',
+      isListed: true,
+      lastActiveAt: null,
+    });
+    const otherUser = await new UserRepository(orm.em.fork()).create({
+      email: 'other-mentor-profile@example.com',
+      name: 'Other Mentor',
+    });
+
+    await expect(
+      new MentorProfileRepository(orm.em.fork()).create({
+        userId: user.id,
+        slug: 'different-slug',
+        headline: 'Duplicate owner',
+        bio: 'Bio',
+        technologies: 'typescript',
+        publicWorkUrl: 'https://example.com',
+        isListed: true,
+        lastActiveAt: null,
+      }),
+    ).rejects.toThrow();
+    await expect(
+      new MentorProfileRepository(orm.em.fork()).create({
+        userId: otherUser.id,
+        slug: 'mentor-one',
+        headline: 'Duplicate slug',
+        bio: 'Bio',
+        technologies: 'typescript',
+        publicWorkUrl: 'https://example.com',
+        isListed: false,
+        lastActiveAt: null,
+      }),
+    ).rejects.toThrow();
+
+    await repository.create({
+      userId: otherUser.id,
+      slug: 'mentor-two',
+      headline: 'Unlisted mentor',
+      bio: 'Bio',
+      technologies: 'python',
+      publicWorkUrl: 'https://example.com',
+      isListed: false,
+      lastActiveAt: null,
+    });
+    expect((await new MentorProfileRepository(orm.em.fork()).findListed()).map(({ id }) => id)).toEqual([saved.id]);
+    expect((await new MentorProfileRepository(orm.em.fork()).findBySlug('mentor-two'))).toMatchObject({
+      isListed: false,
+    });
+    expect(await orm.em.fork().findOne(MentorProfile, { id: saved.id })).toMatchObject({
+      technologies: 'node-js typescript',
+    });
+  });
+
+  it('allows only accepted, unrevoked mentor-role invitations to qualify for mentor profiles', async () => {
+    const users = new UserRepository(orm.em.fork());
+    const uninvited = await users.create({ email: 'uninvited@example.com', name: 'Uninvited' });
+    const seeker = await users.create({ email: 'seeker-profile@example.com', name: 'Seeker' });
+    const revokedMentor = await users.create({ email: 'revoked-mentor@example.com', name: 'Revoked Mentor' });
+    const mentor = await users.create({ email: 'accepted-mentor@example.com', name: 'Accepted Mentor' });
+    const invitations = new InvitationRepository(orm.em.fork());
+    const acceptedAt = new Date();
+    const createInvitation = (email: string, role: string, acceptedByUserId: string | null, revokedAt: Date | null) =>
+      invitations.create({
+        email,
+        displayName: email,
+        role,
+        invitedBy: null,
+        acceptedByUserId,
+        acceptedAt: acceptedByUserId ? acceptedAt : null,
+        revokedAt,
+      });
+
+    await createInvitation('seeker-profile-invite@example.com', 'seeker', seeker.id, null);
+    await createInvitation('revoked-mentor-invite@example.com', 'mentor', revokedMentor.id, acceptedAt);
+    await createInvitation('accepted-mentor-invite@example.com', 'mentor', mentor.id, null);
+
+    expect(await invitations.hasAcceptedRole(uninvited.id, 'mentor')).toBe(false);
+    expect(await invitations.hasAcceptedRole(seeker.id, 'mentor')).toBe(false);
+    expect(await invitations.hasAcceptedRole(revokedMentor.id, 'mentor')).toBe(false);
+    expect(await invitations.hasAcceptedRole(mentor.id, 'mentor')).toBe(true);
+    expect(await invitations.isPilotMember(seeker.id)).toBe(true);
+  });
+});
+
 
 describe('LoginTokenRepository', () => {
   it('stores the opaque hash and consumes a valid token once under concurrent reuse', async () => {
@@ -875,7 +906,7 @@ describe('ApprovalRequestRepository', () => {
 
     expect(attempts.filter((result) => !(result instanceof Error))).toHaveLength(1);
     expect(attempts.filter((result) => result instanceof PendingApprovalConflictError)).toHaveLength(1);
-    expect(await orm.em.count(ApprovalRequest, data)).toBe(1);
+    expect(await orm.em.fork().count(ApprovalRequest, data)).toBe(1);
   });
 
   it('allows one pending refund per payment and a fresh request after a decision', async () => {
@@ -1019,7 +1050,7 @@ describe('ApprovalRequestRepository', () => {
       decidedBy: '00000000-0000-4000-8000-0000000000b2',
       decidedAt,
     });
-    expect(await orm.em.count(StatusTransition, { entityType: 'ApprovalRequest', entityId: created.id })).toBe(1);
+    expect(await orm.em.fork().count(StatusTransition, { entityType: 'ApprovalRequest', entityId: created.id })).toBe(1);
     await expect(
       new ApprovalRequestRepository(orm.em.fork()).create({
         kind: 'refund',
@@ -1035,7 +1066,7 @@ describe('ApprovalRequestRepository', () => {
         'run',
       ),
     ).rejects.toThrow();
-    expect(await orm.em.count(ApprovalRequest, { id: created.id, status: 'approved' })).toBe(1);
+    expect(await orm.em.fork().count(ApprovalRequest, { id: created.id, status: 'approved' })).toBe(1);
   });
 });
 
@@ -1075,8 +1106,8 @@ describe('transitionStatus', () => {
 
     expect(attempts.filter((result) => result === 'success')).toHaveLength(1);
     const conflict = attempts.find((result) => result !== 'success');
-    expect(conflict).toMatchObject({ name: 'ConflictError', code: 'conflict' });
-    const transitions = await orm.em.find(StatusTransition, { entityType: 'Article', entityId: articleId });
+    expect(conflict).toBeInstanceOf(StatusTransitionConflictError);
+    const transitions = await orm.em.fork().find(StatusTransition, { entityType: 'Article', entityId: articleId });
     expect(transitions).toHaveLength(1);
   });
 
@@ -1107,7 +1138,7 @@ describe('transitionStatus', () => {
       'get',
     )) as { status: string } | undefined;
     expect(row?.status).toBe('pending');
-    expect(await orm.em.count(StatusTransition, { entityType: 'Article', entityId: articleId })).toBe(0);
+    expect(await orm.em.fork().count(StatusTransition, { entityType: 'Article', entityId: articleId })).toBe(0);
     expect(await new UserRepository(orm.em.fork()).findByEmail('transition-composition-rollback@example.com')).toBeNull();
   });
 
@@ -1124,7 +1155,7 @@ describe('transitionStatus', () => {
 
     await expect(transitionStatus(em, input)).resolves.toBe(true);
     await expect(transitionStatus(em.fork(), { ...input, ifAlready: true })).resolves.toBe(false);
-    expect(await orm.em.count(StatusTransition, { entityType: 'Article', entityId: articleId })).toBe(1);
+    expect(await orm.em.fork().count(StatusTransition, { entityType: 'Article', entityId: articleId })).toBe(1);
   });
 });
 
@@ -1146,19 +1177,19 @@ describe('migrations (down)', () => {
   it('reverts the history table and renames the remaining tables back without losing rows', async () => {
     const created = await new UserRepository(orm.em.fork()).create({ email: 'rename@example.com', name: 'Rename' });
 
-    await orm.migrator.down(); // status_transitions
+    await orm.migrator.down({ to: 'Migration20261031235000_status_transitions' });
     expect(await publicTables()).toEqual(['articles', 'mikro_orm_migrations', 'users']);
     await orm.migrator.up();
-    await orm.migrator.down(); // add_user_password_hash
-    await orm.migrator.down(); // plural_table_names
+    await orm.migrator.down({ to: 'Migration20261019180703_plural_table_names' });
     expect(await publicTables()).toEqual(['article', 'mikro_orm_migrations', 'user']);
     const rows: { email: string }[] = await orm.em.getConnection().execute('select email from "user" where id = ?', [created.id]);
     expect(rows).toEqual([{ email: 'rename@example.com' }]);
 
     await orm.migrator.up();
-    await orm.migrator.up();
-    await orm.migrator.up();
-    expect(await publicTables()).toEqual(['articles', 'mikro_orm_migrations', 'status_transitions', 'users']);
+    expect(await publicTables()).toEqual([
+      'approval_requests', 'articles', 'bookings', 'invitations', 'login_tokens',
+      'mentor_profiles', 'mikro_orm_migrations', 'payments', 'status_transitions', 'users',
+    ]);
   });
 
   it('remove the application tables when everything is reverted', async () => {
