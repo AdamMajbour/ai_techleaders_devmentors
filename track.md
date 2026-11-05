@@ -48,6 +48,8 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 **Manual test gate:** ⏳ awaiting requester confirmation. Verify mock checkout/reconciliation, mail failure isolation, and operator-only approval decisions; confirm the approval migration applies and rolls back cleanly when PostgreSQL access is available.
 
+**Automated phase checks:** `npm test` (71 suites / 489 tests) and `npm run build` passed. `npm run lint` passed with 11,720 warnings from the pre-existing untracked Storybook output. The approval DB integration coverage remains unverified because PostgreSQL authentication failed in this environment.
+
 ### Phase P4 — Frontend primitives
 
 - [ ] P4.1 Add `usePolling`, including hidden-tab pause, visibility refresh, error backoff, and terminal stop.
