@@ -46,7 +46,7 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 - [x] P3.3 Add approval entity/migration and `ApprovalService`; register dependencies and test operator-only, single-use decisions.
 - Verification note: approval migration/repository integration coverage is present, but not verified against PostgreSQL because the configured database rejects authentication for `postgres`.
 
-**Manual test gate:** ⏳ awaiting requester confirmation. Verify mock checkout/reconciliation, mail failure isolation, and operator-only approval decisions; confirm the approval migration applies and rolls back cleanly when PostgreSQL access is available.
+**Manual test gate:** ✅ requester accepted the automated P3 checks as the phase gate. The approval migration/repository integration coverage remains unverified because PostgreSQL authentication failed in this environment.
 
 **Automated phase checks:** `npm test` (71 suites / 489 tests) and `npm run build` passed. `npm run lint` passed with 11,720 warnings from the pre-existing untracked Storybook output. The approval DB integration coverage remains unverified because PostgreSQL authentication failed in this environment.
 
