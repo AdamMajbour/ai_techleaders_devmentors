@@ -59,7 +59,7 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 **P4.2 validation:** focused component tests (10 passed), UI/app type-check, changed-file ESLint, Storybook jsdom (319 tests), and the app build passed. Token validation is blocked by pre-existing untracked `.storybook/public/` output; the catalogue check still reports four unrelated legacy exports and the absent generated `storybook-static/index.json`.
 
-**Manual test gate:** pending; manually exercise the UI preview, action errors/retry, and polling visibility/terminal behavior.
+**Manual test gate:** ✅ requester accepted the automated P4 checks as the phase gate. Browser/manual verification remains available with a running app at `/ui-preview`.
 
 ## Phase 1 — Sign-in (#10)
 
