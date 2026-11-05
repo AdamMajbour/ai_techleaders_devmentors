@@ -89,6 +89,7 @@ describe('HttpMailer', () => {
     expect(first).toMatchObject({
       to: ['mentor@example.com'],
       subject: 'A paid question is waiting for you',
+      text: expect.stringContaining('<script>private</script> How can I help?'),
       html: expect.stringContaining('&lt;script&gt;private&lt;/script&gt;'),
     });
     expect(first.html).not.toContain('<script>');

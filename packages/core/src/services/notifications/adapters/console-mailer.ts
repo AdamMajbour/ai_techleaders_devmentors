@@ -1,8 +1,9 @@
 import type { Mailer, MailMessage } from '../mailer.port';
+import { redact } from '../../../logger';
 
 /**
- * Development-only adapter. Its explicit console output includes message data, including links,
- * so it must not be used as a production mail transport or routed through the structured logger.
+ * Development-only adapter. It preserves the existing sign-in link preview but masks sensitive
+ * message fields before printing them; it must not be used as a production mail transport.
  */
 export class ConsoleMailer implements Mailer {
   constructor(private readonly write: (output: string) => void = console.log) {}
@@ -14,7 +15,7 @@ export class ConsoleMailer implements Mailer {
         `To: ${to}`,
         `Template: ${template}`,
         'Data:',
-        JSON.stringify(data, null, 2),
+        JSON.stringify(redact(data), null, 2),
       ].join('\n'),
     );
   }

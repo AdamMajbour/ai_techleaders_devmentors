@@ -18,4 +18,27 @@ describe('ConsoleMailer', () => {
     expect(write.mock.calls[0][0]).toContain('Template: sign-in-link');
     expect(write.mock.calls[0][0]).toContain('To: seeker@example.com');
   });
+
+  it('redacts sensitive question and body fields while retaining intended development link output', async () => {
+    const write = jest.fn();
+    const mailer = new ConsoleMailer(write);
+    const question = 'Private question: production database credentials?';
+
+    await mailer.send({
+      to: 'mentor@example.com',
+      template: 'booking-question',
+      data: {
+        question,
+        body: 'Private body content',
+        link: 'https://dev.local/verify?token=development-token',
+      },
+    });
+
+    const output = write.mock.calls[0][0] as string;
+    expect(output).not.toContain(question);
+    expect(output).not.toContain('Private body content');
+    expect(output).toContain('"question": "[redacted]"');
+    expect(output).toContain('"body": "[redacted]"');
+    expect(output).toContain('https://dev.local/verify?token=development-token');
+  });
 });
