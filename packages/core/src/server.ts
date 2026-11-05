@@ -2,6 +2,7 @@
 // so never import it from client components.
 export { apiHandler, jsonResponse } from './http/apiHandler';
 export { makeCrudRoute, type CrudRouteConfig } from './http/makeCrudRoute';
+export { makeActionRoute, type ActionRouteConfig } from './http/makeActionRoute';
 export {
   requireSession,
   optionalSession,

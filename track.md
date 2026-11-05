@@ -34,7 +34,7 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 ### Phase P2 — HTTP and auth primitives
 
 - [x] P2.1 Add `Clock`, `OPERATOR_USER_IDS`, `requireOperator`, `assertParticipant`, and resolver-based `requirePilotMember`; extend tests.
-- [ ] P2.2 Add `makeActionRoute` and tests for validation, CSRF, session, and handler behavior.
+- [x] P2.2 Add `makeActionRoute` and tests for validation, CSRF, session, and handler behavior.
 - [ ] P2.3 Add `makeWebhookRoute` and tests for raw-body signature verification and generic bad-signature response.
 
 **Manual test gate:** verify the route behavior and existing CRUD/auth flows remain unchanged.
