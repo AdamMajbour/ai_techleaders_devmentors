@@ -6,6 +6,10 @@ const MIN_SECRET_LENGTH = 32;
 const envSchema = z.object({
   // Generate with: openssl rand -base64 48
   JWT_SECRET: z.string().min(MIN_SECRET_LENGTH, `JWT_SECRET must be at least ${MIN_SECRET_LENGTH} characters (use 32+ random bytes)`),
+  OPERATOR_USER_IDS: z.preprocess(
+    (value) => parseOperatorUserIds(typeof value === 'string' ? value : undefined),
+    z.array(z.string()),
+  ),
   NODE_ENV: z.string().optional(),
 });
 
@@ -29,6 +33,20 @@ let cached: Env | null = null;
 export function getEnv(): Env {
   cached ??= parseEnv(process.env);
   return cached;
+}
+
+/** Invalid or empty operator configuration grants no operator access. */
+export function parseOperatorUserIds(value: string | undefined): string[] {
+  if (!value?.trim()) return [];
+
+  const ids = value.split(',').map((id) => id.trim());
+  if (ids.some((id) => !id || !z.uuid().safeParse(id).success)) return [];
+  return [...new Set(ids)];
+}
+
+/** Read independently from required secrets so operator checks stay lazy and startup-safe. */
+export function getOperatorUserIds(): string[] {
+  return parseOperatorUserIds(process.env.OPERATOR_USER_IDS);
 }
 
 /** For tests: forget the cached environment. */

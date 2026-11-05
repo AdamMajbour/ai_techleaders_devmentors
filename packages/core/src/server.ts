@@ -2,9 +2,19 @@
 // so never import it from client components.
 export { apiHandler, jsonResponse } from './http/apiHandler';
 export { makeCrudRoute, type CrudRouteConfig } from './http/makeCrudRoute';
-export { requireSession, optionalSession, assertOwns, issueSessionCookie, clearSessionCookie } from './http/auth';
+export {
+  requireSession,
+  optionalSession,
+  assertOwns,
+  requireOperator,
+  assertParticipant,
+  requirePilotMember,
+  issueSessionCookie,
+  clearSessionCookie,
+  type PilotMemberResolver,
+} from './http/auth';
 export { readJsonBody } from './http/body';
-export { getEnv, parseEnv } from './config/env';
+export { getEnv, parseEnv, getOperatorUserIds, parseOperatorUserIds } from './config/env';
 export { createLogger, redact, type Logger, type LogContext } from './logger';
 export { createEventBus, type EventBus } from './events/event-bus';
 export type { EventMap, EventName } from './events/event-map';
@@ -27,3 +37,4 @@ export { assertCsrfSafe } from './security/csrf';
 export { createRateLimiter, clientKey, type RateLimiter } from './security/rate-limit';
 export { withFailureLimit } from './security/guarded';
 export { loginLimiter, registerLimiter } from './security/limiters';
+export { systemClock, type Clock } from './utils/clock';

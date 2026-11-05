@@ -11,6 +11,7 @@ import { createLogger, type Logger } from '../logger';
 import { ArticleService } from '../services/articles/article.service';
 import { AuthService } from '../services/auth/auth.service';
 import { UserService } from '../services/auth/user.service';
+import { systemClock } from '../utils/clock';
 import type { Cradle, OrmLike } from './cradle';
 
 export type AppContainer = AwilixContainer<Cradle>;
@@ -22,6 +23,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
 
   container.register({
     logger: asValue(logger),
+    clock: asValue(systemClock),
     eventBus: asValue(eventBus),
     orm: asValue(orm),
     em: asFunction(({ orm }: Cradle) => orm.em.fork()).scoped(),

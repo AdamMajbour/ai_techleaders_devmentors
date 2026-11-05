@@ -27,13 +27,13 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 - Verification note: the DB integration suite is implemented but could not run here because PostgreSQL password authentication failed; run it against the configured test database before the P1 manual test gate.
 - [x] P1.3 Extend logger redaction for `question` and `body`, with regression coverage.
 
-**Manual test gate:** ⏳ awaiting requester confirmation. Run `npm run test:integration -- --runTestsByPath packages/db/src/repositories/repositories.integration.test.ts` against the configured `devmentor_test` database; confirm migration up/down, concurrent transition handling, and transaction rollback. Do not start P2 until the gate is resolved.
+**Manual test gate:** ⚠️ not passed: the requester asked to continue despite the PostgreSQL authentication failure. The DB integration suite remains unverified; rerun `npm run test:integration -- --runTestsByPath packages/db/src/repositories/repositories.integration.test.ts` against the configured `devmentor_test` database and confirm migration up/down, concurrent transition handling, and transaction rollback when credentials are available.
 
 **Automated phase checks:** `npm test` (65 suites / 451 tests) and `npm run build` passed. `npm run lint` passed with 11,720 warnings from the pre-existing untracked `packages/ui/.storybook/public/` content. The DB integration command is blocked by PostgreSQL password authentication in this environment.
 
 ### Phase P2 — HTTP and auth primitives
 
-- [ ] P2.1 Add `Clock`, `OPERATOR_USER_IDS`, `requireOperator`, `assertParticipant`, and resolver-based `requirePilotMember`; extend tests.
+- [x] P2.1 Add `Clock`, `OPERATOR_USER_IDS`, `requireOperator`, `assertParticipant`, and resolver-based `requirePilotMember`; extend tests.
 - [ ] P2.2 Add `makeActionRoute` and tests for validation, CSRF, session, and handler behavior.
 - [ ] P2.3 Add `makeWebhookRoute` and tests for raw-body signature verification and generic bad-signature response.
 

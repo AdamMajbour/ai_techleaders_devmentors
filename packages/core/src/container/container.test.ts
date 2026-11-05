@@ -2,6 +2,7 @@
 import { ArticleRepository, UserRepository } from '@devmentor/db';
 import { ArticleService } from '../services/articles/article.service';
 import { UserService } from '../services/auth/user.service';
+import { systemClock } from '../utils/clock';
 import { buildContainer } from './container';
 import type { OrmLike } from './cradle';
 
@@ -22,6 +23,7 @@ describe('buildContainer', () => {
     expect(cradle.articleRepository).toBeInstanceOf(ArticleRepository);
     expect(cradle.userService).toBeInstanceOf(UserService);
     expect(cradle.articleService).toBeInstanceOf(ArticleService);
+    expect(cradle.clock).toBe(systemClock);
     expect(fork).toHaveBeenCalledTimes(1);
   });
 

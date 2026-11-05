@@ -4,10 +4,12 @@ import type { Logger } from '../logger';
 import type { ArticleService } from '../services/articles/article.service';
 import type { AuthService } from '../services/auth/auth.service';
 import type { UserService } from '../services/auth/user.service';
+import type { Clock } from '../utils/clock';
 
 /** Every dependency the container can provide. A new service is one line here and one in container.ts. */
 export interface Cradle {
   logger: Logger;
+  clock: Clock;
   eventBus: EventBus;
   orm: OrmLike;
   em: EntityManager;
