@@ -108,7 +108,7 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 **3.5 validation:** focused booking, API, payment adapter, mock-payment, and mentor-page tests passed (7 suites / 54 tests); the full unit suite passed (91 suites / 633 tests), UI Storybook jsdom tests passed (319 tests), and workspace type-check, repository lint (`npm run lint -- --quiet`), production build, and `git diff --check` passed. E2E and DB integration tests were attempted but stopped before assertions because PostgreSQL rejected the configured `postgres` password (`28P01`); E2E uses the dedicated `devmentor_e2e` database guard, and no development database was used. Mock-payment tests use the mock gateway; no live payment mode or Stripe requests were used.
 
-**Manual test gate:** ⏳ pending: manually create a booking, inspect the displayed price and attribution, complete mock checkout, and verify failed/abandoned payments are not visible as paid bookings. Automated service tests do not satisfy this gate.
+**Manual test gate:** ✅ requester accepted the automated Phase 3 checks as the phase gate. E2E and DB integration coverage remains unverified because PostgreSQL authentication failed (`28P01`); live payments remain disabled.
 
 ## Phase 4 — Accept, decline, refund (#13)
 
