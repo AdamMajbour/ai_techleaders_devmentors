@@ -2,6 +2,7 @@
 import { ArticleRepository, UserRepository } from '@devmentor/db';
 import { ArticleService } from '../services/articles/article.service';
 import { UserService } from '../services/auth/user.service';
+import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
 import { systemClock } from '../utils/clock';
 import { buildContainer } from './container';
 import type { OrmLike } from './cradle';
@@ -23,6 +24,7 @@ describe('buildContainer', () => {
     expect(cradle.articleRepository).toBeInstanceOf(ArticleRepository);
     expect(cradle.userService).toBeInstanceOf(UserService);
     expect(cradle.articleService).toBeInstanceOf(ArticleService);
+    expect(cradle.paymentGateway).toBeInstanceOf(MockPaymentGateway);
     expect(cradle.clock).toBe(systemClock);
     expect(fork).toHaveBeenCalledTimes(1);
   });
@@ -54,5 +56,6 @@ describe('buildContainer', () => {
 
     expect(root.createScope().cradle.orm).toBe(orm);
     expect(root.createScope().cradle.logger).toBe(silentLogger);
+    expect(root.createScope().cradle.paymentGateway).toBe(root.createScope().cradle.paymentGateway);
   });
 });

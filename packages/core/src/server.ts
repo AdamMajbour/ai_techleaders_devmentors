@@ -29,6 +29,17 @@ export type { Cradle, OrmLike } from './container/cradle';
 export { ArticleService } from './services/articles/article.service';
 export { AuthService } from './services/auth/auth.service';
 export { UserService } from './services/auth/user.service';
+export type {
+  CheckoutCompletedEvent,
+  CheckoutExpiredEvent,
+  CheckoutFailedEvent,
+  CreateCheckoutInput,
+  CreateCheckoutResult,
+  NormalizedPaymentEvent,
+  PaymentGateway,
+  RefundInput,
+} from './services/payments/payment-gateway.port';
+export { MockPaymentGateway } from './services/payments/adapters/mock-payment-gateway';
 export { hashPassword, verifyPassword, BCRYPT_COST } from './security/password';
 export {
   signSession,

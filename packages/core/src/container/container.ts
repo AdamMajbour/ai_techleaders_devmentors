@@ -11,6 +11,7 @@ import { createLogger, type Logger } from '../logger';
 import { ArticleService } from '../services/articles/article.service';
 import { AuthService } from '../services/auth/auth.service';
 import { UserService } from '../services/auth/user.service';
+import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
 import { systemClock } from '../utils/clock';
 import type { Cradle, OrmLike } from './cradle';
 
@@ -32,6 +33,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     userService: asClass(UserService).scoped(),
     authService: asClass(AuthService).scoped(),
     articleService: asClass(ArticleService).scoped(),
+    paymentGateway: asValue(new MockPaymentGateway()),
   });
 
   return container;
