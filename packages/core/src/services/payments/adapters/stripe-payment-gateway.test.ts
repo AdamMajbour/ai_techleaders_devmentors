@@ -160,6 +160,8 @@ describe('StripePaymentGateway', () => {
       .toBe(state.create.mock.calls[1][1].idempotencyKey);
     expect(state.create.mock.calls[0][1].idempotencyKey).not.toContain(input.idempotencyKey);
     expect(state.getSession()).toMatchObject({ metadata: { bookingId: input.bookingId } });
+    expect(state.create.mock.calls[0][0].success_url)
+      .toBe(`https://app.example.test/bookings/${input.bookingId}/return?session_id={CHECKOUT_SESSION_ID}`);
   });
 
   it('fails on first payment use when required credentials are missing or invalid', async () => {

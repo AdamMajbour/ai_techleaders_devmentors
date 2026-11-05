@@ -131,6 +131,22 @@ export type NewPayment = Pick<
 export class BookingRepository {
   constructor(private readonly em: EntityManager) {}
 
+  async findById(id: string): Promise<Booking | null> {
+    return this.em.findOne(Booking, { id });
+  }
+
+  async findForParticipant(
+    userId: string,
+    role?: 'seeker' | 'mentor',
+  ): Promise<Booking[]> {
+    const where = role === 'seeker'
+      ? { seekerId: userId }
+      : role === 'mentor'
+        ? { mentorId: userId }
+        : { $or: [{ seekerId: userId }, { mentorId: userId }] };
+    return this.em.find(Booking, where, { orderBy: { createdAt: 'desc', id: 'asc' } });
+  }
+
   /** Persists the booking and its pending payment together before contacting the gateway. */
   async createWithPayment(
     bookingData: NewBooking,
@@ -172,6 +188,10 @@ export class BookingRepository {
 
 export class PaymentRepository {
   constructor(private readonly em: EntityManager) {}
+
+  async findByBookingId(bookingId: string): Promise<Payment | null> {
+    return this.em.findOne(Payment, { bookingId });
+  }
 
   async setProviderSession(bookingId: string, providerSessionId: string): Promise<Payment | null> {
     const payment = await this.em.findOne(Payment, { bookingId });

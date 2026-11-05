@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import type { MentorProfileDto } from '@devmentor/core';
 import { apiCall, ErrorMessage, LoadingMessage, Skeleton, TextLink, useAsync } from '@devmentor/ui';
 import { captureBookingAttribution, type BookingSource } from '@/lib/booking-attribution';
+import { BookingQuestionForm } from './booking-question-form';
 
 const ACTIVITY_LABELS: Record<MentorProfileDto['activity'], string> = {
   within_hour: 'Active within the last hour',
@@ -96,6 +97,16 @@ export function MentorProfileView({ slug, source }: { slug: string; source: Book
           <p className="m-0 text-body text-foreground">{ACTIVITY_LABELS[profile.activity]}</p>
           <p className="m-0 text-meta text-muted-foreground">
             Activity is shown in broad buckets, not precise timestamps, and is not a promise of reply time.
+          </p>
+        </section>
+        <BookingQuestionForm profile={profile} source={source} />
+        <section id="pilot-booking-terms" aria-labelledby="pilot-booking-terms-title" className="flex flex-col gap-group">
+          <h2 id="pilot-booking-terms-title" className="m-0 text-label font-strong text-headline">
+            Pilot booking terms
+          </h2>
+          <p className="m-0 text-body text-foreground">
+            You pay 25 EUR for a 25-minute text session. Your question is shared only with this mentor.
+            If the mentor does not accept or does not show up, you are refunded.
           </p>
         </section>
       </article>

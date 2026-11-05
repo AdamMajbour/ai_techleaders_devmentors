@@ -12,6 +12,8 @@ import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { chromium, type Browser } from 'playwright';
+import '../../db/src/load-env';
+import { closeORM, initializeORM, InvitationRepository } from '../../db/src';
 // Relative on purpose: app code must not import the db package, but a test may read its demo constants.
 import { DEMO_ARTICLE_TITLE, DEMO_AUTHOR } from '../../db/scripts/seed-data';
 
@@ -36,6 +38,9 @@ const env: NodeJS.ProcessEnv = {
   DATABASE_NAME: E2E_DATABASE_NAME,
   JWT_SECRET,
   PUBLIC_SIGNUP: 'true',
+  PAYMENTS_MODE: 'mock',
+  MOCK_PAYMENT_E2E_ENABLED: 'true',
+  JEST_WORKER_ID: process.env.JEST_WORKER_ID ?? '1',
 };
 
 jest.setTimeout(30_000);
@@ -114,6 +119,7 @@ async function startServer(extraEnv: NodeJS.ProcessEnv = {}): Promise<RunningSer
 let browser: Browser | undefined;
 let server: RunningServer;
 let baseUrl = '';
+let e2eOrm: Awaited<ReturnType<typeof initializeORM>> | undefined;
 
 beforeAll(async () => {
   run(['--workspace=@devmentor/db', 'run', 'migrate']);
@@ -127,6 +133,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await browser?.close();
   server?.stop();
+  await closeORM();
   run(['--workspace=@devmentor/db', 'run', 'migrate:down']);
 }, 60_000);
 
@@ -162,6 +169,24 @@ async function registerUser(name = 'Tester') {
   });
   const setCookie = result.response.headers.get('set-cookie') ?? '';
   return { ...result, email, cookie: setCookie.split(';')[0], setCookie };
+}
+
+async function registerPilotUser(role: 'seeker' | 'mentor', name: string) {
+  const result = await registerUser(name);
+  if (result.response.status !== 201 || typeof result.body?.data?.id !== 'string') {
+    throw new Error(`Could not create the ${role} account for the booking E2E.`);
+  }
+  e2eOrm ??= await initializeORM({ dbName: E2E_DATABASE_NAME });
+  await new InvitationRepository(e2eOrm.em.fork()).create({
+    email: result.email,
+    displayName: name,
+    role,
+    invitedBy: null,
+    acceptedByUserId: result.body.data.id,
+    acceptedAt: new Date(),
+    revokedAt: null,
+  });
+  return result;
 }
 
 // --- pages ---------------------------------------------------------------------------------
@@ -650,4 +675,92 @@ describe('in a browser', () => {
     expect(problems).toEqual([]);
     await page.close();
   });
+});
+
+describe('mock booking payment flow', () => {
+  it('creates a booking, completes mock checkout, and keeps failed or abandoned payments unpaid', async () => {
+    const suffix = randomBytes(4).toString('hex');
+    const seeker = await registerPilotUser('seeker', 'Booking Seeker');
+    const mentor = await registerPilotUser('mentor', 'Booking Mentor');
+    const profileResponse = await api('/api/mentors', {
+      method: 'POST',
+      cookie: mentor.cookie,
+      json: {
+        slug: `e2e-mentor-${suffix}`,
+        headline: 'E2E mentor',
+        bio: 'A mentor profile for booking flow verification.',
+        technologies: 'typescript',
+        publicWorkUrl: 'https://example.com/work',
+        isListed: true,
+      },
+    });
+    expect(profileResponse.response.status).toBe(201);
+    const profile = profileResponse.body.data;
+
+    const createBooking = async (question: string) => {
+      const landedAt = new Date().toISOString();
+      const response = await api('/api/bookings', {
+        method: 'POST',
+        cookie: seeker.cookie,
+        json: { mentorId: profile.id, question, source: 'list', landedAt },
+      });
+      expect(response.response.status).toBe(201);
+      expect(response.body.data.booking).toMatchObject({
+        seekerId: seeker.body.data.id,
+        mentorId: expect.any(String),
+        question,
+        durationMinutes: 25,
+        priceMinor: 2500,
+        currency: 'EUR',
+        status: 'pending_payment',
+        source: 'list',
+        landedAt,
+      });
+      expect(response.body.data.checkoutUrl).toMatch(/^\/mock-payment\/checkout\//);
+      return response.body.data;
+    };
+
+    const paidAttempt = await createBooking('How do I keep this service reliable?');
+    const checkoutPage = await fetch(`${baseUrl}${paidAttempt.checkoutUrl}`);
+    expect(checkoutPage.status).toBe(200);
+    const completed = await api(`/api/bookings/${paidAttempt.booking.id}/mock-payment`, {
+      method: 'POST',
+      cookie: seeker.cookie,
+      json: { outcome: 'complete' },
+    });
+    expect(completed.response.status).toBe(200);
+    expect(completed.body.data.status).toBe('paid');
+
+    const afterWebhookReconcile = await api(`/api/bookings/${paidAttempt.booking.id}/reconcile-payment`, {
+      method: 'POST',
+      cookie: seeker.cookie,
+      json: {},
+    });
+    expect(afterWebhookReconcile.body.data.status).toBe('paid');
+
+    const failedAttempt = await createBooking('Why does my test fail intermittently?');
+    const failed = await api(`/api/bookings/${failedAttempt.booking.id}/mock-payment`, {
+      method: 'POST',
+      cookie: seeker.cookie,
+      json: { outcome: 'fail' },
+    });
+    expect(failed.response.status).toBe(200);
+    expect(failed.body.data.status).toBe('payment_failed');
+
+    const abandonedAttempt = await createBooking('How should I diagnose this timeout?');
+    const unpaid = await api(`/api/bookings/${abandonedAttempt.booking.id}/reconcile-payment`, {
+      method: 'POST',
+      cookie: seeker.cookie,
+      json: {},
+    });
+    expect(unpaid.body.data.status).toBe('pending_payment');
+
+    const mentorList = await api('/api/bookings?role=mentor', { cookie: mentor.cookie });
+    const mentorPaid = mentorList.body.data.items.find((item: { id: string }) => item.id === paidAttempt.booking.id);
+    const mentorFailed = mentorList.body.data.items.find((item: { id: string }) => item.id === failedAttempt.booking.id);
+    expect(mentorPaid.question).toBe('How do I keep this service reliable?');
+    expect(mentorFailed).toBeUndefined();
+    expect(mentorList.body.data.items.some((item: { id: string }) => item.id === abandonedAttempt.booking.id)).toBe(false);
+    expect(unpaid.body.data.status).not.toBe('paid');
+  }, 120_000);
 });

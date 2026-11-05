@@ -59,7 +59,7 @@ export function registerPaymentGatewayContractTests<Gateway extends PaymentGatew
 
       expect(retry).toEqual(first);
       expect(first.providerSessionId).toBeTruthy();
-      expect(first.url).toMatch(/^https:\/\//);
+      expect(first.url).toMatch(/^(?:https:\/\/\S+|\/mock-payment\/checkout\/[a-zA-Z0-9-]+)$/);
       await expect(gateway.getCheckout(first.providerSessionId)).resolves.toBeNull();
     });
 

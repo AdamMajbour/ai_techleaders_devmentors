@@ -1,4 +1,5 @@
 import type { Article, Booking, User } from '@devmentor/db';
+import type { BookingStatus } from '../workflow/booking-state-machine';
 
 /** What leaves the core package. Entities never do, so a password hash cannot reach a response. */
 export type UserDto = { id: string; email: string; name: string; avatar: string | null; createdAt: string };
@@ -13,12 +14,28 @@ export type BookingDto = {
   durationMinutes: number;
   priceMinor: number;
   currency: string;
-  status: string;
-  source: string;
+  status: BookingStatus;
+  source: 'link' | 'list';
   landedAt: string;
+  startsAt: string | null;
+  endsAt: string | null;
 };
 
 export type Page<T> = { items: T[]; page: number; pageSize: number; total: number; pageCount: number };
+
+export type BookingReadDto = Omit<BookingDto, 'question' | 'source' | 'landedAt'> & {
+  question?: string;
+  source?: 'link' | 'list';
+  landedAt?: string;
+  counterpartName: string;
+  counterpartEmail?: string;
+  mentor?: { id: string; slug: string; name: string; headline: string; technologies: string };
+  refundStatus: 'none';
+  allowedActions: Array<'reconcile_payment' | 'accept' | 'decline'>;
+  serverTime: string;
+};
+
+export type BookingPage = Page<BookingReadDto> & { serverTime: string };
 
 export function toUserDto(user: User): UserDto {
   return {
@@ -50,8 +67,10 @@ export function toBookingDto(booking: Booking): BookingDto {
     durationMinutes: booking.durationMinutes,
     priceMinor: booking.priceMinor,
     currency: booking.currency,
-    status: booking.status,
-    source: booking.source,
+    status: booking.status as BookingStatus,
+    source: booking.source as BookingDto['source'],
     landedAt: booking.landedAt.toISOString(),
+    startsAt: booking.startsAt?.toISOString() ?? null,
+    endsAt: booking.endsAt?.toISOString() ?? null,
   };
 }

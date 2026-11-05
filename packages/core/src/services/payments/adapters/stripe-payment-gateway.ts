@@ -108,7 +108,7 @@ export class StripePaymentGateway implements PaymentGateway {
           },
         ],
         metadata: { bookingId: input.bookingId },
-        success_url: `${baseUrl}/booking/return?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${baseUrl}/bookings/${input.bookingId}/return?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/mentors?checkout=cancelled`,
       },
       { idempotencyKey: normalizedIdempotencyKey(input.idempotencyKey) },

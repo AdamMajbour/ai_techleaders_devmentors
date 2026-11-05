@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { MentorProfileDto } from '@devmentor/core';
 import * as ui from '@devmentor/ui';
 import type { ApiResult } from '@devmentor/ui';
@@ -61,6 +62,46 @@ describe('MentorProfileView', () => {
       mentorSlug: 'ada-lovelace',
       landedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T.*Z$/),
     });
+  });
+
+  it('shows the 25 EUR price before the question and submits the preserved attribution', async () => {
+      const user = userEvent.setup();
+      const landing = '2026-11-05T12:00:00.000Z';
+      window.sessionStorage.setItem(BOOKING_ATTRIBUTION_STORAGE_KEY, JSON.stringify({
+        source: 'list',
+        mentorSlug: 'ada-lovelace',
+        landedAt: landing,
+      }));
+      apiCall
+        .mockResolvedValueOnce(success(unlistedProfile))
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 503,
+          error: { code: 'unavailable', message: 'Checkout is temporarily unavailable.' },
+        });
+      render(<MentorProfileView slug="ada-lovelace" source="list" />);
+
+      await screen.findByRole('heading', { name: 'ada-lovelace' });
+      const price = screen.getByRole('region', { name: 'Price' });
+      const question = screen.getByRole('textbox', { name: /Your question/ });
+      expect(price.compareDocumentPosition(question) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(price).toHaveTextContent('25 EUR');
+      expect(question).toHaveAttribute('maxLength', '4000');
+
+      await user.type(question, 'How do I fix this issue in the service?');
+      await user.click(screen.getByRole('checkbox', { name: /pilot terms/i }));
+      await user.click(screen.getByRole('button', { name: /Pay .* and send/ }));
+
+      await waitFor(() => expect(apiCall).toHaveBeenLastCalledWith('/api/bookings', {
+        method: 'POST',
+        json: {
+          mentorId: unlistedProfile.id,
+          question: 'How do I fix this issue in the service?',
+          source: 'list',
+          landedAt: landing,
+        },
+      }));
+      expect(await screen.findByRole('alert')).toHaveTextContent('Checkout is temporarily unavailable.');
   });
 
   it('keeps a valid landing time stable and replaces malformed storage safely', () => {

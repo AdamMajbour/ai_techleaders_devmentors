@@ -38,6 +38,17 @@ describe('MockPaymentGateway deterministic behavior', () => {
     await expect(first.createCheckout(input)).resolves.toEqual(await second.createCheckout(input));
   });
 
+  it('routes mock checkouts back through the app-local test checkout page', async () => {
+    const checkout = await new MockPaymentGateway().createCheckout({
+      bookingId: 'booking-1',
+      amountMinor: 2500,
+      currency: 'EUR',
+      idempotencyKey: 'checkout-1',
+    });
+
+    expect(checkout.url).toBe('/mock-payment/checkout/booking-1');
+  });
+
   it('does not allow a checkout idempotency key to be reused with different input', async () => {
     const gateway = new MockPaymentGateway();
     await gateway.createCheckout({

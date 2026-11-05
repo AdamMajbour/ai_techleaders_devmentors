@@ -74,7 +74,7 @@ export class MockPaymentGateway implements PaymentGateway {
       input: { ...input },
       result: {
         providerSessionId,
-        url: `https://mock-payment.local/checkout/${providerSessionId}`,
+        url: `/mock-payment/checkout/${input.bookingId}`,
       },
     };
     this.checkouts.set(providerSessionId, stored);

@@ -3,6 +3,7 @@ import type { Booking, MentorProfile, NewBooking } from '@devmentor/db';
 import { CURRENCY, SESSION_25_PRICE_MINOR, SESSION_DURATION_MINUTES } from '../../constants';
 import { ForbiddenError, NotFoundError, UnauthorizedError, ValidationError } from '../../http/errors';
 import type { Clock } from '../../utils/clock';
+import type { NormalizedPaymentEvent } from '../payments/payment-gateway.port';
 import { BookingService } from './booking.service';
 
 const SEEKER_ID = 'seeker-1';
@@ -55,9 +56,10 @@ function setup(options: {
   gatewayError?: Error;
   failCheckoutError?: Error;
   sessionSaveFails?: boolean;
+  checkoutEvent?: NormalizedPaymentEvent | null;
 } = {}) {
   const booking = makeBooking();
-  const payment = { status: 'pending' };
+  const payment = { status: 'pending', providerSessionId: 'session-1' };
   const createWithPayment = jest.fn(async (data: NewBooking) => {
     booking.landedAt = data.landedAt;
     return { booking, payment };
@@ -69,6 +71,20 @@ function setup(options: {
   });
   const setProviderSession = jest.fn(async () => options.sessionSaveFails ? null : {});
   const findById = jest.fn(async () => options.profile === undefined ? makeProfile() : options.profile);
+  const findBookingById = jest.fn(async () => booking);
+  const findForParticipant = jest.fn(async () => [booking]);
+  const findByBookingId = jest.fn(async () => payment);
+  const findUserById = jest.fn(async (id: string) => ({
+    id,
+    name: id === MENTOR_ID ? 'Ada Mentor' : 'Sam Seeker',
+    email: id === MENTOR_ID ? 'mentor@example.com' : 'seeker@example.com',
+  }));
+  const getCheckout = jest.fn(async () => options.checkoutEvent ?? null);
+  const handleEvent = jest.fn(async (event: NormalizedPaymentEvent) => {
+    if (booking.status !== 'pending_payment') return;
+    booking.status = event.type === 'checkout.completed' ? 'paid' : 'payment_failed';
+    payment.status = event.type === 'checkout.completed' ? 'succeeded' : 'failed';
+  });
   const invitationService = {
     isPilotMember: jest.fn(async () => options.isPilotMember ?? true),
     isAcceptedSeeker: jest.fn(async () => options.isAcceptedSeeker ?? true),
@@ -80,9 +96,10 @@ function setup(options: {
   const emit = jest.fn(async () => undefined);
   const clock: Clock = { now: () => new Date(NOW) };
   const service = new BookingService({
-    bookingRepository: { createWithPayment, failCheckout } as never,
-    mentorProfileRepository: { findById } as never,
-    paymentRepository: { setProviderSession } as never,
+    bookingRepository: { createWithPayment, failCheckout, findById: findBookingById, findForParticipant } as never,
+    mentorProfileRepository: { findById, findByUserId: jest.fn(async () => makeProfile()) } as never,
+    paymentRepository: { setProviderSession, findByBookingId } as never,
+    userRepository: { findById: findUserById } as never,
     invitationService,
     paymentGateway: {
       provider: 'mock',
@@ -90,8 +107,9 @@ function setup(options: {
       refund: jest.fn(),
       verifyWebhook: jest.fn(async () => true),
       parseWebhook: jest.fn(),
-      getCheckout: jest.fn(),
+      getCheckout,
     },
+    paymentService: { handleEvent } as never,
     eventBus: { emit } as never,
     clock,
   });
@@ -107,6 +125,12 @@ function setup(options: {
     invitationService,
     createCheckout,
     emit,
+    findBookingById,
+    findForParticipant,
+    findByBookingId,
+    findUserById,
+    getCheckout,
+    handleEvent,
   };
 }
 
@@ -156,6 +180,105 @@ describe('BookingService.create', () => {
       bookingId: 'booking-1',
       seekerId: SEEKER_ID,
       mentorId: MENTOR_ID,
+    });
+  });
+
+  describe('BookingService reads and payment reconciliation', () => {
+    const completed: NormalizedPaymentEvent = {
+      type: 'checkout.completed',
+      bookingId: 'booking-1',
+      providerSessionId: 'session-1',
+      providerPaymentId: 'provider-payment-1',
+      amountMinor: SESSION_25_PRICE_MINOR,
+      currency: CURRENCY,
+      livemode: false,
+    };
+
+    it('keeps question and attribution visibility participant- and status-scoped', async () => {
+      const deps = setup();
+      const seeker = await deps.service.getById({ userId: SEEKER_ID }, 'booking-1');
+      expect(seeker).toMatchObject({
+        question: 'How do I fix this?',
+        source: 'link',
+        landedAt: NOW.toISOString(),
+        counterpartName: 'Ada Mentor',
+        mentor: { id: PROFILE_ID, slug: 'ada-lovelace', name: 'Ada Mentor' },
+      });
+
+      await expect(deps.service.getById({ userId: MENTOR_ID }, 'booking-1')).rejects.toBeInstanceOf(NotFoundError);
+      await expect(deps.service.getById({ userId: 'outsider' }, 'booking-1')).rejects.toBeInstanceOf(NotFoundError);
+
+      deps.booking.status = 'paid';
+      const paidMentorView = await deps.service.getById({ userId: MENTOR_ID }, 'booking-1');
+      expect(paidMentorView.question).toBe('How do I fix this?');
+      expect(paidMentorView).not.toHaveProperty('source');
+      expect(paidMentorView).not.toHaveProperty('landedAt');
+      expect(paidMentorView).not.toHaveProperty('counterpartEmail');
+
+      deps.booking.status = 'payment_failed';
+      const mentorList = await deps.service.list({ userId: MENTOR_ID }, { role: 'mentor', page: 1 });
+      expect(mentorList.items).toHaveLength(0);
+    });
+
+    it('uses the same idempotent payment handler to recover a lost webhook', async () => {
+      const deps = setup({ checkoutEvent: completed });
+
+      const first = await deps.service.reconcilePayment({ userId: SEEKER_ID }, 'booking-1');
+      const second = await deps.service.reconcilePayment({ userId: SEEKER_ID }, 'booking-1');
+
+      expect(deps.getCheckout).toHaveBeenCalledTimes(1);
+      expect(deps.getCheckout).toHaveBeenCalledWith('session-1');
+      expect(deps.handleEvent).toHaveBeenCalledTimes(1);
+      expect(deps.handleEvent).toHaveBeenCalledWith(completed);
+      expect(first.status).toBe('paid');
+      expect(second.status).toBe('paid');
+    });
+
+    it('does not transition again when reconciliation follows the webhook', async () => {
+      const deps = setup({ checkoutEvent: completed });
+      await deps.handleEvent(completed);
+
+      const result = await deps.service.reconcilePayment({ userId: SEEKER_ID }, 'booking-1');
+
+      expect(result.status).toBe('paid');
+      expect(deps.getCheckout).not.toHaveBeenCalled();
+      expect(deps.handleEvent).toHaveBeenCalledTimes(1);
+    });
+
+    it('leaves an unpaid provider checkout pending', async () => {
+      const deps = setup({ checkoutEvent: null });
+
+      const result = await deps.service.reconcilePayment({ userId: SEEKER_ID }, 'booking-1');
+
+      expect(result.status).toBe('pending_payment');
+      expect(deps.handleEvent).not.toHaveBeenCalled();
+    });
+
+    it('does not let the mentor reconcile a seeker payment', async () => {
+      const deps = setup({ checkoutEvent: completed });
+
+      await expect(deps.service.reconcilePayment({ userId: MENTOR_ID }, 'booking-1')).rejects.toBeInstanceOf(ForbiddenError);
+      expect(deps.getCheckout).not.toHaveBeenCalled();
+      expect(deps.handleEvent).not.toHaveBeenCalled();
+    });
+
+    it('never marks a failed checkout paid', async () => {
+      const deps = setup({
+        checkoutEvent: {
+          type: 'checkout.failed',
+          bookingId: 'booking-1',
+          providerSessionId: 'session-1',
+          amountMinor: SESSION_25_PRICE_MINOR,
+          currency: CURRENCY,
+          livemode: false,
+        },
+      });
+
+      const result = await deps.service.reconcilePayment({ userId: SEEKER_ID }, 'booking-1');
+
+      expect(result.status).toBe('payment_failed');
+      expect(deps.booking.status).toBe('payment_failed');
+      expect(deps.booking.status).not.toBe('paid');
     });
   });
 
