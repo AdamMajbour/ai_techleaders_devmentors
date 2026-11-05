@@ -53,11 +53,13 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 ### Phase P4 — Frontend primitives
 
 - [x] P4.1 Add `usePolling`, including hidden-tab pause, visibility refresh, error backoff, and terminal stop.
-- [ ] P4.2 Add `StatusBadge` and `ActionButton`, then showcase all states on `ui-preview`.
+- [x] P4.2 Add `StatusBadge` and `ActionButton`, then showcase all states on `ui-preview`.
 
 **P4.1 validation:** focused hook tests (13 passed), UI package type-check, and ESLint on the changed hook files passed.
 
-**Manual test gate:** pending until P4.2 is complete; manually exercise the UI preview, action errors/retry, and polling visibility/terminal behavior.
+**P4.2 validation:** focused component tests (10 passed), UI/app type-check, changed-file ESLint, Storybook jsdom (319 tests), and the app build passed. Token validation is blocked by pre-existing untracked `.storybook/public/` output; the catalogue check still reports four unrelated legacy exports and the absent generated `storybook-static/index.json`.
+
+**Manual test gate:** pending; manually exercise the UI preview, action errors/retry, and polling visibility/terminal behavior.
 
 ## Phase 1 — Sign-in (#10)
 
