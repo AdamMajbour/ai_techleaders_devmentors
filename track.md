@@ -37,7 +37,7 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 - [x] P2.2 Add `makeActionRoute` and tests for validation, CSRF, session, and handler behavior.
 - [x] P2.3 Add `makeWebhookRoute` and tests for raw-body signature verification and generic bad-signature response.
 
-**Manual test gate:** ⏳ awaiting requester confirmation. Verify route behavior and existing CRUD/auth flows remain unchanged; confirm signed webhooks are accepted, invalid signatures receive generic 400, and webhook handlers need no user session.
+**Manual test gate:** ✅ requester accepted the automated route/auth/CRUD tests as the P2 phase gate on 2026-11-05. Interactive browser/manual verification remains available later with consuming routes.
 
 ### Phase P3 — Ports and services
 
