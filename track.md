@@ -74,7 +74,7 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 **1.4 validation:** `npm run pilot:invite -- --help`, workspace type-check, focused ESLint, full `npm test` (78 suites / 539 tests), and `npm run build` passed. Invite-to-sign-in E2E coverage was added and attempted with the dedicated `devmentor_e2e` database; it is blocked before migration/test execution by PostgreSQL password authentication (`28P01`). No development database was used. HTTP mailer/configuration and invitation-list service tests pass.
 
-**Manual test gate:** [ ] Invite a user, request and consume a magic link, verify single-use behavior, and confirm public signup behavior.
+**Manual test gate:** ✅ requester accepted the automated Phase 1 checks as the phase gate. E2E coverage is present but could not execute because `devmentor_e2e` rejected the configured PostgreSQL password (`28P01`); browser/manual verification remains available after DB access is restored.
 
 ## Phase 2 — Find a mentor (#11)
 
