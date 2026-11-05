@@ -52,10 +52,12 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 ### Phase P4 — Frontend primitives
 
-- [ ] P4.1 Add `usePolling`, including hidden-tab pause, visibility refresh, error backoff, and terminal stop.
+- [x] P4.1 Add `usePolling`, including hidden-tab pause, visibility refresh, error backoff, and terminal stop.
 - [ ] P4.2 Add `StatusBadge` and `ActionButton`, then showcase all states on `ui-preview`.
 
-**Manual test gate:** manually exercise the UI preview, action errors/retry, and polling visibility/terminal behavior.
+**P4.1 validation:** focused hook tests (13 passed), UI package type-check, and ESLint on the changed hook files passed.
+
+**Manual test gate:** pending until P4.2 is complete; manually exercise the UI preview, action errors/retry, and polling visibility/terminal behavior.
 
 ## Phase 1 — Sign-in (#10)
 
