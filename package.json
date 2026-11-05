@@ -19,6 +19,7 @@
     "migrate": "npm --workspace=@devmentor/db run migrate",
     "migrate:down": "npm --workspace=@devmentor/db run migrate:down",
     "db:seed": "npm --workspace=@devmentor/db run seed",
+    "pilot:invite": "npm --workspace=@devmentor/core run pilot:invite --",
     "test:integration": "jest --selectProjects db",
     "test:all": "jest",
     "test:e2e": "jest --selectProjects e2e",

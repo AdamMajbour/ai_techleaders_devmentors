@@ -1,4 +1,4 @@
-import { parseEnv, parseOperatorUserIds } from './env';
+import { parseEnv, parseMailerSettings, parseOperatorUserIds } from './env';
 
 describe('parseEnv', () => {
   it('accepts a long enough JWT secret', () => {
@@ -11,6 +11,37 @@ describe('parseEnv', () => {
     expect(parseEnv({ JWT_SECRET: 'x'.repeat(32), PUBLIC_SIGNUP: 'false' }).PUBLIC_SIGNUP).toBe(false);
     expect(parseEnv({ JWT_SECRET: 'x'.repeat(32), PUBLIC_SIGNUP: 'true' }).PUBLIC_SIGNUP).toBe(true);
     expect(() => parseEnv({ JWT_SECRET: 'x'.repeat(32), PUBLIC_SIGNUP: 'no' })).toThrow(/PUBLIC_SIGNUP/);
+  });
+
+  it('defaults the mailer to console and requires credentials only for HTTP delivery', () => {
+    const secret = 'x'.repeat(32);
+    expect(parseMailerSettings({}).MAILER_MODE).toBe('console');
+    expect(parseMailerSettings({ MAILER_API_KEY: '', MAIL_FROM: '' }).MAILER_MODE).toBe('console');
+    expect(
+      parseMailerSettings({
+        MAILER_MODE: 'http',
+        MAILER_API_KEY: 'test-key',
+        MAIL_FROM: 'DevMentor <hello@example.com>',
+      }),
+    ).toMatchObject({
+      MAILER_MODE: 'http',
+      MAILER_API_KEY: 'test-key',
+      MAIL_FROM: 'DevMentor <hello@example.com>',
+    });
+    expect(() => parseMailerSettings({ MAILER_MODE: 'http', MAIL_FROM: 'hello@example.com' })).toThrow(
+      /MAILER_API_KEY/,
+    );
+    expect(() => parseMailerSettings({ MAILER_MODE: 'http', MAILER_API_KEY: 'test-key' })).toThrow(
+      /MAIL_FROM/,
+    );
+    expect(() => parseMailerSettings({ MAILER_MODE: 'smtp' })).toThrow(/MAILER_MODE/);
+    expect(
+      parseEnv({
+        JWT_SECRET: secret,
+        APP_BASE_URL: 'https://app.example.com',
+        MAILER_MODE: 'http',
+      }).APP_BASE_URL,
+    ).toBe('https://app.example.com');
   });
 
   it('accepts a configured HTTP(S) app origin and rejects unsafe or malformed values', () => {

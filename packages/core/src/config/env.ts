@@ -48,7 +48,28 @@ const envSchema = z.object({
   NODE_ENV: z.string().optional(),
 });
 
+const optionalMailerValue = z.preprocess(
+  (value) => (typeof value === 'string' && !value.trim() ? undefined : value),
+  z.string().trim().min(1).optional(),
+);
+
+const mailerEnvSchema = z.object({
+  MAILER_MODE: z.enum(['console', 'http']).default('console'),
+  MAILER_API_KEY: optionalMailerValue,
+  MAIL_FROM: optionalMailerValue,
+}).superRefine((env, context) => {
+  if (env.MAILER_MODE === 'http') {
+    if (!env.MAILER_API_KEY) {
+      context.addIssue({ code: 'custom', path: ['MAILER_API_KEY'], message: 'Required when MAILER_MODE=http' });
+    }
+    if (!env.MAIL_FROM) {
+      context.addIssue({ code: 'custom', path: ['MAIL_FROM'], message: 'Required when MAILER_MODE=http' });
+    }
+  }
+});
+
 export type Env = z.infer<typeof envSchema>;
+export type MailerSettings = z.infer<typeof mailerEnvSchema>;
 
 /** Validates an environment; throws a message that names the offending variables, never their values. */
 export function parseEnv(source: Record<string, string | undefined>): Env {
@@ -77,6 +98,18 @@ export function getAppBaseUrl(): string {
     throw new Error('Invalid environment configuration: APP_BASE_URL. See .env.example.');
   }
   return APP_BASE_URL;
+}
+
+export function parseMailerSettings(source: Record<string, string | undefined>): MailerSettings {
+  const result = mailerEnvSchema.safeParse(source);
+  if (result.success) return result.data;
+
+  const names = Object.keys(z.flattenError(result.error).fieldErrors).join(', ');
+  throw new Error(`Invalid environment configuration: ${names}. See .env.example.`);
+}
+
+export function getMailerSettings(): MailerSettings {
+  return parseMailerSettings(process.env);
 }
 
 /** Invalid or empty operator configuration grants no operator access. */

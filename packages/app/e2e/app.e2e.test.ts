@@ -21,12 +21,21 @@ const ROOT = path.resolve(APP_DIR, '../..');
 // A fresh signing key per run: never a committed or shared secret.
 const JWT_SECRET = randomBytes(48).toString('base64');
 const PASSWORD = 'correct horse battery';
+const E2E_DATABASE_NAME = process.env.DATABASE_E2E_NAME || 'devmentor_e2e';
+if (
+  E2E_DATABASE_NAME === 'devmentor' ||
+  E2E_DATABASE_NAME === 'devmentor_test' ||
+  E2E_DATABASE_NAME === process.env.DATABASE_NAME
+) {
+  throw new Error('E2E tests require a dedicated database and will not migrate a development/test database.');
+}
 
 const env: NodeJS.ProcessEnv = {
   ...process.env,
   NODE_ENV: 'production',
-  DATABASE_NAME: process.env.DATABASE_E2E_NAME || 'devmentor_e2e',
+  DATABASE_NAME: E2E_DATABASE_NAME,
   JWT_SECRET,
+  PUBLIC_SIGNUP: 'true',
 };
 
 jest.setTimeout(30_000);
@@ -44,8 +53,18 @@ function chromiumEnv(): NodeJS.ProcessEnv {
 
 type RunningServer = { url: string; log: () => string; stop: () => void };
 
-function run(args: string[], cwd = ROOT) {
-  execFileSync('npm', args, { cwd, env, stdio: 'pipe' });
+function run(args: string[], cwd = ROOT, extraEnv: NodeJS.ProcessEnv = {}): string {
+  const npmCli = process.env.npm_execpath;
+  return execFileSync(
+    npmCli ? process.execPath : process.platform === 'win32' ? 'npm.cmd' : 'npm',
+    npmCli ? [npmCli, ...args] : args,
+    {
+      cwd,
+      env: { ...env, ...extraEnv },
+      encoding: 'utf8',
+      shell: process.platform === 'win32' && !npmCli,
+    },
+  );
 }
 
 function freePort(): Promise<number> {
@@ -63,11 +82,10 @@ async function startServer(extraEnv: NodeJS.ProcessEnv = {}): Promise<RunningSer
   const port = await freePort();
   const url = `http://127.0.0.1:${port}`;
   let log = '';
-  // Own process group, so the whole npx -> next-server tree can be stopped afterwards.
-  const child: ChildProcess = spawn('npx', ['next', 'start', '--port', String(port)], {
+  const nextCli = path.join(ROOT, 'node_modules', 'next', 'dist', 'bin', 'next');
+  const child: ChildProcess = spawn(process.execPath, [nextCli, 'start', '--port', String(port)], {
     cwd: APP_DIR,
-    env: { ...env, ...extraEnv },
-    detached: true,
+    env: { ...env, APP_BASE_URL: url, MAILER_MODE: 'console', ...extraEnv },
   });
   child.stdout?.on('data', (chunk) => (log += chunk));
   child.stderr?.on('data', (chunk) => (log += chunk));
@@ -88,7 +106,7 @@ async function startServer(extraEnv: NodeJS.ProcessEnv = {}): Promise<RunningSer
     url,
     log: () => log,
     stop: () => {
-      if (child.pid) process.kill(-child.pid, 'SIGTERM');
+      child.kill('SIGTERM');
     },
   };
 }
@@ -168,7 +186,7 @@ describe('pages', () => {
     expect(css).toContain('.bg-primary');
   });
 
-  it.each(['/login', '/register', '/articles'])('serves %s', async (pathname) => {
+  it.each(['/login', '/auth/verify', '/register', '/articles'])('serves %s', async (pathname) => {
     expect((await fetch(`${baseUrl}${pathname}`)).status).toBe(200);
   });
 });
@@ -527,28 +545,78 @@ describe('in a browser', () => {
     await page.close();
   });
 
-  it('shows client-side validation messages from the shared schema on the login form', async () => {
+  it('validates e-mail before requesting a sign-in link', async () => {
     const { page, problems } = await open('/login');
 
     await page.click('button[type=submit]');
     expect(await page.locator('text=Enter a valid e-mail address').count()).toBe(1);
-    expect(await page.locator('text=Enter your password').count()).toBe(1);
     expect(await page.locator('input[name=email]').getAttribute('aria-invalid')).toBe('true');
     expect(problems).toEqual([]);
     await page.close();
   });
 
-  it('shows the generic server message for wrong credentials', async () => {
-    const { page } = await open('/login');
+  it('shows the same generic confirmation for an uninvited address', async () => {
+    const { page, problems } = await open('/login');
 
     await page.fill('input[name=email]', 'nobody-here@example.com');
-    await page.fill('input[name=password]', 'whatever-password');
     await page.click('button[type=submit]');
+    await page.getByText('If an invitation exists for this address, a sign-in link has been sent. Check your e-mail.').waitFor();
+    expect(problems).toEqual([]);
+    await page.close();
+  });
 
-    // The form-level error is an Alert (`div[role=alert]`). Next.js has its own, empty, role=alert route announcer.
-    const alert = page.locator('[role=alert]', { hasText: 'Invalid credentials.' });
-    await alert.waitFor();
-    expect((await alert.textContent())?.trim()).toBe('Invalid credentials.');
+  it('invites a seeker, requests and consumes a one-time link, and returns a signed-in session', async () => {
+    const email = `pilot-${randomBytes(4).toString('hex')}@example.com`;
+    run([
+      'run',
+      'pilot:invite',
+      '--',
+      '--email',
+      email,
+      '--name',
+      'Pilot E2E',
+      '--role',
+      'seeker',
+    ]);
+
+    const { page, problems } = await open('/login');
+    await page.fill('input[name=email]', email);
+    await page.click('button[type=submit]');
+    await page.getByText('If an invitation exists for this address, a sign-in link has been sent. Check your e-mail.').waitFor();
+
+    const mailboxMarker = `[development mail]\nTo: ${email}`;
+    let verifyUrl: string | undefined;
+    const deadline = Date.now() + 5_000;
+    while (!verifyUrl && Date.now() < deadline) {
+      const output = server.log();
+      const marker = output.lastIndexOf(mailboxMarker);
+      if (marker >= 0) {
+        verifyUrl = output.slice(marker).match(/https?:\/\/[^\s"]+\/auth\/verify\?token=[A-Za-z0-9_-]{43}/)?.[0];
+      }
+      if (!verifyUrl) await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
+    expect(verifyUrl).toBeDefined();
+    expect(new URL(verifyUrl!).origin).toBe(baseUrl);
+    try {
+      await page.goto(verifyUrl!, { waitUntil: 'networkidle' });
+    } catch {
+      throw new Error('The one-time verification link could not be opened.');
+    }
+    await page.getByText('You’re signed in to DevMentor.').waitFor();
+    expect(page.url()).toBe(`${baseUrl}/auth/verify`);
+
+    const session = await page.evaluate(async () => {
+      const response = await fetch('/api/auth/me');
+      return { status: response.status, body: await response.json() };
+    });
+    expect(session.status).toBe(200);
+    expect(session.body).toMatchObject({ ok: true, data: { email } });
+
+    const token = new URL(verifyUrl!).searchParams.get('token');
+    const replay = await api('/api/auth/magic-link/consume', { method: 'POST', json: { token } });
+    expect(replay.response.status).toBe(401);
+    expect(problems).toEqual([]);
     await page.close();
   });
 

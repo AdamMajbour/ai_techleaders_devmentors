@@ -50,4 +50,17 @@ describe('InvitationService', () => {
     await expect(service.findUnrevokedByEmail('ADA@example.com')).resolves.toBeNull();
     expect(invitationRepository.findUnrevokedByEmail).toHaveBeenCalledWith('ada@example.com');
   });
+
+  it('lists invitations including accepted user ids for operator bootstrap', async () => {
+    const invitationRepository = {
+      findAll: jest.fn(async () => [
+        { ...createdInvitation, acceptedByUserId: 'user-id', acceptedAt: new Date('2026-11-05T12:00:00Z') },
+      ]),
+    };
+    const service = new InvitationService({ invitationRepository: invitationRepository as never });
+
+    await expect(service.list()).resolves.toMatchObject([
+      { email: 'ada@example.com', acceptedByUserId: 'user-id', role: 'mentor' },
+    ]);
+  });
 });

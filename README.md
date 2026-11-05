@@ -134,6 +134,7 @@ npm run start        # Uruchom aplikację (po build)
 npm run migrate      # Uruchom migracje bazy danych
 npm run migrate:down # Wycofaj ostatnią migrację
 npm run db:seed      # Dane demo (idempotentne, wymaga migracji)
+npm run pilot:invite -- --help # Zaproszenia uczestników pilota
 npm run lint         # Sprawdź linting
 npm run type-check   # Sprawdzenie typów TypeScript
 npm run test         # Testy jednostkowe (bez bazy)
@@ -288,9 +289,20 @@ DATABASE_PASSWORD=postgres
 # Wymagane tylko przez trasy auth; aplikacja buduje się i startuje bez tego.
 JWT_SECRET=
 
-# Application
-NEXT_PUBLIC_API_URL=http://localhost:3000
+# Sign-in (magic link)
+PUBLIC_SIGNUP=false
+APP_BASE_URL=http://localhost:3000
+OPERATOR_USER_IDS=
+
+# Mail delivery: console by default for development; HTTP mode uses Resend.
+MAILER_MODE=console
+MAILER_API_KEY=
+MAIL_FROM=
 ```
+
+`APP_BASE_URL` is the public HTTP(S) origin used for verification links; it is required when a magic-link request is made and is never inferred from request headers. `MAILER_MODE` defaults to `console` for local development. For deployed mail, set `MAILER_MODE=http`, `MAILER_API_KEY` (Resend API key), and `MAIL_FROM` (for example `DevMentor <no-reply@example.com>`). Keep provider keys and `JWT_SECRET` in deployment secrets, never in source control. The console mailer is for local development only.
+
+The pilot uses invitation-based, one-time e-mail sign-in. Close public password registration with `PUBLIC_SIGNUP=false`. Invite founder A first with `npm run pilot:invite -- --email <email> --name <name> --role seeker`, have them request and consume a sign-in link, then run `npm run pilot:invite -- --list` to get their accepted user id. Set that id in `OPERATOR_USER_IDS` before inviting any other participants. Until it is set, no user has operator access.
 
 ## 🚀 Deployment
 

@@ -50,6 +50,7 @@ export { readJsonBody } from './http/body';
 export {
   getAppBaseUrl,
   getEnv,
+  getMailerSettings,
   parseEnv,
   getOperatorUserIds,
   parseOperatorUserIds,
@@ -97,6 +98,8 @@ export type {
 } from './services/payments/payment-gateway.port';
 export { MockPaymentGateway } from './services/payments/adapters/mock-payment-gateway';
 export { ConsoleMailer } from './services/notifications/adapters/console-mailer';
+export { HttpMailer } from './services/notifications/adapters/http-mailer';
+export { ConfiguredMailer } from './services/notifications/adapters/configured-mailer';
 export type { Mailer, MailMessage } from './services/notifications/mailer.port';
 export { hashPassword, verifyPassword, BCRYPT_COST } from './security/password';
 export {

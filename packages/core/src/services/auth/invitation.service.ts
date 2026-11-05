@@ -71,6 +71,10 @@ export class InvitationService {
     );
   }
 
+  async list(): Promise<InvitationDto[]> {
+    return (await this.invitationRepository.findAll()).map((invitation) => toInvitationDto(invitation)!);
+  }
+
   async acceptForUser(email: string, userId: string, acceptedAt: Date): Promise<boolean> {
     const invitation = await this.findUnrevokedByEmail(email);
     if (!invitation) return false;

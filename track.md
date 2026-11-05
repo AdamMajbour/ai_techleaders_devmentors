@@ -66,11 +66,13 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 - [x] 1.1 Record D24 by founder A and update the product brief.
 - [x] 1.2 Add invitation and login-token entities/migrations, services, env settings, and the pilot-member resolver.
 - [x] 1.3 Add magic-link request/consume routes, rate limiting, and the `PUBLIC_SIGNUP` registration guard.
-- [ ] 1.4 Add login/verify pages, HTTP mailer, `pilot:invite` CLI, env documentation, and invite-to-sign-in E2E coverage.
+- [x] 1.4 Add login/verify pages, HTTP mailer, `pilot:invite` CLI, env documentation, and invite-to-sign-in E2E coverage.
 
 **1.2 validation:** full unit suite passed (76 suites / 513 tests), workspace type-check, production build, and repository ESLint passed. The DB integration suite was attempted but could not connect because PostgreSQL password authentication failed for `postgres`; migration, constraints, expiry, and atomic concurrent-consumption integration checks remain unverified until the configured `devmentor_test` credentials work.
 
 **1.3 validation:** `npm test` (77 suites / 528 tests), `npm run type-check`, ESLint on changed files, and `npm run build` passed. Added route/service coverage for response parity, validation/CSRF/rate limits, first and repeat sign-in, revoked/expired/reused links, and both registration-guard states. The PostgreSQL integration suite was not rerun; its 1.2 verification blocker remains above. Follow-up: request links use the lazily required, validated `APP_BASE_URL` rather than request host data; its deployment setup is documented in task 1.4.
+
+**1.4 validation:** `npm run pilot:invite -- --help`, workspace type-check, focused ESLint, full `npm test` (78 suites / 539 tests), and `npm run build` passed. Invite-to-sign-in E2E coverage was added and attempted with the dedicated `devmentor_e2e` database; it is blocked before migration/test execution by PostgreSQL password authentication (`28P01`). No development database was used. HTTP mailer/configuration and invitation-list service tests pass.
 
 **Manual test gate:** [ ] Invite a user, request and consume a magic link, verify single-use behavior, and confirm public signup behavior.
 

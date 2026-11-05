@@ -12,7 +12,7 @@ import { UserService } from '../services/auth/user.service';
 import { InvitationService } from '../services/auth/invitation.service';
 import { MagicLinkService } from '../services/auth/magic-link.service';
 import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
-import { ConsoleMailer } from '../services/notifications/adapters/console-mailer';
+import { ConfiguredMailer } from '../services/notifications/adapters/configured-mailer';
 import { systemClock } from '../utils/clock';
 import { buildContainer } from './container';
 import type { OrmLike } from './cradle';
@@ -41,7 +41,7 @@ describe('buildContainer', () => {
     expect(cradle.invitationService).toBeInstanceOf(InvitationService);
     expect(cradle.magicLinkService).toBeInstanceOf(MagicLinkService);
     expect(cradle.paymentGateway).toBeInstanceOf(MockPaymentGateway);
-    expect(cradle.mailer).toBeInstanceOf(ConsoleMailer);
+    expect(cradle.mailer).toBeInstanceOf(ConfiguredMailer);
     expect(cradle.clock).toBe(systemClock);
     expect(fork).toHaveBeenCalledTimes(1);
   });

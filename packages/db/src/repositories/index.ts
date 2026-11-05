@@ -159,6 +159,10 @@ export type NewInvitation = Pick<
 export class InvitationRepository {
   constructor(private readonly em: EntityManager) {}
 
+  async findAll(): Promise<Invitation[]> {
+    return this.em.find(Invitation, {}, { orderBy: { email: 'asc' } });
+  }
+
   async findByEmail(email: string): Promise<Invitation | null> {
     return this.em.findOne(Invitation, { email });
   }

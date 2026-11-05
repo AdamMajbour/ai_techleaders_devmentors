@@ -22,7 +22,7 @@ import { UserService } from '../services/auth/user.service';
 import { InvitationService } from '../services/auth/invitation.service';
 import { MagicLinkService } from '../services/auth/magic-link.service';
 import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
-import { ConsoleMailer } from '../services/notifications/adapters/console-mailer';
+import { ConfiguredMailer } from '../services/notifications/adapters/configured-mailer';
 import { ApprovalService, defaultApproverResolvers } from '../services/approvals/approval.service';
 import { systemClock } from '../utils/clock';
 import type { Cradle, OrmLike } from './cradle';
@@ -33,7 +33,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
   const container = createContainer<Cradle>({ injectionMode: InjectionMode.PROXY, strict: true });
   const eventBus = createEventBus(logger);
   registerLoggingSubscriber(eventBus, logger);
-  const mailer = new ConsoleMailer();
+  const mailer = new ConfiguredMailer();
   registerMailSubscriber(eventBus, mailer, logger);
 
   container.register({
