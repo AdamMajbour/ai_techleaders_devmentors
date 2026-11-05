@@ -1,9 +1,18 @@
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { MikroORM } from '@mikro-orm/core';
 import type { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { closeORM, initializeORM } from '../config';
-import { ApprovalRequest, Invitation, LoginToken, MentorProfile, StatusTransition } from '../entities';
+import {
+  ApprovalRequest,
+  Booking,
+  Invitation,
+  LoginToken,
+  MentorProfile,
+  Payment,
+  StatusTransition,
+} from '../entities';
 import { isUniqueConstraintViolation, PendingApprovalConflictError } from '../errors';
 import {
   ArticleRepository,
@@ -60,10 +69,12 @@ describe('migrations', () => {
     expect(await publicTables()).toEqual([
       'approval_requests',
       'articles',
+      'bookings',
       'invitations',
       'login_tokens',
       'mentor_profiles',
       'mikro_orm_migrations',
+      'payments',
       'status_transitions',
       'users',
     ]);
@@ -100,6 +111,153 @@ describe('migrations', () => {
 
     await orm.migrator.up();
     expect(await publicTables()).toContain('mentor_profiles');
+  });
+
+  it('reverses and reapplies the booking/payment migration and its indexes', async () => {
+    await orm.migrator.down('Migration20261105200000_bookings_payments');
+    expect(await publicTables()).not.toContain('bookings');
+    expect(await publicTables()).not.toContain('payments');
+
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('bookings');
+    expect(await publicTables()).toContain('payments');
+    const indexes = (await orm.em.getConnection().execute(
+      `select indexname from pg_indexes where schemaname = 'public' and tablename = 'bookings'`,
+    )) as { indexname: string }[];
+    expect(indexes.map(({ indexname }) => indexname)).toEqual(
+      expect.arrayContaining(['bookings_mentor_status_index', 'bookings_seeker_id_index']),
+    );
+  });
+});
+
+describe('booking and payment constraints', () => {
+  async function insertBooking(input: {
+    seekerId: string;
+    mentorId: string;
+    question?: string;
+    durationMinutes?: number;
+    priceMinor?: number;
+    currency?: string;
+    status?: string;
+    source?: string;
+    startsAt?: Date | null;
+    endsAt?: Date | null;
+  }): Promise<string> {
+    const id = randomUUID();
+    const now = new Date();
+    await orm.em.getConnection().execute(
+      `insert into "bookings" (
+        "id", "seeker_id", "mentor_id", "question", "duration_minutes", "price_minor",
+        "currency", "status", "source", "landed_at", "starts_at", "ends_at", "created_at", "updated_at"
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        input.seekerId,
+        input.mentorId,
+        input.question ?? 'A booking question',
+        input.durationMinutes ?? 25,
+        input.priceMinor ?? 2500,
+        input.currency ?? 'EUR',
+        input.status ?? 'pending_payment',
+        input.source ?? 'link',
+        now,
+        input.startsAt ?? null,
+        input.endsAt ?? null,
+        now,
+        now,
+      ],
+      'run',
+    );
+    return id;
+  }
+
+  async function insertPayment(
+    bookingId: string,
+    providerSessionId: string | null,
+    input: { amountMinor?: number; status?: string } = {},
+  ): Promise<string> {
+    const id = randomUUID();
+    const now = new Date();
+    await orm.em.getConnection().execute(
+      `insert into "payments" (
+        "id", "booking_id", "provider", "livemode", "provider_session_id", "provider_payment_id",
+        "amount_minor", "currency", "status", "created_at", "updated_at"
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        bookingId,
+        'mock',
+        false,
+        providerSessionId,
+        null,
+        input.amountMinor ?? 2500,
+        'EUR',
+        input.status ?? 'pending',
+        now,
+        now,
+      ],
+      'run',
+    );
+    return id;
+  }
+
+  it('enforces participant foreign keys, booking checks, and payment uniqueness', async () => {
+    const seeker = await new UserRepository(orm.em.fork()).create({
+      email: 'booking-seeker@example.com',
+      name: 'Booking Seeker',
+    });
+    const mentorUser = await new UserRepository(orm.em.fork()).create({
+      email: 'booking-mentor@example.com',
+      name: 'Booking Mentor',
+    });
+    await new MentorProfileRepository(orm.em.fork()).create({
+      userId: mentorUser.id,
+      slug: 'booking-mentor',
+      headline: 'Mentor',
+      bio: 'Mentor bio',
+      technologies: 'typescript',
+      publicWorkUrl: 'https://example.com',
+      isListed: true,
+      lastActiveAt: null,
+    });
+    const bookingId = await insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id });
+
+    expect(await orm.em.count(Booking, { id: bookingId })).toBe(1);
+    await expect(
+      insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, question: 'q'.repeat(4001) }),
+    ).rejects.toThrow();
+    await expect(
+      insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, durationMinutes: 50 }),
+    ).rejects.toThrow();
+    await expect(
+      insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, source: 'unknown' }),
+    ).rejects.toThrow();
+    await expect(
+      insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, status: 'completed' }),
+    ).rejects.toThrow();
+    await expect(
+      insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, priceMinor: 0 }),
+    ).rejects.toThrow();
+    await expect(
+      insertBooking({
+        seekerId: seeker.id,
+        mentorId: mentorUser.id,
+        startsAt: new Date('2026-11-06T10:00:00.000Z'),
+      }),
+    ).rejects.toThrow();
+    await expect(
+      insertBooking({ seekerId: seeker.id, mentorId: randomUUID() }),
+    ).rejects.toThrow();
+
+    const paymentId = await insertPayment(bookingId, 'session-one');
+    expect(await orm.em.count(Payment, { id: paymentId })).toBe(1);
+    await expect(insertPayment(bookingId, 'session-two')).rejects.toThrow();
+
+    const anotherBooking = await insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id });
+    await expect(insertPayment(anotherBooking, 'session-one')).rejects.toThrow();
+    await expect(insertPayment(randomUUID(), 'orphan-session')).rejects.toThrow();
+    await expect(insertPayment(anotherBooking, 'invalid-status', { status: 'captured' })).rejects.toThrow();
+    await expect(insertPayment(anotherBooking, 'invalid-amount', { amountMinor: 0 })).rejects.toThrow();
   });
 });
 
