@@ -293,6 +293,8 @@ JWT_SECRET=
 PUBLIC_SIGNUP=false
 APP_BASE_URL=http://localhost:3000
 OPERATOR_USER_IDS=
+MENTOR_RESPONSE_WINDOW_MINUTES=120
+REFUND_AUTO_APPROVE_REASONS=
 
 # Mail delivery: console by default for development; HTTP mode uses Resend.
 MAILER_MODE=console
@@ -301,6 +303,8 @@ MAIL_FROM=
 ```
 
 `APP_BASE_URL` is the public HTTP(S) origin used for verification links; it is required when a magic-link request is made and is never inferred from request headers. `MAILER_MODE` defaults to `console` for local development. For deployed mail, set `MAILER_MODE=http`, `MAILER_API_KEY` (Resend API key), and `MAIL_FROM` (for example `DevMentor <no-reply@example.com>`). Keep provider keys and `JWT_SECRET` in deployment secrets, never in source control. The console mailer is for local development only.
+
+Paid bookings use `MENTOR_RESPONSE_WINDOW_MINUTES` (default `120`, valid range 1–10,080). Leave `REFUND_AUTO_APPROVE_REASONS` empty: D25 is not recorded, and this phase only creates operator-only refund approvals. Supported values for a future, explicitly approved configuration are `mentor_declined` and `mentor_unresponsive`; no refund is executed by booking settlement. Run `npm run bookings:settle` from a scheduler for the same idempotent expiry pass that booking reads trigger.
 
 Payments default to `PAYMENTS_MODE=mock`. To use Stripe Checkout, set `PAYMENTS_MODE=stripe`, provide `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and keep `PAYMENTS_LIVE_ENABLED=false` for test keys. A live `sk_live_` key is refused unless `PAYMENTS_LIVE_ENABLED=true`; do not enable live payments before the pilot launch gates are complete. Stripe credentials are validated only when a payment operation or payment webhook is used, so builds and unrelated routes do not need them.
 

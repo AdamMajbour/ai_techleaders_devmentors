@@ -1,10 +1,43 @@
-import { parseEnv, parseMailerSettings, parseOperatorUserIds, parsePaymentSettings } from './env';
+import {
+  parseBookingSettings,
+  parseEnv,
+  parseMailerSettings,
+  parseOperatorUserIds,
+  parsePaymentSettings,
+} from './env';
 
 describe('parseEnv', () => {
   it('accepts a long enough JWT secret', () => {
     expect(parseEnv({ JWT_SECRET: 'x'.repeat(32) }).JWT_SECRET).toHaveLength(32);
     expect(parseEnv({ JWT_SECRET: 'x'.repeat(32) }).OPERATOR_USER_IDS).toEqual([]);
     expect(parseEnv({ JWT_SECRET: 'x'.repeat(32) }).PUBLIC_SIGNUP).toBe(true);
+  });
+
+  describe('parseBookingSettings', () => {
+    it('defaults the response window and leaves automatic refund reasons empty', () => {
+      expect(parseBookingSettings({})).toEqual({
+        MENTOR_RESPONSE_WINDOW_MINUTES: 120,
+        REFUND_AUTO_APPROVE_REASONS: [],
+      });
+    });
+
+    it('accepts a bounded positive integer and only supported refund reasons', () => {
+      expect(parseBookingSettings({
+        MENTOR_RESPONSE_WINDOW_MINUTES: '60',
+        REFUND_AUTO_APPROVE_REASONS: 'mentor_declined, mentor_unresponsive',
+      })).toEqual({
+        MENTOR_RESPONSE_WINDOW_MINUTES: 60,
+        REFUND_AUTO_APPROVE_REASONS: ['mentor_declined', 'mentor_unresponsive'],
+      });
+      expect(() => parseBookingSettings({ MENTOR_RESPONSE_WINDOW_MINUTES: '0' }))
+        .toThrow(/MENTOR_RESPONSE_WINDOW_MINUTES/);
+      expect(() => parseBookingSettings({ MENTOR_RESPONSE_WINDOW_MINUTES: '10081' }))
+        .toThrow(/MENTOR_RESPONSE_WINDOW_MINUTES/);
+      expect(() => parseBookingSettings({ MENTOR_RESPONSE_WINDOW_MINUTES: '1.5' }))
+        .toThrow(/MENTOR_RESPONSE_WINDOW_MINUTES/);
+      expect(() => parseBookingSettings({ REFUND_AUTO_APPROVE_REASONS: 'unknown' }))
+        .toThrow(/REFUND_AUTO_APPROVE_REASONS/);
+    });
   });
 
   describe('parsePaymentSettings', () => {
@@ -55,6 +88,15 @@ describe('parseEnv', () => {
     expect(parseEnv({ JWT_SECRET: 'x'.repeat(32), PUBLIC_SIGNUP: 'false' }).PUBLIC_SIGNUP).toBe(false);
     expect(parseEnv({ JWT_SECRET: 'x'.repeat(32), PUBLIC_SIGNUP: 'true' }).PUBLIC_SIGNUP).toBe(true);
     expect(() => parseEnv({ JWT_SECRET: 'x'.repeat(32), PUBLIC_SIGNUP: 'no' })).toThrow(/PUBLIC_SIGNUP/);
+  });
+
+  it('does not validate booking-only settings while reading unrelated auth settings', () => {
+    expect(parseEnv({
+      JWT_SECRET: 'x'.repeat(32),
+      MENTOR_RESPONSE_WINDOW_MINUTES: 'not-a-number',
+    }).JWT_SECRET).toHaveLength(32);
+    expect(() => parseBookingSettings({ MENTOR_RESPONSE_WINDOW_MINUTES: 'not-a-number' }))
+      .toThrow(/MENTOR_RESPONSE_WINDOW_MINUTES/);
   });
 
   it('defaults the mailer to console and requires credentials only for HTTP delivery', () => {

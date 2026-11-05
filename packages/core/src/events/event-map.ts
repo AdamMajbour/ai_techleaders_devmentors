@@ -11,6 +11,7 @@ export interface EventMap {
   'bookings.booking.paid': { bookingId: string };
   'bookings.booking.accepted': { bookingId: string };
   'bookings.booking.declined': { bookingId: string };
+  'bookings.booking.expired': { bookingId: string };
   'payments.payment.succeeded': { paymentId: string };
   'payments.payment.failed': { paymentId: string };
   'approvals.approval.requested': { approvalId: string };

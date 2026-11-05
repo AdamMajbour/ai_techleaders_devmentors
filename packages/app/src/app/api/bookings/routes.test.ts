@@ -11,6 +11,7 @@ const mockBookingService = {
   completeMockCheckout: jest.fn(async () => ({ id: 'booking', status: 'paid' })),
   accept: jest.fn(async () => ({ id: 'booking', status: 'accepted' })),
   decline: jest.fn(async () => ({ id: 'booking', status: 'declined' })),
+  requestRefund: jest.fn(async () => ({ approvalId: 'approval' })),
 };
 const mockCradle = { bookingService: mockBookingService } as unknown as Cradle;
 const mockWithScope = jest.fn(async (fn: (cradle: Cradle) => Promise<unknown>) => fn(mockCradle));
@@ -26,6 +27,7 @@ import { POST as reconcilePayment } from './[id]/reconcile-payment/route';
 import { POST as mockPayment } from './[id]/mock-payment/route';
 import { POST as acceptBooking } from './[id]/accept/route';
 import { POST as declineBooking } from './[id]/decline/route';
+import { POST as requestBookingRefund } from '../operator/bookings/[id]/refund/route';
 
 const SECRET = 'b'.repeat(48);
 const BOOKING_ID = '0c0b2f5a-6f6e-4b53-9f0e-6b1f3b0a7a11';
@@ -173,6 +175,43 @@ describe('/api/bookings CRUD routes', () => {
     );
     expect(decline.status).toBe(200);
     expect(mockBookingService.decline).toHaveBeenCalledWith({ userId: 'seeker-id' }, BOOKING_ID);
+  });
+
+  it('routes operator refund requests through the action builder without exposing gateway access', async () => {
+    const previous = process.env.OPERATOR_USER_IDS;
+    try {
+      delete process.env.OPERATOR_USER_IDS;
+      const forbidden = await requestBookingRefund(
+        new Request(`http://localhost/api/operator/bookings/${BOOKING_ID}/refund`, {
+          method: 'POST',
+          headers: mutationHeaders(await memberHeaders()),
+          body: '{}',
+        }),
+        context,
+      );
+      expect(forbidden.status).toBe(403);
+      expect(mockBookingService.requestRefund).not.toHaveBeenCalled();
+
+      process.env.OPERATOR_USER_IDS = BOOKING_ID;
+      const operatorCookie = `${SESSION_COOKIE}=${await signSession(BOOKING_ID, SECRET)}`;
+      const response = await requestBookingRefund(
+        new Request(`http://localhost/api/operator/bookings/${BOOKING_ID}/refund`, {
+          method: 'POST',
+          headers: mutationHeaders({ cookie: operatorCookie }),
+          body: '{}',
+        }),
+        context,
+      );
+
+      expect(response.status).toBe(200);
+      expect(mockBookingService.requestRefund).toHaveBeenCalledWith(
+        { userId: BOOKING_ID },
+        BOOKING_ID,
+      );
+    } finally {
+      if (previous === undefined) delete process.env.OPERATOR_USER_IDS;
+      else process.env.OPERATOR_USER_IDS = previous;
+    }
   });
 
   it('requires CSRF and rejects malformed acceptance start times before the service call', async () => {

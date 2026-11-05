@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 /** A secret shorter than this cannot hold 32 random bytes in any common encoding. */
 const MIN_SECRET_LENGTH = 32;
+const MAX_MENTOR_RESPONSE_WINDOW_MINUTES = 10_080;
+const refundAutoApproveReasons = ['mentor_declined', 'mentor_unresponsive'] as const;
 
 const publicSignupSchema = z.preprocess(
   (value) => {
@@ -11,6 +13,21 @@ const publicSignupSchema = z.preprocess(
     return value;
   },
   z.boolean(),
+);
+
+const mentorResponseWindowMinutesSchema = z.preprocess(
+  (value) => (value === undefined || value === '' ? 120 : value),
+  z.coerce.number().int().min(1).max(MAX_MENTOR_RESPONSE_WINDOW_MINUTES),
+);
+
+const refundAutoApproveReasonsSchema = z.preprocess(
+  (value) =>
+    value === undefined || value === ''
+      ? []
+      : typeof value === 'string'
+        ? value.split(',').map((reason) => reason.trim()).filter(Boolean)
+        : value,
+  z.array(z.enum(refundAutoApproveReasons)),
 );
 
 const appBaseUrlSchema = z
@@ -33,6 +50,11 @@ const appBaseUrlSchema = z
     }
   }, 'APP_BASE_URL must be an HTTP(S) origin without credentials, path, query, or fragment')
   .optional();
+
+const bookingSettingsSchema = z.object({
+  MENTOR_RESPONSE_WINDOW_MINUTES: mentorResponseWindowMinutesSchema,
+  REFUND_AUTO_APPROVE_REASONS: refundAutoApproveReasonsSchema,
+});
 
 const envSchema = z.object({
   // Generate with: openssl rand -base64 48
@@ -121,6 +143,7 @@ const paymentSettingsSchema = z.object({
 export type Env = z.infer<typeof envSchema>;
 export type MailerSettings = z.infer<typeof mailerEnvSchema>;
 export type PaymentSettings = z.infer<typeof paymentSettingsSchema>;
+export type BookingSettings = z.infer<typeof bookingSettingsSchema>;
 
 /** Validates an environment; throws a message that names the offending variables, never their values. */
 export function parseEnv(source: Record<string, string | undefined>): Env {
@@ -174,6 +197,19 @@ export function parsePaymentSettings(source: Record<string, string | undefined>)
 /** Payment settings stay independent of the required app secrets and are read only when needed. */
 export function getPaymentSettings(): PaymentSettings {
   return parsePaymentSettings(process.env);
+}
+
+/** Booking settings are independent of secrets and validated only when booking workflows need them. */
+export function parseBookingSettings(source: Record<string, string | undefined>): BookingSettings {
+  const result = bookingSettingsSchema.safeParse(source);
+  if (result.success) return result.data;
+
+  const names = Object.keys(z.flattenError(result.error).fieldErrors).join(', ');
+  throw new Error(`Invalid booking configuration: ${names}. See .env.example.`);
+}
+
+export function getBookingSettings(): BookingSettings {
+  return parseBookingSettings(process.env);
 }
 
 /** Invalid or empty operator configuration grants no operator access. */

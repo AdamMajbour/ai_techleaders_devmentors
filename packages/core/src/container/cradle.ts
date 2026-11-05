@@ -17,6 +17,7 @@ import type { UserService } from '../services/auth/user.service';
 import type { PaymentGateway } from '../services/payments/payment-gateway.port';
 import type { Mailer } from '../services/notifications/mailer.port';
 import type { Clock } from '../utils/clock';
+import type { BookingSettings } from '../config/env';
 import type { ApprovalService, ApproverResolvers } from '../services/approvals/approval.service';
 import type { InvitationService } from '../services/auth/invitation.service';
 import type { MagicLinkService } from '../services/auth/magic-link.service';
@@ -28,6 +29,7 @@ import type { PaymentService } from '../services/payments/payment.service';
 export interface Cradle {
   logger: Logger;
   clock: Clock;
+  bookingSettings: () => BookingSettings;
   eventBus: EventBus;
   orm: OrmLike;
   em: EntityManager;

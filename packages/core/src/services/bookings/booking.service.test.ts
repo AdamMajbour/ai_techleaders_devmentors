@@ -58,9 +58,13 @@ function setup(options: {
   sessionSaveFails?: boolean;
   checkoutEvent?: NormalizedPaymentEvent | null;
   transitionError?: Error;
+  settlementCandidates?: Booking[];
+  paidAt?: Date;
+  responseWindowMinutes?: number;
+  autoApproveReasons?: Array<'mentor_declined' | 'mentor_unresponsive'>;
 } = {}) {
   const booking = makeBooking();
-  const payment = { status: 'pending', providerSessionId: 'session-1' };
+  const payment = { id: 'payment-1', status: 'pending', providerSessionId: 'session-1' };
   const createWithPayment = jest.fn(async (data: NewBooking) => {
     booking.landedAt = data.landedAt;
     return { booking, payment };
@@ -74,6 +78,11 @@ function setup(options: {
   const findById = jest.fn(async () => options.profile === undefined ? makeProfile() : options.profile);
   const findBookingById = jest.fn(async () => booking);
   const findForParticipant = jest.fn(async () => [booking]);
+  const findForSettlement = jest.fn(async ({ before }: { before: Date }) =>
+    options.paidAt && options.paidAt.getTime() > before.getTime()
+      ? []
+      : options.settlementCandidates ?? [],
+  );
   const transitionBooking = jest.fn(async (
     _id: string,
     status: 'accepted' | 'declined',
@@ -91,6 +100,11 @@ function setup(options: {
     name: id === MENTOR_ID ? 'Ada Mentor' : 'Sam Seeker',
     email: id === MENTOR_ID ? 'mentor@example.com' : 'seeker@example.com',
   }));
+  const expirePaid = jest.fn(async (_id: string) => {
+    if (booking.status !== 'paid') return false;
+    booking.status = 'expired';
+    return true;
+  });
   const findMentorProfileByUserId = jest.fn(async () => makeProfile());
   const updateMentorProfile = jest.fn(async () => makeProfile({ lastActiveAt: NOW }));
   const getCheckout = jest.fn(async () => options.checkoutEvent ?? null);
@@ -107,7 +121,20 @@ function setup(options: {
   const createCheckout = options.gatewayError
     ? jest.fn(async () => { throw options.gatewayError; })
     : jest.fn(async () => ({ providerSessionId: 'session-1', url: 'https://checkout.example/session-1' }));
+  const refund = jest.fn(async () => undefined);
   const emit = jest.fn(async () => undefined);
+  const approvalRequests = new Map<string, { id: string; status: 'pending' }>();
+  const requestApproval = jest.fn(async (
+    kind: string,
+    subject: { type: string; id: string },
+  ) => {
+    const key = `${kind}:${subject.type}:${subject.id}`;
+    const existing = approvalRequests.get(key);
+    if (existing) return existing;
+    const approval = { id: 'approval-1', status: 'pending' as const };
+    approvalRequests.set(key, approval);
+    return approval;
+  });
   const clock: Clock = { now: () => new Date(NOW) };
   const service = new BookingService({
     bookingRepository: {
@@ -115,6 +142,8 @@ function setup(options: {
       failCheckout,
       findById: findBookingById,
       findForParticipant,
+      findForSettlement,
+      expirePaid,
       transitionStatus: transitionBooking,
     } as never,
     mentorProfileRepository: {
@@ -128,12 +157,17 @@ function setup(options: {
     paymentGateway: {
       provider: 'mock',
       createCheckout,
-      refund: jest.fn(),
+      refund,
       verifyWebhook: jest.fn(async () => true),
       parseWebhook: jest.fn(),
       getCheckout,
     },
     paymentService: { handleEvent } as never,
+    approvalService: { request: requestApproval } as never,
+    bookingSettings: () => ({
+      MENTOR_RESPONSE_WINDOW_MINUTES: options.responseWindowMinutes ?? 120,
+      REFUND_AUTO_APPROVE_REASONS: options.autoApproveReasons ?? [],
+    }),
     eventBus: { emit } as never,
     clock,
   });
@@ -151,7 +185,12 @@ function setup(options: {
     emit,
     findBookingById,
     findForParticipant,
+    findForSettlement,
     transitionBooking,
+    expirePaid,
+    approvalRequests,
+    requestApproval,
+    refund,
     findByBookingId,
     findUserById,
     findMentorProfileByUserId,
@@ -275,15 +314,35 @@ describe('BookingService.create', () => {
     it('declines paid bookings without exposing the question and records deliberate mentor activity', async () => {
       const deps = setup();
       deps.booking.status = 'paid';
+      deps.payment.status = 'succeeded';
 
       const declined = await deps.service.decline({ userId: MENTOR_ID }, 'booking-1');
 
       expect(deps.transitionBooking).toHaveBeenCalledWith('booking-1', 'declined', MENTOR_ID);
       expect(deps.updateMentorProfile).toHaveBeenCalledWith(PROFILE_ID, { lastActiveAt: NOW });
       expect(deps.emit).toHaveBeenCalledWith('bookings.booking.declined', { bookingId: 'booking-1' });
+      expect(deps.requestApproval).toHaveBeenCalledWith(
+        'refund',
+        { type: 'payment', id: 'payment-1' },
+        'mentor_declined',
+      );
+      expect(deps.refund).not.toHaveBeenCalled();
       expect(declined.status).toBe('declined');
       expect(declined).not.toHaveProperty('question');
       expect(declined).not.toHaveProperty('counterpartEmail');
+    });
+
+    it('reuses one refund approval for duplicate decline requests', async () => {
+      const deps = setup();
+      deps.booking.status = 'paid';
+      deps.payment.status = 'succeeded';
+
+      await deps.service.decline({ userId: MENTOR_ID }, 'booking-1');
+      await deps.service.decline({ userId: MENTOR_ID }, 'booking-1');
+
+      expect(deps.approvalRequests.size).toBe(1);
+      expect(deps.requestApproval).toHaveBeenCalledTimes(2);
+      expect(deps.refund).not.toHaveBeenCalled();
     });
 
     it('fails closed for non-mentors and bookings not owned by the session user', async () => {
@@ -395,6 +454,89 @@ describe('BookingService.create', () => {
       expect(result.status).toBe('payment_failed');
       expect(deps.booking.status).toBe('payment_failed');
       expect(deps.booking.status).not.toBe('paid');
+    });
+  });
+
+  describe('BookingService lazy expiry and refund approvals', () => {
+    it.each([
+      ['at the response deadline', 0, true],
+      ['one millisecond before it', 1, false],
+    ])('expires only a paid booking %s', async (_label, millisecondsAfterDeadline, shouldExpire) => {
+      const deps = setup({
+        responseWindowMinutes: 120,
+        autoApproveReasons: ['mentor_unresponsive'],
+      });
+      deps.booking.status = 'paid';
+      deps.payment.status = 'succeeded';
+      const paidAt = new Date(NOW.getTime() - 120 * 60_000 + millisecondsAfterDeadline);
+      deps.findForSettlement.mockImplementation(async ({ before }) =>
+        paidAt.getTime() <= before.getTime() ? [deps.booking] : [],
+      );
+
+      expect(await deps.service.settleExpired()).toBe(shouldExpire ? 1 : 0);
+      expect(deps.booking.status).toBe(shouldExpire ? 'expired' : 'paid');
+      expect(deps.requestApproval).toHaveBeenCalledTimes(shouldExpire ? 1 : 0);
+      if (shouldExpire) {
+        expect(deps.requestApproval).toHaveBeenCalledWith(
+          'refund',
+          { type: 'payment', id: 'payment-1' },
+          'mentor_unresponsive',
+        );
+        expect([...deps.approvalRequests.values()]).toEqual([
+          { id: 'approval-1', status: 'pending' },
+        ]);
+      }
+      expect(deps.refund).not.toHaveBeenCalled();
+    });
+
+    it('is idempotent when duplicate settlement reads race', async () => {
+      const deps = setup();
+      deps.booking.status = 'paid';
+      deps.payment.status = 'succeeded';
+      deps.findForSettlement.mockResolvedValue([deps.booking]);
+
+      const results = await Promise.all([
+        deps.service.list({ userId: SEEKER_ID }, { role: 'seeker', page: 1 }),
+        deps.service.list({ userId: SEEKER_ID }, { role: 'seeker', page: 1 }),
+      ]);
+
+      expect(deps.booking.status).toBe('expired');
+      expect(deps.approvalRequests.size).toBe(1);
+      expect(deps.findForSettlement).toHaveBeenCalledTimes(2);
+      expect(deps.refund).not.toHaveBeenCalled();
+    });
+
+    it('opens operator refunds only for operators and paid or accepted bookings', async () => {
+      const previous = process.env.OPERATOR_USER_IDS;
+      process.env.OPERATOR_USER_IDS = MENTOR_ID;
+      const deps = setup();
+      try {
+        await expect(deps.service.requestRefund({ userId: SEEKER_ID }, 'booking-1'))
+          .rejects.toBeInstanceOf(ForbiddenError);
+        expect(deps.requestApproval).not.toHaveBeenCalled();
+
+        await expect(deps.service.requestRefund({ userId: MENTOR_ID }, 'booking-1'))
+          .rejects.toMatchObject({ name: 'ConflictError' });
+        expect(deps.requestApproval).not.toHaveBeenCalled();
+
+        deps.booking.status = 'paid';
+        deps.payment.status = 'succeeded';
+        await expect(deps.service.requestRefund({ userId: MENTOR_ID }, 'booking-1'))
+          .resolves.toEqual({ approvalId: 'approval-1' });
+        deps.booking.status = 'accepted';
+        await expect(deps.service.requestRefund({ userId: MENTOR_ID }, 'booking-1'))
+          .resolves.toEqual({ approvalId: 'approval-1' });
+        expect(deps.approvalRequests.size).toBe(1);
+        expect(deps.requestApproval).toHaveBeenCalledWith(
+          'refund',
+          { type: 'payment', id: 'payment-1' },
+          'operator_requested',
+        );
+        expect(deps.refund).not.toHaveBeenCalled();
+      } finally {
+        if (previous === undefined) delete process.env.OPERATOR_USER_IDS;
+        else process.env.OPERATOR_USER_IDS = previous;
+      }
     });
   });
 

@@ -1,4 +1,4 @@
-import { ExclusionConstraintViolationError } from '@devmentor/db';
+import { ExclusionConstraintViolationError, StatusTransitionConflictError } from '@devmentor/db';
 import type {
   Booking,
   BookingRepository,
@@ -8,8 +8,9 @@ import type {
 } from '@devmentor/db';
 import { CURRENCY, SESSION_25_PRICE_MINOR, SESSION_DURATION_MINUTES } from '../../constants';
 import type { EventBus } from '../../events/event-bus';
-import { assertOwns, assertParticipant } from '../../http/auth';
+import { assertOwns, assertParticipant, requireOperator } from '../../http/auth';
 import { ConflictError, ForbiddenError, NotFoundError, UnauthorizedError, ValidationError } from '../../http/errors';
+import { getBookingSettings } from '../../config/env';
 import type { Session } from '../../security/session';
 import type { Clock } from '../../utils/clock';
 import { parseOrThrow } from '../../validators/parse';
@@ -17,6 +18,7 @@ import { bookingCreateSchema, type BookingCreateInput } from '../../validators/b
 import { bookingAcceptSchema, type BookingAcceptInput } from '../../validators/bookings/booking-accept.schema';
 import type { BookingListQuery } from '../../validators/bookings/booking-list.schema';
 import type { InvitationService } from '../auth/invitation.service';
+import type { ApprovalService } from '../approvals/approval.service';
 import type { PaymentGateway } from '../payments/payment-gateway.port';
 import type { PaymentService } from '../payments/payment.service';
 import { MockPaymentGateway } from '../payments/adapters/mock-payment-gateway';
@@ -32,6 +34,8 @@ type Dependencies = {
   paymentService: Pick<PaymentService, 'handleEvent'>;
   eventBus: EventBus;
   clock: Clock;
+  approvalService: Pick<ApprovalService, 'request'>;
+  bookingSettings?: typeof getBookingSettings;
 };
 
 const ACCEPT_START_MAX_AHEAD_MS = 7 * 24 * 60 * 60 * 1000;
@@ -53,6 +57,8 @@ export class BookingService {
   private readonly paymentService: Dependencies['paymentService'];
   private readonly eventBus: EventBus;
   private readonly clock: Clock;
+  private readonly approvalService: Dependencies['approvalService'];
+  private readonly bookingSettings: NonNullable<Dependencies['bookingSettings']>;
 
   constructor({
     bookingRepository,
@@ -64,6 +70,8 @@ export class BookingService {
     paymentService,
     eventBus,
     clock,
+    approvalService,
+    bookingSettings = getBookingSettings,
   }: Dependencies) {
     this.bookingRepository = bookingRepository;
     this.mentorProfileRepository = mentorProfileRepository;
@@ -74,6 +82,8 @@ export class BookingService {
     this.paymentService = paymentService;
     this.eventBus = eventBus;
     this.clock = clock;
+    this.approvalService = approvalService;
+    this.bookingSettings = bookingSettings;
   }
 
   async create(session: Session, untrustedInput: unknown): Promise<BookingCreationResult> {
@@ -153,6 +163,12 @@ export class BookingService {
 
   async list(session: Session, query: BookingListQuery): Promise<BookingPage> {
     if (!session?.userId) throw new UnauthorizedError();
+    const now = this.clock.now();
+    await this.settleBookings({
+      before: new Date(now.getTime() - this.bookingSettings().MENTOR_RESPONSE_WINDOW_MINUTES * 60_000),
+      participantId: session.userId,
+      role: query.role,
+    });
     const participantBookings = await this.bookingRepository.findForParticipant(session.userId, query.role);
     const bookings = participantBookings.filter((booking) =>
       booking.seekerId === session.userId ||
@@ -164,7 +180,7 @@ export class BookingService {
     const pageItems = seekerList
       ? bookings
       : bookings.slice((page - 1) * pageSize, page * pageSize);
-    const serverTime = this.clock.now().toISOString();
+    const serverTime = now.toISOString();
     return {
       items: await Promise.all(pageItems.map((booking) => this.toParticipantDto(booking, session, serverTime))),
       page,
@@ -177,6 +193,12 @@ export class BookingService {
 
   async getById(session: Session, id: string): Promise<BookingReadDto> {
     if (!session?.userId) throw new UnauthorizedError();
+    const now = this.clock.now();
+    await this.settleBookings({
+      before: new Date(now.getTime() - this.bookingSettings().MENTOR_RESPONSE_WINDOW_MINUTES * 60_000),
+      bookingId: id,
+      participantId: session.userId,
+    });
     const booking = await this.bookingRepository.findById(id);
     if (!booking) throw new NotFoundError('Booking not found.');
     assertParticipant(session, [booking.seekerId, booking.mentorId]);
@@ -234,7 +256,8 @@ export class BookingService {
 
   async accept(session: Session, id: string, untrustedInput: unknown): Promise<BookingReadDto> {
     const input: BookingAcceptInput = parseOrThrow(bookingAcceptSchema, untrustedInput);
-    await this.requireMentorBooking(session, id);
+    const booking = await this.requireMentorBooking(session, id);
+    if (booking.status !== 'paid') throw new ConflictError();
     const now = this.clock.now();
     const startsAt = input.startsAt ? new Date(input.startsAt) : now;
     if (
@@ -265,19 +288,109 @@ export class BookingService {
 
   async decline(session: Session, id: string): Promise<BookingReadDto> {
     const booking = await this.requireMentorBooking(session, id);
+    if (booking.status !== 'paid' && booking.status !== 'declined') throw new ConflictError();
     const now = this.clock.now();
-    await this.bookingRepository.transitionStatus(id, 'declined', session.userId);
-    await this.updateMentorActivity(session.userId, now);
-    await this.eventBus.emit('bookings.booking.declined', { bookingId: booking.id });
+    if (booking.status !== 'declined') {
+      try {
+        const transitioned = await this.bookingRepository.transitionStatus(id, 'declined', session.userId);
+        if (!transitioned) throw new ConflictError();
+        await this.updateMentorActivity(session.userId, now);
+        await this.eventBus.emit('bookings.booking.declined', { bookingId: booking.id });
+      } catch (error) {
+        if (!(error instanceof StatusTransitionConflictError)) throw error;
+        const current = await this.bookingRepository.findById(id);
+        if (current?.status !== 'declined') throw new ConflictError();
+      }
+    }
+    await this.requestRefundApproval(booking, 'mentor_declined');
     return this.getById(session, id);
+  }
+
+  async requestRefund(session: Session, id: string): Promise<{ approvalId: string }> {
+    requireOperator(session);
+    const now = this.clock.now();
+    await this.settleBookings({
+      before: new Date(now.getTime() - this.bookingSettings().MENTOR_RESPONSE_WINDOW_MINUTES * 60_000),
+      bookingId: id,
+    });
+    const booking = await this.bookingRepository.findById(id);
+    if (!booking) throw new NotFoundError('Booking not found.');
+    if (booking.status !== 'paid' && booking.status !== 'accepted') throw new ConflictError();
+    const approvalId = await this.requestRefundApproval(booking, 'operator_requested');
+    return { approvalId };
+  }
+
+  async settleExpired(): Promise<number> {
+    const now = this.clock.now();
+    return this.settleBookings({
+      before: new Date(now.getTime() - this.bookingSettings().MENTOR_RESPONSE_WINDOW_MINUTES * 60_000),
+    });
   }
 
   private async requireMentorBooking(session: Session, id: string): Promise<Booking> {
     if (!session?.userId) throw new UnauthorizedError();
     if (!(await this.invitationService.isAcceptedMentor(session.userId))) throw new NotFoundError('Booking not found.');
+    const now = this.clock.now();
+    await this.settleBookings({
+      before: new Date(now.getTime() - this.bookingSettings().MENTOR_RESPONSE_WINDOW_MINUTES * 60_000),
+      bookingId: id,
+      participantId: session.userId,
+      role: 'mentor',
+    });
     const booking = await this.bookingRepository.findById(id);
     if (!booking || booking.mentorId !== session.userId) throw new NotFoundError('Booking not found.');
     return booking;
+  }
+
+  private async settleBookings(options: {
+    before: Date;
+    bookingId?: string;
+    participantId?: string;
+    role?: BookingListQuery['role'];
+  }): Promise<number> {
+    const candidates = await this.bookingRepository.findForSettlement(options);
+    let expired = 0;
+    for (const candidate of candidates) {
+      let booking = candidate;
+      if (booking.status === 'paid') {
+        try {
+          const transitioned = await this.bookingRepository.expirePaid(booking.id);
+          if (transitioned) {
+            expired += 1;
+            await this.eventBus.emit('bookings.booking.expired', { bookingId: booking.id });
+          }
+        } catch (error) {
+          if (!(error instanceof StatusTransitionConflictError)) throw error;
+        }
+        const current = await this.bookingRepository.findById(booking.id);
+        if (!current) continue;
+        booking = current;
+      }
+
+      if (booking.status === 'declined') {
+        await this.requestRefundApproval(booking, 'mentor_declined');
+      } else if (booking.status === 'expired') {
+        await this.requestRefundApproval(booking, 'mentor_unresponsive');
+      }
+    }
+    return expired;
+  }
+
+  private async requestRefundApproval(
+    booking: Booking,
+    reason: 'mentor_declined' | 'mentor_unresponsive' | 'operator_requested',
+  ): Promise<string> {
+    // Refund execution and auto-approval wait for the real executor in Phase 4.3.
+    const payment = await this.paymentRepository.findByBookingId(booking.id);
+    if (!payment || payment.status !== 'succeeded') {
+      throw new ConflictError('A refund approval requires a succeeded payment.');
+    }
+    const approval = await this.approvalService.request(
+      'refund',
+      { type: 'payment', id: payment.id },
+      reason,
+    );
+    return approval.id;
   }
 
   private async updateMentorActivity(userId: string, activeAt: Date): Promise<void> {

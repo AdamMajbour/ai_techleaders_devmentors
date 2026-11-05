@@ -41,6 +41,7 @@ function setup(
   const repository = {
     create: jest.fn(async () => approval),
     findById: jest.fn(async () => approval),
+    findBySubject: jest.fn(async () => null),
     transitionStatus: jest.fn(async () => true),
     ...repositoryOverrides,
   } as unknown as ApprovalRequestRepository;
@@ -72,10 +73,24 @@ describe('ApprovalService.request', () => {
     expect(Object.keys(requested.mock.calls[0][0] as object)).toEqual(['approvalId']);
   });
 
-  it('maps only the expected pending-subject conflict and preserves unrelated failures', async () => {
+  it('returns an existing refund request on duplicate calls and preserves unrelated failures', async () => {
+    const duplicateCall = setup({
+      findBySubject: jest.fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(pendingApproval()),
+      create: jest.fn(async () => Promise.reject(new PendingApprovalConflictError())),
+    });
+    await expect(duplicateCall.service.request('refund', { type: 'payment', id: SUBJECT_ID }, 'Reason'))
+      .resolves.toEqual({ id: APPROVAL_ID });
+
     const duplicate = setup({ create: jest.fn(async () => Promise.reject(new PendingApprovalConflictError())) });
     await expect(duplicate.service.request('refund', { type: 'payment', id: SUBJECT_ID }, 'Reason'))
       .rejects.toBeInstanceOf(ConflictError);
+
+    const existing = setup({ findBySubject: jest.fn(async () => pendingApproval()) });
+    await expect(existing.service.request('refund', { type: 'payment', id: SUBJECT_ID }, 'Different reason'))
+      .resolves.toEqual({ id: APPROVAL_ID });
+    expect(existing.repository.create).not.toHaveBeenCalled();
 
     const databaseFailure = setup({ create: jest.fn(async () => Promise.reject(new Error('database unavailable'))) });
     await expect(databaseFailure.service.request('refund', { type: 'payment', id: SUBJECT_ID }, 'Reason'))

@@ -11,7 +11,8 @@
   },
   "scripts": {
     "type-check": "tsc --noEmit",
-    "pilot:invite": "ts-node --project tsconfig.json scripts/pilot-invite.ts"
+    "pilot:invite": "ts-node --project tsconfig.json scripts/pilot-invite.ts",
+    "bookings:settle": "ts-node --project tsconfig.json scripts/bookings-settle.ts"
   },
   "dependencies": {
     "@devmentor/db": "*",

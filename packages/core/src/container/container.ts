@@ -20,6 +20,7 @@ import { registerLoggingSubscriber } from '../events/logging-subscriber';
 import { registerMailSubscriber } from '../events/mail-subscriber';
 import { registerBookingMailMappings } from '../events/booking-mail';
 import { createLogger, type Logger } from '../logger';
+import { getBookingSettings } from '../config/env';
 import { ArticleService } from '../services/articles/article.service';
 import { AuthService } from '../services/auth/auth.service';
 import { UserService } from '../services/auth/user.service';
@@ -66,6 +67,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
   container.register({
     logger: asValue(logger),
     clock: asValue(systemClock),
+    bookingSettings: asValue(getBookingSettings),
     eventBus: asValue(eventBus),
     orm: asValue(orm),
     em: asFunction(({ orm }: Cradle) => orm.em.fork()).scoped(),

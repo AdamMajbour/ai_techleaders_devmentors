@@ -55,11 +55,13 @@ export function requirePilotMember(
 }
 export { readJsonBody } from './http/body';
 export {
+  getBookingSettings,
   getAppBaseUrl,
   getEnv,
   getMailerSettings,
   getPaymentSettings,
   parseEnv,
+  parseBookingSettings,
   parsePaymentSettings,
   getOperatorUserIds,
   parseOperatorUserIds,

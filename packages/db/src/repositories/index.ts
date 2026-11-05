@@ -152,6 +152,54 @@ export class BookingRepository {
     return this.em.find(Booking, where, { orderBy: { createdAt: 'desc', id: 'asc' } });
   }
 
+  async findForSettlement(options: {
+    before: Date;
+    bookingId?: string;
+    participantId?: string;
+    role?: 'seeker' | 'mentor';
+  }): Promise<Booking[]> {
+    const predicates = [
+      `((b."status" = 'paid' and exists (
+        select 1 from "status_transitions" paid
+        where paid."entity_type" = 'Booking' and paid."entity_id" = b."id"
+          and paid."to_status" = 'paid' and paid."created_at" <= ?
+      )) or (b."status" in ('declined', 'expired') and exists (
+        select 1 from "status_transitions" closed
+        where closed."entity_type" = 'Booking' and closed."entity_id" = b."id"
+          and closed."from_status" = 'paid' and closed."to_status" = b."status"
+      )))`,
+    ];
+    const values: unknown[] = [options.before];
+
+    if (options.bookingId) {
+      predicates.push('b."id" = ?');
+      values.push(options.bookingId);
+    }
+    if (options.participantId) {
+      const field = options.role === 'seeker'
+        ? 'seeker_id'
+        : options.role === 'mentor'
+          ? 'mentor_id'
+          : null;
+      if (field) {
+        predicates.push(`b."${field}" = ?`);
+        values.push(options.participantId);
+      } else {
+        predicates.push('(b."seeker_id" = ? or b."mentor_id" = ?)');
+        values.push(options.participantId, options.participantId);
+      }
+    }
+
+    const rows = await this.em.getConnection().execute<Array<{ id: string }>>(
+      `select b."id" from "bookings" b where ${predicates.join(' and ')} order by b."created_at", b."id"`,
+      values,
+      'all',
+      this.em.getTransactionContext(),
+    );
+    if (!Array.isArray(rows) || rows.length === 0) return [];
+    return this.em.find(Booking, { id: { $in: rows.map((row) => row.id) } });
+  }
+
   async transitionStatus(
     id: string,
     status: 'accepted' | 'declined',
@@ -173,6 +221,17 @@ export class BookingRepository {
       }
       throw error;
     }
+  }
+
+  async expirePaid(id: string): Promise<boolean> {
+    return transitionStatus(this.em, {
+      entityType: 'Booking',
+      entityId: id,
+      from: ['paid'],
+      to: 'expired',
+      actor: { kind: 'system' },
+      ifAlready: true,
+    });
   }
 
   /** Persists the booking and its pending payment together before contacting the gateway. */
@@ -380,11 +439,14 @@ export type NewApprovalRequest = Pick<ApprovalRequest, 'kind' | 'subjectType' | 
 export type ApprovalDecisionStatus = 'approved' | 'rejected';
 
 const PENDING_APPROVAL_INDEX = 'approval_requests_one_pending_per_subject';
+const REFUND_APPROVAL_INDEX = 'approval_requests_one_refund_per_subject';
 
 function isPendingApprovalUniqueViolation(error: unknown): boolean {
   return (
     isUniqueConstraintViolation(error) &&
-    (error as { constraint?: unknown }).constraint === PENDING_APPROVAL_INDEX
+    [PENDING_APPROVAL_INDEX, REFUND_APPROVAL_INDEX].includes(
+      String((error as { constraint?: unknown }).constraint),
+    )
   );
 }
 
@@ -393,6 +455,10 @@ export class ApprovalRequestRepository {
 
   async findById(id: string): Promise<ApprovalRequest | null> {
     return this.em.findOne(ApprovalRequest, { id });
+  }
+
+  async findBySubject(kind: string, subjectType: string, subjectId: string): Promise<ApprovalRequest | null> {
+    return this.em.findOne(ApprovalRequest, { kind, subjectType, subjectId });
   }
 
   async create(data: NewApprovalRequest): Promise<ApprovalRequest> {

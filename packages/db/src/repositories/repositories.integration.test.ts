@@ -88,6 +88,7 @@ describe('migrations', () => {
   });
 
   it('removes the approval table and its partial index on migration down', async () => {
+    await orm.migrator.down('Migration20261105212000_refund_approval_uniqueness');
     await orm.migrator.down('Migration20261105183000_approval_requests');
     expect(await publicTables()).not.toContain('approval_requests');
 
@@ -100,6 +101,24 @@ describe('migrations', () => {
 
     await orm.migrator.up();
     expect(await publicTables()).toContain('approval_requests');
+  });
+
+  it('reverses and reapplies the single-refund-approval constraint', async () => {
+    await orm.migrator.down('Migration20261105212000_refund_approval_uniqueness');
+    let rows = await orm.em.getConnection().execute(
+      `select to_regclass('public.approval_requests_one_refund_per_subject') as name`,
+      [],
+      'get',
+    ) as unknown as { name: string | null } | undefined;
+    expect(rows?.name).toBeNull();
+
+    await orm.migrator.up();
+    rows = await orm.em.getConnection().execute(
+      `select to_regclass('public.approval_requests_one_refund_per_subject') as name`,
+      [],
+      'get',
+    ) as unknown as { name: string | null } | undefined;
+    expect(rows?.name).toBe('approval_requests_one_refund_per_subject');
   });
 
   it('reverses and reapplies the invitation and login-token migration', async () => {
@@ -225,6 +244,50 @@ describe('booking and payment constraints', () => {
     );
     return id;
   }
+
+  it('settles only paid bookings past the window and makes expiry transitions idempotent', async () => {
+    const seeker = await new UserRepository(orm.em.fork()).create({
+      email: `${randomUUID()}@example.com`,
+      name: 'Seeker',
+    });
+    const mentor = await new UserRepository(orm.em.fork()).create({
+      email: `${randomUUID()}@example.com`,
+      name: 'Mentor',
+    });
+    await new MentorProfileRepository(orm.em.fork()).create({
+      userId: mentor.id,
+      slug: `mentor-${randomUUID()}`,
+      headline: 'Mentor',
+      bio: 'Bio',
+      technologies: 'typescript',
+      publicWorkUrl: 'https://example.com',
+      isListed: true,
+      lastActiveAt: null,
+    });
+    const id = await insertBooking({ seekerId: seeker.id, mentorId: mentor.id });
+    await transitionStatus(orm.em.fork(), {
+      entityType: 'Booking',
+      entityId: id,
+      from: ['pending_payment'],
+      to: 'paid',
+      actor: { kind: 'webhook' },
+    });
+
+    const repository = new BookingRepository(orm.em.fork());
+    const paidJustNow = new Date();
+    expect(await repository.findForSettlement({ before: new Date(paidJustNow.getTime() - 1) }))
+      .toEqual([]);
+    expect(await repository.findForSettlement({ before: new Date(paidJustNow.getTime() + 1) }))
+      .toHaveLength(1);
+    const transitions = await Promise.all([
+      new BookingRepository(orm.em.fork()).expirePaid(id),
+      new BookingRepository(orm.em.fork()).expirePaid(id),
+    ]);
+    expect(transitions.filter(Boolean)).toHaveLength(1);
+    expect(transitions.filter((value) => !value)).toHaveLength(1);
+    await expect(repository.expirePaid(id)).resolves.toBe(false);
+    expect(await orm.em.count(Booking, { id, status: 'expired' })).toBe(1);
+  });
 
   it('enforces participant foreign keys, booking checks, and payment uniqueness', async () => {
     const seeker = await new UserRepository(orm.em.fork()).create({
@@ -790,7 +853,30 @@ describe('UserRepository', () => {
 });
 
 describe('ApprovalRequestRepository', () => {
-  it('allows only one pending request per subject and permits a new request after a decision', async () => {
+  it('creates only one refund request when callers race', async () => {
+    const data = {
+      kind: 'refund',
+      subjectType: 'payment',
+      subjectId: randomUUID(),
+      reason: 'Mentor did not respond.',
+    };
+    const attempts = await Promise.all([
+      new ApprovalRequestRepository(orm.em.fork()).create(data).then(
+        (approval) => approval,
+        (error: unknown) => error,
+      ),
+      new ApprovalRequestRepository(orm.em.fork()).create(data).then(
+        (approval) => approval,
+        (error: unknown) => error,
+      ),
+    ]);
+
+    expect(attempts.filter((result) => !(result instanceof Error))).toHaveLength(1);
+    expect(attempts.filter((result) => result instanceof PendingApprovalConflictError)).toHaveLength(1);
+    expect(await orm.em.count(ApprovalRequest, data)).toBe(1);
+  });
+
+  it('allows only one refund request per payment, including after a decision', async () => {
     const data = {
       kind: 'refund',
       subjectType: 'booking',
@@ -815,10 +901,15 @@ describe('ApprovalRequestRepository', () => {
       decidedBy: '00000000-0000-4000-8000-0000000000b2',
       decidedAt,
     });
-    await expect(new ApprovalRequestRepository(orm.em.fork()).create(data)).resolves.toMatchObject({
-      status: 'pending',
-      subjectId: data.subjectId,
-    });
+    await expect(new ApprovalRequestRepository(orm.em.fork()).create(data))
+      .rejects.toBeInstanceOf(PendingApprovalConflictError);
+    await expect(
+      new ApprovalRequestRepository(orm.em.fork()).findBySubject(
+        'refund',
+        'booking',
+        data.subjectId,
+      ),
+    ).resolves.toMatchObject({ id: created.id, status: 'rejected' });
   });
 });
 
