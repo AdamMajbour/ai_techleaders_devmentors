@@ -13,6 +13,31 @@ describe('parseEnv', () => {
     expect(() => parseEnv({ JWT_SECRET: 'x'.repeat(32), PUBLIC_SIGNUP: 'no' })).toThrow(/PUBLIC_SIGNUP/);
   });
 
+  it('accepts a configured HTTP(S) app origin and rejects unsafe or malformed values', () => {
+    const secret = 'x'.repeat(32);
+    const credentialsUrl = new URL('https://app.example.com');
+    credentialsUrl.username = 'user';
+    credentialsUrl.password = 'pass';
+    expect(parseEnv({ JWT_SECRET: secret, APP_BASE_URL: 'https://app.example.com' }).APP_BASE_URL).toBe(
+      'https://app.example.com',
+    );
+    expect(parseEnv({ JWT_SECRET: secret, APP_BASE_URL: 'http://localhost:3000' }).APP_BASE_URL).toBe(
+      'http://localhost:3000',
+    );
+
+    for (const APP_BASE_URL of [
+      'not-a-url',
+      'ftp://app.example.com',
+      credentialsUrl.toString(),
+      'https://user:password@app.example.com',
+      'https://app.example.com/path',
+      'https://app.example.com/?next=https://attacker.example',
+      'https://app.example.com/#fragment',
+    ]) {
+      expect(() => parseEnv({ JWT_SECRET: secret, APP_BASE_URL })).toThrow(/APP_BASE_URL/);
+    }
+  });
+
   it('rejects a missing or short secret and names the variable, never its value', () => {
     expect(() => parseEnv({})).toThrow(/JWT_SECRET/);
     const weak = 'short-secret-value';

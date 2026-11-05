@@ -13,6 +13,27 @@ const publicSignupSchema = z.preprocess(
   z.boolean(),
 );
 
+const appBaseUrlSchema = z
+  .string()
+  .trim()
+  .url()
+  .refine((value) => {
+    try {
+      const url = new URL(value);
+      return (
+        (url.protocol === 'https:' || url.protocol === 'http:') &&
+        !url.username &&
+        !url.password &&
+        url.pathname === '/' &&
+        !url.search &&
+        !url.hash
+      );
+    } catch {
+      return false;
+    }
+  }, 'APP_BASE_URL must be an HTTP(S) origin without credentials, path, query, or fragment')
+  .optional();
+
 const envSchema = z.object({
   // Generate with: openssl rand -base64 48
   JWT_SECRET: z.string().min(MIN_SECRET_LENGTH, `JWT_SECRET must be at least ${MIN_SECRET_LENGTH} characters (use 32+ random bytes)`),
@@ -22,6 +43,8 @@ const envSchema = z.object({
   ),
   // Default preserves existing deployments; the pilot deployment can disable sign-up later.
   PUBLIC_SIGNUP: publicSignupSchema,
+  // Optional for compatibility; magic-link requests require it when creating verification links.
+  APP_BASE_URL: appBaseUrlSchema,
   NODE_ENV: z.string().optional(),
 });
 
@@ -45,6 +68,15 @@ let cached: Env | null = null;
 export function getEnv(): Env {
   cached ??= parseEnv(process.env);
   return cached;
+}
+
+/** Required only by flows that send absolute links, keeping builds and unrelated routes lazy. */
+export function getAppBaseUrl(): string {
+  const { APP_BASE_URL } = getEnv();
+  if (!APP_BASE_URL) {
+    throw new Error('Invalid environment configuration: APP_BASE_URL. See .env.example.');
+  }
+  return APP_BASE_URL;
 }
 
 /** Invalid or empty operator configuration grants no operator access. */

@@ -60,6 +60,7 @@ const json = (response: Response) => response.json();
 beforeEach(() => {
   process.env.JWT_SECRET = SECRET;
   process.env.PUBLIC_SIGNUP = "true";
+  process.env.APP_BASE_URL = "https://app.devmentor.example";
   resetEnvCache();
   mockMagicLinkRequest.mockClear();
   mockMagicLinkConsume.mockReset().mockResolvedValue("ada@example.com");
@@ -77,8 +78,45 @@ describe("POST /api/auth/magic-link/request", () => {
     expect(uninvited.status).toBe(invited.status);
     expect(await json(invited)).toEqual({ ok: true, data: { sent: true } });
     expect(await json(uninvited)).toEqual({ ok: true, data: { sent: true } });
-    expect(mockMagicLinkRequest).toHaveBeenNthCalledWith(1, "ada@example.com", "http://localhost");
-    expect(mockMagicLinkRequest).toHaveBeenNthCalledWith(2, "nobody@example.com", "http://localhost");
+    expect(mockMagicLinkRequest).toHaveBeenNthCalledWith(1, "ada@example.com", "https://app.devmentor.example");
+    expect(mockMagicLinkRequest).toHaveBeenNthCalledWith(2, "nobody@example.com", "https://app.devmentor.example");
+  });
+
+  it("uses APP_BASE_URL rather than the incoming Host to build mailed links", async () => {
+    const response = await requestMagicLink(
+      new Request("http://internal-host/api/auth/magic-link/request", {
+        method: "POST",
+        headers: {
+          "x-requested-with": "devmentor",
+          origin: "https://attacker.example",
+          host: "attacker.example",
+          "x-forwarded-for": `spoofed-host-${nextClient++}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ email: "ada@example.com" }),
+      }),
+      undefined,
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockMagicLinkRequest).toHaveBeenCalledWith(
+      "ada@example.com",
+      "https://app.devmentor.example",
+    );
+  });
+
+  it("fails explicitly when APP_BASE_URL is missing or invalid", async () => {
+    delete process.env.APP_BASE_URL;
+    resetEnvCache();
+    const missing = await requestMagicLink(post("magic-link/request", { email: "ada@example.com" }), undefined);
+    expect(missing.status).toBe(500);
+    expect(mockWithScope).not.toHaveBeenCalled();
+
+    process.env.APP_BASE_URL = "ftp://attacker.example";
+    resetEnvCache();
+    const invalid = await requestMagicLink(post("magic-link/request", { email: "ada@example.com" }), undefined);
+    expect(invalid.status).toBe(500);
+    expect(mockWithScope).not.toHaveBeenCalled();
   });
 
   it("preserves CSRF and input validation errors", async () => {

@@ -47,7 +47,13 @@ export function requirePilotMember(
   return requirePilotMemberWithResolver(request, resolver ?? defaultResolver, secret);
 }
 export { readJsonBody } from './http/body';
-export { getEnv, parseEnv, getOperatorUserIds, parseOperatorUserIds } from './config/env';
+export {
+  getAppBaseUrl,
+  getEnv,
+  parseEnv,
+  getOperatorUserIds,
+  parseOperatorUserIds,
+} from './config/env';
 export { createLogger, redact, type Logger, type LogContext } from './logger';
 export { createEventBus, type EventBus } from './events/event-bus';
 export type { EventMap, EventName } from './events/event-map';
