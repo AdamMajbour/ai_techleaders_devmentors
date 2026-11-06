@@ -18,6 +18,7 @@ const ALL_EVENTS: EventName[] = [
   'approvals.approval.requested',
   'approvals.approval.approved',
   'approvals.approval.rejected',
+  'messages.message.posted',
 ];
 
 /** Writes one info line per domain event. Add a name above when a new event is added to the map. */

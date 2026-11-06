@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+﻿import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { MikroORM } from '@mikro-orm/core';
@@ -10,6 +10,7 @@ import {
   Invitation,
   LoginToken,
   MentorProfile,
+  Message,
   Payment,
   StatusTransition,
 } from '../entities';
@@ -27,6 +28,7 @@ import {
   InvitationRepository,
   LoginTokenRepository,
   MentorProfileRepository,
+  MessageRepository,
   PaymentRepository,
   UserRepository,
   transitionStatus,
@@ -88,11 +90,20 @@ describe('migrations', () => {
       'invitations',
       'login_tokens',
       'mentor_profiles',
+      'messages',
       'mikro_orm_migrations',
       'payments',
       'status_transitions',
       'users',
     ]);
+  });
+
+  it('creates and removes the messages table through the reversible migration', async () => {
+    await orm.migrator.down('Migration20261106090000_messages');
+    expect(await publicTables()).not.toContain('messages');
+
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('messages');
   });
 
   it('removes the approval table and its partial index on migration down', async () => {
@@ -792,6 +803,53 @@ describe('MentorProfileRepository', () => {
 });
 
 
+describe('MessageRepository', () => {
+  it('stores participant messages and reads each booking in keyset order', async () => {
+    const users = new UserRepository(orm.em.fork());
+    const seeker = await users.create({ email: `${randomUUID()}@example.com`, name: 'Seeker' });
+    const mentor = await users.create({ email: `${randomUUID()}@example.com`, name: 'Mentor' });
+    const otherSeeker = await users.create({ email: `${randomUUID()}@example.com`, name: 'Other seeker' });
+    await new MentorProfileRepository(orm.em.fork()).create({
+      userId: mentor.id,
+      slug: `mentor-${randomUUID()}`,
+      headline: 'Mentor',
+      bio: 'Bio',
+      technologies: 'typescript',
+      publicWorkUrl: 'https://example.com',
+      isListed: true,
+      lastActiveAt: null,
+    });
+    const bookingId = randomUUID();
+    const otherBookingId = randomUUID();
+    const now = new Date();
+    const createBooking = (id: string, seekerId: string, status: string) => orm.em.getConnection().execute(
+      `insert into "bookings" (
+        "id", "seeker_id", "mentor_id", "question", "duration_minutes", "price_minor",
+        "currency", "status", "source", "landed_at", "starts_at", "ends_at", "created_at", "updated_at"
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, seekerId, mentor.id, 'Question', 25, 2500, 'EUR', status, 'link', now, status === 'accepted' ? now : null, status === 'accepted' ? new Date(now.getTime() + 25 * 60_000) : null, now, now],
+      'run',
+    );
+    await createBooking(bookingId, seeker.id, 'accepted');
+    await createBooking(otherBookingId, otherSeeker.id, 'paid');
+
+    const messages = new MessageRepository(orm.em.fork());
+    await messages.create({ bookingId, authorId: seeker.id, body: 'First message' });
+    await messages.create({ bookingId, authorId: mentor.id, body: 'Second message' });
+    await messages.create({ bookingId: otherBookingId, authorId: otherSeeker.id, body: 'Other booking' });
+
+    const first = await messages.findByBookingAfter(bookingId, null, 1);
+    expect(first).toHaveLength(1);
+    const second = await messages.findByBookingAfter(bookingId, { createdAt: first[0].createdAt, id: first[0].id }, 10);
+    expect(second).toHaveLength(1);
+    expect([first[0].body, second[0].body]).toEqual(expect.arrayContaining(['First message', 'Second message']));
+    expect(await orm.em.fork().count(Message, { bookingId })).toBe(2);
+
+    await expect(messages.create({ bookingId, authorId: seeker.id, body: 'm'.repeat(2001) })).rejects.toThrow();
+    await expect(messages.create({ bookingId, authorId: randomUUID(), body: 'Unknown author' })).rejects.toThrow();
+  });
+});
+
 describe('LoginTokenRepository', () => {
   it('stores the opaque hash and consumes a valid token once under concurrent reuse', async () => {
     const rawToken = Buffer.alloc(32, 7).toString('base64url');
@@ -1188,7 +1246,7 @@ describe('migrations (down)', () => {
     await orm.migrator.up();
     expect(await publicTables()).toEqual([
       'approval_requests', 'articles', 'bookings', 'invitations', 'login_tokens',
-      'mentor_profiles', 'mikro_orm_migrations', 'payments', 'status_transitions', 'users',
+      'mentor_profiles', 'messages', 'mikro_orm_migrations', 'payments', 'status_transitions', 'users',
     ]);
   });
 

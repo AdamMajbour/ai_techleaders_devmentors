@@ -5,6 +5,7 @@ import {
   InvitationRepository,
   LoginTokenRepository,
   MentorProfileRepository,
+  MessageRepository,
   UserRepository,
 } from '@devmentor/db';
 import { ArticleService } from '../services/articles/article.service';
@@ -13,6 +14,7 @@ import { UserService } from '../services/auth/user.service';
 import { InvitationService } from '../services/auth/invitation.service';
 import { MagicLinkService } from '../services/auth/magic-link.service';
 import { MentorService } from '../services/mentors/mentor.service';
+import { MessageService } from '../services/messages/message.service';
 import { MockPaymentGateway } from '../services/payments/adapters/mock-payment-gateway';
 import { StripePaymentGateway } from '../services/payments/adapters/stripe-payment-gateway';
 import { PaymentService } from '../services/payments/payment.service';
@@ -70,12 +72,14 @@ describe('buildContainer', () => {
     expect(cradle.invitationRepository).toBeInstanceOf(InvitationRepository);
     expect(cradle.loginTokenRepository).toBeInstanceOf(LoginTokenRepository);
     expect(cradle.mentorProfileRepository).toBeInstanceOf(MentorProfileRepository);
+    expect(cradle.messageRepository).toBeInstanceOf(MessageRepository);
     expect(cradle.userService).toBeInstanceOf(UserService);
     expect(cradle.articleService).toBeInstanceOf(ArticleService);
     expect(cradle.approvalService).toBeInstanceOf(ApprovalService);
     expect(cradle.invitationService).toBeInstanceOf(InvitationService);
     expect(cradle.magicLinkService).toBeInstanceOf(MagicLinkService);
     expect(cradle.mentorService).toBeInstanceOf(MentorService);
+    expect(cradle.messageService).toBeInstanceOf(MessageService);
     expect(cradle.paymentService).toBeInstanceOf(PaymentService);
     expect(cradle.paymentGateway).toBeInstanceOf(MockPaymentGateway);
     expect(cradle.mailer).toBeInstanceOf(ConfiguredMailer);

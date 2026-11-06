@@ -84,6 +84,7 @@ export {
 export { BookingService, type BookingCreationResult } from './services/bookings/booking.service';
 export { PaymentService } from './services/payments/payment.service';
 export { RefundService } from './services/refunds/refund.service';
+export { MessageService, type MessageDto, type MessagePage } from './services/messages/message.service';
 export { AuthService } from './services/auth/auth.service';
 export { UserService } from './services/auth/user.service';
 export {

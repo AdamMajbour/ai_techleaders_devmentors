@@ -8,6 +8,7 @@ import type {
   MentorProfileRepository,
   BookingRepository,
   PaymentRepository,
+  MessageRepository,
 } from '@devmentor/db';
 import type { EventBus } from '../events/event-bus';
 import type { Logger } from '../logger';
@@ -25,6 +26,7 @@ import type { MentorService } from '../services/mentors/mentor.service';
 import type { BookingService } from '../services/bookings/booking.service';
 import type { PaymentService } from '../services/payments/payment.service';
 import type { RefundService } from '../services/refunds/refund.service';
+import type { MessageService } from '../services/messages/message.service';
 
 /** Every dependency the container can provide. A new service is one line here and one in container.ts. */
 export interface Cradle {
@@ -42,6 +44,7 @@ export interface Cradle {
   mentorProfileRepository: MentorProfileRepository;
   bookingRepository: BookingRepository;
   paymentRepository: PaymentRepository;
+  messageRepository: MessageRepository;
   userService: UserService;
   authService: AuthService;
   articleService: ArticleService;
@@ -52,6 +55,7 @@ export interface Cradle {
   bookingService: BookingService;
   paymentService: PaymentService;
   refundService: RefundService;
+  messageService: MessageService;
   approverResolvers: ApproverResolvers;
   paymentGateway: PaymentGateway;
   mailer: Mailer;

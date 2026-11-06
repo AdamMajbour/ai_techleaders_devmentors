@@ -13,6 +13,7 @@ import {
   LoginTokenRepository,
   MentorProfileRepository,
   PaymentRepository,
+  MessageRepository,
   UserRepository,
 } from '@devmentor/db';
 import { createEventBus } from '../events/event-bus';
@@ -33,6 +34,7 @@ import { ApprovalService, defaultApproverResolvers } from '../services/approvals
 import { MentorService } from '../services/mentors/mentor.service';
 import { BookingService } from '../services/bookings/booking.service';
 import { RefundService } from '../services/refunds/refund.service';
+import { MessageService } from '../services/messages/message.service';
 import { systemClock } from '../utils/clock';
 import type { Cradle, OrmLike } from './cradle';
 
@@ -80,6 +82,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     mentorProfileRepository: asFunction(({ em }: Cradle) => new MentorProfileRepository(em)).scoped(),
     bookingRepository: asFunction(({ em }: Cradle) => new BookingRepository(em)).scoped(),
     paymentRepository: asFunction(({ em }: Cradle) => new PaymentRepository(em)).scoped(),
+    messageRepository: asFunction(({ em }: Cradle) => new MessageRepository(em)).scoped(),
     userService: asClass(UserService).scoped(),
     authService: asClass(AuthService).scoped(),
     articleService: asClass(ArticleService).scoped(),
@@ -87,6 +90,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     mentorService: asClass(MentorService).scoped(),
     bookingService: asClass(BookingService).scoped(),
     refundService: asClass(RefundService).scoped(),
+    messageService: asClass(MessageService).scoped(),
     paymentService: asClass(PaymentService).scoped(),
     invitationService: asClass(InvitationService).scoped(),
     magicLinkService: asClass(MagicLinkService).scoped(),

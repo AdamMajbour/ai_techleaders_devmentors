@@ -10,3 +10,4 @@ export { MentorProfile } from './mentors/mentor-profile.entity';
 export { Booking } from './bookings/booking.entity';
 export { Payment } from './payments/payment.entity';
 export { StatusTransition } from './workflow/status-transition.entity';
+export { Message } from './messages/message.entity';

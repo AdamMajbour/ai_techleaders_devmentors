@@ -108,4 +108,23 @@ describe('event bus', () => {
       bookingId: 'booking-1',
     });
   });
+
+  it('logs posted message events with IDs only', async () => {
+    const log = logger();
+    const bus = createEventBus(log);
+    registerLoggingSubscriber(bus, log);
+
+    await bus.emit('messages.message.posted', {
+      messageId: 'message-1',
+      bookingId: 'booking-1',
+      authorId: 'author-1',
+    });
+
+    expect(log.info).toHaveBeenCalledWith('Domain event', {
+      event: 'messages.message.posted',
+      messageId: 'message-1',
+      bookingId: 'booking-1',
+      authorId: 'author-1',
+    });
+  });
 });

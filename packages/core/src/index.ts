@@ -23,6 +23,7 @@ export * from './validators/bookings/booking-list.schema';
 export * from './validators/bookings/booking-action.schema';
 export * from './validators/bookings/booking-accept.schema';
 export * from './validators/approvals/refund-approval-action.schema';
+export * from './validators/messages/message.schema';
 export type {
   ArticleDto,
   BookingDto,

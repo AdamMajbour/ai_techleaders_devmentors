@@ -12,6 +12,7 @@ import {
   MentorProfile,
   Booking,
   Payment,
+  Message,
 } from '../entities';
 import {
   ExclusionConstraintViolationError,
@@ -574,6 +575,46 @@ export class ApprovalRequestRepository {
       actor: { kind: 'system' },
       patch: { decidedBy: null, decidedBySystem: true, decidedAt },
     });
+  }
+}
+
+export type NewMessage = Pick<Message, 'bookingId' | 'authorId' | 'body'>;
+
+export interface MessageCursor {
+  createdAt: Date;
+  id: string;
+}
+
+export class MessageRepository {
+  constructor(private readonly em: EntityManager) {}
+
+  async create(data: NewMessage): Promise<Message> {
+    const message = this.em.create(Message, data);
+    this.em.persist(message);
+    await this.em.flush();
+    return message;
+  }
+
+  async findByBookingAfter(
+    bookingId: string,
+    cursor: MessageCursor | null,
+    limit: number,
+  ): Promise<Message[]> {
+    return this.em.find(
+      Message,
+      {
+        bookingId,
+        ...(cursor
+          ? {
+              $or: [
+                { createdAt: { $gt: cursor.createdAt } },
+                { createdAt: cursor.createdAt, id: { $gt: cursor.id } },
+              ],
+            }
+          : {}),
+      },
+      { orderBy: { createdAt: 'asc', id: 'asc' }, limit },
+    );
   }
 }
 
