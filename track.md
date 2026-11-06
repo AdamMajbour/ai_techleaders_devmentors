@@ -135,13 +135,15 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 **5.2 validation:** focused route, session page, and message service tests passed (3 suites / 17 tests), covering both participant roles, unauthorized and concealed access, CSRF/body validation, polling interval, viewer identity, and read-only behavior after 25 minutes. Workspace type-check, repository lint (`npm run lint -- --quiet`), production build, and `git diff --check` passed. GET includes server time and session bounds; polling uses a separate keyset cursor to fetch new messages while preserving the initial history. The manual browser test gate below remains pending.
 
-**Manual test gate:** test both participant roles, non-participant denial, message polling, and the 25-minute session window.
+**Manual test gate:** ✅ requester directed continuation to Phase 6 on 2026-11-06; Phase 5 is treated as accepted. The checklist remains the manual acceptance record: both participant roles, non-participant denial, message polling, and the 25-minute session window.
 
 ## Phase 6 — Rehearsal before go-live (manual precondition)
 
 - [ ] 6.1 Run the full rehearsal in the target environment with Stripe test keys and a real mail provider.
-- [ ] 6.2 Record evidence, outcomes, and failures in `.ai/runs/2026-11-xx-pilot-rehearsal.md`; rerun failures before proceeding.
+- [ ] 6.2 Record evidence, outcomes, and failures in `.ai/runs/2026-11-06-pilot-rehearsal.md`; rerun failures before proceeding.
 - [ ] 6.3 Founder A reviews the rehearsal and required decisions/reviews, then makes the go-live decision.
+
+**6.1 preflight:** not started. The current workspace has no `.env.local`, no target services configured in the process environment, and no app listening on port 3000. See `.ai/runs/2026-11-06-pilot-rehearsal.md` for the observed state and required inputs. Live payments remain disabled.
 
 ## Current gates
 
