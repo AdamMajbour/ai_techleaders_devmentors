@@ -143,7 +143,7 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 - [ ] 6.2 Record evidence, outcomes, and failures in `.ai/runs/2026-11-06-pilot-rehearsal.md`; rerun failures before proceeding.
 - [ ] 6.3 Founder A reviews the rehearsal and required decisions/reviews, then makes the go-live decision.
 
-**6.1 preflight:** not started. The current workspace has no `.env.local`, no target services configured in the process environment, and no app listening on port 3000. See `.ai/runs/2026-11-06-pilot-rehearsal.md` for the observed state and required inputs. Live payments remain disabled.
+**6.1 local preflight:** setup command `npm.cmd run setup -- --no-seed` created `.env.local` and refreshed `node_modules`; seed was skipped. Local TCP 5432 is reachable, but migrations fail with PostgreSQL `28P01` because `.env.example` credentials do not match the existing server. Docker is unavailable. Phase 6 has not started. Next action: obtain the correct local DB credentials or make Docker available and start the repository DB with `docker compose up -d db`. See `.ai/runs/2026-11-06-pilot-rehearsal.md`. Live payments remain disabled.
 
 ## Current gates
 
