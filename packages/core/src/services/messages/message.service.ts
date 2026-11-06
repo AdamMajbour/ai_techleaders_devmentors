@@ -43,7 +43,10 @@ export interface MessageDto {
 export interface MessagePage {
   items: MessageDto[];
   nextCursor: string | null;
+  pollCursor: string | null;
   serverTime: string;
+  session: { startsAt: string; endsAt: string };
+  viewerId: string;
 }
 
 type Dependencies = {
@@ -85,7 +88,12 @@ export class MessageService {
       nextCursor: hasMore && messages.length > 0
         ? encodeMessageCursor(cursorFromMessage(messages[messages.length - 1]))
         : null,
+      pollCursor: messages.length > 0
+        ? encodeMessageCursor(cursorFromMessage(messages[messages.length - 1]))
+        : cursor ?? null,
       serverTime: this.clock.now().toISOString(),
+      session: { startsAt: booking.startsAt!.toISOString(), endsAt: booking.endsAt!.toISOString() },
+      viewerId: session.userId,
     };
   }
 

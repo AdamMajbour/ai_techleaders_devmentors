@@ -129,9 +129,11 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 ## Phase 5 — Text session (#14)
 
 - [x] 5.1 Add message entity/migration and participant-scoped, time-windowed message service.
-- [ ] 5.2 Add message routes and polling session page; verify read-only behavior after the session ends.
+- [x] 5.2 Add message routes and polling session page; verify read-only behavior after the session ends.
 
 **5.1 validation:** message service tests cover both participant roles, nonparticipant concealment, server-clock session boundaries, body validation, and cursor paging; the DB integration suite passes 40 tests including message migration rollback, booking-scoped keyset reads, foreign keys, and the 2,000-character body constraint. Workspace type-check and `npm run lint -- --quiet` passed; the full unit suite passed (97 suites / 694 tests). The disposable `devmentor_test` cluster was stopped and removed after verification.
+
+**5.2 validation:** focused route, session page, and message service tests passed (3 suites / 17 tests), covering both participant roles, unauthorized and concealed access, CSRF/body validation, polling interval, viewer identity, and read-only behavior after 25 minutes. Workspace type-check, repository lint (`npm run lint -- --quiet`), production build, and `git diff --check` passed. GET includes server time and session bounds; polling uses a separate keyset cursor to fetch new messages while preserving the initial history. The manual browser test gate below remains pending.
 
 **Manual test gate:** test both participant roles, non-participant denial, message polling, and the 25-minute session window.
 
