@@ -143,7 +143,7 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 - [ ] 6.2 Record evidence, outcomes, and failures in `.ai/runs/2026-11-06-pilot-rehearsal.md`; rerun failures before proceeding.
 - [ ] 6.3 Founder A reviews the rehearsal and required decisions/reviews, then makes the go-live decision.
 
-**6.1 local preflight:** setup command `npm.cmd run setup -- --no-seed` created `.env.local` and refreshed `node_modules`; seed was skipped. Local TCP 5432 is reachable, but migrations fail with PostgreSQL `28P01` because `.env.example` credentials do not match the existing server. Docker is unavailable. Phase 6 has not started. Next action: obtain the correct local DB credentials or make Docker available and start the repository DB with `docker compose up -d db`. See `.ai/runs/2026-11-06-pilot-rehearsal.md`. Live payments remain disabled.
+**6.1 local preflight:** Docker Desktop 4.98.0 per-user with WSL 2 is running; Docker engine 29.9.2 responds. PostgreSQL 17 is healthy in isolated Compose project `devmentor-pilot-local` with its own volume at `localhost:5433`; `.env.local` uses `DATABASE_PORT=5433` and migrations are at latest. The existing host `postgres.exe` on 5432 was left untouched. The app has not been started and no invitations, emails, bookings, payments, or refunds were created. Phase 6 remains not started because local Stripe test credentials, a real email provider, and founder A / participant bootstrap are still required. See `.ai/runs/2026-11-06-pilot-rehearsal.md`. Live payments remain disabled.
 
 ## Current gates
 
