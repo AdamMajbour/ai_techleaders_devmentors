@@ -499,12 +499,25 @@ describe('operations', () => {
 describe('in a browser', () => {
   beforeAll(async () => {
     try {
-      browser = await chromium.launch({ env: chromiumEnv() as Record<string, string> });
+      // Add timeout to prevent hanging - 30s should be enough for Chromium to start
+      const launchPromise = chromium.launch({ 
+        env: chromiumEnv() as Record<string, string>,
+        timeout: 30000,
+      });
+      browser = await Promise.race([
+        launchPromise,
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Chromium launch timed out after 30s')), 30000)
+        ),
+      ]);
     } catch (error) {
+      const chromiumLibs = process.env.CHROMIUM_LIBS_DIR || path.join(os.homedir(), '.cache/chromium-libs');
       throw new Error(
-        'Could not start Chromium. Install it with `npx playwright install --with-deps chromium` ' +
-          '(root) or `npx playwright install chromium && python3 scripts/setup-chromium-libs.py` (no root).\n' +
-          String(error),
+        'Could not start Chromium. ' +
+        `CHROMIUM_LIBS_DIR=${chromiumLibs}\n` +
+        'Install it with `npx playwright install --with-deps chromium` (root) ' +
+        'or `npx playwright install chromium && python3 scripts/setup-chromium-libs.py` (no root).\n' +
+        String(error),
       );
     }
   });
