@@ -44,8 +44,5 @@
     "playwright": "^1.64.1",
     "ts-jest": "^29.4.15",
     "typescript": "^5"
-  },
-  "dependencies": {
-    "jq": "^1.7.2"
   }
 }
