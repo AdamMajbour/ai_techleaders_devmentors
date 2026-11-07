@@ -217,3 +217,14 @@ Problems have support: three interviews with incidents and one Discord export, a
 - How: interview about weekly hours, the rate they would set, what their employer allows, whether they invoice, and what they need to see before their notes feed an answer; none of the three was asked
 - Owner and by when: founder B, before the first invitations on 2026-11-02 (D20; reported by founder A)
 - Template: `.ai/specs/research/templates/interview-note.md`
+
+### Questions from the synthetic mentor-onboarding walkthrough
+
+Source: [2026-10-31 walkthrough report](research/walkthroughs/2026-10-31-mentor-onboarding-session-001/report.md) and its [mentor-onboarding prototype](../prototypes/discovery/mentor-onboarding/revision-001/). These are `[SYNTHETIC]` questions for real-user research, not requirements or usability findings; the small panel does not establish a barrier or a population estimate. They inform D04 and A04.
+
+- For invited mentors, is the public-work link required, and who do they think will see it? Can they understand the audience and continue if they choose not to provide a link?
+- If a mentor defers setup after opening the invitation, can they find and resume it later?
+- Does the invitation make the later profile and availability steps clear enough before the mentor begins?
+- Is the visible focus indicator understandable and keyboard navigation usable through the invitation and profile steps? Keyboard behavior was not tested in this walkthrough.
+
+Check these questions with invited mentors completing the flow as they normally would. Do not treat the synthetic reactions as evidence that the field must be optional, that onboarding must be resumable, or that the invitation needs additional copy.

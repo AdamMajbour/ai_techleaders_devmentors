@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import remarkGfm from 'remark-gfm';
 
 const config: StorybookConfig = {
+  staticDirs: ['./public'],
   stories: ['../src/**/*.stories.@(ts|tsx)', './docs/**/*.mdx'],
   addons: [
     {
