@@ -44,7 +44,10 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
   const container = createContainer<Cradle>({ injectionMode: InjectionMode.PROXY, strict: true });
   const eventBus = createEventBus(logger);
   registerLoggingSubscriber(eventBus, logger);
-  const mailer = new ConfiguredMailer();
+  // Use a write function that flushes immediately to avoid buffering issues
+  const mailer = new ConfiguredMailer(undefined, (output) => {
+    process.stdout.write(output + '\n');
+  });
   registerMailSubscriber(eventBus, mailer, logger, (onMail) => {
     registerBookingMailMappings(onMail, {
       paidQuestion: (bookingId) => withScope(async ({ bookingRepository, userRepository }) => {

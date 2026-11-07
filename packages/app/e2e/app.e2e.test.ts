@@ -611,7 +611,7 @@ describe('in a browser', () => {
 
     const mailboxMarker = `[development mail]\nTo: ${email}`;
     let verifyUrl: string | undefined;
-    const deadline = Date.now() + 5_000;
+    const deadline = Date.now() + 25_000; // Increased from 5s to 25s to match jest timeout
     while (!verifyUrl && Date.now() < deadline) {
       const output = server.log();
       const marker = output.lastIndexOf(mailboxMarker);

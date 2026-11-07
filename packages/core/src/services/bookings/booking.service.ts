@@ -263,6 +263,8 @@ export class BookingService {
     // Process webhook event (marks payment as succeeded/failed and emits booking events,
     // including the pending_payment → paid transition for a successful checkout)
     await this.paymentService.handleEvent(event);
+    // Clear the EntityManager cache to ensure we get the latest booking status
+    this.bookingRepository.clearCache();
     return this.getById(session, id);
   }
 

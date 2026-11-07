@@ -146,6 +146,10 @@ export type NewPayment = Pick<
 export class BookingRepository {
   constructor(private readonly em: EntityManager) {}
 
+  clearCache(): void {
+    this.em.clear();
+  }
+
   async findById(id: string): Promise<Booking | null> {
     return this.em.findOne(Booking, { id });
   }
