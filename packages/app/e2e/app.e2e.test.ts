@@ -603,7 +603,7 @@ describe('in a browser', () => {
     await page.close();
   });
 
-  it('invites a seeker, requests and consumes a one-time link, and returns a signed-in session', 60000, async () => {
+  it('invites a seeker, requests and consumes a one-time link, and returns a signed-in session', async () => {
     const email = `pilot-${randomBytes(4).toString('hex')}@example.com`;
     run([
       'run',
@@ -658,7 +658,7 @@ describe('in a browser', () => {
     await page.close();
   });
 
-  it('registers, writes an article, deletes it and logs out through the UI', 60000, async () => {
+  it('registers, writes an article, deletes it and logs out through the UI', async () => {
     const { page, problems } = await open('/register');
     const email = `ui-${randomBytes(4).toString('hex')}@example.com`;
 
