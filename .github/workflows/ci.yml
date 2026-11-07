@@ -54,8 +54,8 @@ jobs:
 
       - name: Create test databases
         run: |
-          PGPASSWORD=postgres createdb -U postgres -h localhost -p 5432 devmentor_test
-          PGPASSWORD=postgres createdb -U postgres -h localhost -p 5432 devmentor_e2e
+          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 -c "CREATE DATABASE devmentor_test;"
+          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 -c "CREATE DATABASE devmentor_e2e;"
 
       - name: Database migrations (up, down, up) and seed
         run: |
