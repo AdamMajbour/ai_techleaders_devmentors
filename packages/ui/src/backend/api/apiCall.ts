@@ -6,7 +6,10 @@ const CLIENT_HEADER = { 'x-requested-with': 'devmentor' } as const;
 /** Status used when no HTTP response was received at all (offline, DNS, CORS). */
 const NO_RESPONSE_STATUS = 0;
 
-type CallOptions = Omit<RequestInit, 'body'> & { json?: unknown };
+type CallOptions = Omit<RequestInit, 'body' | 'signal'> & { 
+  json?: unknown;
+  timeout?: number;
+};
 
 /** Reads a response body as JSON without ever throwing; anything unparseable becomes `null`. */
 export async function readJsonSafe(response: Response): Promise<unknown> {
@@ -41,12 +44,16 @@ function toError(body: unknown, status: number): ApiError {
  * Always resolves to an `ApiResult`; branch on `ok` instead of try/catch.
  */
 export async function apiCall<T>(path: string, options: CallOptions = {}): Promise<ApiResult<T>> {
-  const { json, headers, ...init } = options;
+  const { json, headers, timeout = 30000, ...init } = options;
+
+  const controller = new AbortController();
+  const timeoutId = timeout > 0 ? setTimeout(() => controller.abort(), timeout) : undefined;
 
   let response: Response;
   try {
     response = await fetch(path, {
       ...init,
+      signal: controller.signal,
       headers: {
         ...CLIENT_HEADER,
         ...(json === undefined ? {} : { 'content-type': 'application/json' }),
@@ -54,13 +61,23 @@ export async function apiCall<T>(path: string, options: CallOptions = {}): Promi
       },
       body: json === undefined ? undefined : JSON.stringify(json),
     });
-  } catch {
+  } catch (error) {
+    if (timeoutId) clearTimeout(timeoutId);
+    if (error?.name === 'AbortError') {
+      return {
+        ok: false,
+        status: NO_RESPONSE_STATUS,
+        error: { code: 'timeout', message: 'Request timed out.' },
+      };
+    }
     return {
       ok: false,
       status: NO_RESPONSE_STATUS,
       error: { code: 'network_error', message: 'The server could not be reached.' },
     };
   }
+
+  if (timeoutId) clearTimeout(timeoutId);
 
   const body = await readJsonSafe(response);
   if (response.ok && isRecord(body) && body.ok === true && 'data' in body) {
@@ -86,3 +103,5 @@ export async function apiCallOrThrow<T>(path: string, options?: CallOptions): Pr
   if (!result.ok) throw new ApiCallError(result.error, result.status);
   return result.data;
 }
+
+export type { CallOptions };
