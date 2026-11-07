@@ -608,14 +608,18 @@ describe('in a browser', () => {
     await page.waitForSelector('input[name=email]', { timeout: 10000 });
     await page.fill('input[name=email]', email);
     await page.waitForSelector('button[type=submit]', { timeout: 10000 });
+    console.log('About to click submit');
     await page.click('button[type=submit]');
+    console.log('Clicked submit, waiting for success message');
     // Wait for either success message or error
     try {
       await page.getByText('If an invitation exists for this address, a sign-in link has been sent. Check your e-mail.').waitFor({ timeout: 10000 });
-    } catch {
+      console.log('Success message appeared');
+    } catch (e) {
       // If success message not found, check for error
       const pageText = await page.textContent('body');
-      throw new Error(`Login form did not show success message. Page content: ${pageText?.slice(0, 500)}`);
+      console.log('Success message not found. Page content:', pageText?.slice(0, 500));
+      throw new Error(`Login form did not show success message. Page content: ${pageText?.slice(0, 500)}. Error: ${e}`);
     }
 
     const mailboxMarker = `[development mail]\nTo: ${email}`;
