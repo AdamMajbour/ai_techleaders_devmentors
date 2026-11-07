@@ -260,16 +260,9 @@ export class BookingService {
     const event = outcome === 'complete'
       ? this.paymentGateway.completeCheckout(payment.providerSessionId)
       : this.paymentGateway.failCheckout(payment.providerSessionId);
-    // Process webhook event (marks payment as succeeded/failed and emits booking events)
+    // Process webhook event (marks payment as succeeded/failed and emits booking events,
+    // including the pending_payment → paid transition for a successful checkout)
     await this.paymentService.handleEvent(event);
-    // When mock checkout succeeds we must also move the booking from pending_payment to paid
-    if (outcome === 'complete') {
-      await this.bookingRepository.transitionStatus(
-        id,
-        'paid',
-        booking.seekerId, // owner of the booking
-      );
-    }
     return this.getById(session, id);
   }
 
