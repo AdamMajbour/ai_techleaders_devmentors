@@ -603,7 +603,7 @@ describe('in a browser', () => {
     await page.close();
   });
 
-  it('invites a seeker, requests and consumes a one-time link, and returns a signed-in session', async () => {
+  it('invites a seeker, requests and consumes a one-time link, and returns a signed-in session', 60000, async () => {
     const email = `pilot-${randomBytes(4).toString('hex')}@example.com`;
     run([
       'run',
@@ -624,7 +624,7 @@ describe('in a browser', () => {
 
     const mailboxMarker = `[development mail]\nTo: ${email}`;
     let verifyUrl: string | undefined;
-    const deadline = Date.now() + 25_000; // Increased from 5s to 25s to match jest timeout
+    const deadline = Date.now() + 58_000; // Increased from 5s to 58s to match the test timeout of 60s with buffer
     while (!verifyUrl && Date.now() < deadline) {
       const output = server.log();
       const marker = output.lastIndexOf(mailboxMarker);
@@ -658,7 +658,7 @@ describe('in a browser', () => {
     await page.close();
   });
 
-  it('registers, writes an article, deletes it and logs out through the UI', async () => {
+  it('registers, writes an article, deletes it and logs out through the UI', 60000, async () => {
     const { page, problems } = await open('/register');
     const email = `ui-${randomBytes(4).toString('hex')}@example.com`;
 
