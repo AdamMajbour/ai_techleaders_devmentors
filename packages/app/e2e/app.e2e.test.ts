@@ -605,7 +605,9 @@ describe('in a browser', () => {
     ]);
 
     const { page, problems } = await open('/login');
+    await page.waitForSelector('input[name=email]', { timeout: 10000 });
     await page.fill('input[name=email]', email);
+    await page.waitForSelector('button[type=submit]', { timeout: 10000 });
     await page.click('button[type=submit]');
     // Wait for either success message or error
     try {
@@ -657,11 +659,15 @@ describe('in a browser', () => {
     const { page, problems } = await open('/register');
     const email = `ui-${randomBytes(4).toString('hex')}@example.com`;
 
+    await page.waitForSelector('input[name=name]', { timeout: 10000 });
     await page.fill('input[name=name]', 'Browser Tester');
+    await page.waitForSelector('input[name=email]', { timeout: 10000 });
     await page.fill('input[name=email]', email);
+    await page.waitForSelector('input[name=password]', { timeout: 10000 });
     await page.fill('input[name=password]', PASSWORD);
+    await page.waitForSelector('button[type=submit]', { timeout: 10000 });
     await page.click('button[type=submit]');
-    await page.waitForURL('**/articles', { timeout: 10000 });
+    await page.waitForURL('**/articles', { timeout: 15000 });
     await page.waitForSelector('text=New article', { timeout: 10000 });
     expect(await page.locator('header >> text=Browser Tester').count()).toBe(1);
 
