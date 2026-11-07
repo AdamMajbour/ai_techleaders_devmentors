@@ -1,32 +1,35 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { getEnv, SESSION_COOKIE, verifySession, withScope } from '@devmentor/core/server';
-import { MenteeSessionsHome } from './seeker/mentee-sessions-home';
+import Backdrop from "./backdrop";
 
-export const dynamic = 'force-dynamic';
-
-export const metadata = { title: 'My sessions' };
-
-export default async function HomePage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE)?.value;
-  const session = token ? await verifySession(token, getEnv().JWT_SECRET) : null;
-  if (!session) redirect('/login');
-
-  const access = await withScope(async ({ invitationService }) => ({
-    mentee: await invitationService.isAcceptedSeeker(session.userId),
-    pilot: await invitationService.isPilotMember(session.userId),
-  }));
-
-  if (access.mentee) {
-    return <MenteeSessionsHome />;
-  }
-  if (access.pilot) redirect('/mentors');
-
+export default function HomePage() {
   return (
-    <main className="mx-auto flex max-w-content flex-col gap-group p-panel-compact">
-      <h1 className="m-0 text-page-title font-strong text-headline">Your account is ready</h1>
-      <p className="m-0 text-body text-muted-foreground">You are signed in. This account does not have access to a DevMentor pilot yet.</p>
-    </main>
+    <div className="starter">
+      <Backdrop />
+      <main>
+        <svg className="framework-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="10.4" stroke="currentColor" strokeWidth="1.3" />
+          <path d="M8.4 16.4V7.9l8 10.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M15.5 7.9v5.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+        <p className="status">
+          <span className="status-dot" aria-hidden="true" />
+          Running
+        </p>
+        <h1>Your Next.js app is ready.</h1>
+        <p className="lede">
+          Describe what you want in the AI Coding Agent tab, and this page turns into it.
+        </p>
+        <p className="aside">
+          Prefer to write the code yourself? Start in <code>src/app/page.tsx</code>.
+        </p>
+      </main>
+      <ul className="stack" aria-label="What this workspace runs">
+        <li>Next.js</li>
+        <li>React</li>
+        <li>TypeScript</li>
+        <li>App Router</li>
+        <li>Fast refresh</li>
+        <li>Port 3000</li>
+      </ul>
+    </div>
   );
 }
