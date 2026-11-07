@@ -607,7 +607,7 @@ describe('in a browser', () => {
     const { page, problems } = await open('/login');
     await page.fill('input[name=email]', email);
     await page.click('button[type=submit]');
-    await page.getByText('If an invitation exists for this address, a sign-in link has been sent. Check your e-mail.').waitFor();
+    await page.getByText('If an invitation exists for this address, a sign-in link has been sent. Check your e-mail.').waitFor({ timeout: 10000 });
 
     const mailboxMarker = `[development mail]\nTo: ${email}`;
     let verifyUrl: string | undefined;
@@ -653,8 +653,8 @@ describe('in a browser', () => {
     await page.fill('input[name=email]', email);
     await page.fill('input[name=password]', PASSWORD);
     await page.click('button[type=submit]');
-    await page.waitForURL('**/articles');
-    await page.waitForSelector('text=New article');
+    await page.waitForURL('**/articles', { timeout: 10000 });
+    await page.waitForSelector('text=New article', { timeout: 10000 });
     expect(await page.locator('header >> text=Browser Tester').count()).toBe(1);
 
     const title = `Browser article ${randomBytes(3).toString('hex')}`;
