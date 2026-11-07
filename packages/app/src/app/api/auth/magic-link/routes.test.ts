@@ -5,7 +5,6 @@ import { resetEnvCache } from "../../../../../../core/src/config/env";
 
 const mockMagicLinkRequest = jest.fn<Promise<void>, [string, string]>(async () => undefined);
 const mockMagicLinkConsume = jest.fn<Promise<string | null>, [string]>(async () => "ada@example.com");
-const mockIssueAccountLoginLink = jest.fn<Promise<void>, [string, string]>(async () => undefined);
 const mockRegister = jest.fn(async () => ({
   id: "user-1",
   email: "ada@example.com",
@@ -21,8 +20,8 @@ const mockSignInWithMagicLink = jest.fn(async () => ({
   createdAt: "2026-11-05T12:00:00.000Z",
 }));
 const mockCradle = {
-  magicLinkService: { request: mockMagicLinkRequest, consume: mockMagicLinkConsume, issueAccountLoginLink: mockIssueAccountLoginLink },
-  authService: { register: mockRegister, registerForAccountLink: mockRegister, signInWithMagicLink: mockSignInWithMagicLink },
+  magicLinkService: { request: mockMagicLinkRequest, consume: mockMagicLinkConsume },
+  authService: { register: mockRegister, signInWithMagicLink: mockSignInWithMagicLink },
 } as unknown as Cradle;
 const mockWithScope = jest.fn(async (fn: (cradle: Cradle) => Promise<unknown>) => fn(mockCradle));
 
@@ -65,7 +64,6 @@ beforeEach(() => {
   resetEnvCache();
   mockMagicLinkRequest.mockClear();
   mockMagicLinkConsume.mockReset().mockResolvedValue("ada@example.com");
-  mockIssueAccountLoginLink.mockClear();
   mockRegister.mockClear();
   mockSignInWithMagicLink.mockClear();
   mockWithScope.mockClear().mockImplementation(async (fn) => fn(mockCradle));
@@ -190,7 +188,7 @@ describe("POST /api/auth/magic-link/consume", () => {
   it("rate-limits invalid consume attempts by client", async () => {
     const client = `consume-limiter-${nextClient++}`;
     mockMagicLinkConsume.mockResolvedValue(null);
-    for (let attempt = 0; attempt < 6; attempt++) {
+    for (let attempt = 0; attempt < 10; attempt++) {
       expect((await consumeMagicLink(post("magic-link/consume", { token: "invalid" }, { client }), undefined)).status).toBe(401);
     }
     expect((await consumeMagicLink(post("magic-link/consume", { token: "invalid" }, { client }), undefined)).status).toBe(429);
@@ -227,7 +225,6 @@ describe("POST /api/auth/register PUBLIC_SIGNUP guard", () => {
       name: "Ada",
       password: "correct horse battery",
     });
-    expect(mockIssueAccountLoginLink).toHaveBeenCalledWith("ada@example.com", "https://app.devmentor.example");
   });
 
   it("keeps registration available by default", async () => {
@@ -240,7 +237,7 @@ describe("POST /api/auth/register PUBLIC_SIGNUP guard", () => {
     );
 
     expect(response.status).toBe(201);
-    expect(response.headers.get("set-cookie")).toBeNull();
+    expect(response.headers.get("set-cookie")).toContain("devmentor_session=");
     expect(mockRegister).toHaveBeenCalledWith({
       email: "ada@example.com",
       name: "Ada",
