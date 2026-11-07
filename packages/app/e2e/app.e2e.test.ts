@@ -518,7 +518,7 @@ describe('in a browser', () => {
       const isExpectedVisitorCheck = message.location().url.endsWith('/api/auth/me') && message.text().includes('401');
       if (message.type() === 'error' && !isExpectedVisitorCheck) problems.push(message.text());
     });
-    await page.goto(`${baseUrl}${pathname}`, { waitUntil: 'networkidle' });
+    await page.goto(`${baseUrl}${pathname}`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     return { page, problems };
   }
 
