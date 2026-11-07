@@ -605,22 +605,9 @@ describe('in a browser', () => {
     ]);
 
     const { page, problems } = await open('/login');
-    await page.waitForSelector('input[name=email]', { timeout: 10000 });
     await page.fill('input[name=email]', email);
-    await page.waitForSelector('button[type=submit]', { timeout: 10000 });
-    console.log('About to click submit');
     await page.click('button[type=submit]');
-    console.log('Clicked submit, waiting for success message');
-    // Wait for either success message or error
-    try {
-      await page.getByText('If an invitation exists for this address, a sign-in link has been sent. Check your e-mail.').waitFor({ timeout: 10000 });
-      console.log('Success message appeared');
-    } catch (e) {
-      // If success message not found, check for error
-      const pageText = await page.textContent('body');
-      console.log('Success message not found. Page content:', pageText?.slice(0, 500));
-      throw new Error(`Login form did not show success message. Page content: ${pageText?.slice(0, 500)}. Error: ${e}`);
-    }
+    await page.getByText('If an invitation exists for this address, a sign-in link has been sent. Check your e-mail.').waitFor({ timeout: 10000 });
 
     const mailboxMarker = `[development mail]\nTo: ${email}`;
     let verifyUrl: string | undefined;
@@ -629,7 +616,6 @@ describe('in a browser', () => {
       const output = server.log();
       const marker = output.lastIndexOf(mailboxMarker);
       if (marker >= 0) {
-        // Match both http and https, localhost and 127.0.0.1
         verifyUrl = output.slice(marker).match(/https?:\/\/[^\s"]+\/auth\/verify\?token=[A-Za-z0-9_-]{43}/)?.[0];
       }
       if (!verifyUrl) await new Promise((resolve) => setTimeout(resolve, 50));
@@ -663,13 +649,9 @@ describe('in a browser', () => {
     const { page, problems } = await open('/register');
     const email = `ui-${randomBytes(4).toString('hex')}@example.com`;
 
-    await page.waitForSelector('input[name=name]', { timeout: 10000 });
     await page.fill('input[name=name]', 'Browser Tester');
-    await page.waitForSelector('input[name=email]', { timeout: 10000 });
     await page.fill('input[name=email]', email);
-    await page.waitForSelector('input[name=password]', { timeout: 10000 });
     await page.fill('input[name=password]', PASSWORD);
-    await page.waitForSelector('button[type=submit]', { timeout: 10000 });
     await page.click('button[type=submit]');
     await page.waitForURL('**/articles', { timeout: 15000 });
     await page.waitForSelector('text=New article', { timeout: 10000 });
