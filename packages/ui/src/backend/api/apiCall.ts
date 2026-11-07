@@ -63,7 +63,7 @@ export async function apiCall<T>(path: string, options: CallOptions = {}): Promi
     });
   } catch (error) {
     if (timeoutId) clearTimeout(timeoutId);
-    if (error?.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       return {
         ok: false,
         status: NO_RESPONSE_STATUS,
