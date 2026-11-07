@@ -68,9 +68,11 @@ export function MentorBookingsView() {
           <h1 className="m-0 text-page-title font-strong text-headline">Bookings</h1>
           <p className="m-0 text-body text-muted-foreground">Review paid questions and choose which sessions to accept.</p>
         </div>
-        <TextLink asChild>
-          <Link href="/mentor/profile">Edit mentor profile</Link>
-        </TextLink>
+        <div className="flex flex-wrap items-center gap-group">
+          <TextLink asChild>
+            <Link href="/mentor/profile">Edit mentor profile</Link>
+          </TextLink>
+        </div>
       </header>
 
       {actionError ? (

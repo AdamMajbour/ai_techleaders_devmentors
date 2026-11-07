@@ -54,6 +54,50 @@ export class AuthService {
     }
   }
 
+  /** Creates a passwordless account after GitHub has supplied a verified e-mail. */
+  async registerWithGithub(email: string, name: string): Promise<UserDto> {
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = await this.userRepository.findByEmail(normalizedEmail);
+    if (existing) {
+      if (!(await this.invitationService.isAcceptedSeeker(existing.id))) {
+        await this.invitationService.invite({ email: existing.email, displayName: existing.name, role: 'seeker' });
+        const accepted = await this.invitationService.acceptForUser(existing.email, existing.id, this.clock.now());
+        if (!accepted) throw new ConflictError('Could not assign the seeker account access.');
+      }
+      return toUserDto(existing);
+    }
+
+    try {
+      const user = await this.userRepository.create({
+        email: normalizedEmail,
+        name: name.trim().slice(0, 100) || email,
+        passwordHash: null,
+      });
+      await this.invitationService.invite({
+        email: user.email,
+        displayName: user.name,
+        role: 'seeker',
+      });
+      const accepted = await this.invitationService.acceptForUser(user.email, user.id, this.clock.now());
+      if (!accepted) throw new ConflictError('Could not assign the seeker account access.');
+      await this.eventBus.emit('auth.user.registered', { userId: user.id });
+      return toUserDto(user);
+    } catch (error) {
+      if (isUniqueConstraintViolation(error)) throw new ConflictError('Registration could not be completed.');
+      throw error;
+    }
+  }
+
+  /** Lets a valid account retry link issuance if its first registration request failed after creation. */
+  async registerForAccountLink(input: RegisterInput): Promise<UserDto> {
+    try {
+      return await this.register(input);
+    } catch (error) {
+      if (!(error instanceof ConflictError)) throw error;
+      return this.login({ email: input.email, password: input.password });
+    }
+  }
+
   async login(input: LoginInput): Promise<UserDto> {
     const user = await this.userRepository.findByEmail(input.email);
 

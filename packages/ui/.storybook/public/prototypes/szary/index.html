@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mentor onboarding — discovery prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: system-ui, sans-serif;
+        color: #202124;
+        background: #f5f5f5;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; line-height: 1.5; }
+      header, main, footer { width: min(100% - 2rem, 48rem); margin-inline: auto; }
+      header { padding-block: 1.25rem; }
+      main { min-height: 70vh; padding-block: 1rem 3rem; }
+      footer { padding-block: 1rem 2rem; border-top: 1px solid #c8c8c8; }
+      .eyebrow { margin: 0 0 .4rem; color: #444; font-size: .875rem; }
+      .card { padding: clamp(1.25rem, 4vw, 2rem); background: #fff; border: 1px solid #c8c8c8; border-radius: .5rem; }
+      .stack > * + * { margin-top: 1.25rem; }
+      h1, h2, h3 { line-height: 1.2; }
+      h1 { margin: 0; font-size: clamp(1.75rem, 5vw, 2.4rem); }
+      h2 { margin: 0; font-size: clamp(1.4rem, 4vw, 1.8rem); }
+      h3 { margin-bottom: .35rem; }
+      p { max-width: 68ch; }
+      .notice, .status, .error { padding: .75rem 1rem; border-left: .25rem solid #555; background: #f2f2f2; }
+      .error { border-color: #8a1c1c; color: #681313; }
+      .status { margin-block: 1rem; }
+      .field { display: grid; gap: .35rem; max-width: 36rem; }
+      input, select { width: 100%; min-height: 2.75rem; padding: .55rem .65rem; border: 1px solid #767676; border-radius: .25rem; background: #fff; color: inherit; font: inherit; }
+      input[type="checkbox"] { width: 1.2rem; min-height: 1.2rem; margin: .15rem .55rem 0 0; }
+      .choice { display: flex; align-items: flex-start; gap: .2rem; padding: .75rem; border: 1px solid #aaa; border-radius: .25rem; }
+      .actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-top: 1.5rem; }
+      button, .button-link { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; padding: .55rem 1rem; border: 1px solid #333; border-radius: .25rem; background: #fff; color: #202124; font: inherit; font-weight: 650; text-decoration: none; cursor: pointer; }
+      button.primary, .button-link.primary { background: #252525; color: #fff; }
+      button:hover, .button-link:hover { background: #e7e7e7; color: #111; }
+      button.primary:hover, .button-link.primary:hover { background: #444; color: #fff; }
+      a { color: #202124; }
+      a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #165db4; outline-offset: 3px; }
+      [aria-invalid="true"] { border-color: #8a1c1c; }
+      [hidden] { display: none !important; }
+      dl { display: grid; grid-template-columns: minmax(8rem, 1fr) 2fr; gap: .5rem 1rem; }
+      dt { font-weight: 700; }
+      dd { margin: 0; overflow-wrap: anywhere; }
+      @media (max-width: 34rem) {
+        header, main, footer { width: min(100% - 1rem, 48rem); }
+        dl { grid-template-columns: 1fr; gap: .15rem; }
+        dd { margin-bottom: .75rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <p class="eyebrow">DevMentor · Discovery prototype</p>
+      <p class="notice">Simulated setup only. Nothing is saved or sent, and no account, public listing, booking, or payment is created.</p>
+    </header>
+
+    <main id="main">
+      <section id="welcome" class="screen card stack" aria-labelledby="welcome-title">
+        <p class="eyebrow">Invitation · Step 1 of 4</p>
+        <h1 id="welcome-title" tabindex="-1">Set up your mentor profile</h1>
+        <p>This invitation is for the private pilot. Add a profile and a 25-minute text-session offer. Your profile would be visible only to invited pilot participants.</p>
+        <p class="notice">The pilot price for a 25-minute session is €25. This prototype does not take payment or confirm a booking.</p>
+        <div class="actions">
+          <a class="button-link primary" href="#profile">Start setup</a>
+        </div>
+      </section>
+
+      <section id="profile" class="screen card stack" aria-labelledby="profile-title" hidden>
+        <p class="eyebrow">Profile · Step 2 of 4</p>
+        <h2 id="profile-title" tabindex="-1">Tell seekers what you work with</h2>
+        <p>The pilot list is filtered by technology. A link to public work can help seekers understand your experience; ratings and reviews are not part of this flow.</p>
+        <form id="profile-form" novalidate>
+          <div class="stack">
+            <div class="field">
+              <label for="display-name">Name shown to invited participants</label>
+              <input id="display-name" name="displayName" autocomplete="off" required aria-describedby="display-name-error">
+              <p id="display-name-error" class="error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="technology">Primary technology</label>
+              <select id="technology" name="technology" required aria-describedby="technology-error">
+                <option value="">Choose a technology</option>
+                <option>TypeScript</option>
+                <option>React</option>
+                <option>PostgreSQL</option>
+              </select>
+              <p id="technology-error" class="error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="work-link">Link to public work</label>
+              <input id="work-link" name="workLink" type="text" inputmode="url" autocomplete="off" placeholder="example.invalid/portfolio" required aria-describedby="work-link-error">
+              <p id="work-link-error" class="error" hidden></p>
+            </div>
+          </div>
+          <p id="profile-form-error" class="error" role="alert" hidden></p>
+          <div class="actions">
+            <a class="button-link" href="#welcome">Back</a>
+            <button class="primary" type="submit">Continue to availability</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="availability" class="screen card stack" aria-labelledby="availability-title" hidden>
+        <p class="eyebrow">Session offer · Step 3 of 4</p>
+        <h2 id="availability-title" tabindex="-1">Choose sample availability</h2>
+        <p>Session format: 25-minute text session. Pilot price: €25, set for all mentors.</p>
+        <p class="notice">The options below are fictitious sample slots for this simulation. The brief does not define calendar, timezone, or scheduling rules.</p>
+        <fieldset id="slot-group" class="stack" tabindex="-1" aria-describedby="slot-error">
+          <legend>Select one or more sample slots</legend>
+          <label class="choice"><input type="checkbox" name="slot" value="Tuesday at 10:00">Tuesday at 10:00 <span>(sample)</span></label>
+          <label class="choice"><input type="checkbox" name="slot" value="Wednesday at 15:00">Wednesday at 15:00 <span>(sample)</span></label>
+          <label class="choice"><input type="checkbox" name="slot" value="Friday at 09:00">Friday at 09:00 <span>(sample)</span></label>
+        </fieldset>
+        <p id="slot-error" class="error" role="alert" hidden></p>
+        <div class="actions">
+          <a class="button-link" href="#profile">Back</a>
+          <button id="review-button" class="primary" type="button">Review profile</button>
+        </div>
+      </section>
+
+      <section id="review" class="screen card stack" aria-labelledby="review-title" hidden>
+        <p class="eyebrow">Review · Step 4 of 4</p>
+        <h2 id="review-title" tabindex="-1">Review your simulated profile</h2>
+        <dl>
+          <dt>Name</dt><dd id="summary-name"></dd>
+          <dt>Technology</dt><dd id="summary-technology"></dd>
+          <dt>Public work</dt><dd id="summary-work-link"></dd>
+          <dt>Session</dt><dd>25-minute text session · €25</dd>
+          <dt>Sample availability</dt><dd id="summary-slots"></dd>
+          <dt>Visibility</dt><dd>Invited pilot participants only</dd>
+        </dl>
+        <p class="notice">This review does not accept legal terms, publish a real profile, or make you available for real bookings.</p>
+        <div class="actions">
+          <a class="button-link" href="#availability">Back</a>
+          <a class="button-link" href="#profile">Edit profile</a>
+          <button id="finish-button" class="primary" type="button">Finish simulated setup</button>
+        </div>
+      </section>
+
+      <section id="complete" class="screen card stack" aria-labelledby="complete-title" hidden>
+        <p class="eyebrow">Simulation complete</p>
+        <h2 id="complete-title" tabindex="-1">Your profile is ready for the invited pilot list</h2>
+        <p id="completion-summary"></p>
+        <p class="status" role="status">No real profile was created. This result exists only in this page until you reset it or close the file.</p>
+        <div class="actions">
+          <a class="button-link" href="#review">Back to review</a>
+          <button id="reset-complete" type="button">Reset simulation</button>
+        </div>
+      </section>
+
+      <section id="recovery" class="screen card stack" aria-labelledby="recovery-title" hidden>
+        <p class="eyebrow">Recovery</p>
+        <h2 id="recovery-title" tabindex="-1">That screen is not part of this prototype</h2>
+        <p>Return to the invitation to continue the simulated mentor setup.</p>
+        <div class="actions">
+          <a class="button-link primary" href="#welcome">Return to invitation</a>
+        </div>
+      </section>
+
+      <p id="announcement" class="status" role="status" aria-live="polite" hidden></p>
+    </main>
+
+    <footer>
+      <button id="reset-button" type="button">Reset simulation</button>
+    </footer>
+
+    <script>
+      (() => {
+        const screens = new Set(["welcome", "profile", "availability", "review", "complete"]);
+        const form = document.getElementById("profile-form");
+        const announcement = document.getElementById("announcement");
+        const profileInputs = [
+          ["display-name", "Enter a name to continue."],
+          ["technology", "Choose a primary technology to continue."],
+          ["work-link", "Enter a link to public work to continue."]
+        ];
+
+        function showScreen() {
+          const target = window.location.hash.slice(1) || "welcome";
+          const screenId = screens.has(target) ? target : "recovery";
+          document.querySelectorAll(".screen").forEach((screen) => {
+            screen.hidden = screen.id !== screenId;
+          });
+          const heading = document.querySelector(`#${screenId} h1, #${screenId} h2`);
+          if (heading) heading.focus();
+        }
+
+        function clearFieldErrors() {
+          profileInputs.forEach(([id]) => {
+            const input = document.getElementById(id);
+            const error = document.getElementById(`${id}-error`);
+            input.removeAttribute("aria-invalid");
+            error.hidden = true;
+            error.textContent = "";
+          });
+          document.getElementById("profile-form-error").hidden = true;
+        }
+
+        function updateReview() {
+          document.getElementById("summary-name").textContent = document.getElementById("display-name").value.trim();
+          document.getElementById("summary-technology").textContent = document.getElementById("technology").value;
+          document.getElementById("summary-work-link").textContent = document.getElementById("work-link").value.trim();
+          const selectedSlots = Array.from(document.querySelectorAll('input[name="slot"]:checked'), (slot) => slot.value);
+          document.getElementById("summary-slots").textContent = selectedSlots.join(", ");
+          document.getElementById("completion-summary").textContent =
+            `${document.getElementById("summary-name").textContent} · ${document.getElementById("summary-technology").textContent} · 25-minute text session at €25.`;
+        }
+
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          clearFieldErrors();
+          let valid = true;
+          let firstInvalid = null;
+          profileInputs.forEach(([id, message]) => {
+            const input = document.getElementById(id);
+            if (!input.value.trim()) {
+              const error = document.getElementById(`${id}-error`);
+              error.textContent = message;
+              error.hidden = false;
+              input.setAttribute("aria-invalid", "true");
+              if (!firstInvalid) firstInvalid = input;
+              valid = false;
+            }
+          });
+          if (!valid) {
+            const formError = document.getElementById("profile-form-error");
+            formError.textContent = "Complete the highlighted fields before continuing.";
+            formError.hidden = false;
+            firstInvalid.focus();
+            return;
+          }
+          window.location.hash = "availability";
+        });
+
+        document.getElementById("review-button").addEventListener("click", () => {
+          const selectedSlots = document.querySelectorAll('input[name="slot"]:checked');
+          const error = document.getElementById("slot-error");
+          if (!selectedSlots.length) {
+            error.textContent = "Choose at least one sample slot to review this simulated profile.";
+            error.hidden = false;
+            document.getElementById("slot-group").focus();
+            return;
+          }
+          error.hidden = true;
+          updateReview();
+          window.location.hash = "review";
+        });
+
+        document.getElementById("finish-button").addEventListener("click", () => {
+          updateReview();
+          window.location.hash = "complete";
+        });
+
+        function resetSimulation() {
+          form.reset();
+          document.querySelectorAll('input[name="slot"]').forEach((slot) => { slot.checked = false; });
+          clearFieldErrors();
+          document.getElementById("slot-error").hidden = true;
+          document.getElementById("slot-error").textContent = "";
+          ["summary-name", "summary-technology", "summary-work-link", "summary-slots", "completion-summary"].forEach((id) => {
+            document.getElementById(id).textContent = "";
+          });
+          announcement.textContent = "Simulation reset. No profile or availability remains.";
+          announcement.hidden = false;
+          window.history.replaceState(null, "", "#welcome");
+          showScreen();
+        }
+
+        window.addEventListener("hashchange", showScreen);
+        document.getElementById("reset-button").addEventListener("click", resetSimulation);
+        document.getElementById("reset-complete").addEventListener("click", resetSimulation);
+        showScreen();
+      })();
+    </script>
+  </body>
+</html>

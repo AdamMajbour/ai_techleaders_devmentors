@@ -15,9 +15,9 @@ export const magicLinkRequestLimiter = createRateLimiter({
   cooldownMs: 15 * MINUTE_MS,
 });
 
-/** Bounds invalid-token attempts from one client without exposing whether a link was valid. */
+/** Bounds invalid email-verification attempts from one client without exposing link validity. */
 export const magicLinkConsumeLimiter = createRateLimiter({
-  maxAttempts: 10,
+  maxAttempts: 6,
   windowMs: 15 * MINUTE_MS,
   cooldownMs: 15 * MINUTE_MS,
 });

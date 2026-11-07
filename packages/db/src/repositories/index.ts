@@ -39,6 +39,15 @@ export class UserRepository {
     return this.em.findOne(User, { email });
   }
 
+  async findPage(options: { limit: number; offset: number }): Promise<{ items: User[]; total: number }> {
+    const [items, total] = await this.em.findAndCount(User, {}, {
+      orderBy: { createdAt: 'desc', id: 'asc' },
+      limit: options.limit,
+      offset: options.offset,
+    });
+    return { items, total };
+  }
+
   async create(data: NewUser): Promise<User> {
     const user = this.em.create(User, data as RequiredEntityData<User>);
     this.em.persist(user);
@@ -46,7 +55,7 @@ export class UserRepository {
     return user;
   }
 
-  async update(id: string, data: Partial<Omit<User, 'id'>>): Promise<User | null> {
+  async update(id: string, data: Partial<Omit<User, 'id' | 'passwordHash'>> & { passwordHash?: string | null }): Promise<User | null> {
     const user = await this.em.findOne(User, { id });
     if (!user) return null;
     Object.assign(user, data);
@@ -699,13 +708,13 @@ export class InvitationRepository {
   }
 }
 
-export type NewLoginToken = Pick<LoginToken, 'email' | 'tokenHash' | 'expiresAt' | 'consumedAt'>;
+export type NewLoginToken = Pick<LoginToken, 'email' | 'tokenHash' | 'expiresAt' | 'consumedAt'> & { reusable?: boolean };
 
 export class LoginTokenRepository {
   constructor(private readonly em: EntityManager) {}
 
   async create(data: NewLoginToken): Promise<void> {
-    const token = this.em.create(LoginToken, data as RequiredEntityData<LoginToken>);
+    const token = this.em.create(LoginToken, { ...data, reusable: data.reusable ?? false } as RequiredEntityData<LoginToken>);
     this.em.persist(token);
     await this.em.flush();
   }
@@ -723,5 +732,10 @@ export class LoginTokenRepository {
       transactionContext,
     );
     return row?.email ?? null;
+  }
+
+  async findReusable(tokenHash: string, now: Date): Promise<string | null> {
+    const token = await this.em.findOne(LoginToken, { tokenHash, reusable: true, expiresAt: { $gt: now } });
+    return token?.email ?? null;
   }
 }

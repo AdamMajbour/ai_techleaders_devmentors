@@ -4,7 +4,7 @@ import {
   assertCsrfSafe,
   clientKey,
   getEnv,
-  issueSessionCookie,
+  getAppBaseUrl,
   jsonResponse,
   readJsonBody,
   registerLimiter,
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 const CREATED = 201;
 
-/** POST /api/auth/register - creates the account and logs it in. */
+/** POST /api/auth/register - creates the account and issues a reusable sign-in link. */
 export const POST = apiHandler(async (request) => {
   assertCsrfSafe(request);
   const env = getEnv(); // a missing JWT_SECRET must fail before any account or password work happens
@@ -26,7 +26,8 @@ export const POST = apiHandler(async (request) => {
   registerLimiter.recordFailure(key);
 
   const input = parseOrThrow(registerSchema, await readJsonBody(request));
-  const user = await withScope(({ authService }) => authService.register(input));
+  const user = await withScope(({ authService }) => authService.registerForAccountLink(input));
+  await withScope(({ magicLinkService }) => magicLinkService.issueAccountLoginLink(user.email, getAppBaseUrl()));
 
-  return jsonResponse(user, { status: CREATED, headers: { "Set-Cookie": await issueSessionCookie(user.id) } });
+  return jsonResponse({ created: true }, { status: CREATED });
 });

@@ -6,7 +6,7 @@ import { apiCall, Alert, AlertDescription, Button, Card, CardContent, CardDescri
 
 type VerificationState = "loading" | "success" | "error";
 
-export function VerifyView({ token }: { token: string | null }) {
+export function VerifyView({ token, mode = "magic" }: { token: string | null; mode?: "account" | "magic" }) {
   const [state, setState] = useState<VerificationState>(() => (token ? "loading" : "error"));
   const started = useRef(false);
 
@@ -17,13 +17,14 @@ export function VerifyView({ token }: { token: string | null }) {
 
     if (!token) return;
 
-    void apiCall("/api/auth/magic-link/consume", {
+    void apiCall(mode === "account" ? "/api/auth/account-link/verify" : "/api/auth/magic-link/consume", {
       method: "POST",
       json: { token },
     }).then((result) => {
-      setState(result.ok ? "success" : "error");
+      if (result.ok) window.location.assign(mode === "account" ? "/" : "/admin");
+      else setState("error");
     });
-  }, [token]);
+  }, [token, mode]);
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-6 p-8">
@@ -33,7 +34,9 @@ export function VerifyView({ token }: { token: string | null }) {
           <CardDescription>
             {state === "success"
               ? "Your one-time link has been used. You can close this page."
-              : "Sign-in links can only be used once and expire after 15 minutes."}
+              : mode === "account"
+                ? "This reusable account link expires after 30 days."
+                : "Sign-in links can only be used once and expire after 15 minutes."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -55,7 +58,7 @@ export function VerifyView({ token }: { token: string | null }) {
                 </AlertDescription>
               </Alert>
               <Button asChild>
-                <Link href="/login">Request a new link</Link>
+                <Link href="/sign-in">Request a new link</Link>
               </Button>
             </div>
           )}

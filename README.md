@@ -124,6 +124,10 @@ npm run db:seed
 npm run dev
 ```
 
+Seed adds three local demo accounts. On the sign-in page, use **Continue as mock mentee**, **mock mentor**, or **mock operator**. Their credentials are `mock-mentee@devmentor.test` / `mock-mentee-password`, `mock-mentor@devmentor.test` / `mock-mentor-password`, and `mock-operator@devmentor.test` / `mock-operator-password`. The operator UUID is included in `.env.example`; replace `OPERATOR_USER_IDS` with explicitly approved IDs in any deployed environment. Mentee and mentor access is invitation-backed, and operator pages and API routes require the configured operator ID.
+
+For GitHub role sign-in, set `DEMO_MENTEE_GITHUB_EMAIL`, `DEMO_MENTOR_GITHUB_EMAIL`, and `DEMO_OPERATOR_GITHUB_EMAIL` in `.env.local` to verified GitHub e-mail addresses. You can reuse one address for multiple roles for local testing, then use the corresponding **Continue as … with GitHub** button. These addresses map to the seeded `@devmentor.test` users; GitHub cannot verify the reserved `.test` addresses themselves. The operator account must also be listed in `OPERATOR_USER_IDS`.
+
 ### Dostępne komendy
 
 ```bash

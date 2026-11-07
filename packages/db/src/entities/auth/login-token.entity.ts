@@ -8,6 +8,7 @@ export const LoginToken = defineDomainEntity({
     tokenHash: p.string().hidden().unique(),
     expiresAt: p.datetime(),
     consumedAt: p.datetime().nullable(),
+    reusable: p.boolean(),
   },
 });
 

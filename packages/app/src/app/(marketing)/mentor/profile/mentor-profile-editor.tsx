@@ -207,10 +207,12 @@ export function MentorProfileEditor() {
   if (profile === undefined) {
     return (
       <main className="mx-auto flex max-w-content flex-col gap-between-groups p-panel-compact">
-        <ErrorMessage
-          message={error ?? 'Your mentor profile could not be loaded. Try again.'}
-          onRetry={() => setReloads((count) => count + 1)}
-        />
+        <div className="flex items-start justify-between gap-group">
+          <ErrorMessage
+            message={error ?? 'Your mentor profile could not be loaded. Try again.'}
+            onRetry={() => setReloads((count) => count + 1)}
+          />
+        </div>
         <TextLink asChild>
           <Link href="/mentors">Back to mentors</Link>
         </TextLink>
@@ -220,9 +222,11 @@ export function MentorProfileEditor() {
 
   return (
     <main className="mx-auto flex max-w-content flex-col gap-between-groups p-panel-compact">
-      <TextLink asChild>
-        <Link href="/mentors">Back to mentors</Link>
-      </TextLink>
+      <div className="flex flex-wrap items-center justify-between gap-group">
+        <TextLink asChild>
+          <Link href="/mentors">Back to mentors</Link>
+        </TextLink>
+      </div>
       <header className="flex flex-col gap-group">
         <h1 className="m-0 text-page-title font-strong text-headline">
           {profile ? 'Edit mentor profile' : 'Create mentor profile'}

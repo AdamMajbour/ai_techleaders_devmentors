@@ -70,8 +70,8 @@ export function ArticlesView() {
           </div>
         ) : (
           <div className="flex gap-3 text-sm">
-            <Link href="/login" className="text-primary underline">
-              Log in
+            <Link href="/sign-in" className="text-primary underline">
+              Sign in
             </Link>
             <Link href="/register" className="text-primary underline">
               Register

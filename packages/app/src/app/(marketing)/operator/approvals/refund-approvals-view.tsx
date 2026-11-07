@@ -62,7 +62,9 @@ export function RefundApprovalsView() {
   return (
     <main className="mx-auto flex max-w-content flex-col gap-between-groups p-panel-compact">
       <header className="flex flex-col gap-group">
-        <h1 className="m-0 text-page-title font-strong text-headline">Refund approvals</h1>
+        <div className="flex flex-wrap items-center justify-between gap-group">
+          <h1 className="m-0 text-page-title font-strong text-headline">Refund approvals</h1>
+        </div>
         <p className="m-0 text-body text-muted-foreground">
           Review refund requests. Approved refunds that did not complete remain here to retry.
         </p>

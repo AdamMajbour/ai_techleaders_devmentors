@@ -13,7 +13,10 @@ const ada = {
 } as unknown as User;
 
 function service(found: User | null) {
-  const userRepository = { findById: jest.fn(async () => found) } as unknown as UserRepository;
+  const userRepository = {
+    findById: jest.fn(async () => found),
+    findPage: jest.fn(async () => ({ items: found ? [found] : [], total: found ? 1 : 0 })),
+  } as unknown as UserRepository;
   return new UserService({ userRepository });
 }
 
@@ -27,5 +30,11 @@ describe('UserService', () => {
 
   it('throws NotFoundError (not null) for an unknown user', async () => {
     await expect(service(null).getById('nope')).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it('returns one page of operator users and calculates its metadata', async () => {
+    const result = await service(ada).listForOperator({ page: 2, pageSize: 10 });
+
+    expect(result).toMatchObject({ page: 2, pageSize: 10, total: 1, pageCount: 1, items: [{ id: 'u1' }] });
   });
 });

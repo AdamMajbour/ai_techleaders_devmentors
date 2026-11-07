@@ -27,6 +27,7 @@ describe('MagicLinkService', () => {
       tokenHash: createHash('sha256').update(bytes).digest('hex'),
       expiresAt: issued!.expiresAt,
       consumedAt: null,
+      reusable: false,
     });
     expect(loginTokenRepository.create.mock.calls[0][0]).not.toHaveProperty('token');
   });

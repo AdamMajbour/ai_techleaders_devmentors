@@ -3,7 +3,7 @@ import { PASSWORD_MAX_LENGTH } from '../../constants';
 import { emailSchema } from './email.schema';
 
 /** Short enough to be typed, long enough to resist guessing; the upper bound is bcrypt's 72-byte limit. */
-export const PASSWORD_MIN_LENGTH = 10;
+export const PASSWORD_MIN_LENGTH = 12;
 
 export const registerSchema = z.object({
   email: emailSchema,

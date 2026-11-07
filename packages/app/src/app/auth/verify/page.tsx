@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 export default async function VerifyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string | string[] }>;
+  searchParams: Promise<{ token?: string | string[]; mode?: string | string[] }>;
 }) {
-  const { token } = await searchParams;
-  return <VerifyView token={typeof token === "string" ? token : null} />;
+  const { token, mode } = await searchParams;
+  return <VerifyView token={typeof token === "string" ? token : null} mode={mode === "account" ? "account" : "magic"} />;
 }

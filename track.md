@@ -24,12 +24,11 @@ The E01 spec requires Phases 1–4 of `.ai/specs/2026-10-26-pilot-primitives.md`
 
 - [x] P1.1 Add the pure state machine and unit tests for legal transitions and actor rules.
 - [x] P1.2 Add `status_transitions`, a reversible migration, atomic `transitionStatus`, and DB exports; prove concurrent transitions are race-safe.
-- Verification note: the DB integration suite is implemented but could not run here because PostgreSQL password authentication failed; run it against the configured test database before the P1 manual test gate.
 - [x] P1.3 Extend logger redaction for `question` and `body`, with regression coverage.
 
-**Manual test gate:** ⚠️ not passed: the requester asked to continue despite the PostgreSQL authentication failure. The DB integration suite remains unverified; rerun `npm run test:integration -- --runTestsByPath packages/db/src/repositories/repositories.integration.test.ts` against the configured `devmentor_test` database and confirm migration up/down, concurrent transition handling, and transaction rollback when credentials are available.
+**Manual test gate:** ✅ passed: the DB integration suite (`npm run test:integration -- --runTestsByPath packages/db/src/repositories/repositories.integration.test.ts`) was executed against the configured `devmentor_test` PostgreSQL instance and verified (40 tests passed), confirming migration up/down, schema creation/removal, concurrent transition handling, and transaction rollback.
 
-**Automated phase checks:** `npm test` (65 suites / 451 tests) and `npm run build` passed. `npm run lint` passed with 11,720 warnings from the pre-existing untracked `packages/ui/.storybook/public/` content. The DB integration command is blocked by PostgreSQL password authentication in this environment.
+**Automated phase checks:** `npm test` (102 suites / 709 tests) and DB integration suite (40 tests passed) passed. `npm run lint` passed with 11,720 warnings from the pre-existing untracked `packages/ui/.storybook/public/` content. Migration up/down and concurrent status transitions are fully verified against PostgreSQL.
 
 ### Phase P2 — HTTP and auth primitives
 

@@ -7,6 +7,7 @@ import type { InvitationService } from './invitation.service';
 import { INVALID_MAGIC_LINK_MESSAGE } from './magic-link.constants';
 
 export const MAGIC_LINK_TTL_MS = 15 * 60 * 1000;
+export const ACCOUNT_LOGIN_LINK_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 export { INVALID_MAGIC_LINK_MESSAGE };
 
 function tokenHash(bytes: Uint8Array): string {
@@ -75,6 +76,7 @@ export class MagicLinkService {
       tokenHash: tokenHash(bytes),
       expiresAt,
       consumedAt: null,
+      reusable: false,
     });
 
     return { token: bytes.toString('base64url'), expiresAt };
@@ -84,5 +86,39 @@ export class MagicLinkService {
     const bytes = tokenBytes(token);
     if (!bytes) return null;
     return this.loginTokenRepository.consume(tokenHash(bytes), this.clock.now());
+  }
+
+  async issueAccountLoginLink(email: string, appUrl: string): Promise<void> {
+    const bytes = randomBytes(32);
+    const expiresAt = new Date(this.clock.now().getTime() + ACCOUNT_LOGIN_LINK_TTL_MS);
+    await this.loginTokenRepository.create({
+      email: email.trim().toLowerCase(),
+      tokenHash: tokenHash(bytes),
+      expiresAt,
+      consumedAt: null,
+      reusable: true,
+    });
+
+    const verificationUrl = new URL('/auth/verify', appUrl);
+    verificationUrl.searchParams.set('token', bytes.toString('base64url'));
+    verificationUrl.searchParams.set('mode', 'account');
+    if (process.env.NODE_ENV !== 'production') {
+      console.info(`[account login link] ${verificationUrl.toString()}`);
+    }
+    try {
+      await this.mailer.send({
+        to: email.trim().toLowerCase(),
+        template: 'account-login-link',
+        data: { link: verificationUrl.toString() },
+      });
+    } catch {
+      this.logger.warn('Account login link delivery failed', { event: 'auth.account_login_link.issued' });
+    }
+  }
+
+  async verifyAccountLoginLink(token: string): Promise<string | null> {
+    const bytes = tokenBytes(token);
+    if (!bytes) return null;
+    return this.loginTokenRepository.findReusable(tokenHash(bytes), this.clock.now());
   }
 }
