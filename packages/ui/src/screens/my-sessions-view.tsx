@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { FilterBar } from '../backend/filters';
 import { EmptyState } from '../backend/feedback/EmptyState';
 import { ErrorMessage } from '../backend/feedback/ErrorMessage';
@@ -31,12 +32,16 @@ export function MySessionsView({
   sessions,
   timeZone,
   initialStatus = '',
+  hrefForSession = (id) => `#${id}`,
+  headerAction,
   onRetry,
 }: {
   state: MySessionsState;
   sessions: SessionRowData[];
   timeZone: string;
   initialStatus?: BookingStatusValue | '';
+  hrefForSession?: (sessionId: string) => string;
+  headerAction?: ReactNode;
   onRetry?: () => void;
 }) {
   const [status, setStatus] = useState<BookingStatusValue | ''>(initialStatus);
@@ -44,7 +49,7 @@ export function MySessionsView({
   const selectedStatus = status ? bookingStatusLabel(status, 'seeker').text : '';
 
   return (
-    <Page title="My sessions">
+    <Page title="My sessions" headerAction={headerAction}>
       {state === 'loading' ? (
         <div aria-busy="true" className="flex flex-col">
           <LoadingMessage message="Loading your sessions…" />
@@ -68,12 +73,7 @@ export function MySessionsView({
       {state === 'empty' ? (
         <EmptyState
           title="No sessions yet"
-          description="Pick a mentor and ask your first question. Your sessions appear here."
-          action={
-            <Button asChild>
-              <a href="#mentors">Find a mentor</a>
-            </Button>
-          }
+          description="Sessions you book will appear here."
         />
       ) : null}
 
@@ -98,12 +98,7 @@ export function MySessionsView({
           {sessions.length === 0 ? (
             <EmptyState
               title="No sessions yet"
-              description="Pick a mentor and ask your first question. Your sessions appear here."
-              action={
-                <Button asChild>
-                  <a href="#mentors">Find a mentor</a>
-                </Button>
-              }
+              description="Sessions you book will appear here."
             />
           ) : shown.length === 0 && status ? (
             <EmptyState
@@ -122,7 +117,7 @@ export function MySessionsView({
                   key={session.id}
                   session={session}
                   timeZone={timeZone}
-                  href={`#${session.id}`}
+                  href={hrefForSession(session.id)}
                 />
               ))}
             </ul>

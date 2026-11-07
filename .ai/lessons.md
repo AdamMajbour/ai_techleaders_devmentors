@@ -18,6 +18,7 @@ Spis wszystkich ustaleń, wniosków i usprawień odkrytych w trakcie pracy nad p
 - [2026-10-19 — Render w przeglądarce i Tailwind bez preflightu](lessons/2026-10-19-render-check-and-preflight.md) — zrzuty ekranu ujawniły błędy niewidoczne w testach; resety w komponentach; Chromium bez roota.
 - [2026-10-19 — Standardy vs istniejący kod](lessons/2026-10-19-standards-vs-existing-code.md) — stosuj zasady, odkładaj warstwy bez konsumenta; egzekwuj granice ESLintem.
 - [2026-10-19 — Pułapki warstwy auth i API](lessons/2026-10-19-auth-layer-pitfalls.md) — `loadEnvConfig` bez forceReload, CSRF a Host, normalizacja Zod, emiter zdarzeń, jose w Jest.
+- [2026-11-05 — Izolowanie testów integracyjnych z bazą](lessons/2026-11-05-db-integration-test-isolation.md) — reset schematu, `EntityManager.fork()`, kompletne fixture'y i asercje niezależne od wersji PostgreSQL.
 
 ---
 

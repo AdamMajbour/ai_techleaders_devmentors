@@ -1,6 +1,7 @@
+import { StatusTransitionConflictError } from '@devmentor/db';
 import { HTTP_STATUS } from '../constants';
 import { createLogger, type Logger } from '../logger';
-import { AppError } from './errors';
+import { AppError, ConflictError } from './errors';
 import type { ApiEnvelope } from './envelope';
 
 type RouteHandler<TContext> = (request: Request, context: TContext) => Promise<unknown>;
@@ -28,6 +29,9 @@ export function apiHandler<TContext = unknown>(handler: RouteHandler<TContext>, 
       const result = await handler(request, context);
       return result instanceof Response ? result : json({ ok: true, data: result }, HTTP_STATUS.OK);
     } catch (error) {
+      if (error instanceof StatusTransitionConflictError) {
+        error = new ConflictError();
+      }
       if (error instanceof AppError) {
         return json(
           { ok: false, error: { code: error.code, message: error.message, fieldErrors: error.fieldErrors } },

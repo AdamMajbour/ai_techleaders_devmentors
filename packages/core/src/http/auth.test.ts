@@ -1,8 +1,15 @@
 /** @jest-environment node */
-import { ForbiddenError, UnauthorizedError } from './errors';
+import { ForbiddenError, NotFoundError, UnauthorizedError } from './errors';
 import { SESSION_COOKIE, signSession } from '../security/session';
-import { resetEnvCache } from '../config/env';
-import { assertOwns, optionalSession, requireSession } from './auth';
+import { getOperatorUserIds, parseOperatorUserIds, resetEnvCache } from '../config/env';
+import {
+  assertOwns,
+  assertParticipant,
+  optionalSession,
+  requireOperator,
+  requirePilotMember,
+  requireSession,
+} from './auth';
 
 const SECRET = 'k'.repeat(48);
 const withCookie = (value: string) => new Request('http://x/api', { headers: { cookie: `${SESSION_COOKIE}=${value}` } });
@@ -58,5 +65,66 @@ describe('assertOwns', () => {
     expect(() => assertOwns({ userId: 'u1' }, undefined)).toThrow(ForbiddenError);
     expect(() => assertOwns({ userId: 'u1' }, null)).toThrow(ForbiddenError);
     expect(() => assertOwns({ userId: 'u1' }, '')).toThrow(ForbiddenError);
+  });
+});
+
+describe('operator access', () => {
+  const original = process.env.OPERATOR_USER_IDS;
+  const operatorId = '00000000-0000-4000-8000-000000000001';
+
+  beforeEach(() => {
+    delete process.env.OPERATOR_USER_IDS;
+    resetEnvCache();
+  });
+  afterEach(() => {
+    if (original === undefined) delete process.env.OPERATOR_USER_IDS;
+    else process.env.OPERATOR_USER_IDS = original;
+    resetEnvCache();
+  });
+
+  it('parses configured UUIDs and returns no operators for empty or malformed configuration', () => {
+    expect(parseOperatorUserIds(`${operatorId}, ${operatorId}`)).toEqual([operatorId]);
+    expect(parseOperatorUserIds(undefined)).toEqual([]);
+    expect(parseOperatorUserIds(' , ')).toEqual([]);
+    expect(parseOperatorUserIds(`${operatorId},not-a-uuid`)).toEqual([]);
+    expect(parseOperatorUserIds(`${operatorId},`)).toEqual([]);
+  });
+
+  it('allows only configured user ids and remains independent of JWT_SECRET', () => {
+    process.env.OPERATOR_USER_IDS = operatorId;
+    expect(getOperatorUserIds()).toEqual([operatorId]);
+    expect(() => requireOperator({ userId: operatorId })).not.toThrow();
+    expect(() => requireOperator({ userId: '00000000-0000-4000-8000-000000000002' })).toThrow(ForbiddenError);
+  });
+
+  it('fails closed without crashing when operator configuration is absent or malformed', () => {
+    expect(() => requireOperator({ userId: operatorId })).toThrow(ForbiddenError);
+    process.env.OPERATOR_USER_IDS = 'invalid';
+    expect(() => requireOperator({ userId: operatorId })).toThrow(ForbiddenError);
+  });
+});
+
+describe('assertParticipant', () => {
+  it('allows an included participant and returns 404 for everyone else', () => {
+    expect(() => assertParticipant({ userId: 'u1' }, ['u2', 'u1'])).not.toThrow();
+    expect(() => assertParticipant({ userId: 'u1' }, ['u2'])).toThrow(NotFoundError);
+    expect(() => assertParticipant({ userId: 'u1' }, [])).toThrow(NotFoundError);
+  });
+});
+
+describe('requirePilotMember', () => {
+  it('requires a valid session and passes the session and request to its resolver', async () => {
+    const request = withCookie(await signSession('u1', SECRET));
+    const resolver = jest.fn(async () => true);
+
+    await expect(requirePilotMember(request, resolver, SECRET)).resolves.toEqual({ userId: 'u1' });
+    expect(resolver).toHaveBeenCalledWith({ userId: 'u1' }, request);
+  });
+
+  it('denies by default and conceals users rejected by the resolver', async () => {
+    const request = withCookie(await signSession('u1', SECRET));
+
+    await expect(requirePilotMember(request, undefined, SECRET)).rejects.toBeInstanceOf(NotFoundError);
+    await expect(requirePilotMember(request, async () => false, SECRET)).rejects.toBeInstanceOf(NotFoundError);
   });
 });

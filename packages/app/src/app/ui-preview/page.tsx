@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@devmentor/ui";
+import { PreviewInteractions } from "./PreviewInteractions";
 
 export const metadata = {
   title: "UI preview",
@@ -37,6 +38,7 @@ export default function UiPreviewPage() {
           <Button size="lg">Large</Button>
         </CardFooter>
       </Card>
+      <PreviewInteractions />
     </main>
   );
 }

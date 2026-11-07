@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCAN = ['src', '.storybook'];
 const EXT = new Set(['.ts', '.tsx', '.css', '.mdx']);
-const SKIP_DIR = new Set(['node_modules', 'generated', 'storybook-static']);
+const SKIP_DIR = new Set(['node_modules', 'generated', 'storybook-static', 'public']);
 const TOKEN_FILE = path.join('src', 'styles', 'tokens.css');
 
 const PALETTES = 'slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose';

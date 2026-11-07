@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { useAsync, useDebounce, useMediaQuery } from './index';
+import { useAsync, useDebounce, useMediaQuery, usePolling } from './index';
 
 describe('useDebounce', () => {
   beforeEach(() => jest.useFakeTimers());
@@ -64,6 +64,111 @@ describe('useMediaQuery', () => {
     expect(media.listenerCount()).toBe(0);
   });
 });
+
+describe('usePolling', () => {
+  let visibilityDescriptor: PropertyDescriptor | undefined;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    visibilityDescriptor = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    if (visibilityDescriptor) {
+      Object.defineProperty(document, 'visibilityState', visibilityDescriptor);
+    } else {
+      Reflect.deleteProperty(document, 'visibilityState');
+    }
+  });
+
+  function setVisibility(visibility: DocumentVisibilityState) {
+    act(() => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, value: visibility });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+  }
+
+  async function flushPromises() {
+    await act(async () => {
+      await Promise.resolve();
+    });
+  }
+
+  it('pauses scheduled polling while the document is hidden', async () => {
+    setVisibility('visible');
+    const fetcher = jest.fn().mockResolvedValue({ value: 1 });
+    renderHook(() => usePolling({ fetcher, intervalMs: 100, cursor: null }));
+    await flushPromises();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    setVisibility('hidden');
+    act(() => jest.advanceTimersByTime(500));
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('fetches immediately when visibility returns', async () => {
+    setVisibility('hidden');
+    const fetcher = jest.fn().mockResolvedValue({ value: 1 });
+    renderHook(() => usePolling({ fetcher, intervalMs: 100, cursor: null }));
+    expect(fetcher).not.toHaveBeenCalled();
+
+    setVisibility('visible');
+    await flushPromises();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('backs off after errors and resumes the normal interval after success', async () => {
+    setVisibility('visible');
+    const fetcher = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValue({ value: 1 });
+    const { result } = renderHook(() => usePolling({ fetcher, intervalMs: 100, cursor: null }));
+    await flushPromises();
+    expect(result.current.status).toBe('error');
+
+    act(() => jest.advanceTimersByTime(199));
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    act(() => jest.advanceTimersByTime(1));
+    await flushPromises();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(result.current.status).toBe('success');
+
+    act(() => jest.advanceTimersByTime(100));
+    await flushPromises();
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
+
+  it('stops polling when a result marks the operation terminal', async () => {
+    setVisibility('visible');
+    const fetcher = jest.fn().mockResolvedValue({ value: 1, terminal: true });
+    const { result } = renderHook(() => usePolling({ fetcher, intervalMs: 100, cursor: null }));
+    await flushPromises();
+    expect(result.current.terminal).toBe(true);
+
+    act(() => jest.advanceTimersByTime(1_000));
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes the current cursor and immediately fetches when it changes', async () => {
+    setVisibility('visible');
+    const fetcher = jest.fn((cursor: string) => Promise.resolve({ cursor }));
+    const { result, rerender } = renderHook(
+      ({ cursor }) => usePolling({ fetcher, intervalMs: 100, cursor }),
+      { initialProps: { cursor: 'first' } },
+    );
+    await flushPromises();
+    expect(fetcher).toHaveBeenLastCalledWith('first');
+    expect(result.current.data).toEqual({ cursor: 'first' });
+
+    rerender({ cursor: 'next' });
+    await flushPromises();
+    expect(fetcher).toHaveBeenLastCalledWith('next');
+    expect(result.current.data).toEqual({ cursor: 'next' });
+  });
+});
+
 describe('useAsync', () => {
   it('goes from pending to success with the resolved data', async () => {
     const { result } = renderHook(() => useAsync(() => Promise.resolve(42)));

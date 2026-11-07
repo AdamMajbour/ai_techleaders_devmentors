@@ -4,3 +4,4 @@ export * from './components';
 export * from './hooks';
 export * from './lib';
 export * from './backend';
+export * from './screens/my-sessions-view';
