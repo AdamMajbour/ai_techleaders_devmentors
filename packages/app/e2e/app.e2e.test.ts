@@ -607,7 +607,14 @@ describe('in a browser', () => {
     const { page, problems } = await open('/login');
     await page.fill('input[name=email]', email);
     await page.click('button[type=submit]');
-    await page.getByText('If an invitation exists for this address, a sign-in link has been sent. Check your e-mail.').waitFor({ timeout: 10000 });
+    // Wait for either success message or error
+    try {
+      await page.getByText('If an invitation exists for this address, a sign-in link has been sent. Check your e-mail.').waitFor({ timeout: 10000 });
+    } catch {
+      // If success message not found, check for error
+      const pageText = await page.textContent('body');
+      throw new Error(`Login form did not show success message. Page content: ${pageText?.slice(0, 500)}`);
+    }
 
     const mailboxMarker = `[development mail]\nTo: ${email}`;
     let verifyUrl: string | undefined;
@@ -616,6 +623,7 @@ describe('in a browser', () => {
       const output = server.log();
       const marker = output.lastIndexOf(mailboxMarker);
       if (marker >= 0) {
+        // Match both http and https, localhost and 127.0.0.1
         verifyUrl = output.slice(marker).match(/https?:\/\/[^\s"]+\/auth\/verify\?token=[A-Za-z0-9_-]{43}/)?.[0];
       }
       if (!verifyUrl) await new Promise((resolve) => setTimeout(resolve, 50));
