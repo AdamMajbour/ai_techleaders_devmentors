@@ -2,14 +2,158 @@ import { z } from 'zod';
 
 /** A secret shorter than this cannot hold 32 random bytes in any common encoding. */
 const MIN_SECRET_LENGTH = 32;
+const MAX_MENTOR_RESPONSE_WINDOW_MINUTES = 10_080;
+const refundAutoApproveReasons = ['mentor_declined', 'mentor_unresponsive'] as const;
+
+const publicSignupSchema = z.preprocess(
+  (value) => {
+    if (value === undefined) return true;
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  },
+  z.boolean(),
+);
+
+const mentorResponseWindowMinutesSchema = z.preprocess(
+  (value) => (value === undefined || value === '' ? 120 : value),
+  z.coerce.number().int().min(1).max(MAX_MENTOR_RESPONSE_WINDOW_MINUTES),
+);
+
+const refundAutoApproveReasonsSchema = z.preprocess(
+  (value) =>
+    value === undefined || value === ''
+      ? []
+      : typeof value === 'string'
+        ? value.split(',').map((reason) => reason.trim()).filter(Boolean)
+        : value,
+  z.array(z.enum(refundAutoApproveReasons)),
+);
+
+const appBaseUrlSchema = z
+  .string()
+  .trim()
+  .url()
+  .refine((value) => {
+    try {
+      const url = new URL(value);
+      return (
+        (url.protocol === 'https:' || url.protocol === 'http:') &&
+        !url.username &&
+        !url.password &&
+        url.pathname === '/' &&
+        !url.search &&
+        !url.hash
+      );
+    } catch {
+      return false;
+    }
+  }, 'APP_BASE_URL must be an HTTP(S) origin without credentials, path, query, or fragment')
+  .optional();
+
+const bookingSettingsSchema = z.object({
+  MENTOR_RESPONSE_WINDOW_MINUTES: mentorResponseWindowMinutesSchema,
+  REFUND_AUTO_APPROVE_REASONS: refundAutoApproveReasonsSchema,
+});
+
+const optionalEmailValue = z.preprocess(
+  (value) => (typeof value === 'string' && !value.trim() ? undefined : value),
+  z.string().trim().email().optional(),
+);
 
 const envSchema = z.object({
   // Generate with: openssl rand -base64 48
   JWT_SECRET: z.string().min(MIN_SECRET_LENGTH, `JWT_SECRET must be at least ${MIN_SECRET_LENGTH} characters (use 32+ random bytes)`),
+  OPERATOR_USER_IDS: z.preprocess(
+    (value) => parseOperatorUserIds(typeof value === 'string' ? value : undefined),
+    z.array(z.string()),
+  ),
+  // Default preserves existing deployments; the pilot deployment can disable sign-up later.
+  PUBLIC_SIGNUP: publicSignupSchema,
+  // Optional for compatibility; magic-link requests require it when creating verification links.
+  APP_BASE_URL: appBaseUrlSchema,
+  GITHUB_CLIENT_ID: z.string().trim().min(1).optional(),
+  GITHUB_CLIENT_SECRET: z.string().trim().min(1).optional(),
+  DEMO_MENTEE_GITHUB_EMAIL: optionalEmailValue,
+  DEMO_MENTOR_GITHUB_EMAIL: optionalEmailValue,
+  DEMO_OPERATOR_GITHUB_EMAIL: optionalEmailValue,
   NODE_ENV: z.string().optional(),
 });
 
+const optionalMailerValue = z.preprocess(
+  (value) => (typeof value === 'string' && !value.trim() ? undefined : value),
+  z.string().trim().min(1).optional(),
+);
+
+const mailerEnvSchema = z.object({
+  MAILER_MODE: z.enum(['console', 'http']).default('console'),
+  MAILER_API_KEY: optionalMailerValue,
+  MAIL_FROM: optionalMailerValue,
+}).superRefine((env, context) => {
+  if (env.MAILER_MODE === 'http') {
+    if (!env.MAILER_API_KEY) {
+      context.addIssue({ code: 'custom', path: ['MAILER_API_KEY'], message: 'Required when MAILER_MODE=http' });
+    }
+    if (!env.MAIL_FROM) {
+      context.addIssue({ code: 'custom', path: ['MAIL_FROM'], message: 'Required when MAILER_MODE=http' });
+    }
+  }
+});
+
+const optionalPaymentValue = z.preprocess(
+  (value) => (typeof value === 'string' && !value.trim() ? undefined : value),
+  z.string().trim().min(1).optional(),
+);
+
+const paymentBooleanSchema = z.preprocess((value) => {
+  if (value === undefined || value === '') return false;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return value;
+}, z.boolean());
+
+const paymentSettingsSchema = z.object({
+  PAYMENTS_MODE: z.enum(['mock', 'stripe']).default('mock'),
+  STRIPE_SECRET_KEY: optionalPaymentValue,
+  STRIPE_WEBHOOK_SECRET: optionalPaymentValue,
+  PAYMENTS_LIVE_ENABLED: paymentBooleanSchema,
+}).superRefine((settings, context) => {
+  if (
+    settings.STRIPE_SECRET_KEY &&
+    !/^sk_(test|live)_[A-Za-z0-9]+$/.test(settings.STRIPE_SECRET_KEY)
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['STRIPE_SECRET_KEY'],
+      message: 'Must be a valid Stripe secret key',
+    });
+  }
+  if (
+    settings.STRIPE_WEBHOOK_SECRET &&
+    !/^whsec_[A-Za-z0-9]+$/.test(settings.STRIPE_WEBHOOK_SECRET)
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['STRIPE_WEBHOOK_SECRET'],
+      message: 'Must be a valid Stripe webhook secret',
+    });
+  }
+  if (
+    settings.STRIPE_SECRET_KEY?.startsWith('sk_live_') &&
+    !settings.PAYMENTS_LIVE_ENABLED
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['PAYMENTS_LIVE_ENABLED'],
+      message: 'Must be true to use a live Stripe secret key',
+    });
+  }
+});
+
 export type Env = z.infer<typeof envSchema>;
+export type MailerSettings = z.infer<typeof mailerEnvSchema>;
+export type PaymentSettings = z.infer<typeof paymentSettingsSchema>;
+export type BookingSettings = z.infer<typeof bookingSettingsSchema>;
 
 /** Validates an environment; throws a message that names the offending variables, never their values. */
 export function parseEnv(source: Record<string, string | undefined>): Env {
@@ -29,6 +173,67 @@ let cached: Env | null = null;
 export function getEnv(): Env {
   cached ??= parseEnv(process.env);
   return cached;
+}
+
+/** Required only by flows that send absolute links, keeping builds and unrelated routes lazy. */
+export function getAppBaseUrl(): string {
+  const { APP_BASE_URL } = getEnv();
+  if (!APP_BASE_URL) {
+    throw new Error('Invalid environment configuration: APP_BASE_URL. See .env.example.');
+  }
+  return APP_BASE_URL;
+}
+
+export function parseMailerSettings(source: Record<string, string | undefined>): MailerSettings {
+  const result = mailerEnvSchema.safeParse(source);
+  if (result.success) return result.data;
+
+  const names = Object.keys(z.flattenError(result.error).fieldErrors).join(', ');
+  throw new Error(`Invalid environment configuration: ${names}. See .env.example.`);
+}
+
+export function getMailerSettings(): MailerSettings {
+  return parseMailerSettings(process.env);
+}
+
+export function parsePaymentSettings(source: Record<string, string | undefined>): PaymentSettings {
+  const result = paymentSettingsSchema.safeParse(source);
+  if (result.success) return result.data;
+
+  const names = Object.keys(z.flattenError(result.error).fieldErrors).join(', ');
+  throw new Error(`Invalid payment configuration: ${names}. See .env.example.`);
+}
+
+/** Payment settings stay independent of the required app secrets and are read only when needed. */
+export function getPaymentSettings(): PaymentSettings {
+  return parsePaymentSettings(process.env);
+}
+
+/** Booking settings are independent of secrets and validated only when booking workflows need them. */
+export function parseBookingSettings(source: Record<string, string | undefined>): BookingSettings {
+  const result = bookingSettingsSchema.safeParse(source);
+  if (result.success) return result.data;
+
+  const names = Object.keys(z.flattenError(result.error).fieldErrors).join(', ');
+  throw new Error(`Invalid booking configuration: ${names}. See .env.example.`);
+}
+
+export function getBookingSettings(): BookingSettings {
+  return parseBookingSettings(process.env);
+}
+
+/** Invalid or empty operator configuration grants no operator access. */
+export function parseOperatorUserIds(value: string | undefined): string[] {
+  if (!value?.trim()) return [];
+
+  const ids = value.split(',').map((id) => id.trim());
+  if (ids.some((id) => !id || !z.uuid().safeParse(id).success)) return [];
+  return [...new Set(ids)];
+}
+
+/** Read independently from required secrets so operator checks stay lazy and startup-safe. */
+export function getOperatorUserIds(): string[] {
+  return parseOperatorUserIds(process.env.OPERATOR_USER_IDS);
 }
 
 /** For tests: forget the cached environment. */

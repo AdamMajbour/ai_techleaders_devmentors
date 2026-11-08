@@ -7,6 +7,18 @@ const ALL_EVENTS: EventName[] = [
   'articles.article.created',
   'articles.article.updated',
   'articles.article.deleted',
+  'bookings.booking.created',
+  'bookings.booking.paid',
+  'bookings.booking.accepted',
+  'bookings.booking.declined',
+  'bookings.booking.expired',
+  'payments.payment.succeeded',
+  'payments.payment.failed',
+  'payments.payment.refunded',
+  'approvals.approval.requested',
+  'approvals.approval.approved',
+  'approvals.approval.rejected',
+  'messages.message.posted',
 ];
 
 /** Writes one info line per domain event. Add a name above when a new event is added to the map. */

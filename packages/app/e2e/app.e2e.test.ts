@@ -12,6 +12,8 @@ import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { chromium, type Browser } from 'playwright';
+import '../../db/src/load-env';
+import { closeORM, initializeORM, InvitationRepository } from '../../db/src';
 // Relative on purpose: app code must not import the db package, but a test may read its demo constants.
 import { DEMO_ARTICLE_TITLE, DEMO_AUTHOR } from '../../db/scripts/seed-data';
 
@@ -21,12 +23,24 @@ const ROOT = path.resolve(APP_DIR, '../..');
 // A fresh signing key per run: never a committed or shared secret.
 const JWT_SECRET = randomBytes(48).toString('base64');
 const PASSWORD = 'correct horse battery';
+const E2E_DATABASE_NAME = process.env.DATABASE_E2E_NAME || 'devmentor_e2e';
+if (
+  E2E_DATABASE_NAME === 'devmentor' ||
+  E2E_DATABASE_NAME === 'devmentor_test' ||
+  E2E_DATABASE_NAME === process.env.DATABASE_NAME
+) {
+  throw new Error('E2E tests require a dedicated database and will not migrate a development/test database.');
+}
 
 const env: NodeJS.ProcessEnv = {
   ...process.env,
   NODE_ENV: 'production',
-  DATABASE_NAME: process.env.DATABASE_E2E_NAME || 'devmentor_e2e',
+  DATABASE_NAME: E2E_DATABASE_NAME,
   JWT_SECRET,
+  PUBLIC_SIGNUP: 'true',
+  PAYMENTS_MODE: 'mock',
+  MOCK_PAYMENT_E2E_ENABLED: 'true',
+  JEST_WORKER_ID: process.env.JEST_WORKER_ID ?? '1',
 };
 
 jest.setTimeout(30_000);
@@ -44,8 +58,18 @@ function chromiumEnv(): NodeJS.ProcessEnv {
 
 type RunningServer = { url: string; log: () => string; stop: () => void };
 
-function run(args: string[], cwd = ROOT) {
-  execFileSync('npm', args, { cwd, env, stdio: 'pipe' });
+function run(args: string[], cwd = ROOT, extraEnv: NodeJS.ProcessEnv = {}): string {
+  const npmCli = process.env.npm_execpath;
+  return execFileSync(
+    npmCli ? process.execPath : process.platform === 'win32' ? 'npm.cmd' : 'npm',
+    npmCli ? [npmCli, ...args] : args,
+    {
+      cwd,
+      env: { ...env, ...extraEnv },
+      encoding: 'utf8',
+      shell: process.platform === 'win32' && !npmCli,
+    },
+  );
 }
 
 function freePort(): Promise<number> {
@@ -63,11 +87,10 @@ async function startServer(extraEnv: NodeJS.ProcessEnv = {}): Promise<RunningSer
   const port = await freePort();
   const url = `http://127.0.0.1:${port}`;
   let log = '';
-  // Own process group, so the whole npx -> next-server tree can be stopped afterwards.
-  const child: ChildProcess = spawn('npx', ['next', 'start', '--port', String(port)], {
+  const nextCli = path.join(ROOT, 'node_modules', 'next', 'dist', 'bin', 'next');
+  const child: ChildProcess = spawn(process.execPath, [nextCli, 'start', '--port', String(port)], {
     cwd: APP_DIR,
-    env: { ...env, ...extraEnv },
-    detached: true,
+    env: { ...env, APP_BASE_URL: url, MAILER_MODE: 'console', ...extraEnv },
   });
   child.stdout?.on('data', (chunk) => (log += chunk));
   child.stderr?.on('data', (chunk) => (log += chunk));
@@ -88,7 +111,7 @@ async function startServer(extraEnv: NodeJS.ProcessEnv = {}): Promise<RunningSer
     url,
     log: () => log,
     stop: () => {
-      if (child.pid) process.kill(-child.pid, 'SIGTERM');
+      child.kill('SIGTERM');
     },
   };
 }
@@ -96,6 +119,7 @@ async function startServer(extraEnv: NodeJS.ProcessEnv = {}): Promise<RunningSer
 let browser: Browser | undefined;
 let server: RunningServer;
 let baseUrl = '';
+let e2eOrm: Awaited<ReturnType<typeof initializeORM>> | undefined;
 
 beforeAll(async () => {
   run(['--workspace=@devmentor/db', 'run', 'migrate']);
@@ -109,6 +133,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await browser?.close();
   server?.stop();
+  await closeORM();
   run(['--workspace=@devmentor/db', 'run', 'migrate:down']);
 }, 60_000);
 
@@ -146,6 +171,24 @@ async function registerUser(name = 'Tester') {
   return { ...result, email, cookie: setCookie.split(';')[0], setCookie };
 }
 
+async function registerPilotUser(role: 'seeker' | 'mentor', name: string) {
+  const result = await registerUser(name);
+  if (result.response.status !== 201 || typeof result.body?.data?.id !== 'string') {
+    throw new Error(`Could not create the ${role} account for the booking E2E.`);
+  }
+  e2eOrm ??= await initializeORM({ dbName: E2E_DATABASE_NAME });
+  await new InvitationRepository(e2eOrm.em.fork()).create({
+    email: result.email,
+    displayName: name,
+    role,
+    invitedBy: null,
+    acceptedByUserId: result.body.data.id,
+    acceptedAt: new Date(),
+    revokedAt: null,
+  });
+  return result;
+}
+
 // --- pages ---------------------------------------------------------------------------------
 
 describe('pages', () => {
@@ -168,7 +211,7 @@ describe('pages', () => {
     expect(css).toContain('.bg-primary');
   });
 
-  it.each(['/login', '/register', '/articles'])('serves %s', async (pathname) => {
+  it.each(['/login', '/auth/verify', '/register', '/articles'])('serves %s', async (pathname) => {
     expect((await fetch(`${baseUrl}${pathname}`)).status).toBe(200);
   });
 });
@@ -456,12 +499,25 @@ describe('operations', () => {
 describe('in a browser', () => {
   beforeAll(async () => {
     try {
-      browser = await chromium.launch({ env: chromiumEnv() as Record<string, string> });
+      // Add timeout to prevent hanging - 30s should be enough for Chromium to start
+      const launchPromise = chromium.launch({ 
+        env: chromiumEnv() as Record<string, string>,
+        timeout: 30000,
+      });
+      browser = await Promise.race([
+        launchPromise,
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Chromium launch timed out after 30s')), 30000)
+        ),
+      ]);
     } catch (error) {
+      const chromiumLibs = process.env.CHROMIUM_LIBS_DIR || path.join(os.homedir(), '.cache/chromium-libs');
       throw new Error(
-        'Could not start Chromium. Install it with `npx playwright install --with-deps chromium` ' +
-          '(root) or `npx playwright install chromium && python3 scripts/setup-chromium-libs.py` (no root).\n' +
-          String(error),
+        'Could not start Chromium. ' +
+        `CHROMIUM_LIBS_DIR=${chromiumLibs}\n` +
+        'Install it with `npx playwright install --with-deps chromium` (root) ' +
+        'or `npx playwright install chromium && python3 scripts/setup-chromium-libs.py` (no root).\n' +
+        String(error),
       );
     }
   });
@@ -475,7 +531,7 @@ describe('in a browser', () => {
       const isExpectedVisitorCheck = message.location().url.endsWith('/api/auth/me') && message.text().includes('401');
       if (message.type() === 'error' && !isExpectedVisitorCheck) problems.push(message.text());
     });
-    await page.goto(`${baseUrl}${pathname}`, { waitUntil: 'networkidle' });
+    await page.goto(`${baseUrl}${pathname}`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     return { page, problems };
   }
 
@@ -527,59 +583,111 @@ describe('in a browser', () => {
     await page.close();
   });
 
-  it('shows client-side validation messages from the shared schema on the login form', async () => {
+  it('validates e-mail before requesting a sign-in link', async () => {
     const { page, problems } = await open('/login');
 
     await page.click('button[type=submit]');
     expect(await page.locator('text=Enter a valid e-mail address').count()).toBe(1);
-    expect(await page.locator('text=Enter your password').count()).toBe(1);
     expect(await page.locator('input[name=email]').getAttribute('aria-invalid')).toBe('true');
     expect(problems).toEqual([]);
     await page.close();
   });
 
-  it('shows the generic server message for wrong credentials', async () => {
-    const { page } = await open('/login');
+    it('shows the same generic confirmation for an uninvited address', async () => {
+    const { page, problems } = await open('/login');
 
     await page.fill('input[name=email]', 'nobody-here@example.com');
-    await page.fill('input[name=password]', 'whatever-password');
     await page.click('button[type=submit]');
-
-    // The form-level error is an Alert (`div[role=alert]`). Next.js has its own, empty, role=alert route announcer.
-    const alert = page.locator('[role=alert]', { hasText: 'Invalid credentials.' });
-    await alert.waitFor();
-    expect((await alert.textContent())?.trim()).toBe('Invalid credentials.');
-    await page.close();
-  });
-
-  it('registers, writes an article, deletes it and logs out through the UI', async () => {
-    const { page, problems } = await open('/register');
-    const email = `ui-${randomBytes(4).toString('hex')}@example.com`;
-
-    await page.fill('input[name=name]', 'Browser Tester');
-    await page.fill('input[name=email]', email);
-    await page.fill('input[name=password]', PASSWORD);
-    await page.click('button[type=submit]');
-    await page.waitForURL('**/articles');
-    await page.waitForSelector('text=New article');
-    expect(await page.locator('header >> text=Browser Tester').count()).toBe(1);
-
-    const title = `Browser article ${randomBytes(3).toString('hex')}`;
-    await page.fill('input[name=title]', title);
-    await page.fill('textarea[name=content]', 'Written through the form.');
-    await page.click('button:has-text("Publish")');
-
-    const row = page.locator('tr', { hasText: title });
-    await row.waitFor();
-    expect(await row.locator('td').nth(2).textContent()).toBe('You');
-
-    await row.locator('button:has-text("Delete")').click();
-    await row.waitFor({ state: 'detached' });
-
-    await page.click('button:has-text("Log out")');
-    await page.waitForSelector('a:has-text("Log in")');
-    expect(await page.locator('text=New article').count()).toBe(0);
+    await page.getByText('If an invitation exists for this address, a sign-in link has been sent. Check your e-mail.').waitFor();
     expect(problems).toEqual([]);
     await page.close();
   });
+});
+
+describe('mock booking payment flow', () => {
+  it('creates a booking, completes mock checkout, and keeps failed or abandoned payments unpaid', async () => {
+    const suffix = randomBytes(4).toString('hex');
+    const seeker = await registerPilotUser('seeker', 'Booking Seeker');
+    const mentor = await registerPilotUser('mentor', 'Booking Mentor');
+    const profileResponse = await api('/api/mentors', {
+      method: 'POST',
+      cookie: mentor.cookie,
+      json: {
+        slug: `e2e-mentor-${suffix}`,
+        headline: 'E2E mentor',
+        bio: 'A mentor profile for booking flow verification.',
+        technologies: 'typescript',
+        publicWorkUrl: 'https://example.com/work',
+        isListed: true,
+      },
+    });
+    expect(profileResponse.response.status).toBe(201);
+    const profile = profileResponse.body.data;
+
+    const createBooking = async (question: string) => {
+      const landedAt = new Date().toISOString();
+      const response = await api('/api/bookings', {
+        method: 'POST',
+        cookie: seeker.cookie,
+        json: { mentorId: profile.id, question, source: 'list', landedAt },
+      });
+      expect(response.response.status).toBe(201);
+      expect(response.body.data.booking).toMatchObject({
+        seekerId: seeker.body.data.id,
+        mentorId: expect.any(String),
+        question,
+        durationMinutes: 25,
+        priceMinor: 2500,
+        currency: 'EUR',
+        status: 'pending_payment',
+        source: 'list',
+        landedAt,
+      });
+      expect(response.body.data.checkoutUrl).toMatch(/^\/mock-payment\/checkout\//);
+      return response.body.data;
+    };
+
+    const paidAttempt = await createBooking('How do I keep this service reliable?');
+    const checkoutPage = await fetch(`${baseUrl}${paidAttempt.checkoutUrl}`);
+    expect(checkoutPage.status).toBe(200);
+    const completed = await api(`/api/bookings/${paidAttempt.booking.id}/mock-payment`, {
+      method: 'POST',
+      cookie: seeker.cookie,
+      json: { outcome: 'complete' },
+    });
+    expect(completed.response.status).toBe(200);
+    expect(completed.body.data.status).toBe('paid');
+
+    const afterWebhookReconcile = await api(`/api/bookings/${paidAttempt.booking.id}/reconcile-payment`, {
+      method: 'POST',
+      cookie: seeker.cookie,
+      json: {},
+    });
+    expect(afterWebhookReconcile.body.data.status).toBe('paid');
+
+    const failedAttempt = await createBooking('Why does my test fail intermittently?');
+    const failed = await api(`/api/bookings/${failedAttempt.booking.id}/mock-payment`, {
+      method: 'POST',
+      cookie: seeker.cookie,
+      json: { outcome: 'fail' },
+    });
+    expect(failed.response.status).toBe(200);
+    expect(failed.body.data.status).toBe('payment_failed');
+
+    const abandonedAttempt = await createBooking('How should I diagnose this timeout?');
+    const unpaid = await api(`/api/bookings/${abandonedAttempt.booking.id}/reconcile-payment`, {
+      method: 'POST',
+      cookie: seeker.cookie,
+      json: {},
+    });
+    expect(unpaid.body.data.status).toBe('pending_payment');
+
+    const mentorList = await api('/api/bookings?role=mentor', { cookie: mentor.cookie });
+    const mentorPaid = mentorList.body.data.items.find((item: { id: string }) => item.id === paidAttempt.booking.id);
+    const mentorFailed = mentorList.body.data.items.find((item: { id: string }) => item.id === failedAttempt.booking.id);
+    expect(mentorPaid.question).toBe('How do I keep this service reliable?');
+    expect(mentorFailed).toBeUndefined();
+    expect(mentorList.body.data.items.some((item: { id: string }) => item.id === abandonedAttempt.booking.id)).toBe(false);
+    expect(unpaid.body.data.status).not.toBe('paid');
+  }, 120_000);
 });

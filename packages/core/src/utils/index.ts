@@ -1,5 +1,6 @@
 // Utility functions
 // Place helper functions here
+export { systemClock, type Clock } from './clock';
 
 export function formatDate(date: Date): string {
   return date.toLocaleDateString('en-US', {

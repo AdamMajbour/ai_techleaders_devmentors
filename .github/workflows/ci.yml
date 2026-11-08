@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'feat/**']
 
 jobs:
   verify:
@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 20
 
     # The same defaults as docker-compose.yml and packages/db/src/config.
-    # The integration and E2E tests create their own databases (devmentor_test, devmentor_e2e).
+    # The integration tests use devmentor_test, E2E tests use devmentor_e2e.
     services:
       postgres:
         image: postgres:17
@@ -51,6 +51,14 @@ jobs:
 
       - name: Unit and component tests
         run: npm test
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Create test databases
+        run: |
+          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 -c "CREATE DATABASE devmentor_test;"
+          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 -c "CREATE DATABASE devmentor_e2e;"
 
       - name: Database migrations (up, down, up) and seed
         run: |

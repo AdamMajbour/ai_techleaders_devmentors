@@ -1,4 +1,4 @@
-import { registerSchema, parseOrThrow } from "@devmentor/core";
+import { ForbiddenError, registerSchema, parseOrThrow } from "@devmentor/core";
 import {
   apiHandler,
   assertCsrfSafe,
@@ -18,7 +18,8 @@ const CREATED = 201;
 /** POST /api/auth/register - creates the account and logs it in. */
 export const POST = apiHandler(async (request) => {
   assertCsrfSafe(request);
-  getEnv(); // a missing JWT_SECRET must fail before any account or password work happens
+  const env = getEnv(); // a missing JWT_SECRET must fail before any account or password work happens
+  if (!env.PUBLIC_SIGNUP) throw new ForbiddenError("Public sign-up is disabled.");
 
   const key = clientKey(request);
   registerLimiter.assertAllowed(key);

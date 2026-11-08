@@ -1,11 +1,13 @@
 import { useState, type ReactNode } from 'react';
 
+import { ActionButton } from '../../src/backend/actions/ActionButton';
 import { CrudForm } from '../../src/backend/forms/CrudForm';
 import { DataTable } from '../../src/backend/tables/DataTable';
 import { MarkdownView } from '../../src/backend/content/MarkdownView';
 import { EmptyState } from '../../src/backend/feedback/EmptyState';
 import { ErrorMessage } from '../../src/backend/feedback/ErrorMessage';
 import { LoadingMessage } from '../../src/backend/feedback/LoadingMessage';
+import { StatusBadge } from '../../src/backend/status/StatusBadge';
 import { BookingRow } from '../../src/components/bookings/BookingRow';
 import { BookingStatus } from '../../src/components/bookings/BookingStatus';
 import { PriceNotice } from '../../src/components/bookings/PriceNotice';
@@ -26,7 +28,7 @@ import { Field } from '../../src/components/ui/field';
 import { Input } from '../../src/components/ui/input';
 import { Select } from '../../src/components/ui/select';
 import { Skeleton } from '../../src/components/ui/skeleton';
-import { StatusBadge } from '../../src/components/ui/status-badge';
+import { StatusBadge as StatusBadgePrimitive } from '../../src/components/ui/status-badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../src/components/ui/table';
 import { Textarea } from '../../src/components/ui/textarea';
 import { TextLink } from '../../src/components/ui/text-link';
@@ -69,6 +71,11 @@ export interface CatalogueEntry {
 }
 
 const ok = async () => ({ ok: true as const, status: 200, data: {} });
+const statusLabels = {
+  draft: { text: 'Draft', tone: 'neutral' },
+  published: { text: 'Published', tone: 'active' },
+  payment_failed: { text: 'Payment failed', tone: 'danger' },
+} as const;
 
 function DialogPreview() {
   return (
@@ -144,6 +151,15 @@ export const CATALOGUE: CatalogueEntry[] = [
         </Button>
       </div>
     ),
+  },
+  {
+    name: 'ActionButton',
+    group: 'Primitives',
+    summary: 'Runs an allowed action and reports errors without losing the retry.',
+    when: 'The user changes a record state or performs an action on it.',
+    whenNot: 'The user navigates somewhere (Button or TextLink).',
+    docs: 'backend-actionbutton--success',
+    preview: <ActionButton label="Approve refund" run={ok} onDone={() => undefined} />,
   },
   {
     name: 'Card',
@@ -245,12 +261,14 @@ export const CATALOGUE: CatalogueEntry[] = [
     summary: 'A status in one to three words.',
     when: 'Where a record stands: Draft, Published.',
     whenNot: 'A sentence (Alert), a count.',
-    docs: 'primitives-statusbadge--statusbadge',
+    docs: 'backend-statusbadge--playground',
+    alsoExports: ['StatusBadgePrimitive', 'StatusBadgePrimitiveProps'],
     preview: (
       <div className="flex flex-wrap items-center gap-group">
-        <StatusBadge>Draft</StatusBadge>
-        <StatusBadge tone="active">Published</StatusBadge>
-        <StatusBadge tone="danger">Payment failed</StatusBadge>
+        <StatusBadge status="draft" labels={statusLabels} />
+        <StatusBadge status="published" labels={statusLabels} />
+        <StatusBadge status="payment_failed" labels={statusLabels} />
+        <StatusBadgePrimitive tone="active">Current</StatusBadgePrimitive>
       </div>
     ),
   },

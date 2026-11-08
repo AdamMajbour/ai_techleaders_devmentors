@@ -15,6 +15,18 @@ describe('redact', () => {
     });
   });
 
+  it('masks question and body keys at any depth', () => {
+    const result = redact({
+      question: 'How do I reset my password?',
+      request: { body: 'private message', items: [{ question: 'Another private question' }] },
+    });
+
+    expect(result).toEqual({
+      question: '[redacted]',
+      request: { body: '[redacted]', items: [{ question: '[redacted]' }] },
+    });
+  });
+
   it('turns an Error into plain data', () => {
     expect(redact(new Error('boom'))).toMatchObject({ name: 'Error', message: 'boom' });
   });

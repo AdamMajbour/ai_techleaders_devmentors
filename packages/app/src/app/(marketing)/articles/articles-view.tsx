@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { articleCreateSchema, type ArticleDto, type Page, type UserDto } from "@devmentor/core";
 import {
@@ -52,33 +51,9 @@ export function ArticlesView() {
     reload();
   }
 
-  async function logout() {
-    await apiCall("/api/auth/logout", { method: "POST" });
-    reload();
-  }
-
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
-      <header className="flex items-center justify-between gap-4">
-        <h1 className="m-0 text-2xl font-semibold">Articles</h1>
-        {user ? (
-          <div className="flex items-center gap-3 text-sm">
-            <span>{user.name}</span>
-            <Button variant="outline" size="sm" onClick={logout}>
-              Log out
-            </Button>
-          </div>
-        ) : (
-          <div className="flex gap-3 text-sm">
-            <Link href="/login" className="text-primary underline">
-              Log in
-            </Link>
-            <Link href="/register" className="text-primary underline">
-              Register
-            </Link>
-          </div>
-        )}
-      </header>
+      <h1 className="m-0 text-2xl font-semibold">Articles</h1>
 
       <Card>
         <CardContent className="pt-6">
