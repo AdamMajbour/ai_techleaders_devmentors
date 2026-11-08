@@ -1,0 +1,1007 @@
+{
+  "target": "CLAUDE.md",
+  "repo": "C:\\projects\\ai_techleaders_devmentors",
+  "mode": "full",
+  "totals": {
+    "lines": 59,
+    "directives": 42,
+    "actionable_directives": 34,
+    "est_tokens": 569,
+    "directives_with_project_noun": 17,
+    "project_noun_ratio": 0.5,
+    "vague_no_noun": 3
+  },
+  "sections": [
+    {
+      "section": "Og\u00f3lne zasady",
+      "directives": 5,
+      "tokens": 103,
+      "first_line": 16
+    },
+    {
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/lessons/`",
+      "directives": 8,
+      "tokens": 92,
+      "first_line": 37
+    },
+    {
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/runs/`",
+      "directives": 5,
+      "tokens": 79,
+      "first_line": 30
+    },
+    {
+      "section": "Przep\u0142yw dla implementacji specyfikacji",
+      "directives": 6,
+      "tokens": 77,
+      "first_line": 47
+    },
+    {
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/specs/`",
+      "directives": 5,
+      "tokens": 70,
+      "first_line": 23
+    },
+    {
+      "section": "Czytaj AGENTS.md zawsze",
+      "directives": 6,
+      "tokens": 66,
+      "first_line": 7
+    },
+    {
+      "section": "Archiwizowanie",
+      "directives": 4,
+      "tokens": 64,
+      "first_line": 55
+    },
+    {
+      "section": "Instrukcje dla Claude i AI \u2014 korzystanie ze struktury .ai/",
+      "directives": 1,
+      "tokens": 15,
+      "first_line": 5
+    },
+    {
+      "section": "(root)",
+      "directives": 2,
+      "tokens": 3,
+      "first_line": 1
+    }
+  ],
+  "near_duplicates": [
+    {
+      "similarity": 1.0,
+      "tier": "likely",
+      "cross_file": true,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 5,
+        "text": "This version has breaking changes \u2014 APIs, conventions, and file structure may all differ from your training data."
+      },
+      "b": {
+        "file": "packages\\app\\AGENTS.md",
+        "line": 5,
+        "text": "This version has breaking changes \u2014 APIs, conventions, and file structure may all differ from your training data."
+      }
+    },
+    {
+      "similarity": 1.0,
+      "tier": "likely",
+      "cross_file": true,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 5,
+        "text": "Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo"
+      },
+      "b": {
+        "file": "packages\\app\\AGENTS.md",
+        "line": 5,
+        "text": "Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo"
+      }
+    },
+    {
+      "similarity": 1.0,
+      "tier": "likely",
+      "cross_file": true,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 5,
+        "text": "Heed deprecation notices."
+      },
+      "b": {
+        "file": "packages\\app\\AGENTS.md",
+        "line": 5,
+        "text": "Heed deprecation notices."
+      }
+    },
+    {
+      "similarity": 1.0,
+      "tier": "likely",
+      "cross_file": true,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 7,
+        "text": "This block is written and re-added by `next dev` \u2014 verify at `node_modules/next/dist/server/lib/generate-agent-files.js`."
+      },
+      "b": {
+        "file": "packages\\app\\AGENTS.md",
+        "line": 7,
+        "text": "This block is written and re-added by `next dev` \u2014 verify at `node_modules/next/dist/server/lib/generate-agent-files.js`."
+      }
+    },
+    {
+      "similarity": 1.0,
+      "tier": "likely",
+      "cross_file": true,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 7,
+        "text": "Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean."
+      },
+      "b": {
+        "file": "packages\\app\\AGENTS.md",
+        "line": 7,
+        "text": "Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean."
+      }
+    },
+    {
+      "similarity": 0.64,
+      "tier": "likely",
+      "cross_file": false,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 200,
+        "text": "**Format nazwy:** `YYYY-MM-DD-slug.md` (np. `2026-10-19-auth-system-redesign.md`)"
+      },
+      "b": {
+        "file": "AGENTS.md",
+        "line": 213,
+        "text": "**Format nazwy:** `YYYY-MM-DD-slug.md` (np. `2026-10-19-performance-optimization-run.md`)"
+      }
+    },
+    {
+      "similarity": 0.39,
+      "tier": "possible",
+      "cross_file": false,
+      "a": {
+        "file": "CLAUDE.md",
+        "line": 28,
+        "text": "**Instrukcja:** Utw\u00f3rz plik `YYYY-MM-DD-slug.md` w `.ai/specs/` z pe\u0142n\u0105 specyfikacj\u0105"
+      },
+      "b": {
+        "file": "CLAUDE.md",
+        "line": 44,
+        "text": "Utw\u00f3rz plik `YYYY-MM-DD-slug.md` w `.ai/lessons/`"
+      }
+    },
+    {
+      "similarity": 0.38,
+      "tier": "possible",
+      "cross_file": false,
+      "a": {
+        "file": "CLAUDE.md",
+        "line": 28,
+        "text": "**Instrukcja:** Utw\u00f3rz plik `YYYY-MM-DD-slug.md` w `.ai/specs/` z pe\u0142n\u0105 specyfikacj\u0105"
+      },
+      "b": {
+        "file": "CLAUDE.md",
+        "line": 49,
+        "text": "Utw\u00f3rz specyfikacj\u0119 w `.ai/specs/` z formatem `YYYY-MM-DD-slug.md`"
+      }
+    },
+    {
+      "similarity": 0.38,
+      "tier": "possible",
+      "cross_file": true,
+      "a": {
+        "file": "CLAUDE.md",
+        "line": 49,
+        "text": "Utw\u00f3rz specyfikacj\u0119 w `.ai/specs/` z formatem `YYYY-MM-DD-slug.md`"
+      },
+      "b": {
+        "file": "AGENTS.md",
+        "line": 245,
+        "text": "Dla z\u0142o\u017conych zada\u0144 najpierw utw\u00f3rz specyfikacj\u0119 w `.ai/specs/`:"
+      }
+    },
+    {
+      "similarity": 0.38,
+      "tier": "possible",
+      "cross_file": false,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 64,
+        "text": "`packages/db/src/entities/<concept>/<name>.entity.ts`"
+      },
+      "b": {
+        "file": "AGENTS.md",
+        "line": 65,
+        "text": "`packages/core/src/services/<concept>/<name>.service.ts`"
+      }
+    },
+    {
+      "similarity": 0.3,
+      "tier": "possible",
+      "cross_file": true,
+      "a": {
+        "file": "CLAUDE.md",
+        "line": 58,
+        "text": "Nigdy nie usuwaj plik\u00f3w \u2014 zawsze archiwizuj"
+      },
+      "b": {
+        "file": "AGENTS.md",
+        "line": 207,
+        "text": "Nigdy nie usuwaj specyfikacji \u2014 archiwizuj zamiast tego"
+      }
+    },
+    {
+      "similarity": 0.29,
+      "tier": "possible",
+      "cross_file": false,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 200,
+        "text": "**Format nazwy:** `YYYY-MM-DD-slug.md` (np. `2026-10-19-auth-system-redesign.md`)"
+      },
+      "b": {
+        "file": "AGENTS.md",
+        "line": 228,
+        "text": "**Format nazwy w `lessons/`:** `YYYY-MM-DD-slug.md`"
+      }
+    },
+    {
+      "similarity": 0.29,
+      "tier": "possible",
+      "cross_file": false,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 213,
+        "text": "**Format nazwy:** `YYYY-MM-DD-slug.md` (np. `2026-10-19-performance-optimization-run.md`)"
+      },
+      "b": {
+        "file": "AGENTS.md",
+        "line": 228,
+        "text": "**Format nazwy w `lessons/`:** `YYYY-MM-DD-slug.md`"
+      }
+    }
+  ],
+  "dead_references": [
+    {
+      "line": 10,
+      "ref": ".ai/",
+      "text": "Dokumentacj\u0119 struktury katalog\u00f3w `.ai/`"
+    },
+    {
+      "line": 18,
+      "ref": ".ai/",
+      "text": "**Czytaj AGENTS.md** \u2014 zawiera szczeg\u00f3\u0142ow\u0105 dokumentacj\u0119 struktury `.ai/` i Best Practices"
+    },
+    {
+      "line": 19,
+      "ref": "YYYY-MM-DD-slug.md",
+      "text": "**Respektuj konwencje nazewnictwa** \u2014 wszystkie pliki musz\u0105 mie\u0107 format `YYYY-MM-DD-slug.md`"
+    },
+    {
+      "line": 20,
+      "ref": ".ai/specs/",
+      "text": "**Organizuj wiedz\u0119** \u2014 skorzystaj ze struktur `.ai/specs/`, `.ai/runs/` i `.ai/lessons/` do zbierania i organizowania in"
+    },
+    {
+      "line": 20,
+      "ref": ".ai/runs/",
+      "text": "**Organizuj wiedz\u0119** \u2014 skorzystaj ze struktur `.ai/specs/`, `.ai/runs/` i `.ai/lessons/` do zbierania i organizowania in"
+    },
+    {
+      "line": 20,
+      "ref": ".ai/lessons/",
+      "text": "**Organizuj wiedz\u0119** \u2014 skorzystaj ze struktur `.ai/specs/`, `.ai/runs/` i `.ai/lessons/` do zbierania i organizowania in"
+    },
+    {
+      "line": 23,
+      "ref": ".ai/specs/",
+      "text": "## Kiedy tworzy\u0107 pliki w `.ai/specs/`"
+    },
+    {
+      "line": 28,
+      "ref": "YYYY-MM-DD-slug.md",
+      "text": "**Instrukcja:** Utw\u00f3rz plik `YYYY-MM-DD-slug.md` w `.ai/specs/` z pe\u0142n\u0105 specyfikacj\u0105"
+    },
+    {
+      "line": 28,
+      "ref": ".ai/specs/",
+      "text": "**Instrukcja:** Utw\u00f3rz plik `YYYY-MM-DD-slug.md` w `.ai/specs/` z pe\u0142n\u0105 specyfikacj\u0105"
+    },
+    {
+      "line": 30,
+      "ref": ".ai/runs/",
+      "text": "## Kiedy tworzy\u0107 pliki w `.ai/runs/`"
+    },
+    {
+      "line": 35,
+      "ref": "YYYY-MM-DD-slug.md",
+      "text": "**Instrukcja:** Utw\u00f3rz log `YYYY-MM-DD-slug.md` w `.ai/runs/` z celem, metod\u0105, wynikami i wnioskami"
+    },
+    {
+      "line": 35,
+      "ref": ".ai/runs/",
+      "text": "**Instrukcja:** Utw\u00f3rz log `YYYY-MM-DD-slug.md` w `.ai/runs/` z celem, metod\u0105, wynikami i wnioskami"
+    },
+    {
+      "line": 37,
+      "ref": ".ai/lessons/",
+      "text": "## Kiedy tworzy\u0107 pliki w `.ai/lessons/`"
+    },
+    {
+      "line": 44,
+      "ref": "YYYY-MM-DD-slug.md",
+      "text": "Utw\u00f3rz plik `YYYY-MM-DD-slug.md` w `.ai/lessons/`"
+    },
+    {
+      "line": 44,
+      "ref": ".ai/lessons/",
+      "text": "Utw\u00f3rz plik `YYYY-MM-DD-slug.md` w `.ai/lessons/`"
+    },
+    {
+      "line": 45,
+      "ref": ".ai/lessons.md",
+      "text": "Zaktualizuj `.ai/lessons.md` z linkiem i kr\u00f3tkim opisem"
+    },
+    {
+      "line": 49,
+      "ref": ".ai/specs/",
+      "text": "Utw\u00f3rz specyfikacj\u0119 w `.ai/specs/` z formatem `YYYY-MM-DD-slug.md`"
+    },
+    {
+      "line": 49,
+      "ref": "YYYY-MM-DD-slug.md",
+      "text": "Utw\u00f3rz specyfikacj\u0119 w `.ai/specs/` z formatem `YYYY-MM-DD-slug.md`"
+    },
+    {
+      "line": 51,
+      "ref": ".ai/specs/implemented/",
+      "text": "Po zako\u0144czeniu: przenie\u015b plik do `.ai/specs/implemented/`"
+    },
+    {
+      "line": 52,
+      "ref": ".ai/lessons/",
+      "text": "Je\u015bli nauczy\u0142e\u015b si\u0119 czego\u015b wa\u017cnego \u2192 utw\u00f3rz wpis w `.ai/lessons/`"
+    },
+    {
+      "line": 53,
+      "ref": ".ai/runs/",
+      "text": "Je\u015bli by\u0142o wiele iteracji \u2192 utw\u00f3rz log w `.ai/runs/`"
+    },
+    {
+      "line": 57,
+      "ref": ".ai/specs/archive/",
+      "text": "Gdy specyfikacja jest przestarza\u0142a lub nigdy nie b\u0119dzie wdro\u017cona \u2192 przenie\u015b do `.ai/specs/archive/`"
+    },
+    {
+      "line": 59,
+      "ref": ".ai/lessons/",
+      "text": "Star\u00e9 wpisy w `.ai/lessons/` mog\u0105 pozosta\u0107, ale oznacz je jako `[ARCHIVED]` je\u015bli s\u0105 nieaktualne"
+    }
+  ],
+  "directives": [
+    {
+      "id": 1,
+      "line": 1,
+      "end_line": 1,
+      "section": "(root)",
+      "kind": "prose",
+      "text": "@AGENTS.md",
+      "tokens": 2,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 2,
+      "line": 3,
+      "end_line": 3,
+      "section": "(root)",
+      "kind": "prose",
+      "text": "---",
+      "tokens": 1,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 3,
+      "line": 5,
+      "end_line": 5,
+      "section": "Instrukcje dla Claude i AI \u2014 korzystanie ze struktury .ai/",
+      "kind": "heading",
+      "text": "# Instrukcje dla Claude i AI \u2014 korzystanie ze struktury .ai/",
+      "tokens": 15,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 4,
+      "line": 7,
+      "end_line": 7,
+      "section": "Czytaj AGENTS.md zawsze",
+      "kind": "heading",
+      "text": "## Czytaj AGENTS.md zawsze",
+      "tokens": 6,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 5,
+      "line": 9,
+      "end_line": 9,
+      "section": "Czytaj AGENTS.md zawsze",
+      "kind": "prose",
+      "text": "AGENTS.md zawiera:",
+      "tokens": 4,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 6,
+      "line": 10,
+      "end_line": 10,
+      "section": "Czytaj AGENTS.md zawsze",
+      "kind": "bullet",
+      "text": "Dokumentacj\u0119 struktury katalog\u00f3w `.ai/`",
+      "tokens": 10,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "line": 11,
+      "end_line": 11,
+      "section": "Czytaj AGENTS.md zawsze",
+      "kind": "bullet",
+      "text": "Best Practices z wskaz\u00f3wkami Borisa Cherny'ego",
+      "tokens": 12,
+      "flags": [
+        "vague"
+      ],
+      "references": []
+    },
+    {
+      "id": 8,
+      "line": 12,
+      "end_line": 12,
+      "section": "Czytaj AGENTS.md zawsze",
+      "kind": "bullet",
+      "text": "Wszystkie obowi\u0105zkowe zasady dla pracy z tym projektem",
+      "tokens": 14,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 9,
+      "line": 14,
+      "end_line": 14,
+      "section": "Czytaj AGENTS.md zawsze",
+      "kind": "prose",
+      "text": "**Zanim zaczniesz prac\u0119:** przejrzyj AGENTS.md, zw\u0142aszcza sekcj\u0119 \"Best Practices\".",
+      "tokens": 20,
+      "flags": [
+        "vague",
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 10,
+      "line": 16,
+      "end_line": 16,
+      "section": "Og\u00f3lne zasady",
+      "kind": "heading",
+      "text": "## Og\u00f3lne zasady",
+      "tokens": 4,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 11,
+      "line": 18,
+      "end_line": 18,
+      "section": "Og\u00f3lne zasady",
+      "kind": "bullet",
+      "text": "**Czytaj AGENTS.md** \u2014 zawiera szczeg\u00f3\u0142ow\u0105 dokumentacj\u0119 struktury `.ai/` i Best Practices",
+      "tokens": 22,
+      "flags": [
+        "vague",
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "line": 19,
+      "end_line": 19,
+      "section": "Og\u00f3lne zasady",
+      "kind": "bullet",
+      "text": "**Respektuj konwencje nazewnictwa** \u2014 wszystkie pliki musz\u0105 mie\u0107 format `YYYY-MM-DD-slug.md`",
+      "tokens": 23,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "YYYY-MM-DD-slug.md",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "line": 20,
+      "end_line": 20,
+      "section": "Og\u00f3lne zasady",
+      "kind": "bullet",
+      "text": "**Organizuj wiedz\u0119** \u2014 skorzystaj ze struktur `.ai/specs/`, `.ai/runs/` i `.ai/lessons/` do zbierania i organizowania informacji",
+      "tokens": 32,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/specs/",
+          "exists": false
+        },
+        {
+          "ref": ".ai/runs/",
+          "exists": false
+        },
+        {
+          "ref": ".ai/lessons/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "line": 21,
+      "end_line": 21,
+      "section": "Og\u00f3lne zasady",
+      "kind": "bullet",
+      "text": "**Stosuj Best Practices** \u2014 szczeg\u00f3lnie planowanie, weryfikacja i zapisywanie wniosk\u00f3w",
+      "tokens": 22,
+      "flags": [
+        "vague"
+      ],
+      "references": []
+    },
+    {
+      "id": 15,
+      "line": 23,
+      "end_line": 23,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/specs/`",
+      "kind": "heading",
+      "text": "## Kiedy tworzy\u0107 pliki w `.ai/specs/`",
+      "tokens": 9,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/specs/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "line": 25,
+      "end_line": 25,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/specs/`",
+      "kind": "bullet",
+      "text": "Tworzysz now\u0105 specyfikacj\u0119 projektow\u0105 lub SDD",
+      "tokens": 11,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 17,
+      "line": 26,
+      "end_line": 26,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/specs/`",
+      "kind": "bullet",
+      "text": "Planujesz znacz\u0105cy refactor lub zmian\u0119 architekturaln\u0105",
+      "tokens": 14,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 18,
+      "line": 27,
+      "end_line": 27,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/specs/`",
+      "kind": "bullet",
+      "text": "Definiujesz nowy system lub komponent wymagaj\u0105cy dokumentacji",
+      "tokens": 15,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 19,
+      "line": 28,
+      "end_line": 28,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/specs/`",
+      "kind": "bullet",
+      "text": "**Instrukcja:** Utw\u00f3rz plik `YYYY-MM-DD-slug.md` w `.ai/specs/` z pe\u0142n\u0105 specyfikacj\u0105",
+      "tokens": 21,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "YYYY-MM-DD-slug.md",
+          "exists": false
+        },
+        {
+          "ref": ".ai/specs/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "line": 30,
+      "end_line": 30,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/runs/`",
+      "kind": "heading",
+      "text": "## Kiedy tworzy\u0107 pliki w `.ai/runs/`",
+      "tokens": 9,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/runs/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "line": 32,
+      "end_line": 32,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/runs/`",
+      "kind": "bullet",
+      "text": "Prowadzisz autonomiczny przebieg (np. optymalizacja, debugowanie, analiza)",
+      "tokens": 18,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 22,
+      "line": 33,
+      "end_line": 33,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/runs/`",
+      "kind": "bullet",
+      "text": "Wykonujesz iteracyjne eksperymenty wymagaj\u0105ce \u015bledzenia",
+      "tokens": 14,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 23,
+      "line": 34,
+      "end_line": 34,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/runs/`",
+      "kind": "bullet",
+      "text": "Chcesz udokumentowa\u0107 decyzje podj\u0119te w trakcie pracy",
+      "tokens": 13,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 24,
+      "line": 35,
+      "end_line": 35,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/runs/`",
+      "kind": "bullet",
+      "text": "**Instrukcja:** Utw\u00f3rz log `YYYY-MM-DD-slug.md` w `.ai/runs/` z celem, metod\u0105, wynikami i wnioskami",
+      "tokens": 25,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "YYYY-MM-DD-slug.md",
+          "exists": false
+        },
+        {
+          "ref": ".ai/runs/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "line": 37,
+      "end_line": 37,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/lessons/`",
+      "kind": "heading",
+      "text": "## Kiedy tworzy\u0107 pliki w `.ai/lessons/`",
+      "tokens": 10,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/lessons/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "line": 39,
+      "end_line": 39,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/lessons/`",
+      "kind": "bullet",
+      "text": "Naprawi\u0142e\u015b trudny bug \u2014 dokumentuj root cause i rozwi\u0105zanie",
+      "tokens": 15,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 27,
+      "line": 40,
+      "end_line": 40,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/lessons/`",
+      "kind": "bullet",
+      "text": "Odkry\u0142e\u015b wa\u017cny wzorzec projektowy lub best practice",
+      "tokens": 13,
+      "flags": [
+        "vague"
+      ],
+      "references": []
+    },
+    {
+      "id": 28,
+      "line": 41,
+      "end_line": 41,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/lessons/`",
+      "kind": "bullet",
+      "text": "Nauczy\u0142e\u015b si\u0119 czego\u015b nieoczywistego o systemie",
+      "tokens": 12,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 29,
+      "line": 42,
+      "end_line": 42,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/lessons/`",
+      "kind": "bullet",
+      "text": "Chcesz zachowa\u0107 d\u0142ugoterminow\u0105 wiedz\u0119 dla zespo\u0142u",
+      "tokens": 12,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 30,
+      "line": 43,
+      "end_line": 43,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/lessons/`",
+      "kind": "bullet",
+      "text": "**Instrukcja:**",
+      "tokens": 4,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 31,
+      "line": 44,
+      "end_line": 44,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/lessons/`",
+      "kind": "bullet",
+      "text": "Utw\u00f3rz plik `YYYY-MM-DD-slug.md` w `.ai/lessons/`",
+      "tokens": 12,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "YYYY-MM-DD-slug.md",
+          "exists": false
+        },
+        {
+          "ref": ".ai/lessons/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "line": 45,
+      "end_line": 45,
+      "section": "Kiedy tworzy\u0107 pliki w `.ai/lessons/`",
+      "kind": "bullet",
+      "text": "Zaktualizuj `.ai/lessons.md` z linkiem i kr\u00f3tkim opisem",
+      "tokens": 14,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/lessons.md",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "line": 47,
+      "end_line": 47,
+      "section": "Przep\u0142yw dla implementacji specyfikacji",
+      "kind": "heading",
+      "text": "## Przep\u0142yw dla implementacji specyfikacji",
+      "tokens": 10,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 34,
+      "line": 49,
+      "end_line": 49,
+      "section": "Przep\u0142yw dla implementacji specyfikacji",
+      "kind": "bullet",
+      "text": "Utw\u00f3rz specyfikacj\u0119 w `.ai/specs/` z formatem `YYYY-MM-DD-slug.md`",
+      "tokens": 16,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/specs/",
+          "exists": false
+        },
+        {
+          "ref": "YYYY-MM-DD-slug.md",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "line": 50,
+      "end_line": 50,
+      "section": "Przep\u0142yw dla implementacji specyfikacji",
+      "kind": "bullet",
+      "text": "Implementuj wed\u0142ug specyfikacji",
+      "tokens": 8,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 36,
+      "line": 51,
+      "end_line": 51,
+      "section": "Przep\u0142yw dla implementacji specyfikacji",
+      "kind": "bullet",
+      "text": "Po zako\u0144czeniu: przenie\u015b plik do `.ai/specs/implemented/`",
+      "tokens": 14,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/specs/implemented/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "line": 52,
+      "end_line": 52,
+      "section": "Przep\u0142yw dla implementacji specyfikacji",
+      "kind": "bullet",
+      "text": "Je\u015bli nauczy\u0142e\u015b si\u0119 czego\u015b wa\u017cnego \u2192 utw\u00f3rz wpis w `.ai/lessons/`",
+      "tokens": 16,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/lessons/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "line": 53,
+      "end_line": 53,
+      "section": "Przep\u0142yw dla implementacji specyfikacji",
+      "kind": "bullet",
+      "text": "Je\u015bli by\u0142o wiele iteracji \u2192 utw\u00f3rz log w `.ai/runs/`",
+      "tokens": 13,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/runs/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "line": 55,
+      "end_line": 55,
+      "section": "Archiwizowanie",
+      "kind": "heading",
+      "text": "## Archiwizowanie",
+      "tokens": 4,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 40,
+      "line": 57,
+      "end_line": 57,
+      "section": "Archiwizowanie",
+      "kind": "bullet",
+      "text": "Gdy specyfikacja jest przestarza\u0142a lub nigdy nie b\u0119dzie wdro\u017cona \u2192 przenie\u015b do `.ai/specs/archive/`",
+      "tokens": 25,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/specs/archive/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "line": 58,
+      "end_line": 58,
+      "section": "Archiwizowanie",
+      "kind": "bullet",
+      "text": "Nigdy nie usuwaj plik\u00f3w \u2014 zawsze archiwizuj",
+      "tokens": 11,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 42,
+      "line": 59,
+      "end_line": 59,
+      "section": "Archiwizowanie",
+      "kind": "bullet",
+      "text": "Star\u00e9 wpisy w `.ai/lessons/` mog\u0105 pozosta\u0107, ale oznacz je jako `[ARCHIVED]` je\u015bli s\u0105 nieaktualne",
+      "tokens": 24,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/lessons/",
+          "exists": false
+        }
+      ]
+    }
+  ]
+}

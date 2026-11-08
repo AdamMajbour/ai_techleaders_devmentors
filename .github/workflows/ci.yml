@@ -46,6 +46,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Agent task router validation
+        run: npm run check:agents
+
       - name: Unit and component tests
         run: npm test
 

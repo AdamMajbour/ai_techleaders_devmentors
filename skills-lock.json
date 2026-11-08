@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "eliminate-no-op": {
+      "source": "pat-lewczuk/skills",
+      "sourceType": "github",
+      "skillPath": "skills/eliminate-no-op/SKILL.md",
+      "computedHash": "b4c97a2efd9545fe1a0b51e8ac0f66a919991ebeef1ba4fa52218604ffa1a0a7"
+    },
     "om-app-spec-writing": {
       "source": "open-mercato/skills",
       "sourceType": "github",
@@ -420,6 +426,12 @@
       "sourceType": "github",
       "skillPath": "skills/om-verify-in-repo/SKILL.md",
       "computedHash": "fb08d8ddf6b86ca509173def6995aada2b8bb0a202f34b2ec92a4a9477f20220"
+    },
+    "task-router": {
+      "source": "pat-lewczuk/skills",
+      "sourceType": "github",
+      "skillPath": "skills/task-router/SKILL.md",
+      "computedHash": "d92b828405b7ce7003f555e4ee47b419148e6c07880ece9e2e7efde630c8dd51"
     }
   }
 }

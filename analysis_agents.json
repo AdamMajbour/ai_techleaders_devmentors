@@ -1,0 +1,3784 @@
+{
+  "target": "AGENTS.md",
+  "repo": "C:\\projects\\ai_techleaders_devmentors",
+  "mode": "full",
+  "totals": {
+    "lines": 283,
+    "directives": 187,
+    "actionable_directives": 157,
+    "est_tokens": 3563,
+    "directives_with_project_noun": 83,
+    "project_noun_ratio": 0.53,
+    "vague_no_noun": 1
+  },
+  "sections": [
+    {
+      "section": "Struktura monorepo",
+      "directives": 3,
+      "tokens": 558,
+      "first_line": 25
+    },
+    {
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "directives": 22,
+      "tokens": 476,
+      "first_line": 90
+    },
+    {
+      "section": "Domain concept convention",
+      "directives": 13,
+      "tokens": 304,
+      "first_line": 59
+    },
+    {
+      "section": "Reusable API & UI layer",
+      "directives": 10,
+      "tokens": 263,
+      "first_line": 77
+    },
+    {
+      "section": "Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski",
+      "directives": 12,
+      "tokens": 184,
+      "first_line": 222
+    },
+    {
+      "section": "Katalog `.ai/specs/` \u2014 Specyfikacje i SDD",
+      "directives": 9,
+      "tokens": 167,
+      "first_line": 196
+    },
+    {
+      "section": "This is NOT the Next.js you know",
+      "directives": 8,
+      "tokens": 157,
+      "first_line": 3
+    },
+    {
+      "section": "Katalog `.ai/runs/` \u2014 Logi autonomicznych przebieg\u00f3w AI",
+      "directives": 9,
+      "tokens": 149,
+      "first_line": 209
+    },
+    {
+      "section": "1. Planowanie przed implementacj\u0105",
+      "directives": 8,
+      "tokens": 109,
+      "first_line": 243
+    },
+    {
+      "section": "Stack techniczny",
+      "directives": 8,
+      "tokens": 97,
+      "first_line": 15
+    },
+    {
+      "section": "3. MikroORM i baza danych",
+      "directives": 5,
+      "tokens": 95,
+      "first_line": 128
+    },
+    {
+      "section": "3. Zapisywanie wniosk\u00f3w po poprawkach",
+      "directives": 8,
+      "tokens": 92,
+      "first_line": 261
+    },
+    {
+      "section": "4. Zaawansowane promptowanie",
+      "directives": 5,
+      "tokens": 89,
+      "first_line": 271
+    },
+    {
+      "section": "5. Automatyczne naprawianie zamiast zarz\u0105dzania",
+      "directives": 5,
+      "tokens": 76,
+      "first_line": 278
+    },
+    {
+      "section": "2. Dependency Injection z Awilix",
+      "directives": 5,
+      "tokens": 72,
+      "first_line": 122
+    },
+    {
+      "section": "2. Weryfikacja zmian przed zatwierdzeniem",
+      "directives": 5,
+      "tokens": 72,
+      "first_line": 254
+    },
+    {
+      "section": "Deployment",
+      "directives": 6,
+      "tokens": 71,
+      "first_line": 183
+    },
+    {
+      "section": "4. TypeScript everywhere",
+      "directives": 5,
+      "tokens": 65,
+      "first_line": 134
+    },
+    {
+      "section": "1. Izolacja pakiet\u00f3w",
+      "directives": 6,
+      "tokens": 62,
+      "first_line": 115
+    },
+    {
+      "section": "Nazewnictwo",
+      "directives": 5,
+      "tokens": 62,
+      "first_line": 148
+    },
+    {
+      "section": "Migracje i baza danych",
+      "directives": 5,
+      "tokens": 55,
+      "first_line": 168
+    },
+    {
+      "section": "5. UI z Tailwind i shadcn-ui",
+      "directives": 5,
+      "tokens": 54,
+      "first_line": 140
+    },
+    {
+      "section": "Testy",
+      "directives": 6,
+      "tokens": 52,
+      "first_line": 175
+    },
+    {
+      "section": "Importy",
+      "directives": 4,
+      "tokens": 48,
+      "first_line": 154
+    },
+    {
+      "section": "Struktura .ai \u2014 dokumentacja AI i autonomiczne przebiegi",
+      "directives": 2,
+      "tokens": 41,
+      "first_line": 192
+    },
+    {
+      "section": "Struktura pliku",
+      "directives": 2,
+      "tokens": 31,
+      "first_line": 159
+    },
+    {
+      "section": "Best Practices \u2014 Wskaz\u00f3wki dla efektywnej pracy z Claude",
+      "directives": 2,
+      "tokens": 30,
+      "first_line": 239
+    },
+    {
+      "section": "DevMentor \u2014 Architektura i za\u0142o\u017cenia techniczne",
+      "directives": 1,
+      "tokens": 12,
+      "first_line": 13
+    },
+    {
+      "section": "(root)",
+      "directives": 1,
+      "tokens": 8,
+      "first_line": 1
+    },
+    {
+      "section": "Princypia architektoniczne",
+      "directives": 1,
+      "tokens": 7,
+      "first_line": 113
+    },
+    {
+      "section": "Konwencje kodowe",
+      "directives": 1,
+      "tokens": 5,
+      "first_line": 146
+    }
+  ],
+  "near_duplicates": [
+    {
+      "similarity": 1.0,
+      "tier": "likely",
+      "cross_file": true,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 5,
+        "text": "This version has breaking changes \u2014 APIs, conventions, and file structure may all differ from your training data."
+      },
+      "b": {
+        "file": "packages\\app\\AGENTS.md",
+        "line": 5,
+        "text": "This version has breaking changes \u2014 APIs, conventions, and file structure may all differ from your training data."
+      }
+    },
+    {
+      "similarity": 1.0,
+      "tier": "likely",
+      "cross_file": true,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 5,
+        "text": "Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo"
+      },
+      "b": {
+        "file": "packages\\app\\AGENTS.md",
+        "line": 5,
+        "text": "Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo"
+      }
+    },
+    {
+      "similarity": 1.0,
+      "tier": "likely",
+      "cross_file": true,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 5,
+        "text": "Heed deprecation notices."
+      },
+      "b": {
+        "file": "packages\\app\\AGENTS.md",
+        "line": 5,
+        "text": "Heed deprecation notices."
+      }
+    },
+    {
+      "similarity": 1.0,
+      "tier": "likely",
+      "cross_file": true,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 7,
+        "text": "This block is written and re-added by `next dev` \u2014 verify at `node_modules/next/dist/server/lib/generate-agent-files.js`."
+      },
+      "b": {
+        "file": "packages\\app\\AGENTS.md",
+        "line": 7,
+        "text": "This block is written and re-added by `next dev` \u2014 verify at `node_modules/next/dist/server/lib/generate-agent-files.js`."
+      }
+    },
+    {
+      "similarity": 1.0,
+      "tier": "likely",
+      "cross_file": true,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 7,
+        "text": "Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean."
+      },
+      "b": {
+        "file": "packages\\app\\AGENTS.md",
+        "line": 7,
+        "text": "Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean."
+      }
+    },
+    {
+      "similarity": 0.64,
+      "tier": "likely",
+      "cross_file": false,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 200,
+        "text": "**Format nazwy:** `YYYY-MM-DD-slug.md` (np. `2026-10-19-auth-system-redesign.md`)"
+      },
+      "b": {
+        "file": "AGENTS.md",
+        "line": 213,
+        "text": "**Format nazwy:** `YYYY-MM-DD-slug.md` (np. `2026-10-19-performance-optimization-run.md`)"
+      }
+    },
+    {
+      "similarity": 0.39,
+      "tier": "possible",
+      "cross_file": false,
+      "a": {
+        "file": "CLAUDE.md",
+        "line": 28,
+        "text": "**Instrukcja:** Utw\u00f3rz plik `YYYY-MM-DD-slug.md` w `.ai/specs/` z pe\u0142n\u0105 specyfikacj\u0105"
+      },
+      "b": {
+        "file": "CLAUDE.md",
+        "line": 44,
+        "text": "Utw\u00f3rz plik `YYYY-MM-DD-slug.md` w `.ai/lessons/`"
+      }
+    },
+    {
+      "similarity": 0.38,
+      "tier": "possible",
+      "cross_file": false,
+      "a": {
+        "file": "CLAUDE.md",
+        "line": 28,
+        "text": "**Instrukcja:** Utw\u00f3rz plik `YYYY-MM-DD-slug.md` w `.ai/specs/` z pe\u0142n\u0105 specyfikacj\u0105"
+      },
+      "b": {
+        "file": "CLAUDE.md",
+        "line": 49,
+        "text": "Utw\u00f3rz specyfikacj\u0119 w `.ai/specs/` z formatem `YYYY-MM-DD-slug.md`"
+      }
+    },
+    {
+      "similarity": 0.38,
+      "tier": "possible",
+      "cross_file": false,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 64,
+        "text": "`packages/db/src/entities/<concept>/<name>.entity.ts`"
+      },
+      "b": {
+        "file": "AGENTS.md",
+        "line": 65,
+        "text": "`packages/core/src/services/<concept>/<name>.service.ts`"
+      }
+    },
+    {
+      "similarity": 0.38,
+      "tier": "possible",
+      "cross_file": true,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 245,
+        "text": "Dla z\u0142o\u017conych zada\u0144 najpierw utw\u00f3rz specyfikacj\u0119 w `.ai/specs/`:"
+      },
+      "b": {
+        "file": "CLAUDE.md",
+        "line": 49,
+        "text": "Utw\u00f3rz specyfikacj\u0119 w `.ai/specs/` z formatem `YYYY-MM-DD-slug.md`"
+      }
+    },
+    {
+      "similarity": 0.3,
+      "tier": "possible",
+      "cross_file": true,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 207,
+        "text": "Nigdy nie usuwaj specyfikacji \u2014 archiwizuj zamiast tego"
+      },
+      "b": {
+        "file": "CLAUDE.md",
+        "line": 58,
+        "text": "Nigdy nie usuwaj plik\u00f3w \u2014 zawsze archiwizuj"
+      }
+    },
+    {
+      "similarity": 0.29,
+      "tier": "possible",
+      "cross_file": false,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 200,
+        "text": "**Format nazwy:** `YYYY-MM-DD-slug.md` (np. `2026-10-19-auth-system-redesign.md`)"
+      },
+      "b": {
+        "file": "AGENTS.md",
+        "line": 228,
+        "text": "**Format nazwy w `lessons/`:** `YYYY-MM-DD-slug.md`"
+      }
+    },
+    {
+      "similarity": 0.29,
+      "tier": "possible",
+      "cross_file": false,
+      "a": {
+        "file": "AGENTS.md",
+        "line": 213,
+        "text": "**Format nazwy:** `YYYY-MM-DD-slug.md` (np. `2026-10-19-performance-optimization-run.md`)"
+      },
+      "b": {
+        "file": "AGENTS.md",
+        "line": 228,
+        "text": "**Format nazwy w `lessons/`:** `YYYY-MM-DD-slug.md`"
+      }
+    }
+  ],
+  "dead_references": [
+    {
+      "line": 5,
+      "ref": "next/dist/docs/",
+      "text": "Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` "
+    },
+    {
+      "line": 7,
+      "ref": "next/dist/server/lib/generate-agent-files.js",
+      "text": "This block is written and re-added by `next dev` \u2014 verify at `node_modules/next/dist/server/lib/generate-agent-files.js`"
+    },
+    {
+      "line": 27,
+      "ref": "src/app/",
+      "text": "packages/\n\u251c\u2500\u2500 app/                      # Next.js: routing, strony, route handlers (api/)\n\u2502   \u251c\u2500\u2500 src/app/              "
+    },
+    {
+      "line": 27,
+      "ref": "next/react",
+      "text": "packages/\n\u251c\u2500\u2500 app/                      # Next.js: routing, strony, route handlers (api/)\n\u2502   \u251c\u2500\u2500 src/app/              "
+    },
+    {
+      "line": 56,
+      "ref": "@mikro-orm/*",
+      "text": "Kierunek zale\u017cno\u015bci jest wymuszany przez ESLint (`no-restricted-imports`): `app \u2192 core \u2192 db`, `ui` importowalne tylko pr"
+    },
+    {
+      "line": 56,
+      "ref": "mikro-orm/*",
+      "text": "Kierunek zale\u017cno\u015bci jest wymuszany przez ESLint (`no-restricted-imports`): `app \u2192 core \u2192 db`, `ui` importowalne tylko pr"
+    },
+    {
+      "line": 61,
+      "ref": "modules/",
+      "text": "Kod domenowy nie jest podzielony na `modules/`."
+    },
+    {
+      "line": 64,
+      "ref": "packages/db/src/entities/<concept>/<name>.entity.ts",
+      "text": "`packages/db/src/entities/<concept>/<name>.entity.ts`"
+    },
+    {
+      "line": 64,
+      "ref": "db/src/entities/",
+      "text": "`packages/db/src/entities/<concept>/<name>.entity.ts`"
+    },
+    {
+      "line": 65,
+      "ref": "packages/core/src/services/<concept>/<name>.service.ts",
+      "text": "`packages/core/src/services/<concept>/<name>.service.ts`"
+    },
+    {
+      "line": 65,
+      "ref": "core/src/services/",
+      "text": "`packages/core/src/services/<concept>/<name>.service.ts`"
+    },
+    {
+      "line": 66,
+      "ref": "packages/core/src/validators/<concept>/",
+      "text": "`packages/core/src/validators/<concept>/` (wsp\u00f3\u0142dzielone schematy Zod, gdy potrzebne)"
+    },
+    {
+      "line": 66,
+      "ref": "core/src/validators/",
+      "text": "`packages/core/src/validators/<concept>/` (wsp\u00f3\u0142dzielone schematy Zod, gdy potrzebne)"
+    },
+    {
+      "line": 67,
+      "ref": "packages/app/src/app/api/<concept>/route.ts",
+      "text": "`packages/app/src/app/api/<concept>/route.ts` i odpowiadaj\u0105ce `page.tsx` w grupie tras persony"
+    },
+    {
+      "line": 67,
+      "ref": "page.tsx",
+      "text": "`packages/app/src/app/api/<concept>/route.ts` i odpowiadaj\u0105ce `page.tsx` w grupie tras persony"
+    },
+    {
+      "line": 67,
+      "ref": "app/src/app/api/",
+      "text": "`packages/app/src/app/api/<concept>/route.ts` i odpowiadaj\u0105ce `page.tsx` w grupie tras persony"
+    },
+    {
+      "line": 69,
+      "ref": "setupu/ACL/auto-discovery.",
+      "text": "To konwencja katalog\u00f3w, a nie runtime modu\u0142\u00f3w: bez per-konceptowego setupu/ACL/auto-discovery."
+    },
+    {
+      "line": 69,
+      "ref": ".ai/specs/engineering-standards.md",
+      "text": "Pe\u0142na tabela nazewnictwa, wzorce port\u00f3w p\u0142atno\u015bci i emitera zdarze\u0144: `.ai/specs/engineering-standards.md`."
+    },
+    {
+      "line": 73,
+      "ref": "event-map.ts",
+      "text": "`articles.article.created`), emitowane przez serwis po udanej mutacji przez typowany emiter w `packages/core/src/events`"
+    },
+    {
+      "line": 73,
+      "ref": "core/src/events",
+      "text": "`articles.article.created`), emitowane przez serwis po udanej mutacji przez typowany emiter w `packages/core/src/events`"
+    },
+    {
+      "line": 73,
+      "ref": "kolejek/worker\u00f3w",
+      "text": "`articles.article.created`), emitowane przez serwis po udanej mutacji przez typowany emiter w `packages/core/src/events`"
+    },
+    {
+      "line": 73,
+      "ref": "logging-subscriber.ts",
+      "text": "Nowe zdarzenie = wpis w `EventMap` i w `logging-subscriber.ts`."
+    },
+    {
+      "line": 79,
+      "ref": "fetch/walidacji/auth/obs\u0142ugi",
+      "text": "Ka\u017cda trasa i strona u\u017cywa dw\u00f3ch wsp\u00f3\u0142dzielonych warstw zamiast w\u0142asnego fetch/walidacji/auth/obs\u0142ugi b\u0142\u0119d\u00f3w:"
+    },
+    {
+      "line": 81,
+      "ref": "errors.ts",
+      "text": "`packages/core/src/http/` \u2014 `errors.ts` (hierarchia `AppError`), `apiHandler.ts` (\u0142apie `AppError`, mapuje na status i"
+    },
+    {
+      "line": 81,
+      "ref": "apiHandler.ts",
+      "text": "`packages/core/src/http/` \u2014 `errors.ts` (hierarchia `AppError`), `apiHandler.ts` (\u0142apie `AppError`, mapuje na status i"
+    },
+    {
+      "line": 81,
+      "ref": "core/src/http/",
+      "text": "`packages/core/src/http/` \u2014 `errors.ts` (hierarchia `AppError`), `apiHandler.ts` (\u0142apie `AppError`, mapuje na status i"
+    },
+    {
+      "line": 82,
+      "ref": "try/catch",
+      "text": "Trasy nie maj\u0105 w\u0142asnego `try/catch`."
+    },
+    {
+      "line": 82,
+      "ref": "makeCrudRoute.ts",
+      "text": "`makeCrudRoute.ts` (schematy Zod + metody serwis\u00f3w \u2192 `{ GET, POST, PUT, DELETE }`; mutacje zawsze wymagaj\u0105 sesji i nag\u0142\u00f3"
+    },
+    {
+      "line": 82,
+      "ref": "auth.ts",
+      "text": "`makeCrudRoute.ts` (schematy Zod + metody serwis\u00f3w \u2192 `{ GET, POST, PUT, DELETE }`; mutacje zawsze wymagaj\u0105 sesji i nag\u0142\u00f3"
+    },
+    {
+      "line": 82,
+      "ref": "app/src/app/api/articles/",
+      "text": "Wzorzec: `packages/app/src/app/api/articles/`."
+    },
+    {
+      "line": 86,
+      "ref": "api/apiCall.ts",
+      "text": "`packages/ui/src/backend/` \u2014 `api/apiCall.ts` (jedyny dozwolony `fetch()` do `/api/*`), `forms/CrudForm.tsx` (ten sam sc"
+    },
+    {
+      "line": 86,
+      "ref": "/api/*",
+      "text": "`packages/ui/src/backend/` \u2014 `api/apiCall.ts` (jedyny dozwolony `fetch()` do `/api/*`), `forms/CrudForm.tsx` (ten sam sc"
+    },
+    {
+      "line": 86,
+      "ref": "forms/CrudForm.tsx",
+      "text": "`packages/ui/src/backend/` \u2014 `api/apiCall.ts` (jedyny dozwolony `fetch()` do `/api/*`), `forms/CrudForm.tsx` (ten sam sc"
+    },
+    {
+      "line": 86,
+      "ref": "ui/src/backend/",
+      "text": "`packages/ui/src/backend/` \u2014 `api/apiCall.ts` (jedyny dozwolony `fetch()` do `/api/*`), `forms/CrudForm.tsx` (ten sam sc"
+    },
+    {
+      "line": 87,
+      "ref": "tables/DataTable.tsx",
+      "text": "Zod co serwer, b\u0142\u0119dy p\u00f3l z serwera, Ctrl/Cmd+Enter i Escape), `tables/DataTable.tsx` (stany loading/empty/error, paginac"
+    },
+    {
+      "line": 87,
+      "ref": "feedback/{LoadingMessage,ErrorMessage,EmptyState}.tsx",
+      "text": "Zod co serwer, b\u0142\u0119dy p\u00f3l z serwera, Ctrl/Cmd+Enter i Escape), `tables/DataTable.tsx` (stany loading/empty/error, paginac"
+    },
+    {
+      "line": 87,
+      "ref": "Ctrl/Cmd",
+      "text": "Zod co serwer, b\u0142\u0119dy p\u00f3l z serwera, Ctrl/Cmd+Enter i Escape), `tables/DataTable.tsx` (stany loading/empty/error, paginac"
+    },
+    {
+      "line": 87,
+      "ref": "loading/empty/error",
+      "text": "Zod co serwer, b\u0142\u0119dy p\u00f3l z serwera, Ctrl/Cmd+Enter i Escape), `tables/DataTable.tsx` (stany loading/empty/error, paginac"
+    },
+    {
+      "line": 87,
+      "ref": "app/src/app/",
+      "text": "Wzorzec: `packages/app/src/app/(marketing)/articles/`."
+    },
+    {
+      "line": 90,
+      "ref": ".ai/specs/engineering-standards.md",
+      "text": "### Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)"
+    },
+    {
+      "line": 92,
+      "ref": ".env.local",
+      "text": "Has\u0142a: bcrypt, koszt 12, d\u0142ugo\u015b\u0107 10\u201372. Sesja: JWT HS256, wa\u017cny 24 h, sekret `JWT_SECRET` (min. 32 znaki, z `.env.local`"
+    },
+    {
+      "line": 98,
+      "ref": "has\u0142a/tokeny/JWT/cookies",
+      "text": "Logger maskuje has\u0142a/tokeny/JWT/cookies; encje nie opuszczaj\u0105 `core` (DTO), wi\u0119c hash has\u0142a nie trafia do odpowiedzi."
+    },
+    {
+      "line": 107,
+      "ref": "ui/src/components/ui/",
+      "text": "Prymityw shadcn \u2192 `ui/src/components/ui/` (przez `npx shadcn@latest add`, nie r\u0119cznie \u2014 wyj\u0105tek: `Button` i `Card` napis"
+    },
+    {
+      "line": 107,
+      "ref": "src/components/ui/",
+      "text": "Prymityw shadcn \u2192 `ui/src/components/ui/` (przez `npx shadcn@latest add`, nie r\u0119cznie \u2014 wyj\u0105tek: `Button` i `Card` napis"
+    },
+    {
+      "line": 109,
+      "ref": "ui/src/backend/<category>/",
+      "text": "Og\u00f3lny wzorzec paneli niezale\u017cny od konceptu \u2192 `ui/src/backend/<category>/`."
+    },
+    {
+      "line": 109,
+      "ref": "src/backend/",
+      "text": "Og\u00f3lny wzorzec paneli niezale\u017cny od konceptu \u2192 `ui/src/backend/<category>/`."
+    },
+    {
+      "line": 110,
+      "ref": "ui/src/components/<concept>/",
+      "text": "Komponent zwi\u0105zany z kszta\u0142tem domeny jednego konceptu \u2192 `ui/src/components/<concept>/`."
+    },
+    {
+      "line": 110,
+      "ref": "src/components/",
+      "text": "Komponent zwi\u0105zany z kszta\u0142tem domeny jednego konceptu \u2192 `ui/src/components/<concept>/`."
+    },
+    {
+      "line": 111,
+      "ref": "page.tsx",
+      "text": "U\u017cywany przez jedn\u0105 stron\u0119 \u2192 obok jej `page.tsx`, dop\u00f3ki nie pojawi si\u0119 drugi konsument."
+    },
+    {
+      "line": 117,
+      "ref": "app/",
+      "text": "`app/` zawiera logik\u0119 Next.js i routing"
+    },
+    {
+      "line": 118,
+      "ref": "core/",
+      "text": "`core/` zawiera logik\u0119 biznesow\u0105, niezale\u017cn\u0105 od frameworka"
+    },
+    {
+      "line": 119,
+      "ref": "db/",
+      "text": "`db/` zarz\u0105dza wszystkim zwi\u0105zanym z baz\u0105 danych"
+    },
+    {
+      "line": 120,
+      "ref": "ui/",
+      "text": "`ui/` zawiera tylko komponenty i styling"
+    },
+    {
+      "line": 123,
+      "ref": "core/src/container/container.ts",
+      "text": "Rejestruj serwisy w kontenerze DI (`packages/core/src/container/container.ts`) r\u0119cznie, jedna linia na zale\u017cno\u015b\u0107 \u2014 bez `"
+    },
+    {
+      "line": 129,
+      "ref": "packages/db/src/entities/<concept>/",
+      "text": "Definiuj modele przez `defineEntity` w `packages/db/src/entities/<concept>/` (jawne `name` i `tableName`)"
+    },
+    {
+      "line": 129,
+      "ref": "db/src/entities/",
+      "text": "Definiuj modele przez `defineEntity` w `packages/db/src/entities/<concept>/` (jawne `name` i `tableName`)"
+    },
+    {
+      "line": 130,
+      "ref": "db/src/migrations/",
+      "text": "Migracje w `packages/db/src/migrations/` (generuj przez `migration:create`, sprawd\u017a `down()`)"
+    },
+    {
+      "line": 132,
+      "ref": "db/src/repositories/",
+      "text": "Repositories w `packages/db/src/repositories/` dla abstrakcji dost\u0119pu do danych; serwisy w `core` u\u017cywaj\u0105 ich przez kont"
+    },
+    {
+      "line": 137,
+      "ref": "core/src/types/",
+      "text": "Wsp\u00f3lne typy w `packages/core/src/types/`"
+    },
+    {
+      "line": 142,
+      "ref": "ui/src/components/",
+      "text": "Custom komponenty w `packages/ui/src/components/`"
+    },
+    {
+      "line": 149,
+      "ref": "UserCard.tsx",
+      "text": "**Komponenty React:** PascalCase (`UserCard.tsx`)"
+    },
+    {
+      "line": 150,
+      "ref": "useUserForm.ts",
+      "text": "**Pliki utils/hooks:** camelCase (`useUserForm.ts`, `formatDate.ts`)"
+    },
+    {
+      "line": 150,
+      "ref": "formatDate.ts",
+      "text": "**Pliki utils/hooks:** camelCase (`useUserForm.ts`, `formatDate.ts`)"
+    },
+    {
+      "line": 150,
+      "ref": "utils/hooks",
+      "text": "**Pliki utils/hooks:** camelCase (`useUserForm.ts`, `formatDate.ts`)"
+    },
+    {
+      "line": 152,
+      "ref": "user-service/",
+      "text": "**Foldery:** kebab-case (`user-service/`, `auth-guards/`)"
+    },
+    {
+      "line": 152,
+      "ref": "auth-guards/",
+      "text": "**Foldery:** kebab-case (`user-service/`, `auth-guards/`)"
+    },
+    {
+      "line": 156,
+      "ref": "@devmentor/core",
+      "text": "Importy bezwzgl\u0119dne dla pakiet\u00f3w z monorepo: `@devmentor/core`, `@devmentor/db`, `@devmentor/ui`"
+    },
+    {
+      "line": 156,
+      "ref": "@devmentor/db",
+      "text": "Importy bezwzgl\u0119dne dla pakiet\u00f3w z monorepo: `@devmentor/core`, `@devmentor/db`, `@devmentor/ui`"
+    },
+    {
+      "line": 156,
+      "ref": "@devmentor/ui",
+      "text": "Importy bezwzgl\u0119dne dla pakiet\u00f3w z monorepo: `@devmentor/core`, `@devmentor/db`, `@devmentor/ui`"
+    },
+    {
+      "line": 156,
+      "ref": "devmentor/core",
+      "text": "Importy bezwzgl\u0119dne dla pakiet\u00f3w z monorepo: `@devmentor/core`, `@devmentor/db`, `@devmentor/ui`"
+    },
+    {
+      "line": 156,
+      "ref": "devmentor/db",
+      "text": "Importy bezwzgl\u0119dne dla pakiet\u00f3w z monorepo: `@devmentor/core`, `@devmentor/db`, `@devmentor/ui`"
+    },
+    {
+      "line": 156,
+      "ref": "devmentor/ui",
+      "text": "Importy bezwzgl\u0119dne dla pakiet\u00f3w z monorepo: `@devmentor/core`, `@devmentor/db`, `@devmentor/ui`"
+    },
+    {
+      "line": 170,
+      "ref": "packages/db/migrations/",
+      "text": "Migracje przechowywane w `packages/db/migrations/`"
+    },
+    {
+      "line": 170,
+      "ref": "db/migrations/",
+      "text": "Migracje przechowywane w `packages/db/migrations/`"
+    },
+    {
+      "line": 177,
+      "ref": "core/",
+      "text": "Unit testy dla `core/` i `db/`"
+    },
+    {
+      "line": 177,
+      "ref": "db/",
+      "text": "Unit testy dla `core/` i `db/`"
+    },
+    {
+      "line": 178,
+      "ref": "ui/",
+      "text": "Component testy dla `ui/`"
+    },
+    {
+      "line": 179,
+      "ref": "app/",
+      "text": "E2E testy dla `app/`"
+    },
+    {
+      "line": 180,
+      "ref": "component.tsx",
+      "text": "Umie\u015b\u0107 testy obok pliku: `component.tsx` + `component.test.tsx`"
+    },
+    {
+      "line": 180,
+      "ref": "component.test.tsx",
+      "text": "Umie\u015b\u0107 testy obok pliku: `component.tsx` + `component.test.tsx`"
+    },
+    {
+      "line": 185,
+      "ref": "app/",
+      "text": "`app/` jest aplikacj\u0105 Next.js, kt\u00f3r\u0105 deployujesz na Vercel/hosting"
+    },
+    {
+      "line": 185,
+      "ref": "Vercel/hosting",
+      "text": "`app/` jest aplikacj\u0105 Next.js, kt\u00f3r\u0105 deployujesz na Vercel/hosting"
+    },
+    {
+      "line": 186,
+      "ref": "core/",
+      "text": "`core/`, `db/`, `ui/` s\u0105 pakietami wewn\u0119trznymi \u2014 nie deployujesz ich osobno"
+    },
+    {
+      "line": 186,
+      "ref": "db/",
+      "text": "`core/`, `db/`, `ui/` s\u0105 pakietami wewn\u0119trznymi \u2014 nie deployujesz ich osobno"
+    },
+    {
+      "line": 186,
+      "ref": "ui/",
+      "text": "`core/`, `db/`, `ui/` s\u0105 pakietami wewn\u0119trznymi \u2014 nie deployujesz ich osobno"
+    },
+    {
+      "line": 187,
+      "ref": "app/",
+      "text": "Build: `npm run build` w `app/` (powinien budowa\u0107 zale\u017cno\u015bci z innych pakiet\u00f3w)"
+    },
+    {
+      "line": 188,
+      "ref": ".env.local",
+      "text": "ENV zmienne: `.env.local` dla dev, secrets w CI/CD"
+    },
+    {
+      "line": 188,
+      "ref": "CI/CD",
+      "text": "ENV zmienne: `.env.local` dla dev, secrets w CI/CD"
+    },
+    {
+      "line": 194,
+      "ref": ".ai/",
+      "text": "Projekt u\u017cywa struktury `.ai/` do centralnego zarz\u0105dzania dokumentacj\u0105 AI i logami autonomicznych przebieg\u00f3w."
+    },
+    {
+      "line": 196,
+      "ref": ".ai/specs/",
+      "text": "## Katalog `.ai/specs/` \u2014 Specyfikacje i SDD"
+    },
+    {
+      "line": 200,
+      "ref": "YYYY-MM-DD-slug.md",
+      "text": "**Format nazwy:** `YYYY-MM-DD-slug.md` (np. `2026-10-19-auth-system-redesign.md`)"
+    },
+    {
+      "line": 200,
+      "ref": "2026-10-19-auth-system-redesign.md",
+      "text": "**Format nazwy:** `YYYY-MM-DD-slug.md` (np. `2026-10-19-auth-system-redesign.md`)"
+    },
+    {
+      "line": 201,
+      "ref": "implemented/",
+      "text": "**Podkatalog `implemented/`:** Specyfikacje ju\u017c wdro\u017cone \u2014 przenie\u015b tutaj po zako\u0144czeniu implementacji"
+    },
+    {
+      "line": 202,
+      "ref": "archive/",
+      "text": "**Podkatalog `archive/`:** Stare lub porzucone specyfikacje \u2014 archiwizuj po deprecacji"
+    },
+    {
+      "line": 205,
+      "ref": ".ai/specs/",
+      "text": "Ka\u017cda nowa specyfikacja powinna by\u0107 stworzona w `.ai/specs/` ze znacznikiem daty"
+    },
+    {
+      "line": 206,
+      "ref": "implemented/",
+      "text": "Po wdro\u017ceniu przenie\u015b plik do `implemented/` z komentarzem dotycz\u0105cym wersji wdro\u017cenia"
+    },
+    {
+      "line": 209,
+      "ref": ".ai/runs/",
+      "text": "## Katalog `.ai/runs/` \u2014 Logi autonomicznych przebieg\u00f3w AI"
+    },
+    {
+      "line": 213,
+      "ref": "YYYY-MM-DD-slug.md",
+      "text": "**Format nazwy:** `YYYY-MM-DD-slug.md` (np. `2026-10-19-performance-optimization-run.md`)"
+    },
+    {
+      "line": 213,
+      "ref": "2026-10-19-performance-optimization-run.md",
+      "text": "**Format nazwy:** `YYYY-MM-DD-slug.md` (np. `2026-10-19-performance-optimization-run.md`)"
+    },
+    {
+      "line": 222,
+      "ref": ".ai/lessons/",
+      "text": "## Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski"
+    },
+    {
+      "line": 222,
+      "ref": "lessons.md",
+      "text": "## Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski"
+    },
+    {
+      "line": 226,
+      "ref": "lessons.md",
+      "text": "**Plik `lessons.md`:** Indeks wszystkich lekcji z kr\u00f3tkim opisem"
+    },
+    {
+      "line": 227,
+      "ref": "lessons/",
+      "text": "**Podkatalog `lessons/`:** Szczeg\u00f3\u0142owe notatki dla ka\u017cdej lekcji"
+    },
+    {
+      "line": 228,
+      "ref": "lessons/",
+      "text": "**Format nazwy w `lessons/`:** `YYYY-MM-DD-slug.md`"
+    },
+    {
+      "line": 228,
+      "ref": "YYYY-MM-DD-slug.md",
+      "text": "**Format nazwy w `lessons/`:** `YYYY-MM-DD-slug.md`"
+    },
+    {
+      "line": 233,
+      "ref": "lessons.md",
+      "text": "Linki z `lessons.md` do szczeg\u00f3\u0142owych notatek w `lessons/`"
+    },
+    {
+      "line": 233,
+      "ref": "lessons/",
+      "text": "Linki z `lessons.md` do szczeg\u00f3\u0142owych notatek w `lessons/`"
+    },
+    {
+      "line": 245,
+      "ref": ".ai/specs/",
+      "text": "Dla z\u0142o\u017conych zada\u0144 najpierw utw\u00f3rz specyfikacj\u0119 w `.ai/specs/`:"
+    },
+    {
+      "line": 264,
+      "ref": ".ai/lessons/",
+      "text": "Utw\u00f3rz wpis w `.ai/lessons/` dokumentuj\u0105cy root cause"
+    },
+    {
+      "line": 265,
+      "ref": ".ai/lessons.md",
+      "text": "Dodaj do `.ai/lessons.md` \u2014 to zapobiega powtarzaniu b\u0142\u0119d\u00f3w"
+    },
+    {
+      "line": 266,
+      "ref": ".ai/runs/",
+      "text": "Je\u015bli by\u0142a d\u0142uga iteracja \u2014 zaloguj to w `.ai/runs/`"
+    }
+  ],
+  "directives": [
+    {
+      "id": 1,
+      "line": 1,
+      "end_line": 1,
+      "section": "(root)",
+      "kind": "prose",
+      "text": "<!-- BEGIN:nextjs-agent-rules -->",
+      "tokens": 8,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 2,
+      "line": 3,
+      "end_line": 3,
+      "section": "This is NOT the Next.js you know",
+      "kind": "heading",
+      "text": "# This is NOT the Next.js you know",
+      "tokens": 8,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 3,
+      "line": 5,
+      "end_line": 5,
+      "section": "This is NOT the Next.js you know",
+      "kind": "prose",
+      "text": "This version has breaking changes \u2014 APIs, conventions, and file structure may all differ from your training data.",
+      "tokens": 28,
+      "flags": [
+        "absolute"
+      ],
+      "references": []
+    },
+    {
+      "id": 4,
+      "line": 5,
+      "end_line": 5,
+      "section": "This is NOT the Next.js you know",
+      "kind": "prose",
+      "text": "Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code.",
+      "tokens": 48,
+      "flags": [
+        "self-referential",
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "node_modules/next/dist/docs/",
+          "exists": true
+        },
+        {
+          "ref": "next/dist/docs/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "line": 5,
+      "end_line": 5,
+      "section": "This is NOT the Next.js you know",
+      "kind": "prose",
+      "text": "Heed deprecation notices.",
+      "tokens": 6,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 6,
+      "line": 7,
+      "end_line": 7,
+      "section": "This is NOT the Next.js you know",
+      "kind": "prose",
+      "text": "This block is written and re-added by `next dev` \u2014 verify at `node_modules/next/dist/server/lib/generate-agent-files.js`.",
+      "tokens": 30,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "node_modules/next/dist/server/lib/generate-agent-files.js",
+          "exists": true
+        },
+        {
+          "ref": "next/dist/server/lib/generate-agent-files.js",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "line": 7,
+      "end_line": 7,
+      "section": "This is NOT the Next.js you know",
+      "kind": "prose",
+      "text": "Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.",
+      "tokens": 28,
+      "flags": [
+        "vague"
+      ],
+      "references": []
+    },
+    {
+      "id": 8,
+      "line": 9,
+      "end_line": 9,
+      "section": "This is NOT the Next.js you know",
+      "kind": "prose",
+      "text": "<!-- END:nextjs-agent-rules -->",
+      "tokens": 8,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 9,
+      "line": 11,
+      "end_line": 11,
+      "section": "This is NOT the Next.js you know",
+      "kind": "prose",
+      "text": "---",
+      "tokens": 1,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 10,
+      "line": 13,
+      "end_line": 13,
+      "section": "DevMentor \u2014 Architektura i za\u0142o\u017cenia techniczne",
+      "kind": "heading",
+      "text": "# DevMentor \u2014 Architektura i za\u0142o\u017cenia techniczne",
+      "tokens": 12,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 11,
+      "line": 15,
+      "end_line": 15,
+      "section": "Stack techniczny",
+      "kind": "heading",
+      "text": "## Stack techniczny",
+      "tokens": 5,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 12,
+      "line": 17,
+      "end_line": 17,
+      "section": "Stack techniczny",
+      "kind": "bullet",
+      "text": "**Framework:** Next.js (najnowsza wersja) z TypeScript",
+      "tokens": 14,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 13,
+      "line": 18,
+      "end_line": 18,
+      "section": "Stack techniczny",
+      "kind": "bullet",
+      "text": "**UI Framework:** React 19",
+      "tokens": 6,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 14,
+      "line": 19,
+      "end_line": 19,
+      "section": "Stack techniczny",
+      "kind": "bullet",
+      "text": "**CSS:** Tailwind CSS (frontend), shadcn-ui komponenty (backend)",
+      "tokens": 16,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 15,
+      "line": 20,
+      "end_line": 20,
+      "section": "Stack techniczny",
+      "kind": "bullet",
+      "text": "**Baza danych:** PostgreSQL",
+      "tokens": 7,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 16,
+      "line": 21,
+      "end_line": 21,
+      "section": "Stack techniczny",
+      "kind": "bullet",
+      "text": "**ORM:** MikroORM \u2014 obs\u0142uguje migracje, pul\u0119 po\u0142\u0105cze\u0144, lazy loading",
+      "tokens": 17,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 17,
+      "line": 22,
+      "end_line": 22,
+      "section": "Stack techniczny",
+      "kind": "bullet",
+      "text": "**Dependency Injection:** Awilix \u2014 lekki, wydajny kontener DI dla TypeScript",
+      "tokens": 19,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 18,
+      "line": 23,
+      "end_line": 23,
+      "section": "Stack techniczny",
+      "kind": "bullet",
+      "text": "**Package Manager:** npm (monorepo z workspace'ami)",
+      "tokens": 13,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 19,
+      "line": 25,
+      "end_line": 25,
+      "section": "Struktura monorepo",
+      "kind": "heading",
+      "text": "## Struktura monorepo",
+      "tokens": 5,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 20,
+      "line": 27,
+      "end_line": 54,
+      "section": "Struktura monorepo",
+      "kind": "code",
+      "text": "packages/\n\u251c\u2500\u2500 app/                      # Next.js: routing, strony, route handlers (api/)\n\u2502   \u251c\u2500\u2500 src/app/              # App Router; grupy tras per persona, np. (marketing)/\n\u2502   \u251c\u2500\u2500 public/               # Zasoby statyczne\n\u2502   \u2514\u2500\u2500 e2e/                  # Testy E2E (build + start + HTTP + Chromium)\n\u251c\u2500\u2500 core/                     # Logika biznesowa, niezale\u017cna od frameworka (bez next/react)\n\u2502   \u251c\u2500\u2500 ",
+      "tokens": 504,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "src/app/",
+          "exists": false
+        },
+        {
+          "ref": "next/react",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "line": 56,
+      "end_line": 56,
+      "section": "Struktura monorepo",
+      "kind": "prose",
+      "text": "Kierunek zale\u017cno\u015bci jest wymuszany przez ESLint (`no-restricted-imports`): `app \u2192 core \u2192 db`, `ui` importowalne tylko przez `app`; `core` nie importuje `next`/`react`; `@mikro-orm/*` tylko w `db`.",
+      "tokens": 49,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "@mikro-orm/*",
+          "exists": false
+        },
+        {
+          "ref": "mikro-orm/*",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "line": 59,
+      "end_line": 59,
+      "section": "Domain concept convention",
+      "kind": "heading",
+      "text": "### Domain concept convention",
+      "tokens": 7,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 23,
+      "line": 61,
+      "end_line": 61,
+      "section": "Domain concept convention",
+      "kind": "prose",
+      "text": "Kod domenowy nie jest podzielony na `modules/`.",
+      "tokens": 12,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "modules/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "line": 61,
+      "end_line": 61,
+      "section": "Domain concept convention",
+      "kind": "prose",
+      "text": "Ka\u017cdy koncept (`auth`, `mentors`, `availability`, `bookings`, `payments`, `messages`, `favorites`, `reviews`, ...) to podkatalog o tej samej nazwie powt\u00f3rzony w warstwach, kt\u00f3re go potrzebuj\u0105:",
+      "tokens": 48,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 25,
+      "line": 64,
+      "end_line": 64,
+      "section": "Domain concept convention",
+      "kind": "bullet",
+      "text": "`packages/db/src/entities/<concept>/<name>.entity.ts`",
+      "tokens": 13,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/db/src/entities/<concept>/<name>.entity.ts",
+          "exists": false
+        },
+        {
+          "ref": "db/src/entities/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "line": 65,
+      "end_line": 65,
+      "section": "Domain concept convention",
+      "kind": "bullet",
+      "text": "`packages/core/src/services/<concept>/<name>.service.ts`",
+      "tokens": 14,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/core/src/services/<concept>/<name>.service.ts",
+          "exists": false
+        },
+        {
+          "ref": "core/src/services/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "line": 66,
+      "end_line": 66,
+      "section": "Domain concept convention",
+      "kind": "bullet",
+      "text": "`packages/core/src/validators/<concept>/` (wsp\u00f3\u0142dzielone schematy Zod, gdy potrzebne)",
+      "tokens": 21,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/core/src/validators/<concept>/",
+          "exists": false
+        },
+        {
+          "ref": "core/src/validators/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "line": 67,
+      "end_line": 67,
+      "section": "Domain concept convention",
+      "kind": "bullet",
+      "text": "`packages/app/src/app/api/<concept>/route.ts` i odpowiadaj\u0105ce `page.tsx` w grupie tras persony",
+      "tokens": 24,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/app/src/app/api/<concept>/route.ts",
+          "exists": false
+        },
+        {
+          "ref": "page.tsx",
+          "exists": false
+        },
+        {
+          "ref": "app/src/app/api/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "line": 69,
+      "end_line": 69,
+      "section": "Domain concept convention",
+      "kind": "prose",
+      "text": "Katalog konceptu powstaje dopiero wraz z pierwszym plikiem \u2014 nigdy puste szkielety.",
+      "tokens": 21,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 30,
+      "line": 69,
+      "end_line": 69,
+      "section": "Domain concept convention",
+      "kind": "prose",
+      "text": "To konwencja katalog\u00f3w, a nie runtime modu\u0142\u00f3w: bez per-konceptowego setupu/ACL/auto-discovery.",
+      "tokens": 24,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "setupu/ACL/auto-discovery.",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "line": 69,
+      "end_line": 69,
+      "section": "Domain concept convention",
+      "kind": "prose",
+      "text": "Pe\u0142na tabela nazewnictwa, wzorce port\u00f3w p\u0142atno\u015bci i emitera zdarze\u0144: `.ai/specs/engineering-standards.md`.",
+      "tokens": 26,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/specs/engineering-standards.md",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "line": 73,
+      "end_line": 73,
+      "section": "Domain concept convention",
+      "kind": "prose",
+      "text": "ID zdarze\u0144: `concept.entity.action` (np.",
+      "tokens": 10,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 33,
+      "line": 73,
+      "end_line": 73,
+      "section": "Domain concept convention",
+      "kind": "prose",
+      "text": "`articles.article.created`), emitowane przez serwis po udanej mutacji przez typowany emiter w `packages/core/src/events` (`eventBus` w `Cradle`, rejestr w `event-map.ts`) \u2014 tylko in-process, bez kolejek/worker\u00f3w; wyj\u0105tek w subskrybencie jest logowany i nie psuje mutacji.",
+      "tokens": 68,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/core/src/events",
+          "exists": true
+        },
+        {
+          "ref": "event-map.ts",
+          "exists": false
+        },
+        {
+          "ref": "core/src/events",
+          "exists": false
+        },
+        {
+          "ref": "kolejek/worker\u00f3w",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "line": 73,
+      "end_line": 73,
+      "section": "Domain concept convention",
+      "kind": "prose",
+      "text": "Nowe zdarzenie = wpis w `EventMap` i w `logging-subscriber.ts`.",
+      "tokens": 16,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "logging-subscriber.ts",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "line": 77,
+      "end_line": 77,
+      "section": "Reusable API & UI layer",
+      "kind": "heading",
+      "text": "### Reusable API & UI layer",
+      "tokens": 7,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 36,
+      "line": 79,
+      "end_line": 79,
+      "section": "Reusable API & UI layer",
+      "kind": "prose",
+      "text": "Ka\u017cda trasa i strona u\u017cywa dw\u00f3ch wsp\u00f3\u0142dzielonych warstw zamiast w\u0142asnego fetch/walidacji/auth/obs\u0142ugi b\u0142\u0119d\u00f3w:",
+      "tokens": 27,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "fetch/walidacji/auth/obs\u0142ugi",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "line": 81,
+      "end_line": 81,
+      "section": "Reusable API & UI layer",
+      "kind": "bullet",
+      "text": "`packages/core/src/http/` \u2014 `errors.ts` (hierarchia `AppError`), `apiHandler.ts` (\u0142apie `AppError`, mapuje na status i",
+      "tokens": 30,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/core/src/http/",
+          "exists": true
+        },
+        {
+          "ref": "errors.ts",
+          "exists": false
+        },
+        {
+          "ref": "apiHandler.ts",
+          "exists": false
+        },
+        {
+          "ref": "core/src/http/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "line": 82,
+      "end_line": 82,
+      "section": "Reusable API & UI layer",
+      "kind": "prose",
+      "text": "kopert\u0119 JSON `{ ok, data | error }`, loguje nieoczekiwane b\u0142\u0119dy, nigdy nie zwraca stack trace).",
+      "tokens": 24,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 39,
+      "line": 82,
+      "end_line": 82,
+      "section": "Reusable API & UI layer",
+      "kind": "prose",
+      "text": "Trasy nie maj\u0105 w\u0142asnego `try/catch`.",
+      "tokens": 9,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "try/catch",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "line": 82,
+      "end_line": 82,
+      "section": "Reusable API & UI layer",
+      "kind": "prose",
+      "text": "`makeCrudRoute.ts` (schematy Zod + metody serwis\u00f3w \u2192 `{ GET, POST, PUT, DELETE }`; mutacje zawsze wymagaj\u0105 sesji i nag\u0142\u00f3wka CSRF) oraz `auth.ts` (`requireSession`, `optionalSession`, `assertOwns`; brak `requireRole`, bo produkt nie ma RBAC).",
+      "tokens": 60,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "makeCrudRoute.ts",
+          "exists": false
+        },
+        {
+          "ref": "auth.ts",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "line": 82,
+      "end_line": 82,
+      "section": "Reusable API & UI layer",
+      "kind": "prose",
+      "text": "Wzorzec: `packages/app/src/app/api/articles/`.",
+      "tokens": 12,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/app/src/app/api/articles/",
+          "exists": true
+        },
+        {
+          "ref": "app/src/app/api/articles/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "line": 86,
+      "end_line": 86,
+      "section": "Reusable API & UI layer",
+      "kind": "bullet",
+      "text": "`packages/ui/src/backend/` \u2014 `api/apiCall.ts` (jedyny dozwolony `fetch()` do `/api/*`), `forms/CrudForm.tsx` (ten sam schemat",
+      "tokens": 31,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/ui/src/backend/",
+          "exists": true
+        },
+        {
+          "ref": "api/apiCall.ts",
+          "exists": false
+        },
+        {
+          "ref": "/api/*",
+          "exists": false
+        },
+        {
+          "ref": "forms/CrudForm.tsx",
+          "exists": false
+        },
+        {
+          "ref": "ui/src/backend/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "line": 87,
+      "end_line": 87,
+      "section": "Reusable API & UI layer",
+      "kind": "prose",
+      "text": "Zod co serwer, b\u0142\u0119dy p\u00f3l z serwera, Ctrl/Cmd+Enter i Escape), `tables/DataTable.tsx` (stany loading/empty/error, paginacja, akcje wiersza), `feedback/{LoadingMessage,ErrorMessage,EmptyState}.tsx`.",
+      "tokens": 49,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "tables/DataTable.tsx",
+          "exists": false
+        },
+        {
+          "ref": "feedback/{LoadingMessage,ErrorMessage,EmptyState}.tsx",
+          "exists": false
+        },
+        {
+          "ref": "Ctrl/Cmd",
+          "exists": false
+        },
+        {
+          "ref": "loading/empty/error",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "line": 87,
+      "end_line": 87,
+      "section": "Reusable API & UI layer",
+      "kind": "prose",
+      "text": "Wzorzec: `packages/app/src/app/(marketing)/articles/`.",
+      "tokens": 14,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/app/src/app/(marketing)/articles/",
+          "exists": true
+        },
+        {
+          "ref": "app/src/app/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 45,
+      "line": 90,
+      "end_line": 90,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "heading",
+      "text": "### Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "tokens": 17,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/specs/engineering-standards.md",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 46,
+      "line": 92,
+      "end_line": 92,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "bullet",
+      "text": "Has\u0142a: bcrypt, koszt 12, d\u0142ugo\u015b\u0107 10\u201372. Sesja: JWT HS256, wa\u017cny 24 h, sekret `JWT_SECRET` (min. 32 znaki, z `.env.local`,",
+      "tokens": 30,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".env.local",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 47,
+      "line": 93,
+      "end_line": 93,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "prose",
+      "text": "nigdy w repo), cookie `httpOnly`, `SameSite=Lax`, `Secure` w produkcji.",
+      "tokens": 18,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 48,
+      "line": 93,
+      "end_line": 93,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "prose",
+      "text": "Brak refresh token\u00f3w (znane ograniczenie).",
+      "tokens": 10,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 49,
+      "line": 94,
+      "end_line": 94,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "bullet",
+      "text": "CSRF: ka\u017cde \u017c\u0105danie zmieniaj\u0105ce stan musi mie\u0107 nag\u0142\u00f3wek `x-requested-with: devmentor` (`apiCall` ustawia go zawsze), a `Origin`",
+      "tokens": 32,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 50,
+      "line": 95,
+      "end_line": 95,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "prose",
+      "text": "musi zgadza\u0107 si\u0119 z hostem.",
+      "tokens": 6,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 51,
+      "line": 95,
+      "end_line": 95,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "prose",
+      "text": "Rate limiting logowania i rejestracji w pami\u0119ci procesu (do zast\u0105pienia wsp\u00f3\u0142dzielonym magazynem).",
+      "tokens": 24,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 52,
+      "line": 96,
+      "end_line": 96,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "bullet",
+      "text": "W\u0142asno\u015b\u0107, nie role: ka\u017cda mutacja sprawdza w\u0142a\u015bciciela rekordu (`assertOwns`, odmowa domy\u015blna). Autor rekordu zawsze pochodzi z",
+      "tokens": 32,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 53,
+      "line": 97,
+      "end_line": 97,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "prose",
+      "text": "sesji, nigdy z cia\u0142a \u017c\u0105dania; dane wej\u015bciowe przechodz\u0105 przez schemat Zod (brak mass assignment).",
+      "tokens": 24,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 54,
+      "line": 97,
+      "end_line": 97,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "prose",
+      "text": "B\u0142\u0119dy logowania s\u0105 og\u00f3lne.",
+      "tokens": 6,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 55,
+      "line": 98,
+      "end_line": 98,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "bullet",
+      "text": "Logger maskuje has\u0142a/tokeny/JWT/cookies; encje nie opuszczaj\u0105 `core` (DTO), wi\u0119c hash has\u0142a nie trafia do odpowiedzi.",
+      "tokens": 29,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "has\u0142a/tokeny/JWT/cookies",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 56,
+      "line": 99,
+      "end_line": 99,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "bullet",
+      "text": "`npm run audit:prod` w CI (pr\u00f3g: critical).",
+      "tokens": 11,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 57,
+      "line": 101,
+      "end_line": 101,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "prose",
+      "text": "**Design system:** zanim zbudujesz lub zmienisz ekran, przeczytaj `docs/design-system.md` jako pierwszy plik (charakter produktu, komponenty z tabel\u0105 \u201ekiedy u\u017cywa\u0107 i kiedy nie\u201d, tokeny znaczeniowe, przewodniki \u201eje\u015bli\u2026 to u\u017cyj\u2026\u201d, czego unika\u0107, komendy).",
+      "tokens": 63,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "docs/design-system.md",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": 58,
+      "line": 101,
+      "end_line": 101,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "prose",
+      "text": "Pe\u0142na dokumentacja to Storybook w `packages/ui` (`npm run storybook` w tym katalogu).",
+      "tokens": 21,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/ui",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": 59,
+      "line": 103,
+      "end_line": 103,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "prose",
+      "text": "**J\u0119zyk interfejsu:** angielski.",
+      "tokens": 8,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 60,
+      "line": 103,
+      "end_line": 103,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "prose",
+      "text": "S\u0142owa produktu (seeker, mentor, session, booking, question): `docs/design-system.md`, sekcja Content.",
+      "tokens": 25,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "docs/design-system.md",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": 61,
+      "line": 105,
+      "end_line": 105,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "prose",
+      "text": "Nowy komponent wielokrotnego u\u017cytku ma jedno wyznaczone miejsce:",
+      "tokens": 16,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 62,
+      "line": 107,
+      "end_line": 107,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "bullet",
+      "text": "Prymityw shadcn \u2192 `ui/src/components/ui/` (przez `npx shadcn@latest add`, nie r\u0119cznie \u2014 wyj\u0105tek: `Button` i `Card` napisane",
+      "tokens": 31,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "ui/src/components/ui/",
+          "exists": false
+        },
+        {
+          "ref": "src/components/ui/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 63,
+      "line": 108,
+      "end_line": 108,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "prose",
+      "text": "r\u0119cznie z powodu b\u0142\u0119du CLI, patrz README).",
+      "tokens": 10,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 64,
+      "line": 109,
+      "end_line": 109,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "bullet",
+      "text": "Og\u00f3lny wzorzec paneli niezale\u017cny od konceptu \u2192 `ui/src/backend/<category>/`.",
+      "tokens": 19,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "ui/src/backend/<category>/",
+          "exists": false
+        },
+        {
+          "ref": "src/backend/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 65,
+      "line": 110,
+      "end_line": 110,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "bullet",
+      "text": "Komponent zwi\u0105zany z kszta\u0142tem domeny jednego konceptu \u2192 `ui/src/components/<concept>/`.",
+      "tokens": 22,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "ui/src/components/<concept>/",
+          "exists": false
+        },
+        {
+          "ref": "src/components/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 66,
+      "line": 111,
+      "end_line": 111,
+      "section": "Bezpiecze\u0144stwo (minimum z `.ai/specs/engineering-standards.md`)",
+      "kind": "bullet",
+      "text": "U\u017cywany przez jedn\u0105 stron\u0119 \u2192 obok jej `page.tsx`, dop\u00f3ki nie pojawi si\u0119 drugi konsument.",
+      "tokens": 22,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "page.tsx",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 67,
+      "line": 113,
+      "end_line": 113,
+      "section": "Princypia architektoniczne",
+      "kind": "heading",
+      "text": "## Princypia architektoniczne",
+      "tokens": 7,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 68,
+      "line": 115,
+      "end_line": 115,
+      "section": "1. Izolacja pakiet\u00f3w",
+      "kind": "heading",
+      "text": "### 1. Izolacja pakiet\u00f3w",
+      "tokens": 6,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 69,
+      "line": 116,
+      "end_line": 116,
+      "section": "1. Izolacja pakiet\u00f3w",
+      "kind": "bullet",
+      "text": "Ka\u017cdy pakiet ma swoj\u0105 odpowiedzialno\u015b\u0107",
+      "tokens": 10,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 70,
+      "line": 117,
+      "end_line": 117,
+      "section": "1. Izolacja pakiet\u00f3w",
+      "kind": "bullet",
+      "text": "`app/` zawiera logik\u0119 Next.js i routing",
+      "tokens": 10,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "app/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 71,
+      "line": 118,
+      "end_line": 118,
+      "section": "1. Izolacja pakiet\u00f3w",
+      "kind": "bullet",
+      "text": "`core/` zawiera logik\u0119 biznesow\u0105, niezale\u017cn\u0105 od frameworka",
+      "tokens": 14,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "core/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 72,
+      "line": 119,
+      "end_line": 119,
+      "section": "1. Izolacja pakiet\u00f3w",
+      "kind": "bullet",
+      "text": "`db/` zarz\u0105dza wszystkim zwi\u0105zanym z baz\u0105 danych",
+      "tokens": 12,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "db/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 73,
+      "line": 120,
+      "end_line": 120,
+      "section": "1. Izolacja pakiet\u00f3w",
+      "kind": "bullet",
+      "text": "`ui/` zawiera tylko komponenty i styling",
+      "tokens": 10,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "ui/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 74,
+      "line": 122,
+      "end_line": 122,
+      "section": "2. Dependency Injection z Awilix",
+      "kind": "heading",
+      "text": "### 2. Dependency Injection z Awilix",
+      "tokens": 9,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 75,
+      "line": 123,
+      "end_line": 123,
+      "section": "2. Dependency Injection z Awilix",
+      "kind": "bullet",
+      "text": "Rejestruj serwisy w kontenerze DI (`packages/core/src/container/container.ts`) r\u0119cznie, jedna linia na zale\u017cno\u015b\u0107 \u2014 bez `loadModules`",
+      "tokens": 33,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/core/src/container/container.ts",
+          "exists": true
+        },
+        {
+          "ref": "core/src/container/container.ts",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 76,
+      "line": 124,
+      "end_line": 124,
+      "section": "2. Dependency Injection z Awilix",
+      "kind": "bullet",
+      "text": "Wstrzykuj zale\u017cno\u015bci zamiast tworzy\u0107 je localnie",
+      "tokens": 12,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 77,
+      "line": 125,
+      "end_line": 125,
+      "section": "2. Dependency Injection z Awilix",
+      "kind": "bullet",
+      "text": "U\u0142atwia testowanie i zmian\u0119 implementacji",
+      "tokens": 10,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 78,
+      "line": 126,
+      "end_line": 126,
+      "section": "2. Dependency Injection z Awilix",
+      "kind": "bullet",
+      "text": "Unikaj sprz\u0119\u017ce\u0144 mi\u0119dzy warstwami",
+      "tokens": 8,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 79,
+      "line": 128,
+      "end_line": 128,
+      "section": "3. MikroORM i baza danych",
+      "kind": "heading",
+      "text": "### 3. MikroORM i baza danych",
+      "tokens": 7,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 80,
+      "line": 129,
+      "end_line": 129,
+      "section": "3. MikroORM i baza danych",
+      "kind": "bullet",
+      "text": "Definiuj modele przez `defineEntity` w `packages/db/src/entities/<concept>/` (jawne `name` i `tableName`)",
+      "tokens": 26,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/db/src/entities/<concept>/",
+          "exists": false
+        },
+        {
+          "ref": "db/src/entities/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 81,
+      "line": 130,
+      "end_line": 130,
+      "section": "3. MikroORM i baza danych",
+      "kind": "bullet",
+      "text": "Migracje w `packages/db/src/migrations/` (generuj przez `migration:create`, sprawd\u017a `down()`)",
+      "tokens": 23,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/db/src/migrations/",
+          "exists": true
+        },
+        {
+          "ref": "db/src/migrations/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 82,
+      "line": 131,
+      "end_line": 131,
+      "section": "3. MikroORM i baza danych",
+      "kind": "bullet",
+      "text": "Pul\u0119 po\u0142\u0105cze\u0144 zarz\u0105dza MikroORM",
+      "tokens": 8,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 83,
+      "line": 132,
+      "end_line": 132,
+      "section": "3. MikroORM i baza danych",
+      "kind": "bullet",
+      "text": "Repositories w `packages/db/src/repositories/` dla abstrakcji dost\u0119pu do danych; serwisy w `core` u\u017cywaj\u0105 ich przez kontener",
+      "tokens": 31,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/db/src/repositories/",
+          "exists": true
+        },
+        {
+          "ref": "db/src/repositories/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 84,
+      "line": 134,
+      "end_line": 134,
+      "section": "4. TypeScript everywhere",
+      "kind": "heading",
+      "text": "### 4. TypeScript everywhere",
+      "tokens": 7,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 85,
+      "line": 135,
+      "end_line": 135,
+      "section": "4. TypeScript everywhere",
+      "kind": "bullet",
+      "text": "Strikt mode: `\"strict\": true` w `tsconfig.json`",
+      "tokens": 12,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "tsconfig.json",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": 86,
+      "line": 136,
+      "end_line": 136,
+      "section": "4. TypeScript everywhere",
+      "kind": "bullet",
+      "text": "Bez `any` \u2014 je\u015bli nie wiesz typ, zamiast tego napisz interface",
+      "tokens": 16,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 87,
+      "line": 137,
+      "end_line": 137,
+      "section": "4. TypeScript everywhere",
+      "kind": "bullet",
+      "text": "Wsp\u00f3lne typy w `packages/core/src/types/`",
+      "tokens": 10,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/core/src/types/",
+          "exists": true
+        },
+        {
+          "ref": "core/src/types/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 88,
+      "line": 138,
+      "end_line": 138,
+      "section": "4. TypeScript everywhere",
+      "kind": "bullet",
+      "text": "Wykorzystuj branded types dla dodatkowej bezpiecze\u0144stwa (np. UserId, ArticleId)",
+      "tokens": 20,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 89,
+      "line": 140,
+      "end_line": 140,
+      "section": "5. UI z Tailwind i shadcn-ui",
+      "kind": "heading",
+      "text": "### 5. UI z Tailwind i shadcn-ui",
+      "tokens": 8,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 90,
+      "line": 141,
+      "end_line": 141,
+      "section": "5. UI z Tailwind i shadcn-ui",
+      "kind": "bullet",
+      "text": "shadcn-ui dla \"business\" komponent\u00f3w (forms, dialogs, tables)",
+      "tokens": 15,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 91,
+      "line": 142,
+      "end_line": 142,
+      "section": "5. UI z Tailwind i shadcn-ui",
+      "kind": "bullet",
+      "text": "Custom komponenty w `packages/ui/src/components/`",
+      "tokens": 12,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/ui/src/components/",
+          "exists": true
+        },
+        {
+          "ref": "ui/src/components/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 92,
+      "line": 143,
+      "end_line": 143,
+      "section": "5. UI z Tailwind i shadcn-ui",
+      "kind": "bullet",
+      "text": "Tailwind utility classes dla stylizacji",
+      "tokens": 10,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 93,
+      "line": 144,
+      "end_line": 144,
+      "section": "5. UI z Tailwind i shadcn-ui",
+      "kind": "bullet",
+      "text": "Brak CSS-in-JS \u2014 wszystko w Tailwind",
+      "tokens": 9,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 94,
+      "line": 146,
+      "end_line": 146,
+      "section": "Konwencje kodowe",
+      "kind": "heading",
+      "text": "## Konwencje kodowe",
+      "tokens": 5,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 95,
+      "line": 148,
+      "end_line": 148,
+      "section": "Nazewnictwo",
+      "kind": "heading",
+      "text": "### Nazewnictwo",
+      "tokens": 4,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 96,
+      "line": 149,
+      "end_line": 149,
+      "section": "Nazewnictwo",
+      "kind": "bullet",
+      "text": "**Komponenty React:** PascalCase (`UserCard.tsx`)",
+      "tokens": 12,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "UserCard.tsx",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 97,
+      "line": 150,
+      "end_line": 150,
+      "section": "Nazewnictwo",
+      "kind": "bullet",
+      "text": "**Pliki utils/hooks:** camelCase (`useUserForm.ts`, `formatDate.ts`)",
+      "tokens": 17,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "useUserForm.ts",
+          "exists": false
+        },
+        {
+          "ref": "formatDate.ts",
+          "exists": false
+        },
+        {
+          "ref": "utils/hooks",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 98,
+      "line": 151,
+      "end_line": 151,
+      "section": "Nazewnictwo",
+      "kind": "bullet",
+      "text": "**Sta\u0142e:** UPPER_SNAKE_CASE (`API_BASE_URL`, `MAX_RETRIES`)",
+      "tokens": 15,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 99,
+      "line": 152,
+      "end_line": 152,
+      "section": "Nazewnictwo",
+      "kind": "bullet",
+      "text": "**Foldery:** kebab-case (`user-service/`, `auth-guards/`)",
+      "tokens": 14,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "user-service/",
+          "exists": false
+        },
+        {
+          "ref": "auth-guards/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 100,
+      "line": 154,
+      "end_line": 154,
+      "section": "Importy",
+      "kind": "heading",
+      "text": "### Importy",
+      "tokens": 3,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 101,
+      "line": 155,
+      "end_line": 155,
+      "section": "Importy",
+      "kind": "bullet",
+      "text": "Importy wzgl\u0119dne dla tego samego pakietu",
+      "tokens": 10,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 102,
+      "line": 156,
+      "end_line": 156,
+      "section": "Importy",
+      "kind": "bullet",
+      "text": "Importy bezwzgl\u0119dne dla pakiet\u00f3w z monorepo: `@devmentor/core`, `@devmentor/db`, `@devmentor/ui`",
+      "tokens": 24,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "@devmentor/core",
+          "exists": false
+        },
+        {
+          "ref": "@devmentor/db",
+          "exists": false
+        },
+        {
+          "ref": "@devmentor/ui",
+          "exists": false
+        },
+        {
+          "ref": "devmentor/core",
+          "exists": false
+        },
+        {
+          "ref": "devmentor/db",
+          "exists": false
+        },
+        {
+          "ref": "devmentor/ui",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 103,
+      "line": 157,
+      "end_line": 157,
+      "section": "Importy",
+      "kind": "bullet",
+      "text": "Path aliases w `tsconfig.json` dla czysto\u015bci",
+      "tokens": 11,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "tsconfig.json",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "line": 159,
+      "end_line": 159,
+      "section": "Struktura pliku",
+      "kind": "heading",
+      "text": "### Struktura pliku",
+      "tokens": 5,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 105,
+      "line": 160,
+      "end_line": 166,
+      "section": "Struktura pliku",
+      "kind": "code",
+      "text": "// 1. Importy\n// 2. Typy i interfejsy\n// 3. Sta\u0142e\n// 4. Komponenty / Funkcje\n// 5. Exports (je\u015bli trzeba)",
+      "tokens": 26,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 106,
+      "line": 168,
+      "end_line": 168,
+      "section": "Migracje i baza danych",
+      "kind": "heading",
+      "text": "## Migracje i baza danych",
+      "tokens": 6,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 107,
+      "line": 170,
+      "end_line": 170,
+      "section": "Migracje i baza danych",
+      "kind": "bullet",
+      "text": "Migracje przechowywane w `packages/db/migrations/`",
+      "tokens": 12,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "packages/db/migrations/",
+          "exists": false
+        },
+        {
+          "ref": "db/migrations/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 108,
+      "line": 171,
+      "end_line": 171,
+      "section": "Migracje i baza danych",
+      "kind": "bullet",
+      "text": "Uruchamiaj migracje przed deployem: `npm run migrate`",
+      "tokens": 13,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 109,
+      "line": 172,
+      "end_line": 172,
+      "section": "Migracje i baza danych",
+      "kind": "bullet",
+      "text": "Nigdy nie edytuj starych migracji \u2014 zawsze utw\u00f3rz now\u0105",
+      "tokens": 14,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 110,
+      "line": 173,
+      "end_line": 173,
+      "section": "Migracje i baza danych",
+      "kind": "bullet",
+      "text": "Migracje musz\u0105 by\u0107 reversible (up i down)",
+      "tokens": 10,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 111,
+      "line": 175,
+      "end_line": 175,
+      "section": "Testy",
+      "kind": "heading",
+      "text": "## Testy",
+      "tokens": 2,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 112,
+      "line": 177,
+      "end_line": 177,
+      "section": "Testy",
+      "kind": "bullet",
+      "text": "Unit testy dla `core/` i `db/`",
+      "tokens": 8,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "core/",
+          "exists": false
+        },
+        {
+          "ref": "db/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 113,
+      "line": 178,
+      "end_line": 178,
+      "section": "Testy",
+      "kind": "bullet",
+      "text": "Component testy dla `ui/`",
+      "tokens": 6,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "ui/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 114,
+      "line": 179,
+      "end_line": 179,
+      "section": "Testy",
+      "kind": "bullet",
+      "text": "E2E testy dla `app/`",
+      "tokens": 5,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "app/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 115,
+      "line": 180,
+      "end_line": 180,
+      "section": "Testy",
+      "kind": "bullet",
+      "text": "Umie\u015b\u0107 testy obok pliku: `component.tsx` + `component.test.tsx`",
+      "tokens": 16,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "component.tsx",
+          "exists": false
+        },
+        {
+          "ref": "component.test.tsx",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 116,
+      "line": 181,
+      "end_line": 181,
+      "section": "Testy",
+      "kind": "bullet",
+      "text": "Framework: Jest + React Testing Library (domy\u015blnie w Next.js)",
+      "tokens": 15,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 117,
+      "line": 183,
+      "end_line": 183,
+      "section": "Deployment",
+      "kind": "heading",
+      "text": "## Deployment",
+      "tokens": 3,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 118,
+      "line": 185,
+      "end_line": 185,
+      "section": "Deployment",
+      "kind": "bullet",
+      "text": "`app/` jest aplikacj\u0105 Next.js, kt\u00f3r\u0105 deployujesz na Vercel/hosting",
+      "tokens": 16,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "app/",
+          "exists": false
+        },
+        {
+          "ref": "Vercel/hosting",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 119,
+      "line": 186,
+      "end_line": 186,
+      "section": "Deployment",
+      "kind": "bullet",
+      "text": "`core/`, `db/`, `ui/` s\u0105 pakietami wewn\u0119trznymi \u2014 nie deployujesz ich osobno",
+      "tokens": 19,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "core/",
+          "exists": false
+        },
+        {
+          "ref": "db/",
+          "exists": false
+        },
+        {
+          "ref": "ui/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 120,
+      "line": 187,
+      "end_line": 187,
+      "section": "Deployment",
+      "kind": "bullet",
+      "text": "Build: `npm run build` w `app/` (powinien budowa\u0107 zale\u017cno\u015bci z innych pakiet\u00f3w)",
+      "tokens": 20,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "app/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 121,
+      "line": 188,
+      "end_line": 188,
+      "section": "Deployment",
+      "kind": "bullet",
+      "text": "ENV zmienne: `.env.local` dla dev, secrets w CI/CD",
+      "tokens": 12,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".env.local",
+          "exists": false
+        },
+        {
+          "ref": "CI/CD",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 122,
+      "line": 190,
+      "end_line": 190,
+      "section": "Deployment",
+      "kind": "prose",
+      "text": "---",
+      "tokens": 1,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 123,
+      "line": 192,
+      "end_line": 192,
+      "section": "Struktura .ai \u2014 dokumentacja AI i autonomiczne przebiegi",
+      "kind": "heading",
+      "text": "# Struktura .ai \u2014 dokumentacja AI i autonomiczne przebiegi",
+      "tokens": 14,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 124,
+      "line": 194,
+      "end_line": 194,
+      "section": "Struktura .ai \u2014 dokumentacja AI i autonomiczne przebiegi",
+      "kind": "prose",
+      "text": "Projekt u\u017cywa struktury `.ai/` do centralnego zarz\u0105dzania dokumentacj\u0105 AI i logami autonomicznych przebieg\u00f3w.",
+      "tokens": 27,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 125,
+      "line": 196,
+      "end_line": 196,
+      "section": "Katalog `.ai/specs/` \u2014 Specyfikacje i SDD",
+      "kind": "heading",
+      "text": "## Katalog `.ai/specs/` \u2014 Specyfikacje i SDD",
+      "tokens": 11,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/specs/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 126,
+      "line": 198,
+      "end_line": 198,
+      "section": "Katalog `.ai/specs/` \u2014 Specyfikacje i SDD",
+      "kind": "prose",
+      "text": "Miejsce przechowywania specyfikacji dla Software Design Documents (SDD) oraz innych specyfikacji projektowych.",
+      "tokens": 28,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 127,
+      "line": 200,
+      "end_line": 200,
+      "section": "Katalog `.ai/specs/` \u2014 Specyfikacje i SDD",
+      "kind": "bullet",
+      "text": "**Format nazwy:** `YYYY-MM-DD-slug.md` (np. `2026-10-19-auth-system-redesign.md`)",
+      "tokens": 20,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "YYYY-MM-DD-slug.md",
+          "exists": false
+        },
+        {
+          "ref": "2026-10-19-auth-system-redesign.md",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 128,
+      "line": 201,
+      "end_line": 201,
+      "section": "Katalog `.ai/specs/` \u2014 Specyfikacje i SDD",
+      "kind": "bullet",
+      "text": "**Podkatalog `implemented/`:** Specyfikacje ju\u017c wdro\u017cone \u2014 przenie\u015b tutaj po zako\u0144czeniu implementacji",
+      "tokens": 26,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "implemented/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 129,
+      "line": 202,
+      "end_line": 202,
+      "section": "Katalog `.ai/specs/` \u2014 Specyfikacje i SDD",
+      "kind": "bullet",
+      "text": "**Podkatalog `archive/`:** Stare lub porzucone specyfikacje \u2014 archiwizuj po deprecacji",
+      "tokens": 22,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "archive/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 130,
+      "line": 204,
+      "end_line": 204,
+      "section": "Katalog `.ai/specs/` \u2014 Specyfikacje i SDD",
+      "kind": "prose",
+      "text": "**Instrukcje:**",
+      "tokens": 4,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 131,
+      "line": 205,
+      "end_line": 205,
+      "section": "Katalog `.ai/specs/` \u2014 Specyfikacje i SDD",
+      "kind": "bullet",
+      "text": "Ka\u017cda nowa specyfikacja powinna by\u0107 stworzona w `.ai/specs/` ze znacznikiem daty",
+      "tokens": 20,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/specs/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 132,
+      "line": 206,
+      "end_line": 206,
+      "section": "Katalog `.ai/specs/` \u2014 Specyfikacje i SDD",
+      "kind": "bullet",
+      "text": "Po wdro\u017ceniu przenie\u015b plik do `implemented/` z komentarzem dotycz\u0105cym wersji wdro\u017cenia",
+      "tokens": 22,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "implemented/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 133,
+      "line": 207,
+      "end_line": 207,
+      "section": "Katalog `.ai/specs/` \u2014 Specyfikacje i SDD",
+      "kind": "bullet",
+      "text": "Nigdy nie usuwaj specyfikacji \u2014 archiwizuj zamiast tego",
+      "tokens": 14,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 134,
+      "line": 209,
+      "end_line": 209,
+      "section": "Katalog `.ai/runs/` \u2014 Logi autonomicznych przebieg\u00f3w AI",
+      "kind": "heading",
+      "text": "## Katalog `.ai/runs/` \u2014 Logi autonomicznych przebieg\u00f3w AI",
+      "tokens": 14,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/runs/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 135,
+      "line": 211,
+      "end_line": 211,
+      "section": "Katalog `.ai/runs/` \u2014 Logi autonomicznych przebieg\u00f3w AI",
+      "kind": "prose",
+      "text": "Miejsce do logowania wynik\u00f3w autonomicznych przebieg\u00f3w, eksperyment\u00f3w i iteracyjnych optymalizacji.",
+      "tokens": 25,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 136,
+      "line": 213,
+      "end_line": 213,
+      "section": "Katalog `.ai/runs/` \u2014 Logi autonomicznych przebieg\u00f3w AI",
+      "kind": "bullet",
+      "text": "**Format nazwy:** `YYYY-MM-DD-slug.md` (np. `2026-10-19-performance-optimization-run.md`)",
+      "tokens": 22,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "YYYY-MM-DD-slug.md",
+          "exists": false
+        },
+        {
+          "ref": "2026-10-19-performance-optimization-run.md",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 137,
+      "line": 214,
+      "end_line": 214,
+      "section": "Katalog `.ai/runs/` \u2014 Logi autonomicznych przebieg\u00f3w AI",
+      "kind": "bullet",
+      "text": "**Zawarto\u015b\u0107:** Cel, metody, wyniki, wnioski, problemy i dalsze kroki",
+      "tokens": 17,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 138,
+      "line": 215,
+      "end_line": 215,
+      "section": "Katalog `.ai/runs/` \u2014 Logi autonomicznych przebieg\u00f3w AI",
+      "kind": "bullet",
+      "text": "**Cykl \u017cycia:** Po zako\u0144czeniu przebiegu zachowaj log jako histori\u0119 decyzji",
+      "tokens": 19,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 139,
+      "line": 217,
+      "end_line": 217,
+      "section": "Katalog `.ai/runs/` \u2014 Logi autonomicznych przebieg\u00f3w AI",
+      "kind": "prose",
+      "text": "**Instrukcje:**",
+      "tokens": 4,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 140,
+      "line": 218,
+      "end_line": 218,
+      "section": "Katalog `.ai/runs/` \u2014 Logi autonomicznych przebieg\u00f3w AI",
+      "kind": "bullet",
+      "text": "Ka\u017cdy autonomiczny przebieg powinien rejestrowa\u0107 swoje dzia\u0142ania i wnioski",
+      "tokens": 18,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 141,
+      "line": 219,
+      "end_line": 219,
+      "section": "Katalog `.ai/runs/` \u2014 Logi autonomicznych przebieg\u00f3w AI",
+      "kind": "bullet",
+      "text": "Logi s\u0142u\u017c\u0105 jako audyt i \u017ar\u00f3d\u0142o wsp\u00f3lnej wiedzy dla zespo\u0142u",
+      "tokens": 14,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 142,
+      "line": 220,
+      "end_line": 220,
+      "section": "Katalog `.ai/runs/` \u2014 Logi autonomicznych przebieg\u00f3w AI",
+      "kind": "bullet",
+      "text": "R\u00f3b periodyczne wpisy (nie czekaj do ko\u0144ca) dla \u015bledzenia post\u0119pu",
+      "tokens": 16,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 143,
+      "line": 222,
+      "end_line": 222,
+      "section": "Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski",
+      "kind": "heading",
+      "text": "## Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski",
+      "tokens": 17,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/lessons/",
+          "exists": false
+        },
+        {
+          "ref": "lessons.md",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 144,
+      "line": 224,
+      "end_line": 224,
+      "section": "Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski",
+      "kind": "prose",
+      "text": "Miejsce do zbierania ustale\u0144, wniosk\u00f3w i d\u0142ugoterminowych usprawnie\u0144.",
+      "tokens": 17,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 145,
+      "line": 226,
+      "end_line": 226,
+      "section": "Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski",
+      "kind": "bullet",
+      "text": "**Plik `lessons.md`:** Indeks wszystkich lekcji z kr\u00f3tkim opisem",
+      "tokens": 16,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "lessons.md",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 146,
+      "line": 227,
+      "end_line": 227,
+      "section": "Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski",
+      "kind": "bullet",
+      "text": "**Podkatalog `lessons/`:** Szczeg\u00f3\u0142owe notatki dla ka\u017cdej lekcji",
+      "tokens": 16,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "lessons/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 147,
+      "line": 228,
+      "end_line": 228,
+      "section": "Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski",
+      "kind": "bullet",
+      "text": "**Format nazwy w `lessons/`:** `YYYY-MM-DD-slug.md`",
+      "tokens": 13,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "lessons/",
+          "exists": false
+        },
+        {
+          "ref": "YYYY-MM-DD-slug.md",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 148,
+      "line": 229,
+      "end_line": 229,
+      "section": "Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski",
+      "kind": "bullet",
+      "text": "**Tre\u015b\u0107:** Kontekst, co si\u0119 nauczyli\u015bmy, jak to stosowa\u0107, powi\u0105zane bugfixes",
+      "tokens": 19,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 149,
+      "line": 231,
+      "end_line": 231,
+      "section": "Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski",
+      "kind": "prose",
+      "text": "**Instrukcje:**",
+      "tokens": 4,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 150,
+      "line": 232,
+      "end_line": 232,
+      "section": "Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski",
+      "kind": "bullet",
+      "text": "Po ka\u017cdym znacz\u0105cym odkryciu (naprawa b\u0142\u0119du, analiza problemu, wzorzec projektowy) utw\u00f3rz wpis",
+      "tokens": 24,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 151,
+      "line": 233,
+      "end_line": 233,
+      "section": "Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski",
+      "kind": "bullet",
+      "text": "Linki z `lessons.md` do szczeg\u00f3\u0142owych notatek w `lessons/`",
+      "tokens": 14,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": "lessons.md",
+          "exists": false
+        },
+        {
+          "ref": "lessons/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 152,
+      "line": 234,
+      "end_line": 234,
+      "section": "Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski",
+      "kind": "bullet",
+      "text": "U\u017cywaj tych notatek jako d\u0142ugoterminowej pami\u0119ci zespo\u0142u \u2014 pomagaj\u0105 unika\u0107 powt\u00f3rzenia b\u0142\u0119d\u00f3w",
+      "tokens": 23,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 153,
+      "line": 235,
+      "end_line": 235,
+      "section": "Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski",
+      "kind": "bullet",
+      "text": "Aktualizuj istniej\u0105ce wpisy gdy pojawi\u0105 si\u0119 nowe informacje lub zmiany w podej\u015bciu",
+      "tokens": 20,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 154,
+      "line": 237,
+      "end_line": 237,
+      "section": "Katalog `.ai/lessons/` i plik `lessons.md` \u2014 Ustalenia i wnioski",
+      "kind": "prose",
+      "text": "---",
+      "tokens": 1,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 155,
+      "line": 239,
+      "end_line": 239,
+      "section": "Best Practices \u2014 Wskaz\u00f3wki dla efektywnej pracy z Claude",
+      "kind": "heading",
+      "text": "# Best Practices \u2014 Wskaz\u00f3wki dla efektywnej pracy z Claude",
+      "tokens": 14,
+      "flags": [
+        "vague"
+      ],
+      "references": []
+    },
+    {
+      "id": 156,
+      "line": 241,
+      "end_line": 241,
+      "section": "Best Practices \u2014 Wskaz\u00f3wki dla efektywnej pracy z Claude",
+      "kind": "prose",
+      "text": "Wdro\u017cone na podstawie do\u015bwiadcze\u0144 Borisa Cherny'ego z Claude Code.",
+      "tokens": 16,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 157,
+      "line": 243,
+      "end_line": 243,
+      "section": "1. Planowanie przed implementacj\u0105",
+      "kind": "heading",
+      "text": "## 1. Planowanie przed implementacj\u0105",
+      "tokens": 9,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 158,
+      "line": 245,
+      "end_line": 245,
+      "section": "1. Planowanie przed implementacj\u0105",
+      "kind": "prose",
+      "text": "Dla z\u0142o\u017conych zada\u0144 najpierw utw\u00f3rz specyfikacj\u0119 w `.ai/specs/`:",
+      "tokens": 16,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/specs/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 159,
+      "line": 246,
+      "end_line": 246,
+      "section": "1. Planowanie przed implementacj\u0105",
+      "kind": "bullet",
+      "text": "Zdefiniuj problem, cele i ograniczenia",
+      "tokens": 10,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 160,
+      "line": 247,
+      "end_line": 247,
+      "section": "1. Planowanie przed implementacj\u0105",
+      "kind": "bullet",
+      "text": "Wypisz krok po kroku, co ma by\u0107 zrobione",
+      "tokens": 10,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 161,
+      "line": 248,
+      "end_line": 248,
+      "section": "1. Planowanie przed implementacj\u0105",
+      "kind": "bullet",
+      "text": "Ustal metryki sukcesu",
+      "tokens": 5,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 162,
+      "line": 249,
+      "end_line": 249,
+      "section": "1. Planowanie przed implementacj\u0105",
+      "kind": "bullet",
+      "text": "Zamiast m\u00f3wi\u0107 \"zr\u00f3b to\", powiedz \"zr\u00f3b to w taki spos\u00f3b\"",
+      "tokens": 14,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 163,
+      "line": 250,
+      "end_line": 250,
+      "section": "1. Planowanie przed implementacj\u0105",
+      "kind": "bullet",
+      "text": "Claude wykonuje takie zadania precyzyjniej, szybciej i z mniej iteracjami",
+      "tokens": 18,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 164,
+      "line": 252,
+      "end_line": 252,
+      "section": "1. Planowanie przed implementacj\u0105",
+      "kind": "prose",
+      "text": "**Gdy pytanie jest skomplikowane:** Rozsy\u0142aj prac\u0119 do wielu subagent\u00f3w r\u00f3wnolegle zamiast pyta\u0107 sekwencyjnie.",
+      "tokens": 27,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 165,
+      "line": 254,
+      "end_line": 254,
+      "section": "2. Weryfikacja zmian przed zatwierdzeniem",
+      "kind": "heading",
+      "text": "## 2. Weryfikacja zmian przed zatwierdzeniem",
+      "tokens": 11,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 166,
+      "line": 256,
+      "end_line": 256,
+      "section": "2. Weryfikacja zmian przed zatwierdzeniem",
+      "kind": "bullet",
+      "text": "Uruchom testy, sprawd\u017a type-checking, dokonaj przegl\u0105du kodu",
+      "tokens": 15,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 167,
+      "line": 257,
+      "end_line": 257,
+      "section": "2. Weryfikacja zmian przed zatwierdzeniem",
+      "kind": "bullet",
+      "text": "Dla zmian UI: przetestuj w przegl\u0105darce (z\u0142ota \u015bcie\u017cka i edge case'i)",
+      "tokens": 17,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 168,
+      "line": 258,
+      "end_line": 258,
+      "section": "2. Weryfikacja zmian przed zatwierdzeniem",
+      "kind": "bullet",
+      "text": "Patrz na diffs zanim co\u015b zacommitiasz \u2014 wychwy\u0107 niespodzianki",
+      "tokens": 15,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 169,
+      "line": 259,
+      "end_line": 259,
+      "section": "2. Weryfikacja zmian przed zatwierdzeniem",
+      "kind": "bullet",
+      "text": "Je\u015bli co\u015b wygl\u0105da dziwnie, pytaj zanim nie b\u0119dzie za p\u00f3\u017ano",
+      "tokens": 14,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 170,
+      "line": 261,
+      "end_line": 261,
+      "section": "3. Zapisywanie wniosk\u00f3w po poprawkach",
+      "kind": "heading",
+      "text": "## 3. Zapisywanie wniosk\u00f3w po poprawkach",
+      "tokens": 10,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 171,
+      "line": 263,
+      "end_line": 263,
+      "section": "3. Zapisywanie wniosk\u00f3w po poprawkach",
+      "kind": "prose",
+      "text": "Po ka\u017cdej znacz\u0105cej naprawie b\u0142\u0119du:",
+      "tokens": 9,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 172,
+      "line": 264,
+      "end_line": 264,
+      "section": "3. Zapisywanie wniosk\u00f3w po poprawkach",
+      "kind": "bullet",
+      "text": "Utw\u00f3rz wpis w `.ai/lessons/` dokumentuj\u0105cy root cause",
+      "tokens": 13,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/lessons/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 173,
+      "line": 265,
+      "end_line": 265,
+      "section": "3. Zapisywanie wniosk\u00f3w po poprawkach",
+      "kind": "bullet",
+      "text": "Dodaj do `.ai/lessons.md` \u2014 to zapobiega powtarzaniu b\u0142\u0119d\u00f3w",
+      "tokens": 15,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/lessons.md",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 174,
+      "line": 266,
+      "end_line": 266,
+      "section": "3. Zapisywanie wniosk\u00f3w po poprawkach",
+      "kind": "bullet",
+      "text": "Je\u015bli by\u0142a d\u0142uga iteracja \u2014 zaloguj to w `.ai/runs/`",
+      "tokens": 13,
+      "flags": [
+        "project-noun"
+      ],
+      "references": [
+        {
+          "ref": ".ai/runs/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": 175,
+      "line": 267,
+      "end_line": 267,
+      "section": "3. Zapisywanie wniosk\u00f3w po poprawkach",
+      "kind": "bullet",
+      "text": "Je\u015bli odkry\u0142e\u015b now\u0105 zasad\u0119 \u2014 zaktualizuj CLAUDE.md",
+      "tokens": 12,
+      "flags": [
+        "project-noun"
+      ],
+      "references": []
+    },
+    {
+      "id": 176,
+      "line": 269,
+      "end_line": 269,
+      "section": "3. Zapisywanie wniosk\u00f3w po poprawkach",
+      "kind": "prose",
+      "text": "**Cel:** Ka\u017cda naprawa to lekcja dla przysz\u0142ych prac.",
+      "tokens": 13,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 177,
+      "line": 269,
+      "end_line": 269,
+      "section": "3. Zapisywanie wniosk\u00f3w po poprawkach",
+      "kind": "prose",
+      "text": "Bez zapisania, wiedza ginie.",
+      "tokens": 7,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 178,
+      "line": 271,
+      "end_line": 271,
+      "section": "4. Zaawansowane promptowanie",
+      "kind": "heading",
+      "text": "## 4. Zaawansowane promptowanie",
+      "tokens": 8,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 179,
+      "line": 273,
+      "end_line": 273,
+      "section": "4. Zaawansowane promptowanie",
+      "kind": "bullet",
+      "text": "B\u0105d\u017a szczeg\u00f3\u0142owy i specyficzny \u2014 powiedz CO\u015a zamiast \"zr\u00f3b to lepiej\"",
+      "tokens": 17,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 180,
+      "line": 274,
+      "end_line": 274,
+      "section": "4. Zaawansowane promptowanie",
+      "kind": "bullet",
+      "text": "Podaj kontekst \u2014 link do pliku, numer linii, przyk\u0142ad problemu",
+      "tokens": 16,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 181,
+      "line": 275,
+      "end_line": 275,
+      "section": "4. Zaawansowane promptowanie",
+      "kind": "bullet",
+      "text": "Pytaj o konkretny styl: \"refaktoruj aby by\u0142o bardziej czytelne\" vs. \"upro\u015b\u0107 to do 3 linii\"",
+      "tokens": 22,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 182,
+      "line": 276,
+      "end_line": 276,
+      "section": "4. Zaawansowane promptowanie",
+      "kind": "bullet",
+      "text": "Wyzwij do elegancji \u2014 \"czy to da si\u0119 zrobi\u0107 bez callback\u00f3w?\" czasem daje zaskakuj\u0105co dobre rozwi\u0105zania",
+      "tokens": 26,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 183,
+      "line": 278,
+      "end_line": 278,
+      "section": "5. Automatyczne naprawianie zamiast zarz\u0105dzania",
+      "kind": "heading",
+      "text": "## 5. Automatyczne naprawianie zamiast zarz\u0105dzania",
+      "tokens": 12,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 184,
+      "line": 280,
+      "end_line": 280,
+      "section": "5. Automatyczne naprawianie zamiast zarz\u0105dzania",
+      "kind": "bullet",
+      "text": "Zamiast \"przeanalizuj ten b\u0142\u0105d\" \u2014 wklej error log i powiedz \"fix\"",
+      "tokens": 16,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 185,
+      "line": 281,
+      "end_line": 281,
+      "section": "5. Automatyczne naprawianie zamiast zarz\u0105dzania",
+      "kind": "bullet",
+      "text": "Claude lepiej dzia\u0142a gdy ma jasny cel i autonomi\u0119",
+      "tokens": 12,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 186,
+      "line": 282,
+      "end_line": 282,
+      "section": "5. Automatyczne naprawianie zamiast zarz\u0105dzania",
+      "kind": "bullet",
+      "text": "Nie zarz\u0105dzaj ka\u017cdym krokiem \u2014 ustaw kierunek i pozw\u00f3l dzia\u0142a\u0107",
+      "tokens": 16,
+      "flags": [],
+      "references": []
+    },
+    {
+      "id": 187,
+      "line": 283,
+      "end_line": 283,
+      "section": "5. Automatyczne naprawianie zamiast zarz\u0105dzania",
+      "kind": "bullet",
+      "text": "Je\u015bli potrzebujesz wi\u0119cej mocy \u2014 powiedz \"use subagents\" dla z\u0142o\u017conych problem\u00f3w",
+      "tokens": 20,
+      "flags": [],
+      "references": []
+    }
+  ]
+}
