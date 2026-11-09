@@ -18,6 +18,7 @@ const note: NoteDto = {
   title: 'Safe Kubernetes upgrades',
   body: 'Read the events first.',
   status: 'draft',
+  canPublish: true,
   aiNoticeVersion: null,
   aiConsentedAt: null,
   publishedAt: null,

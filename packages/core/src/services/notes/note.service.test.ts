@@ -106,6 +106,14 @@ describe('NoteService', () => {
     expect(repository.publish).not.toHaveBeenCalled();
   });
 
+  it('returns the server publication gate so the UI matches enabled production configuration', async () => {
+    const closed = setup({ settings: { publishEnabled: false, isProduction: true } });
+    await expect(closed.service.get(SESSION, IDS.note)).resolves.toMatchObject({ canPublish: false });
+
+    const open = setup({ settings: { publishEnabled: true, isProduction: true } });
+    await expect(open.service.get(SESSION, IDS.note)).resolves.toMatchObject({ canPublish: true });
+  });
+
   it('records fresh versioned consent and emits only note and mentor ids on publish', async () => {
     const { service, repository, emit } = setup();
     const published = await service.publish(SESSION, IDS.note, { consent: true, noticeVersion: VAULT_NOTICE_VERSION });

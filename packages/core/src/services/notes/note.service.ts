@@ -29,12 +29,13 @@ type Dependencies = {
   vaultSettings: () => VaultSettings;
 };
 
-function toNoteDto(note: Note): NoteDto {
+function toNoteDto(note: Note, canPublish: boolean): NoteDto {
   return noteDtoSchema.parse({
     id: note.id,
     title: note.title,
     body: note.body,
     status: note.status,
+    canPublish,
     aiNoticeVersion: note.aiNoticeVersion,
     aiConsentedAt: note.aiConsentedAt?.toISOString() ?? null,
     publishedAt: note.publishedAt?.toISOString() ?? null,
@@ -44,8 +45,9 @@ function toNoteDto(note: Note): NoteDto {
   });
 }
 
-function toSummaryDto(note: Note): NoteSummaryDto {
-  const { body: _body, ...summary } = toNoteDto(note);
+function toSummaryDto(note: Note, canPublish: boolean): NoteSummaryDto {
+  const { body, ...summary } = toNoteDto(note, canPublish);
+  void body;
   return noteSummaryDtoSchema.parse(summary);
 }
 
@@ -70,8 +72,9 @@ export class NoteService {
       limit: NOTES_PAGE_SIZE,
       offset: (page - 1) * NOTES_PAGE_SIZE,
     });
+    const canPublish = this.canPublish();
     return {
-      items: items.map(toSummaryDto),
+      items: items.map((note) => toSummaryDto(note, canPublish)),
       page,
       pageSize: NOTES_PAGE_SIZE,
       total,
@@ -83,7 +86,7 @@ export class NoteService {
     await this.requireMentor(session);
     const note = await this.find(id);
     assertOwns(session, note.mentorId);
-    return toNoteDto(note);
+    return toNoteDto(note, this.canPublish());
   }
 
   async create(session: Session, input: NoteInput): Promise<NoteDto> {
@@ -97,7 +100,7 @@ export class NoteService {
       publishedAt: null,
       takenDownAt: null,
     });
-    return toNoteDto(note);
+    return toNoteDto(note, this.canPublish());
   }
 
   async update(session: Session, id: string, input: NoteInput): Promise<NoteDto> {
@@ -107,7 +110,7 @@ export class NoteService {
     if (existing.status === 'published') throw new ConflictError('Take the note down before editing it.');
     const updated = await this.noteRepository.updateDraft(id, session.userId, input, this.clock.now());
     if (!updated) throw new ConflictError('The note changed. Reload it before editing.');
-    return toNoteDto(await this.find(id));
+    return toNoteDto(await this.find(id), this.canPublish());
   }
 
   async remove(session: Session, id: string): Promise<{ id: string }> {
@@ -126,8 +129,7 @@ export class NoteService {
     if (input.noticeVersion !== VAULT_NOTICE_VERSION) {
       throw new ConflictError('The notice changed. Read it again before you publish.');
     }
-    const settings = this.vaultSettings();
-    if (settings.isProduction && !settings.publishEnabled) {
+    if (!this.canPublish()) {
       throw new ForbiddenError('Publishing opens when the notice has been reviewed.');
     }
     const existing = await this.find(id);
@@ -137,7 +139,7 @@ export class NoteService {
       throw new ConflictError('Only a draft or taken-down note can be published.');
     }
     await this.eventBus.emit('notes.note.published', { noteId: id, mentorId: session.userId });
-    return toNoteDto(await this.find(id));
+    return toNoteDto(await this.find(id), this.canPublish());
   }
 
   async takeDown(session: Session, id: string): Promise<NoteDto> {
@@ -148,7 +150,7 @@ export class NoteService {
       throw new ConflictError('Only a published note can be taken down.');
     }
     await this.eventBus.emit('notes.note.taken_down', { noteId: id, mentorId: session.userId });
-    return toNoteDto(await this.find(id));
+    return toNoteDto(await this.find(id), this.canPublish());
   }
 
   private async find(id: string): Promise<Note> {
@@ -159,5 +161,10 @@ export class NoteService {
 
   private async requireMentor(session: Session): Promise<void> {
     if (!(await this.invitationService.isAcceptedMentor(session.userId))) throw new ForbiddenError();
+  }
+
+  private canPublish(): boolean {
+    const settings = this.vaultSettings();
+    return !settings.isProduction || settings.publishEnabled;
   }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { NoteDto, NoteSummaryDto, Page } from '@devmentor/core';
 import {
@@ -15,6 +15,7 @@ import {
   Page as PageShell,
   PublishNoticePanel,
   StatusBadgePrimitive,
+  useAsync,
   type ApiResult,
   type DataTableColumn,
 } from '@devmentor/ui';
@@ -34,16 +35,11 @@ function noteHref(id: string) {
 
 export function MentorNotesList() {
   const [page, setPage] = useState(1);
-  const [result, setResult] = useState<ApiResult<Page<NoteSummaryDto>> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const load = useCallback(async () => {
-    setLoading(true);
-    const response = await apiCall<Page<NoteSummaryDto>>(`/api/notes?page=${page}`);
-    setResult(response);
-    setLoading(false);
-  }, [page]);
-
-  useEffect(() => { void load(); }, [load]);
+  const [reloads, setReloads] = useState(0);
+  const request = useAsync(() => apiCall<Page<NoteSummaryDto>>(`/api/notes?page=${page}`), [page, reloads]);
+  const result = request.data;
+  const loading = request.status === 'idle' || request.status === 'pending';
+  const error = request.error?.message ?? (result && !result.ok ? result.error.message : null);
 
   const columns = useMemo<DataTableColumn<NoteSummaryDto>[]>(() => [
     { key: 'title', header: 'Title', cell: (note) => <Link className="text-link underline" href={noteHref(note.id)}>{note.title}</Link> },
@@ -62,8 +58,8 @@ export function MentorNotesList() {
         rows={result?.ok ? result.data.items : undefined}
         getRowId={(note) => note.id}
         isLoading={loading}
-        error={result && !result.ok ? result.error.message : null}
-        onRetry={() => void load()}
+        error={error}
+        onRetry={() => setReloads((value) => value + 1)}
         emptyTitle="No notes yet"
         emptyDescription="Write down what you explain again and again. A note feeds AI answers only after you publish it."
         emptyAction={<Button asChild><Link href="/mentor/notes/new">Write your first note</Link></Button>}
@@ -76,26 +72,23 @@ export function MentorNotesList() {
 
 export function MentorNoteDetail({ noteId }: { noteId?: string }) {
   const router = useRouter();
-  const [note, setNote] = useState<NoteDto | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(Boolean(noteId));
+  const [reloads, setReloads] = useState(0);
+  const [savedNote, setSavedNote] = useState<NoteDto | null>(null);
   const [saved, setSaved] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const request = useAsync(
+    () => noteId ? apiCall<NoteDto>(`/api/notes/${encodeURIComponent(noteId)}`) : Promise.resolve(null),
+    [noteId, reloads],
+  );
+  const fetchedNote = request.data?.ok ? request.data.data : null;
+  const note = savedNote ?? fetchedNote;
+  const loading = Boolean(noteId) && (request.status === 'idle' || request.status === 'pending');
+  const loadError = request.error?.message ?? (request.data && !request.data.ok ? request.data.error.message : null);
 
-  const load = useCallback(async () => {
-    if (!noteId) return;
-    setLoading(true);
-    const response = await apiCall<NoteDto>(`/api/notes/${encodeURIComponent(noteId)}`);
-    if (response.ok) {
-      setNote(response.data);
-      setLoadError(null);
-    } else {
-      setLoadError(response.error.message);
-    }
-    setLoading(false);
-  }, [noteId]);
-
-  useEffect(() => { void load(); }, [load]);
+  function retryLoad() {
+    setSavedNote(null);
+    setReloads((value) => value + 1);
+  }
 
   async function save(values: { title: string; body: string }): Promise<ApiResult<unknown>> {
     const response = await apiCall<NoteDto>(noteId ? `/api/notes/${encodeURIComponent(noteId)}` : '/api/notes', {
@@ -103,7 +96,7 @@ export function MentorNoteDetail({ noteId }: { noteId?: string }) {
       json: values,
     });
     if (response.ok) {
-      setNote(response.data);
+      setSavedNote(response.data);
       setSaved(true);
       setShowPreview(false);
       if (!noteId) router.replace(noteHref(response.data.id));
@@ -112,7 +105,7 @@ export function MentorNoteDetail({ noteId }: { noteId?: string }) {
   }
 
   if (loading) return <PageShell title="Loading note" narrow><p aria-busy="true" className="m-0 text-body">Loading note…</p></PageShell>;
-  if (loadError) return <PageShell title="Note unavailable" narrow><p role="alert" className="m-0 text-body">{loadError}</p><Button variant="secondary" onClick={() => void load()}>Try again</Button></PageShell>;
+  if (loadError) return <PageShell title="Note unavailable" narrow><p role="alert" className="m-0 text-body">{loadError}</p><Button variant="secondary" onClick={retryLoad}>Try again</Button></PageShell>;
 
   const status = note?.status ?? 'new';
   const statusView = note ? noteStatusLabel(note.status) : null;
@@ -131,7 +124,7 @@ export function MentorNoteDetail({ noteId }: { noteId?: string }) {
             label="Take down note"
             confirm={`Take down “${title}”? This prevents new answers from using the note.`}
             run={() => apiCall<NoteDto>(`/api/notes/${encodeURIComponent(note!.id)}/take-down`, { method: 'POST', json: {} })}
-            onDone={() => { setSaved(false); void load(); }}
+            onDone={() => { setSaved(false); retryLoad(); }}
           />
         </>
       ) : (
@@ -157,14 +150,14 @@ export function MentorNoteDetail({ noteId }: { noteId?: string }) {
               <PublishNoticePanel
                 noticeItems={[...VAULT_NOTICE_ITEMS]}
                 noticeVersion={VAULT_NOTICE_VERSION}
-                blockedReason={process.env.NODE_ENV === 'production' ? 'Publishing opens when the notice has been reviewed.' : undefined}
+                blockedReason={note?.canPublish === false ? 'Publishing opens when the notice has been reviewed.' : undefined}
                 onPublish={(input) => apiCall<NoteDto>(`/api/notes/${encodeURIComponent(note!.id)}/publish`, { method: 'POST', json: input })}
                 onSuccess={(data) => {
                   const parsed = noteDtoSchema.safeParse(data);
                   if (parsed.success) {
-                    setNote(parsed.data);
+                    setSavedNote(parsed.data);
                   } else {
-                    void load();
+                    retryLoad();
                   }
                 }}
               />

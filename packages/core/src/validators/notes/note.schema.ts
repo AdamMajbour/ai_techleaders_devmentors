@@ -25,6 +25,7 @@ export const noteDtoSchema = z.object({
   title: z.string(),
   body: z.string(),
   status: z.enum(['draft', 'published', 'taken_down']),
+  canPublish: z.boolean(),
   aiNoticeVersion: z.string().nullable(),
   aiConsentedAt: z.iso.datetime().nullable(),
   publishedAt: z.iso.datetime().nullable(),
