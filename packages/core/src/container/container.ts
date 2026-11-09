@@ -14,6 +14,7 @@ import {
   MentorProfileRepository,
   PaymentRepository,
   MessageRepository,
+  NoteRepository,
   UserRepository,
 } from '@devmentor/db';
 import { createEventBus } from '../events/event-bus';
@@ -21,7 +22,7 @@ import { registerLoggingSubscriber } from '../events/logging-subscriber';
 import { registerMailSubscriber } from '../events/mail-subscriber';
 import { registerBookingMailMappings } from '../events/booking-mail';
 import { createLogger, type Logger } from '../logger';
-import { getBookingSettings } from '../config/env';
+import { getBookingSettings, getVaultSettings } from '../config/env';
 import { ArticleService } from '../services/articles/article.service';
 import { AuthService } from '../services/auth/auth.service';
 import { UserService } from '../services/auth/user.service';
@@ -35,6 +36,7 @@ import { MentorService } from '../services/mentors/mentor.service';
 import { BookingService } from '../services/bookings/booking.service';
 import { RefundService } from '../services/refunds/refund.service';
 import { MessageService } from '../services/messages/message.service';
+import { NoteService } from '../services/notes/note.service';
 import { systemClock } from '../utils/clock';
 import type { Cradle, OrmLike } from './cradle';
 
@@ -74,6 +76,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     logger: asValue(logger),
     clock: asValue(systemClock),
     bookingSettings: asValue(getBookingSettings),
+    vaultSettings: asValue(getVaultSettings),
     eventBus: asValue(eventBus),
     orm: asValue(orm),
     em: asFunction(({ orm }: Cradle) => orm.em.fork()).scoped(),
@@ -86,6 +89,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     bookingRepository: asFunction(({ em }: Cradle) => new BookingRepository(em)).scoped(),
     paymentRepository: asFunction(({ em }: Cradle) => new PaymentRepository(em)).scoped(),
     messageRepository: asFunction(({ em }: Cradle) => new MessageRepository(em)).scoped(),
+    noteRepository: asFunction(({ em }: Cradle) => new NoteRepository(em)).scoped(),
     userService: asClass(UserService).scoped(),
     authService: asClass(AuthService).scoped(),
     articleService: asClass(ArticleService).scoped(),
@@ -94,6 +98,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     bookingService: asClass(BookingService).scoped(),
     refundService: asClass(RefundService).scoped(),
     messageService: asClass(MessageService).scoped(),
+    noteService: asClass(NoteService).scoped(),
     paymentService: asClass(PaymentService).scoped(),
     invitationService: asClass(InvitationService).scoped(),
     magicLinkService: asClass(MagicLinkService).scoped(),
