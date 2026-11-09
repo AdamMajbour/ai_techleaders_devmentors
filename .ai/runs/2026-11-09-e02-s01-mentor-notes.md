@@ -24,6 +24,14 @@ Implement E02-S01: invited mentors can create and manage private notes, publish 
 ## Source doc
 `.ai/specs/2026-10-27-pilot-vault-answers.md`
 
+## Validation
+- `npm run type-check` — passed.
+- `npm run lint` — passed with five existing warnings outside this change.
+- `npm run check:agents` — passed.
+- `npm test -- --runInBand` — passed (105 suites, 722 tests).
+- `npm run build` — passed.
+- `npm run test:integration` — blocked before tests: local PostgreSQL password authentication failed for `postgres`; the environment file was not copied into the worktree. Migration and owner-isolation integration coverage is present but unverified.
+
 ## Progress
 PR: #29
 
@@ -35,7 +43,5 @@ PR: #29
 - [x] 1.2 Implement owner-scoped note service and CRUD, publish, and take-down routes — 4101b28
 - [x] 1.3 Add shared validators and unit/integration coverage for consent, ownership, and state transitions — 7993757
 - [x] 1.4 Build mentor notes pages from Storybook patterns and verify the full validation gate — fad1509
-
-
 
 
