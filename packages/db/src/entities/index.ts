@@ -11,3 +11,4 @@ export { Booking } from './bookings/booking.entity';
 export { Payment } from './payments/payment.entity';
 export { StatusTransition } from './workflow/status-transition.entity';
 export { Message } from './messages/message.entity';
+export { Note } from './notes/note.entity';
