@@ -24,12 +24,14 @@ Implement E02-S01: invited mentors can create and manage private notes, publish 
 `.ai/specs/2026-10-27-pilot-vault-answers.md`
 
 ## Progress
+PR: #29
 
 > Convention: `- [ ]` pending, `- [x]` done. Append `— <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Notes (E02-S01, #15)
 
-- [ ] 1.1 Add the notes entity, consent constraint, migration, repository, state rules, and notice constants
+- [x] 1.1 Add the notes entity, consent constraint, migration, repository, state rules, and notice constants — bcd77ab
 - [ ] 1.2 Implement owner-scoped note service and CRUD, publish, and take-down routes
 - [ ] 1.3 Add shared validators and unit/integration coverage for consent, ownership, and state transitions
 - [ ] 1.4 Build mentor notes pages from Storybook patterns and verify the full validation gate
+
