@@ -19,6 +19,7 @@ Implement E02-S01: invited mentors can create and manage private notes, publish 
 - User data and consent are persisted; verify owner isolation and the DB constraint with integration coverage.
 - `VAULT_PUBLISH_ENABLED` defaults closed in production until E03-T02 is recorded. Never record secret values.
 - E02 purchase/generation cannot ship as part of this story until primitives 2 is implemented.
+- `npm run test:integration` could not connect to the local test database (default PostgreSQL authentication failed for `postgres`). The test suite includes migration up/down and owner-isolation coverage, but this risk-heavy database evidence remains unverified until it runs with the repository test DB environment.
 
 ## Source doc
 `.ai/specs/2026-10-27-pilot-vault-answers.md`
@@ -33,7 +34,8 @@ PR: #29
 - [x] 1.1 Add the notes entity, consent constraint, migration, repository, state rules, and notice constants — bcd77ab
 - [x] 1.2 Implement owner-scoped note service and CRUD, publish, and take-down routes — 4101b28
 - [x] 1.3 Add shared validators and unit/integration coverage for consent, ownership, and state transitions — 7993757
-- [ ] 1.4 Build mentor notes pages from Storybook patterns and verify the full validation gate
+- [x] 1.4 Build mentor notes pages from Storybook patterns and verify the full validation gate — fad1509
+
 
 
 
