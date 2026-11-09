@@ -4,6 +4,7 @@ import {
   parseMailerSettings,
   parseOperatorUserIds,
   parsePaymentSettings,
+  parseVaultSettings,
 } from './env';
 
 describe('parseEnv', () => {
@@ -165,5 +166,13 @@ describe('parseEnv', () => {
   it('accepts malformed operator configuration without turning it into a startup error', () => {
     expect(parseEnv({ JWT_SECRET: 'x'.repeat(32), OPERATOR_USER_IDS: 'not-an-id' }).OPERATOR_USER_IDS).toEqual([]);
     expect(parseOperatorUserIds('not-an-id')).toEqual([]);
+  });
+});
+
+describe('parseVaultSettings', () => {
+  it('keeps production publishing disabled unless explicitly enabled', () => {
+    expect(parseVaultSettings({ NODE_ENV: 'production' })).toEqual({ publishEnabled: false, isProduction: true });
+    expect(parseVaultSettings({ NODE_ENV: 'production', VAULT_PUBLISH_ENABLED: 'true' })).toEqual({ publishEnabled: true, isProduction: true });
+    expect(parseVaultSettings({ NODE_ENV: 'development' })).toEqual({ publishEnabled: false, isProduction: false });
   });
 });
