@@ -32,7 +32,8 @@ PR: #29
 
 - [x] 1.1 Add the notes entity, consent constraint, migration, repository, state rules, and notice constants — bcd77ab
 - [x] 1.2 Implement owner-scoped note service and CRUD, publish, and take-down routes — 4101b28
-- [ ] 1.3 Add shared validators and unit/integration coverage for consent, ownership, and state transitions
+- [x] 1.3 Add shared validators and unit/integration coverage for consent, ownership, and state transitions — 7993757
 - [ ] 1.4 Build mentor notes pages from Storybook patterns and verify the full validation gate
+
 
 
