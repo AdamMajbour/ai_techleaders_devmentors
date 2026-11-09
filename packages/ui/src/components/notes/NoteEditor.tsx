@@ -31,6 +31,8 @@ export interface NoteEditorProps {
   /** Leave out for a new note: no status badge is shown. */
   status?: NoteStatus;
   initialValues?: { title: string; body: string };
+  /** The app passes the shared core validator used by the API routes. */
+  schema?: z.ZodType<z.output<typeof noteInputSchema>>;
   /** Saves the note. Resolves to the `apiCall` result. The status is never sent: publishing is its own action. */
   onSave: (values: z.output<typeof noteInputSchema>) => Promise<ApiResult<unknown>>;
   onSuccess?: (data: unknown) => void;
@@ -39,7 +41,7 @@ export interface NoteEditorProps {
 
 // The editor of one note. It is the Form pattern (CrudForm with the shared schema), plus the status of the note.
 // Saving never publishes: a note feeds AI answers only after the mentor accepts the notice in PublishNoticePanel.
-export function NoteEditor({ status, initialValues, onSave, onSuccess, onCancel }: NoteEditorProps) {
+export function NoteEditor({ status, initialValues, schema = noteInputSchema, onSave, onSuccess, onCancel }: NoteEditorProps) {
   return (
     <div className="flex flex-col gap-between-groups">
       {status ? (
@@ -48,7 +50,7 @@ export function NoteEditor({ status, initialValues, onSave, onSuccess, onCancel 
         </p>
       ) : null}
       <CrudForm
-        schema={noteInputSchema}
+        schema={schema}
         fields={[
           { name: 'title', label: 'Title', requirement: 'required' },
           {

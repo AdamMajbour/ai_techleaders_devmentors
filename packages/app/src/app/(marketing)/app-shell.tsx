@@ -12,6 +12,7 @@ const navigation = [
       { href: '/', label: 'My sessions' },
       { href: '/mentors', label: 'Find mentors' },
       { href: '/mentor/bookings', label: 'Bookings' },
+      { href: '/mentor/notes', label: 'Notes' },
       { href: '/mentor/profile', label: 'Mentor profile' },
     ],
   },
