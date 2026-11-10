@@ -76,6 +76,9 @@ beforeAll(async () => {
 async function resetDatabase(): Promise<void> {
   // Start from an empty database and build the schema with the real migrations.
   await orm.schema.dropSchema({ dropMigrationsTable: true });
+  // PostgreSQL functions are schema objects and survive MikroORM's table-only
+  // reset, unlike the trigger attached to the dropped bookings table.
+  await orm.em.getConnection().execute('drop function if exists "release_booking_availability_slot"() cascade');
   await orm.migrator.up();
   // Articles provide an existing mapped target table for exercising the generic transition runner.
   await orm.em.getConnection().execute('alter table "articles" add column "status" varchar(255)');
@@ -138,7 +141,7 @@ describe('migrations', () => {
     await orm.migrator.down('Migration20261110170000_vault_answers');
     expect(await publicTables()).not.toContain('vault_answers');
     const before = await orm.em.getConnection().execute(`select is_nullable from information_schema.columns where table_name = 'payments' and column_name = 'booking_id'`);
-    expect(before).toEqual([{ is_nullable: 'YES' }]);
+    expect(before).toEqual([{ is_nullable: 'NO' }]);
     await orm.migrator.up();
     expect(await publicTables()).toContain('vault_answers');
     expect(await publicTables()).toContain('vault_answer_citations');
@@ -748,7 +751,20 @@ describe('InvitationRepository', () => {
 
 describe('AvailabilitySlotRepository', () => {
   it('atomically reserves a slot for one booking and releases it when checkout fails', async () => {
-    const mentorId = randomUUID();
+    const users = new UserRepository(orm.em.fork());
+    const seeker = await users.create({ email: `${randomUUID()}@example.com`, name: 'Seeker' });
+    const mentor = await users.create({ email: `${randomUUID()}@example.com`, name: 'Mentor' });
+    await new MentorProfileRepository(orm.em.fork()).create({
+      userId: mentor.id,
+      slug: `mentor-${randomUUID()}`,
+      headline: 'Mentor',
+      bio: 'Bio',
+      technologies: 'typescript',
+      publicWorkUrl: 'https://example.com',
+      isListed: true,
+      lastActiveAt: null,
+    });
+    const mentorId = mentor.id;
     const now = new Date();
     const startsAt = new Date(Math.ceil((now.getTime() + 60 * 60_000) / 900_000) * 900_000);
     const slots = new AvailabilitySlotRepository(orm.em.fork());
@@ -758,7 +774,7 @@ describe('AvailabilitySlotRepository', () => {
       endsAt: new Date(startsAt.getTime() + 25 * 60_000),
     });
     const bookingData = {
-      seekerId: randomUUID(),
+      seekerId: seeker.id,
       mentorId,
       question: 'Question',
       durationMinutes: 25,
@@ -771,6 +787,8 @@ describe('AvailabilitySlotRepository', () => {
       endsAt: null,
       availabilitySlotId: slot.id,
     };
+    const competingSeeker = await users.create({ email: `${randomUUID()}@example.com`, name: 'Other seeker' });
+    const competingBookingData = { ...bookingData, seekerId: competingSeeker.id };
     const paymentData = {
       provider: 'mock',
       livemode: false,
@@ -782,16 +800,19 @@ describe('AvailabilitySlotRepository', () => {
     };
     const reservations = await Promise.allSettled([
       slots.reserveWithBooking(slot.id, mentorId, now, bookingData, paymentData),
-      new AvailabilitySlotRepository(orm.em.fork()).reserveWithBooking(slot.id, mentorId, now, bookingData, paymentData),
+      new AvailabilitySlotRepository(orm.em.fork()).reserveWithBooking(slot.id, mentorId, now, competingBookingData, paymentData),
     ]);
     const winner = reservations.filter((result) => result.status === 'fulfilled');
+    if (winner.length !== 1) {
+      throw new Error(`Expected one slot reservation; results: ${reservations.map((result) => result.status === 'rejected' ? String(result.reason) : 'fulfilled').join(' | ')}`);
+    }
     expect(winner).toHaveLength(1);
-    expect((await slots.findById(slot.id))?.status).toBe('reserved');
+    expect((await new AvailabilitySlotRepository(orm.em.fork()).findById(slot.id))?.status).toBe('reserved');
 
     const booking = winner[0];
     if (booking.status !== 'fulfilled') throw new Error('Expected one successful slot reservation.');
     await new BookingRepository(orm.em.fork()).failCheckout(booking.value.booking.id);
-    expect((await slots.findById(slot.id))?.status).toBe('open');
+    expect((await new AvailabilitySlotRepository(orm.em.fork()).findById(slot.id))?.status).toBe('open');
   });
 
   it('rejects overlapping published slots for the same mentor', async () => {
@@ -1359,6 +1380,11 @@ describe('NoteRepository', () => {
       publishedAt: new Date(),
       takenDownAt: null,
     })).rejects.toThrow();
+    expect(await repository.publish(saved.id, mentorId, 'notice-v1', new Date())).toBe(true);
+    expect(saved.status).toBe('published');
+    expect(saved.aiNoticeVersion).toBe('notice-v1');
+    expect(await repository.takeDown(saved.id, mentorId, new Date())).toBe(true);
+    expect(saved.status).toBe('taken_down');
   });
 });
 

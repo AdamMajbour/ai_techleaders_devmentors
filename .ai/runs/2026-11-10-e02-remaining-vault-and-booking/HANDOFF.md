@@ -8,9 +8,9 @@ PR #32 is open as a draft stacked on PR #29. Branch: `feat/e02-remaining-vault-s
 - Shared UI components are reused; feature flags remain closed by default.
 
 ## Current evidence and open gates
-- Type-check, lint (five pre-existing warnings), focused vault tests, full unit suite (119 suites, 782 tests), production build and `check:agents` pass.
-- PostgreSQL integration suite cannot connect because local password authentication fails for `postgres`. Browser QA cannot run because `.ai/qa/test-env.json` is absent.
+- Type-check, lint (five pre-existing warnings), full unit suite (119 suites, 782 tests), Storybook JSDOM stories (323), production build, `check:agents`, DB integration (49), and E2E (33) pass.
+- Local QA descriptor is `.ai/qa/test-env.json`, with screenshots and report in `.ai/qa/artifacts_e02-local/`. Browser provider used Playwright/Chromium fallback because configured agent-browser is unavailable in this Windows session.
 - Independent PR review, staging rehearsal, and product/legal gates in the vault spec remain open. Do not enable live vault/AI/payment flags or move the spec to `implemented` until those gates are satisfied.
 
 ## Next action
-Resume at PLAN Gate 4.1: record final unit totals, inspect final diff/review findings, update issue #8 and PR #32 description, then keep the PR stacked/draft until predecessor and environment/review gates are resolved.
+Resume at PLAN Gate 4.1: inspect final diff/review findings, update PR #32 description, and keep it stacked/draft until #29 plus product/legal/staging gates are resolved.

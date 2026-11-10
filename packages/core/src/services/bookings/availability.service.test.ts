@@ -29,7 +29,12 @@ function setup(overrides: { isMentor?: boolean; isListed?: boolean; cancelResult
   };
   const clock: Clock = { now: () => new Date(now) };
   return {
-    service: new AvailabilityService(repository as never, profileRepository as never, invitations, clock),
+    service: new AvailabilityService({
+      availabilitySlotRepository: repository as never,
+      mentorProfileRepository: profileRepository as never,
+      invitationService: invitations,
+      clock,
+    }),
     repository,
   };
 }

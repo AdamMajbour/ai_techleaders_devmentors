@@ -35,7 +35,7 @@ function setup(options: {
   const createWithPayment = jest.fn().mockResolvedValue({ answer, payment: {} });
   const failCheckout = jest.fn();
   const countOpenForSeeker = jest.fn().mockResolvedValue(options.openCount ?? 0);
-  const paymentRepository = { setProviderSessionForVaultAnswer: jest.fn().mockResolvedValue({}), findByVaultAnswerId: jest.fn() };
+  const paymentRepository = { setProviderSessionForVaultAnswer: jest.fn().mockImplementation(async (_id: string, providerSessionId: string) => ({ providerSessionId })), findByVaultAnswerId: jest.fn() };
   const createCheckout = jest.fn().mockResolvedValue({ providerSessionId: 'checkout-1', url: 'https://pay.example.test/session' });
   const emit = jest.fn();
   const assertAIReady = jest.fn(() => { if (options.ready === false) throw new Error('disabled'); });
@@ -58,7 +58,7 @@ function setup(options: {
     vaultSettings: () => ({ enabled: options.enabled ?? true, publishEnabled: true, isProduction: false }),
     assertAIReady,
   });
-  return { service, createWithPayment, createCheckout, failCheckout, countOpenForSeeker, emit, assertAIReady };
+  return { service, createWithPayment, createCheckout, failCheckout, countOpenForSeeker, emit, assertAIReady, paymentRepository };
 }
 
 describe('VaultAnswerService.create', () => {
@@ -80,6 +80,7 @@ describe('VaultAnswerService.create', () => {
     expect(deps.createCheckout).toHaveBeenCalledWith(expect.objectContaining({
       subjectType: 'vault_answer', subjectId: answerId, amountMinor: 1000,
     }));
+    expect(deps.paymentRepository.setProviderSessionForVaultAnswer).toHaveBeenCalledWith(answerId, 'checkout-1');
     expect(deps.emit).toHaveBeenCalledWith('vault.answer.created', { answerId, seekerId });
   });
 

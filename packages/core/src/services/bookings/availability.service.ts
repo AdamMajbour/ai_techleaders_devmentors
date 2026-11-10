@@ -6,6 +6,13 @@ import { parseOrThrow } from '../../validators/parse';
 import { availabilitySlotCreateSchema } from '../../validators/bookings/availability-slot.schema';
 import type { InvitationService } from '../auth/invitation.service';
 
+type Dependencies = {
+  availabilitySlotRepository: AvailabilitySlotRepository;
+  mentorProfileRepository: MentorProfileRepository;
+  invitationService: Pick<InvitationService, 'isAcceptedMentor' | 'isPilotMember'>;
+  clock: Clock;
+};
+
 export interface AvailabilitySlotDto {
   id: string;
   startsAt: string;
@@ -22,12 +29,17 @@ function toDto(slot: AvailabilitySlot): AvailabilitySlotDto {
 }
 
 export class AvailabilityService {
-  constructor(
-    private readonly availabilitySlotRepository: AvailabilitySlotRepository,
-    private readonly mentorProfileRepository: MentorProfileRepository,
-    private readonly invitationService: Pick<InvitationService, 'isAcceptedMentor' | 'isPilotMember'>,
-    private readonly clock: Clock,
-  ) {}
+  private readonly availabilitySlotRepository: AvailabilitySlotRepository;
+  private readonly mentorProfileRepository: MentorProfileRepository;
+  private readonly invitationService: Dependencies['invitationService'];
+  private readonly clock: Clock;
+
+  constructor({ availabilitySlotRepository, mentorProfileRepository, invitationService, clock }: Dependencies) {
+    this.availabilitySlotRepository = availabilitySlotRepository;
+    this.mentorProfileRepository = mentorProfileRepository;
+    this.invitationService = invitationService;
+    this.clock = clock;
+  }
 
   async list(session: Session, mentorId: string): Promise<AvailabilitySlotDto[]> {
     await this.requireMember(session);

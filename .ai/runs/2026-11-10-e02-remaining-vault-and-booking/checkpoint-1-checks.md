@@ -15,8 +15,8 @@ Date: 2026-11-10
 - `npm run check:agents` — passed.
 - Full unit suite — passed: 107 suites, 730 tests (before final boundary/default-time refinements); focused tests after refinements passed: 3 suites, 14 tests.
 - `npm run build` — passed; routes include `/mentor/availability`, `/api/mentors/[id]/availability`, and `/api/mentors/me/availability`.
-- `npm run test:integration -- --runInBand` — blocked before migration tests: local PostgreSQL password authentication failed for `postgres`; no credentials were copied. New integration coverage includes atomic competing claims, release after failed checkout, and overlapping-slot constraint.
-- Browser screenshot pass — skipped: `.ai/qa/test-env.json` is absent and local PostgreSQL is unavailable, so there is no runnable authenticated app environment. Component tests cover mentor slot management and seeker time selection.
+- `npm run test:integration -- --runInBand --silent` — 49/49 passed against isolated `devmentor_test`, including atomic competing claims, release after failed checkout, and overlapping-slot constraint.
+- Browser booking flow — 33/33 repository E2E passed; selected-time booking verifies stored interval and unpaid failed/abandoned paths. Full evidence is in `.ai/qa/artifacts_e02-local/report.md`.
 
 ## Exit status
 Selected-time booking code is implemented. Integration proof is outstanding. Remaining E02 vault phases are still todo and depend on primitives 2 Phases 1–4, absent from the predecessor branch.

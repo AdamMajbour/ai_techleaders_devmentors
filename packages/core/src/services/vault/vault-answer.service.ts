@@ -65,7 +65,7 @@ export class VaultAnswerService {
     );
     if (openCount >= VAULT_MAX_OPEN_ANSWERS) throw new TooManyRequestsError(60);
 
-    const { answer } = await this.dependencies.vaultAnswerRepository.createWithPayment({
+    const { answer, payment } = await this.dependencies.vaultAnswerRepository.createWithPayment({
       seekerId: session.userId,
       question: parsed.data.question,
       status: 'pending_payment',
@@ -99,9 +99,11 @@ export class VaultAnswerService {
         currency: CURRENCY,
         idempotencyKey: `vault-answer:${answer.id}:checkout`,
       });
-      if (!(await this.dependencies.paymentRepository.setProviderSessionForVaultAnswer(answer.id, checkout.providerSessionId))) {
+      const persistedPayment = await this.dependencies.paymentRepository.setProviderSessionForVaultAnswer(answer.id, checkout.providerSessionId);
+      if (!persistedPayment) {
         throw new Error('Pending vault payment was not found.');
       }
+      payment.providerSessionId = persistedPayment.providerSessionId;
     } catch {
       await this.dependencies.vaultAnswerRepository.failCheckout(answer.id);
       throw new AppError('The checkout could not be started. No payment was taken.', 'checkout_unavailable', 503);

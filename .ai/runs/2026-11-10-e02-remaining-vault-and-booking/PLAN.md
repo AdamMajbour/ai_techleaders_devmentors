@@ -8,7 +8,7 @@
 | Phase 1 | 1.1 | Extend E01 spec with requester-approved selected-time booking | inline | done | 6db598e |
 | Phase 1 | 1.2 | Add persisted slots, owner APIs, atomic booking reservation, and terminal-state release | inline | done | 08a3b35 |
 | Phase 1 | 1.3 | Build mentor slot manager and seeker timezone-aware slot selector | inline | done | e16e4af |
-| Gate | 1.4 | Finish slot integration evidence and update issue #8 | inline | blocked-env | — |
+| Gate | 1.4 | Finish slot integration evidence and update issue #8 | inline | done | pending |
 | Phase 2 | 2.1 | Add UnitOfWork, visibility fields, leases and route background hooks | inline | done | 2b42088 |
 | Phase 2 | 2.2 | Add generic payment subjects and vault refund queue support | inline | done | c6ad00b |
 | Phase 2 | 2.3 | Add exact money helpers, append-only ledger, AI adapters and preview cutoff | inline | done | 0b6adc9 |
@@ -33,12 +33,14 @@ Deliver selected-time mentor booking plus E02-S02/S03 on a branch stacked on E02
 - PR #29 remains draft with integration DB evidence and independent review unresolved.
 
 ## Validation
-- `npm run type-check` — passed after the repository integration tests were added.
+- `npm run type-check` — passed after final E2E/UI corrections.
 - `npm run lint` — passed with five existing warnings; no new warnings.
-- Focused vault tests — 5 suites, 19 tests passed.
-- Full unit suite — 119 suites, 782 tests passed after the final repository concurrency changes.
+- Focused vault tests — 5 suites, 19 tests passed earlier; full suite below includes them.
+- Full unit suite — 119 suites, 782 tests passed.
+- Storybook UI stories in JSDOM — 323 tests passed.
 - `npm run build` — passed; generated routes include seeker vault, mentor preview/credits, operator vault, and availability.
 - `npm run check:agents` — passed.
-- `npm run test:integration` — blocked before DB tests: local PostgreSQL password authentication failed for `postgres`; no credentials copied. Additional integration cases now cover vault migration/review table, generation claim, preview, atomic credits, and consent withdrawal.
-- Browser QA — blocked: `.ai/qa/test-env.json` is absent and no authenticated app environment is provisioned.
+- `npm run test:integration -- --runInBand --silent` — 49/49 passed on isolated `devmentor_test`; covers migrations, atomic selected-slot claim/release, generation lease, preview approval/credits, and withdrawn consent.
+- `npm run test:e2e -- --runInBand` — 33/33 passed on dedicated `devmentor_e2e`; covers selected-time booking and mock vault purchase → cited mentor approval → released answer. Playwright/Chromium 1248 used because configured `agent-browser` is unavailable in this Windows session.
+- Local QA descriptor `.ai/qa/test-env.json` is running at `http://localhost:3001`; generated up script cold/warm was verified (12s / <1s). Screenshot and evidence report are under `.ai/qa/artifacts_e02-local/`.
 - Staging rehearsal, independent PR review, and product/legal gates remain open. Do not enable live flags or mark the spec implemented until they are satisfied.

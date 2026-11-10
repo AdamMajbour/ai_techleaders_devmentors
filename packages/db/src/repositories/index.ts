@@ -866,15 +866,19 @@ export class NoteRepository {
   }
 
   async updateDraft(id: string, mentorId: string, data: Pick<Note, 'title' | 'body'>, now: Date): Promise<boolean> {
-    return (await this.em.nativeUpdate(
+    const changed = await this.em.nativeUpdate(
       Note,
       { id, mentorId, status: { $in: ['draft', 'taken_down'] } },
       { ...data, updatedAt: now },
-    )) === 1;
+    );
+    if (changed !== 1) return false;
+    const managed = await this.em.findOne(Note, { id, mentorId });
+    if (managed) Object.assign(managed, data, { updatedAt: now });
+    return true;
   }
 
   async publish(id: string, mentorId: string, noticeVersion: string, now: Date): Promise<boolean> {
-    return (await this.em.nativeUpdate(
+    const changed = await this.em.nativeUpdate(
       Note,
       { id, mentorId, status: { $in: ['draft', 'taken_down'] } },
       {
@@ -885,15 +889,26 @@ export class NoteRepository {
         takenDownAt: null,
         updatedAt: now,
       },
-    )) === 1;
+    );
+    if (changed !== 1) return false;
+    const managed = await this.em.findOne(Note, { id, mentorId });
+    if (managed) Object.assign(managed, {
+      status: 'published', aiNoticeVersion: noticeVersion, aiConsentedAt: now,
+      publishedAt: now, takenDownAt: null, updatedAt: now,
+    });
+    return true;
   }
 
   async takeDown(id: string, mentorId: string, now: Date): Promise<boolean> {
-    return (await this.em.nativeUpdate(
+    const changed = await this.em.nativeUpdate(
       Note,
       { id, mentorId, status: 'published' },
       { status: 'taken_down', takenDownAt: now, updatedAt: now },
-    )) === 1;
+    );
+    if (changed !== 1) return false;
+    const managed = await this.em.findOne(Note, { id, mentorId });
+    if (managed) Object.assign(managed, { status: 'taken_down', takenDownAt: now, updatedAt: now });
+    return true;
   }
 
   async deleteDraft(id: string, mentorId: string): Promise<boolean> {

@@ -13,7 +13,10 @@ export default function VaultPage() {
   const list = useAsync(() => apiCall<AnswerList>('/api/vault-answers'), [reload]);
   const submit = async ({ question }: { question: string; acceptedTerms: true }) => {
     const result = await apiCall<{ answer: VaultAnswerDto; checkoutUrl: string }>('/api/vault-answers', { method: 'POST', json: { question } });
-    if (result.ok) router.push(result.data.checkoutUrl);
+    if (result.ok) {
+      const checkoutUrl = result.data.checkoutUrl;
+      router.push(checkoutUrl.startsWith('/') ? checkoutUrl : new URL(checkoutUrl).pathname);
+    }
     return result;
   };
   return <main className="mx-auto flex max-w-session flex-col gap-between-groups py-between-groups">
