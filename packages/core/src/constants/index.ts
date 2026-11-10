@@ -32,3 +32,5 @@ export const PASSWORD_MAX_LENGTH = 72;
 export const SESSION_25_PRICE_MINOR = 2500;
 export const CURRENCY = 'EUR';
 export const SESSION_DURATION_MINUTES = 25;
+export const VAULT_ANSWER_PRICE_MINOR = 1000;
+export const MENTOR_SHARE_BP = 8000;
