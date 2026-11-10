@@ -31,6 +31,21 @@ export class Migration20261110170000_vault_answers extends Migration {
     );`);
     this.addSql(`create index "vault_answers_seeker_created_index" on "vault_answers" ("seeker_id", "created_at");`);
     this.addSql(`create index "vault_answers_status_lease_index" on "vault_answers" ("status", "generation_started_at");`);
+    this.addSql(`create table "vault_answer_reviews" (
+      "id" uuid not null,
+      "answer_id" uuid not null,
+      "reviewer_id" uuid not null,
+      "decision" varchar(16) null,
+      "decided_at" timestamptz null,
+      "reason" varchar(500) null,
+      "created_at" timestamptz not null,
+      "updated_at" timestamptz not null,
+      constraint "vault_answer_reviews_pkey" primary key ("id"),
+      constraint "vault_answer_reviews_answer_reviewer_unique" unique ("answer_id", "reviewer_id"),
+      constraint "vault_answer_reviews_decision_check" check ("decision" is null or "decision" in ('approved', 'rejected')),
+      constraint "vault_answer_reviews_reason_length_check" check ("reason" is null or char_length("reason") <= 500)
+    );`);
+    this.addSql(`create index "vault_answer_reviews_reviewer_decision_index" on "vault_answer_reviews" ("reviewer_id", "decision");`);
     this.addSql(`create table "vault_answer_citations" (
       "id" uuid not null,
       "answer_id" uuid not null,
@@ -62,6 +77,7 @@ export class Migration20261110170000_vault_answers extends Migration {
     this.addSql(`alter table "payments" drop column "vault_answer_id";`);
     this.addSql(`alter table "payments" alter column "booking_id" set not null;`);
     this.addSql(`drop table if exists "vault_answer_citations" cascade;`);
+    this.addSql(`drop table if exists "vault_answer_reviews" cascade;`);
     this.addSql(`drop table if exists "vault_answers" cascade;`);
   }
 }

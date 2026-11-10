@@ -23,6 +23,7 @@
     "db:seed": "npm --workspace=@devmentor/db run seed",
     "pilot:invite": "npm --workspace=@devmentor/core run pilot:invite --",
     "bookings:settle": "npm --workspace=@devmentor/core run bookings:settle --",
+    "vault:settle": "npm --workspace=@devmentor/core run vault:settle --",
     "test:integration": "jest --selectProjects db",
     "test:all": "jest",
     "test:e2e": "jest --selectProjects e2e --runInBand",

@@ -17,6 +17,8 @@ import {
   NoteRepository,
   AvailabilitySlotRepository,
   LedgerEntryRepository,
+  MikroOrmUnitOfWork,
+  VaultAnswerRepository,
   UserRepository,
 } from '@devmentor/db';
 import { createEventBus } from '../events/event-bus';
@@ -43,6 +45,14 @@ import { NoteService } from '../services/notes/note.service';
 import { systemClock } from '../utils/clock';
 import { LedgerService } from '../services/ledger/ledger.service';
 import { createConfiguredAnswerGenerator } from '../services/ai/answer-generator.factory';
+import { NoteSelector } from '../services/vault/note-selector';
+import { VaultAnswerPaymentHandler } from '../services/vault/vault-answer-payment.handler';
+import { VaultAnswerService } from '../services/vault/vault-answer.service';
+import { VaultReleaseService } from '../services/vault/vault-release.service';
+import { VaultGenerationTask } from '../services/vault/vault-generation.task';
+import { VaultReviewService } from '../services/vault/vault-review.service';
+import { VaultExpireReviewsTask } from '../services/vault/vault-expire-reviews.task';
+import { assertConfiguredAIReadyToCharge } from '../services/ai/answer-generator.factory';
 import type { Cradle, OrmLike } from './cradle';
 
 export type AppContainer = AwilixContainer<Cradle>;
@@ -97,6 +107,8 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     noteRepository: asFunction(({ em }: Cradle) => new NoteRepository(em)).scoped(),
     availabilitySlotRepository: asFunction(({ em }: Cradle) => new AvailabilitySlotRepository(em)).scoped(),
     ledgerEntryRepository: asFunction(({ em }: Cradle) => new LedgerEntryRepository(em)).scoped(),
+    unitOfWork: asFunction(({ em }: Cradle) => new MikroOrmUnitOfWork(em)).scoped(),
+    vaultAnswerRepository: asFunction(({ em }: Cradle) => new VaultAnswerRepository(em)).scoped(),
     userService: asClass(UserService).scoped(),
     authService: asClass(AuthService).scoped(),
     articleService: asClass(ArticleService).scoped(),
@@ -106,6 +118,15 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     availabilityService: asClass(AvailabilityService).scoped(),
     ledgerService: asClass(LedgerService).scoped(),
     answerGenerator: asFunction(createConfiguredAnswerGenerator).singleton(),
+    noteSelector: asClass(NoteSelector).scoped(),
+    vaultAnswerPaymentHandler: asClass(VaultAnswerPaymentHandler).scoped(),
+    paymentSubjectHandlers: asFunction(({ vaultAnswerPaymentHandler }: Cradle) => [vaultAnswerPaymentHandler]).scoped(),
+    vaultAnswerService: asClass(VaultAnswerService).scoped(),
+    vaultReleaseService: asClass(VaultReleaseService).scoped(),
+    vaultGenerationTask: asClass(VaultGenerationTask).scoped(),
+    vaultReviewService: asClass(VaultReviewService).scoped(),
+    vaultExpireReviewsTask: asClass(VaultExpireReviewsTask).scoped(),
+    assertAIReady: asValue(assertConfiguredAIReadyToCharge),
     refundService: asClass(RefundService).scoped(),
     messageService: asClass(MessageService).scoped(),
     noteService: asClass(NoteService).scoped(),

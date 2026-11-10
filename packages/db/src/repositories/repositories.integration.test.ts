@@ -1,4 +1,4 @@
-﻿import { randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { MikroORM } from '@mikro-orm/core';
@@ -14,6 +14,9 @@ import {
   Message,
   Payment,
   StatusTransition,
+  Note,
+  VaultAnswerCitation,
+  VaultAnswerReview,
 } from '../entities';
 import {
   ExclusionConstraintViolationError,
@@ -35,6 +38,7 @@ import {
   NoteRepository,
   PaymentRepository,
   UserRepository,
+  VaultAnswerRepository,
   transitionStatus,
 } from './index';
 
@@ -103,6 +107,7 @@ describe('migrations', () => {
       'status_transitions',
       'users',
       'vault_answer_citations',
+      'vault_answer_reviews',
       'vault_answers',
     ]);
   });
@@ -137,6 +142,7 @@ describe('migrations', () => {
     await orm.migrator.up();
     expect(await publicTables()).toContain('vault_answers');
     expect(await publicTables()).toContain('vault_answer_citations');
+    expect(await publicTables()).toContain('vault_answer_reviews');
     const after = await orm.em.getConnection().execute(`select is_nullable from information_schema.columns where table_name = 'payments' and column_name = 'booking_id'`);
     expect(after).toEqual([{ is_nullable: 'YES' }]);
   });
@@ -1380,6 +1386,85 @@ describe('LedgerEntryRepository', () => {
   });
 });
 
+describe('VaultAnswerRepository', () => {
+  it('claims a generation lease once, persists preview assignments, and releases credits atomically on the final approval', async () => {
+    const em = orm.em.fork();
+    const seekerId = randomUUID();
+    const mentorId = randomUUID();
+    const reviewerId = randomUUID();
+    const noteId = randomUUID();
+    const now = new Date('2026-11-10T12:00:00.000Z');
+    await em.persistAndFlush(em.create(Note, {
+      mentorId, title: 'Consented', body: 'Body', status: 'published', aiNoticeVersion: 'v1',
+      aiConsentedAt: now, publishedAt: now, takenDownAt: null,
+    }));
+    await em.persistAndFlush(em.create(Note, {
+      id: noteId, mentorId, title: 'Vault source', body: 'Body', status: 'published', aiNoticeVersion: 'v1',
+      aiConsentedAt: now, publishedAt: now, takenDownAt: null,
+    }));
+    const repository = new VaultAnswerRepository(em);
+    const { answer, payment } = await repository.createWithPayment({
+      seekerId, question: 'How does it work?', status: 'paid', priceMinor: 1000, currency: 'EUR',
+      answerText: null, failureReason: null, modelId: null, inputTokens: null, outputTokens: null,
+      generationAttempts: 0, generationStartedAt: null, previewRequired: true, reviewExpiresAt: null,
+    }, {
+      provider: 'mock', providerSessionId: 'vault-session', providerPaymentId: null, amountMinor: 1000,
+      currency: 'EUR', status: 'succeeded', livemode: false,
+    });
+    expect(await repository.claimGeneration(answer.id, now, 180_000)).toBe(true);
+    expect(await repository.claimGeneration(answer.id, now, 180_000)).toBe(false);
+    expect(await repository.persistGenerated({
+      answerId: answer.id, answerText: 'Answer', modelId: 'mock-v1', inputTokens: 10, outputTokens: 5,
+      citations: [{ answerId: answer.id, noteId, mentorId, mentorName: 'Mentor', noteTitle: 'Vault source', position: 0 }],
+      reviewerIds: [reviewerId], reviewExpiresAt: new Date(now.getTime() + 60_000), now, directRelease: false,
+    })).toBe(true);
+    expect((await repository.findById(answer.id))?.status).toBe('pending_preview');
+    await expect(repository.decideAndReleaseWithCredits({
+      answerId: answer.id, reviewerId,
+      decidedAt: new Date(now.getTime() + 30_000),
+      credits: [{ accountId: mentorId, amountMinor: 800, currency: 'EUR', livemode: payment.livemode, sourceType: 'vault_answer', sourceId: answer.id }],
+    })).resolves.toBe(true);
+    expect((await repository.findById(answer.id))?.status).toBe('released');
+    expect(await em.count(VaultAnswerReview, { answerId: answer.id, decision: 'approved' })).toBe(1);
+    expect(await em.count(LedgerEntry, { sourceId: answer.id, accountId: mentorId })).toBe(1);
+  });
+
+  it('rejects the last approval when a cited note loses consent and opens one refund request', async () => {
+    const em = orm.em.fork();
+    const seekerId = randomUUID();
+    const mentorId = randomUUID();
+    const reviewerId = randomUUID();
+    const noteId = randomUUID();
+    const now = new Date('2026-11-10T12:00:00.000Z');
+    const repository = new VaultAnswerRepository(em);
+    const { answer, payment } = await repository.createWithPayment({
+      seekerId, question: 'How?', status: 'pending_preview', priceMinor: 1000, currency: 'EUR',
+      answerText: 'Answer', failureReason: null, modelId: 'mock-v1', inputTokens: 10, outputTokens: 5,
+      generationAttempts: 1, generationStartedAt: now, previewRequired: true, reviewExpiresAt: new Date(now.getTime() + 60_000),
+    }, {
+      provider: 'mock', providerSessionId: 'vault-session-reject', providerPaymentId: null, amountMinor: 1000,
+      currency: 'EUR', status: 'succeeded', livemode: false,
+    });
+    await em.persistAndFlush(em.create(Note, {
+      id: noteId, mentorId, title: 'Taken down', body: 'Body', status: 'taken_down', aiNoticeVersion: 'v1',
+      aiConsentedAt: now, publishedAt: now, takenDownAt: now,
+    }));
+    await em.persistAndFlush(em.create(VaultAnswerCitation, {
+      answerId: answer.id, noteId, mentorId, mentorName: 'Mentor', noteTitle: 'Taken down', position: 0,
+    }));
+    await em.persistAndFlush(em.create(VaultAnswerReview, {
+      answerId: answer.id, reviewerId, decision: null, decidedAt: null, reason: null,
+    }));
+    await expect(repository.decideAndReleaseWithCredits({
+      answerId: answer.id, reviewerId, decidedAt: now,
+      credits: [{ accountId: mentorId, amountMinor: 800, currency: 'EUR', livemode: payment.livemode, sourceType: 'vault_answer', sourceId: answer.id }],
+    })).resolves.toBe(false);
+    expect((await repository.findById(answer.id))?.status).toBe('rejected');
+    expect(await em.count(LedgerEntry, { sourceId: answer.id })).toBe(0);
+    expect(await em.count(ApprovalRequest, { subjectId: payment.id, status: 'pending' })).toBe(1);
+  });
+});
+
 describe('migrations (down)', () => {
   it('reverts the history table and renames the remaining tables back without losing rows', async () => {
     const created = await new UserRepository(orm.em.fork()).create({ email: 'rename@example.com', name: 'Rename' });
@@ -1397,7 +1482,7 @@ describe('migrations (down)', () => {
       'approval_requests', 'articles', 'bookings', 'invitations', 'ledger_entries', 'login_tokens',
       'mentor_availability_slots', 'mentor_profiles', 'messages', 'mikro_orm_migrations',
       'notes', 'payments', 'status_transitions', 'users',
-      'vault_answer_citations', 'vault_answers',
+      'vault_answer_citations', 'vault_answer_reviews', 'vault_answers',
     ]);
   });
 

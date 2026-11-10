@@ -57,6 +57,11 @@ export default async function MentorWorkspacePage() {
           <Button asChild><Link href="/mentor/notes">Manage notes</Link></Button>
         </div>
       </section>
+      <section aria-labelledby="previews-heading" className="flex flex-col gap-group border-t border-border py-section">
+        <h2 id="previews-heading" className="m-0 text-section-title font-strong text-headline">AI answer previews</h2>
+        <p className="m-0 text-body text-muted-foreground">Review answers that cite your published notes before seekers can read them.</p>
+        <div><Button asChild><Link href="/mentor/previews">Review answers</Link></Button></div>
+      </section>
     </main>
   );
 }

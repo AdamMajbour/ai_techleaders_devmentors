@@ -3,7 +3,7 @@ import { z } from 'zod';
 /** A secret shorter than this cannot hold 32 random bytes in any common encoding. */
 const MIN_SECRET_LENGTH = 32;
 const MAX_MENTOR_RESPONSE_WINDOW_MINUTES = 10_080;
-const refundAutoApproveReasons = ['mentor_declined', 'mentor_unresponsive'] as const;
+const refundAutoApproveReasons = ['mentor_declined', 'mentor_unresponsive', 'vault_rejected', 'vault_expired', 'vault_generation_failed', 'vault_cancelled'] as const;
 
 const publicSignupSchema = z.preprocess(
   (value) => {
@@ -128,6 +128,7 @@ const aiSettingsSchema = z.object({
 });
 
 const vaultSettingsSchema = z.object({
+  VAULT_ENABLED: paymentBooleanSchema,
   VAULT_PUBLISH_ENABLED: paymentBooleanSchema,
   NODE_ENV: z.string().optional(),
 });
@@ -174,7 +175,7 @@ export type Env = z.infer<typeof envSchema>;
 export type MailerSettings = z.infer<typeof mailerEnvSchema>;
 export type PaymentSettings = z.infer<typeof paymentSettingsSchema>;
 export type BookingSettings = z.infer<typeof bookingSettingsSchema>;
-export type VaultSettings = { publishEnabled: boolean; isProduction: boolean };
+export type VaultSettings = { enabled: boolean; publishEnabled: boolean; isProduction: boolean };
 export type AISettings = z.infer<typeof aiSettingsSchema>;
 
 /** Validates an environment; throws a message that names the offending variables, never their values. */
@@ -250,7 +251,11 @@ export function parseVaultSettings(source: Record<string, string | undefined>): 
   if (!result.success) {
     throw new Error('Invalid vault configuration: VAULT_PUBLISH_ENABLED. See .env.example.');
   }
-  return { publishEnabled: result.data.VAULT_PUBLISH_ENABLED, isProduction: result.data.NODE_ENV === 'production' };
+  return {
+    enabled: result.data.VAULT_ENABLED,
+    publishEnabled: result.data.VAULT_PUBLISH_ENABLED,
+    isProduction: result.data.NODE_ENV === 'production',
+  };
 }
 
 export function getVaultSettings(): VaultSettings {

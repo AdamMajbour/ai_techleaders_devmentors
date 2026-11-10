@@ -173,9 +173,9 @@ describe('parseEnv', () => {
 
 describe('parseVaultSettings', () => {
   it('keeps production publishing disabled unless explicitly enabled', () => {
-    expect(parseVaultSettings({ NODE_ENV: 'production' })).toEqual({ publishEnabled: false, isProduction: true });
-    expect(parseVaultSettings({ NODE_ENV: 'production', VAULT_PUBLISH_ENABLED: 'true' })).toEqual({ publishEnabled: true, isProduction: true });
-    expect(parseVaultSettings({ NODE_ENV: 'development' })).toEqual({ publishEnabled: false, isProduction: false });
+    expect(parseVaultSettings({ NODE_ENV: 'production' })).toEqual({ enabled: false, publishEnabled: false, isProduction: true });
+    expect(parseVaultSettings({ NODE_ENV: 'production', VAULT_PUBLISH_ENABLED: 'true' })).toEqual({ enabled: false, publishEnabled: true, isProduction: true });
+    expect(parseVaultSettings({ NODE_ENV: 'development' })).toEqual({ enabled: false, publishEnabled: false, isProduction: false });
   });
 });
 

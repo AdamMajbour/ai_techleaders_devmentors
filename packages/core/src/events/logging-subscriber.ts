@@ -21,6 +21,13 @@ const ALL_EVENTS: EventName[] = [
   'messages.message.posted',
   'notes.note.published',
   'notes.note.taken_down',
+  'vault.answer.paid',
+  'vault.answer.created',
+  'vault.answer.generated',
+  'vault.answer.failed',
+  'vault.answer.rejected',
+  'vault.answer.expired',
+  'vault.answer.released',
 ];
 
 /** Writes one info line per domain event. Add a name above when a new event is added to the map. */

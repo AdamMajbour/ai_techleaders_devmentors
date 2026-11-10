@@ -19,6 +19,7 @@ export interface ReviewItemData {
   /** The other mentors whose notes are cited. */
   otherMentors: string[];
   expiresAt: string;
+  canDecide?: boolean;
 }
 
 export interface ReviewItemProps {
@@ -50,7 +51,7 @@ export function ReviewItem({ item, now, onApprove, onReject, pendingAction, acti
   const minutesLeft = Math.ceil((new Date(expiresAt).getTime() - new Date(now).getTime()) / 60000);
   const closed = minutesLeft <= 0;
   const busy = pendingAction !== undefined;
-  const canDecide = !decision && !closed;
+  const canDecide = item.canDecide !== false && !decision && !closed;
 
   return (
     <li className="flex flex-col gap-between-groups border-b border-border py-panel-compact last:border-b-0">

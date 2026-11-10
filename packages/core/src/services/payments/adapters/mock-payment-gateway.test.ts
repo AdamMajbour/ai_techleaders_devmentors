@@ -49,6 +49,21 @@ describe('MockPaymentGateway deterministic behavior', () => {
     expect(checkout.url).toBe('/mock-payment/checkout/booking-1');
   });
 
+  it('routes and signs vault answer checkouts as a separate payable subject', async () => {
+    const gateway = new MockPaymentGateway();
+    const checkout = await gateway.createCheckout({
+      subjectType: 'vault_answer',
+      subjectId: 'answer-1',
+      amountMinor: 1000,
+      currency: 'EUR',
+      idempotencyKey: 'vault:answer-1:checkout',
+    });
+    expect(checkout.url).toBe('/mock-payment/vault-checkout/answer-1');
+    const event = gateway.completeCheckout(checkout.providerSessionId);
+    expect(event).toMatchObject({ subjectType: 'vault_answer', subjectId: 'answer-1' });
+    expect(event).not.toHaveProperty('bookingId');
+  });
+
   it('does not allow a checkout idempotency key to be reused with different input', async () => {
     const gateway = new MockPaymentGateway();
     await gateway.createCheckout({

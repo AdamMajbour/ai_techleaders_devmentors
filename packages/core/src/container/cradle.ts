@@ -12,6 +12,7 @@ import type {
   NoteRepository,
   AvailabilitySlotRepository,
   LedgerEntryRepository,
+  VaultAnswerRepository,
 } from '@devmentor/db';
 import type { EventBus } from '../events/event-bus';
 import type { Logger } from '../logger';
@@ -34,6 +35,15 @@ import type { NoteService } from '../services/notes/note.service';
 import type { AvailabilityService } from '../services/bookings/availability.service';
 import type { LedgerService } from '../services/ledger/ledger.service';
 import type { AnswerGenerator } from '../services/ai/answer-generator.port';
+import type { NoteSelector } from '../services/vault/note-selector';
+import type { VaultAnswerPaymentHandler } from '../services/vault/vault-answer-payment.handler';
+import type { PaymentSubjectHandler } from '../services/payments/payment.service';
+import type { VaultAnswerService } from '../services/vault/vault-answer.service';
+import type { UnitOfWork } from '../workflow/unit-of-work.port';
+import type { VaultReleaseService } from '../services/vault/vault-release.service';
+import type { VaultGenerationTask } from '../services/vault/vault-generation.task';
+import type { VaultReviewService } from '../services/vault/vault-review.service';
+import type { VaultExpireReviewsTask } from '../services/vault/vault-expire-reviews.task';
 
 /** Every dependency the container can provide. A new service is one line here and one in container.ts. */
 export interface Cradle {
@@ -56,6 +66,8 @@ export interface Cradle {
   noteRepository: NoteRepository;
   availabilitySlotRepository: AvailabilitySlotRepository;
   ledgerEntryRepository: LedgerEntryRepository;
+  unitOfWork: UnitOfWork;
+  vaultAnswerRepository: VaultAnswerRepository;
   userService: UserService;
   authService: AuthService;
   articleService: ArticleService;
@@ -71,6 +83,15 @@ export interface Cradle {
   availabilityService: AvailabilityService;
   ledgerService: LedgerService;
   answerGenerator: AnswerGenerator;
+  noteSelector: NoteSelector;
+  vaultAnswerPaymentHandler: VaultAnswerPaymentHandler;
+  paymentSubjectHandlers: readonly PaymentSubjectHandler[];
+  vaultAnswerService: VaultAnswerService;
+  vaultReleaseService: VaultReleaseService;
+  vaultGenerationTask: VaultGenerationTask;
+  vaultReviewService: VaultReviewService;
+  vaultExpireReviewsTask: VaultExpireReviewsTask;
+  assertAIReady: () => void;
   approverResolvers: ApproverResolvers;
   paymentGateway: PaymentGateway;
   mailer: Mailer;

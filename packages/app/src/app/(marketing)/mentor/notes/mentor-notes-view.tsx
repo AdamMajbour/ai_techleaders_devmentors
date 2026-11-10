@@ -18,6 +18,7 @@ import {
   useAsync,
   type ApiResult,
   type DataTableColumn,
+  CreditsPanel,
 } from '@devmentor/ui';
 import {
   NOTE_BODY_MAX,
@@ -33,7 +34,7 @@ function noteHref(id: string) {
   return `/mentor/notes/${encodeURIComponent(id)}`;
 }
 
-export function MentorNotesList() {
+export function MentorNotesList({ credits }: { credits?: { balanceMinor: number; testBalanceMinor: number; currency: string; entries: Array<{ id: string; date: string; amountMinor: number; livemode: boolean }> } }) {
   const [page, setPage] = useState(1);
   const [reloads, setReloads] = useState(0);
   const request = useAsync(() => apiCall<Page<NoteSummaryDto>>(`/api/notes?page=${page}`), [page, reloads]);
@@ -66,6 +67,7 @@ export function MentorNotesList() {
         caption="Your mentor notes"
         pagination={result?.ok ? { page: result.data.page, pageCount: result.data.pageCount, onPageChange: setPage } : undefined}
       />
+      {credits ? <CreditsPanel {...credits} /> : null}
     </PageShell>
   );
 }

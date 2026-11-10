@@ -1,6 +1,6 @@
 # Pilot vault answers (E02): mentor notes, AI-generated answers with mentor preview, credited purchase
 
-Status: Draft for review (gate answered by the requester 2026-10-27; not yet audited with `om-pre-implement-spec`). Source: issue #8 (E02) with #15, #16, #17; design authority `.ai/specs/product-brief.md`. **Depends on** `2026-10-27-pilot-primitives-2.md` (Phases 1, 3 and 4, and Phase 2, which lands after E01 is live) and through it on `2026-10-26-pilot-primitives.md` and `2026-10-26-pilot-booking-flow.md` (E01: payments, refunds, invitations). None of the three is implemented yet.
+Status: Implementation in progress on a stacked PR (2026-11-10). Source: issue #8 (E02) with #15, #16, #17; design authority `.ai/specs/product-brief.md`. The first notes slice is implemented in predecessor PR #29; remaining vault slices and selected-time booking are implemented on stacked PR #32. The primitive dependencies are present in the stack.
 
 Related mentor-onboarding prototype (reference only): [`.ai/prototypes/discovery/mentor-onboarding/revision-001/`](../prototypes/discovery/mentor-onboarding/revision-001/).
 
@@ -309,3 +309,9 @@ Source: [walkthrough session 002](research/walkthroughs/2026-10-31-mentor-onboar
 
 ### Close-out
 Lesson entry for anything non-obvious (likely: the reject/take-down semantics); move this spec and `2026-10-27-pilot-primitives-2.md` to `.ai/specs/implemented/` after Phase 4 merges and the rehearsal record exists.
+
+## Implementation status (2026-11-10)
+
+The user requested selected-time mentor reservation in addition to this epic. The scoped amendment is recorded in `.ai/specs/2026-10-26-pilot-booking-flow.md` as Q9: mentors publish discrete 25-minute UTC slots within seven days; seekers select one before payment; the slot is reserved atomically with booking/payment and released on terminal checkout failure. Calendar sync, recurring availability and rescheduling remain out of scope.
+
+The vault purchase, AI generation, mentor review, refund and credit workflows remain gated by `VAULT_ENABLED=false` and the existing AI/payment settings. Implementation must retain operator approval for refunds unless a separately approved auto-approval policy is configured. The settlement command is `npm run vault:settle`; `-- --include-ai` explicitly enables the external generation task under a scheduler budget. Database integration migration tests and browser QA remain environmental gates and must be reported separately from unit/type/UI checks.

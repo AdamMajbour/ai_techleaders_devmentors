@@ -102,6 +102,12 @@ export { validateGeneration, type GenerationValidationOptions } from './services
 export { MockAnswerGenerator } from './services/ai/adapters/mock-answer-generator';
 export { AnthropicAnswerGenerator } from './services/ai/adapters/anthropic-answer-generator';
 export { createConfiguredAnswerGenerator, assertConfiguredAIReadyToCharge } from './services/ai/answer-generator.factory';
+export { VaultAnswerPaymentHandler } from './services/vault/vault-answer-payment.handler';
+export { VaultReleaseService } from './services/vault/vault-release.service';
+export { VaultReviewService } from './services/vault/vault-review.service';
+export { VaultGenerationTask } from './services/vault/vault-generation.task';
+export { VaultExpireReviewsTask } from './services/vault/vault-expire-reviews.task';
+export { VaultAnswerService, type VaultAnswerCreationResult } from './services/vault/vault-answer.service';
 export { PaymentService } from './services/payments/payment.service';
 export { RefundService } from './services/refunds/refund.service';
 export { MessageService, type MessageDto, type MessagePage } from './services/messages/message.service';

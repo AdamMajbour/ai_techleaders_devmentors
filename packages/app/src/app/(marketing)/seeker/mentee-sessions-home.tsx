@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from 'react';
 import type { BookingPage } from '@devmentor/core';
 import { apiCall, MySessionsView, useAsync } from '@devmentor/ui';
+import Link from 'next/link';
 
 const noSubscription = () => () => undefined;
 const getBrowserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -39,6 +40,8 @@ export function MenteeSessionsHome() {
       : 'loading';
 
   return (
+    <div className="mx-auto flex max-w-content flex-col gap-group">
+      <div><Link className="text-link underline" href="/vault">Ask the mentor notes vault</Link></div>
     <MySessionsView
       state={state}
       sessions={sessions}
@@ -46,5 +49,6 @@ export function MenteeSessionsHome() {
       hrefForSession={(id) => `/bookings/${encodeURIComponent(id)}`}
       onRetry={() => setReloads((value) => value + 1)}
     />
+    </div>
   );
 }

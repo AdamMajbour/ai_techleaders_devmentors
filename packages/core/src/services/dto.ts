@@ -40,7 +40,7 @@ export type BookingPage = Page<BookingReadDto> & { serverTime: string };
 export interface RefundApprovalDto {
   approvalId: string;
   paymentId: string;
-  bookingId: string;
+  bookingId: string | null;
   reason: string;
   status: 'pending' | 'approved';
   createdAt: string;

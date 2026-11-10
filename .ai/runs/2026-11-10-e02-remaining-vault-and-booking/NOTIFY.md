@@ -1,4 +1,5 @@
 # NOTIFY
-- 2026-11-10T12:20:00Z � Scope decision: user clarified they mean choose a concrete available time; E01 spec updated as Q9 in commit 6db598e.
-- 2026-11-10T12:21:00Z � Started independent selected-time booking slice on stacked worktree `feat/e02-remaining-vault-slots`; remaining vault still depends on missing primitives 2.
-- 2026-11-10T12:45:00Z — Checkpoint 1: selected-time booking implementation complete; type-check, lint, check:agents, full unit suite, and production build passed. PostgreSQL integration tests are blocked by local password authentication for `postgres`; browser pass skipped because shared test env descriptor is absent and the DB is unavailable. Recorded in `checkpoint-1-checks.md`.
+- 2026-11-10T12:20:00Z — Scope decision: user clarified they mean choose a concrete available time; E01 spec updated as Q9 in commit 6db598e.
+- 2026-11-10T12:21:00Z — Started selected-time booking on stacked worktree `feat/e02-remaining-vault-slots`.
+- 2026-11-10T12:45:00Z — Checkpoint 1: booking implementation complete. PostgreSQL integration blocked by local auth; browser environment missing.
+- 2026-11-10T14:15:00Z — Remaining E02 vault slices implemented behind closed-by-default gates; type-check, lint, focused vault tests, build and task-router validation pass. Full unit run and final PR checkpoint in progress.- 2026-11-10T14:22:00Z — Full unit suite final: 119 suites, 782 tests passed. Integration remains blocked by local PostgreSQL auth; browser QA environment is absent.
