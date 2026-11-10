@@ -13,7 +13,10 @@
 | Phase 2 | 2.1.2 | Add DB leases and settlement task execution | inline | todo | — |
 | Phase 2 | 2.1.3 | Add route background hooks and read-triggered settlement | inline | done | — |
 | Phase 2 | 2.2 | Implement generic payable subject/refund handling | inline | todo | — |
-| Phase 2 | 2.3 | Implement ledger and AnswerGenerator primitives | inline | todo | — |
+| Phase 2 | 2.3.1 | Add exact money split helpers and vault constants | inline | done | 0eca8ce |
+| Phase 2 | 2.3.2 | Add append-only mentor credit ledger | inline | todo | — |
+| Phase 2 | 2.3.3 | Add validated AnswerGenerator port and mock | inline | todo | — |
+| Phase 2 | 2.3.4 | Add pilot preview-window helper | inline | todo | — |
 | Phase 2 | 2.4 | Implement shared UI primitives required by vault | inline | todo | — |
 | Phase 3 | 3.1 | Implement vault purchase and generation | inline | todo | — |
 | Phase 3 | 3.2 | Implement mentor preview, approval and refund paths | inline | todo | — |
