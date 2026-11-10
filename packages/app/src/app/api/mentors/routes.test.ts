@@ -95,6 +95,7 @@ describe('GET /api/mentors', () => {
           bio: 'A helpful mentor.',
           technologies: 'typescript',
           publicWorkUrl: 'https://example.com',
+          githubUrl: undefined,
           isListed: false,
         }),
       }),
@@ -110,6 +111,7 @@ describe('GET /api/mentors', () => {
         bio: 'A helpful mentor.',
         technologies: 'typescript',
         publicWorkUrl: 'https://example.com',
+        githubUrl: undefined,
         isListed: false,
       },
     );

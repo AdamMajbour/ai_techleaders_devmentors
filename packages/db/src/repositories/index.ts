@@ -75,10 +75,10 @@ export class UserRepository {
 export type NewMentorProfile = Pick<
   MentorProfile,
   'userId' | 'slug' | 'headline' | 'bio' | 'technologies' | 'publicWorkUrl' | 'isListed' | 'lastActiveAt'
->;
+> & { githubUrl?: string | null };
 
 export type MentorProfileUpdate = Partial<
-  Pick<MentorProfile, 'slug' | 'headline' | 'bio' | 'technologies' | 'publicWorkUrl' | 'isListed' | 'lastActiveAt'>
+  Pick<MentorProfile, 'slug' | 'headline' | 'bio' | 'technologies' | 'publicWorkUrl' | 'githubUrl' | 'isListed' | 'lastActiveAt'>
 >;
 
 export class MentorProfileRepository {
@@ -101,7 +101,7 @@ export class MentorProfileRepository {
   }
 
   async create(data: NewMentorProfile): Promise<MentorProfile> {
-    const profile = this.em.create(MentorProfile, data);
+    const profile = this.em.create(MentorProfile, { ...data, githubUrl: data.githubUrl ?? null });
     this.em.persist(profile);
     await this.em.flush();
     return profile;

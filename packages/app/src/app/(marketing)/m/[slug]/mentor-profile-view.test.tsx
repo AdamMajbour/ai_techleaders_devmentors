@@ -24,6 +24,7 @@ const unlistedProfile: MentorProfileDto = {
   bio: 'A practical mentor.',
   technologies: 'node-js typescript',
   publicWorkUrl: 'https://example.com/work',
+  githubUrl: null,
   isListed: false,
   activity: 'within_hour',
 };

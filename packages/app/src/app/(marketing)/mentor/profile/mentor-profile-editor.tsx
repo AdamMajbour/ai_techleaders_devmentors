@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
-import { mentorProfileInputSchema, type MentorProfileDto } from '@devmentor/core';
+import { MENTOR_TECHNOLOGY_OPTIONS, mentorProfileInputSchema, type MentorProfileDto } from '@devmentor/core';
 import {
   Alert,
   AlertDescription,
@@ -25,10 +25,15 @@ type ProfileFields = {
   bio: string;
   technologies: string;
   publicWorkUrl: string;
+  githubUrl: string;
   isListed: boolean;
 };
 
 type FieldErrors = Partial<Record<keyof ProfileFields, string[]>>;
+function technologyLabel(value: string): string {
+  const labels: Record<string, string> = {'c-sharp':'C#','dot-net':'.NET','next-js':'Next.js','node-js':'Node.js',javascript:'JavaScript',typescript:'TypeScript',aws:'AWS'};
+  return labels[value] ?? value.split('-').map((part) => part[0]?.toUpperCase() + part.slice(1)).join(' ');
+}
 
 function initialFields(profile: MentorProfileDto | null): ProfileFields {
   return {
@@ -37,6 +42,7 @@ function initialFields(profile: MentorProfileDto | null): ProfileFields {
     bio: profile?.bio ?? '',
     technologies: profile?.technologies ?? '',
     publicWorkUrl: profile?.publicWorkUrl ?? '',
+    githubUrl: profile?.githubUrl ?? '',
     isListed: profile?.isListed ?? false,
   };
 }
@@ -133,16 +139,29 @@ function MentorProfileForm({
       </Field>
       <Field
         label="Technologies"
-        hint="Separate technologies with spaces or commas."
-        requirement="required"
+        hint="Choose the technologies you can help seekers with."
         error={fieldErrors.technologies?.join(' ')}
       >
-        <Input
-          name="technologies"
-          value={values.technologies}
-          disabled={isSubmitting}
-          onChange={(event) => updateField('technologies', event.currentTarget.value)}
-        />
+        <div className="grid gap-group sm:grid-cols-2">
+          {MENTOR_TECHNOLOGY_OPTIONS.map((technology) => (
+            <Field
+              key={technology}
+              label={technologyLabel(technology)}
+              orientation="inline"
+            >
+              <Checkbox
+                checked={values.technologies.split(/[\s,]+/).includes(technology)}
+                disabled={isSubmitting}
+                onCheckedChange={(checked) => {
+                  const selected = new Set(values.technologies.split(/[\s,]+/).filter(Boolean));
+                  if (checked === true) selected.add(technology);
+                  else selected.delete(technology);
+                  updateField('technologies', [...selected].join(' '));
+                }}
+              />
+            </Field>
+          ))}
+        </div>
       </Field>
       <Field label="Public work URL" requirement="required" error={fieldErrors.publicWorkUrl?.join(' ')}>
         <Input
@@ -153,9 +172,18 @@ function MentorProfileForm({
           onChange={(event) => updateField('publicWorkUrl', event.currentTarget.value)}
         />
       </Field>
+      <Field label="GitHub profile URL" hint="Optional. Link to your GitHub profile, for example https://github.com/your-name." error={fieldErrors.githubUrl?.join(' ')}>
+        <Input
+          name="githubUrl"
+          type="url"
+          value={values.githubUrl}
+          disabled={isSubmitting}
+          onChange={(event) => updateField('githubUrl', event.currentTarget.value)}
+        />
+      </Field>
       <Field
-        label="List this profile"
-        hint="When selected, pilot members can find your profile at /mentors."
+        label="Publish this profile"
+        hint="When selected, seekers can find your profile in the mentor directory."
         orientation="inline"
         error={fieldErrors.isListed?.join(' ')}
       >
@@ -172,7 +200,7 @@ function MentorProfileForm({
         </Alert>
       )}
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Saving…' : profile ? 'Save profile' : 'Create profile'}
+        {isSubmitting ? 'Saving…' : values.isListed ? 'Publish profile' : profile ? 'Save profile' : 'Save profile'}
       </Button>
     </form>
   );

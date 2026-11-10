@@ -65,6 +65,7 @@ function toMentorProfile(profile: MentorProfile, now: Date): MentorProfileDto {
     bio: profile.bio,
     technologies: profile.technologies,
     publicWorkUrl: profile.publicWorkUrl,
+    githubUrl: profile.githubUrl,
     isListed: profile.isListed,
     activity: activityFor(profile.lastActiveAt, now),
   });
@@ -133,6 +134,7 @@ export class MentorService {
       bio: input.bio,
       technologies: normalizeTechnologySlugs(input.technologies),
       publicWorkUrl: input.publicWorkUrl,
+      githubUrl: input.githubUrl ?? null,
       isListed: input.isListed ?? false,
       lastActiveAt: null,
     });
@@ -157,6 +159,7 @@ export class MentorService {
     if (changes.bio !== undefined) normalized.bio = changes.bio;
     if (changes.technologies !== undefined) normalized.technologies = normalizeTechnologySlugs(changes.technologies);
     if (changes.publicWorkUrl !== undefined) normalized.publicWorkUrl = changes.publicWorkUrl;
+    if (changes.githubUrl !== undefined) normalized.githubUrl = changes.githubUrl;
     if (changes.isListed !== undefined) normalized.isListed = changes.isListed;
     normalized.lastActiveAt = this.clock.now();
     const updated = await this.mentorProfileRepository.update(id, normalized);

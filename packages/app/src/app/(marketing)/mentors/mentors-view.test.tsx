@@ -20,6 +20,7 @@ const mentor: MentorProfileDto = {
   bio: 'A practical mentor.',
   technologies: 'node-js typescript',
   publicWorkUrl: 'https://example.com',
+  githubUrl: null,
   isListed: true,
   activity: 'today',
 };
