@@ -89,7 +89,7 @@ export function MentorsView() {
           <p className="m-0 text-body text-muted-foreground">Browse mentors invited to the pilot.</p>
         </div>
         <TextLink asChild>
-          <Link href="/mentor/profile">Edit mentor profile</Link>
+          <Link href="/profile">Edit my profile</Link>
         </TextLink>
       </header>
 
