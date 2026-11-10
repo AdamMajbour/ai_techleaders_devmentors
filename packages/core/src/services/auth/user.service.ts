@@ -1,4 +1,7 @@
 import type { UserRepository } from '@devmentor/db';
+import { assertOwns } from '../../http/auth';
+import type { Session } from '../../security/session';
+import type { UserProfileUpdate } from '../../validators/auth/user-profile.schema';
 import { NotFoundError } from '../../http/errors';
 import { toUserDto, type Page, type UserDto } from '../dto';
 import type { OperatorUserListQuery } from '../../validators/auth/operator-user-list.schema';
@@ -12,6 +15,13 @@ export class UserService {
 
   async getById(id: string): Promise<UserDto> {
     const user = await this.userRepository.findById(id);
+    if (!user) throw new NotFoundError('User not found.');
+    return toUserDto(user);
+  }
+
+  async updateOwnProfile(session: Session, changes: UserProfileUpdate): Promise<UserDto> {
+    assertOwns(session, session.userId);
+    const user = await this.userRepository.update(session.userId, changes);
     if (!user) throw new NotFoundError('User not found.');
     return toUserDto(user);
   }

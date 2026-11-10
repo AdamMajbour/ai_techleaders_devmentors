@@ -13,6 +13,7 @@ export * from './validators/parse';
 export * from './validators/id.schema';
 export * from './validators/auth/register.schema';
 export * from './validators/auth/login.schema';
+export * from './validators/auth/user-profile.schema';
 export * from './validators/auth/magic-link.schema';
 export * from './validators/auth/operator-user-list.schema';
 export * from './validators/articles/article-create.schema';
