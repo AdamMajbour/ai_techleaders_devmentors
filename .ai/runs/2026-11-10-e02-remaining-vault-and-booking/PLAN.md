@@ -1,4 +1,4 @@
-﻿# E02 remaining slices + selected-time booking — 2026-11-10
+# E02 remaining slices + selected-time booking — 2026-11-10
 
 ## Tasks
 
@@ -9,7 +9,9 @@
 | Phase 1 | 1.2 | Add persisted slots, owner APIs, atomic booking reservation, and terminal-state release | inline | done | 08a3b35 |
 | Phase 1 | 1.3 | Build mentor slot manager and seeker timezone-aware slot selector | inline | done | e16e4af |
 | Gate | 1.4 | Finish slot integration evidence and update issue #8 | inline | in-progress | — |
-| Phase 2 | 2.1 | Implement shared workflow primitives required by vault | inline | todo | — |
+| Phase 2 | 2.1.1 | Add UnitOfWork and state-dependent field visibility | inline | done | 2b42088 |
+| Phase 2 | 2.1.2 | Add DB leases and settlement task execution | inline | todo | — |
+| Phase 2 | 2.1.3 | Add route background hooks and read-triggered settlement | inline | done | — |
 | Phase 2 | 2.2 | Implement generic payable subject/refund handling | inline | todo | — |
 | Phase 2 | 2.3 | Implement ledger and AnswerGenerator primitives | inline | todo | — |
 | Phase 2 | 2.4 | Implement shared UI primitives required by vault | inline | todo | — |
@@ -30,5 +32,3 @@ Deliver selected-time mentor booking plus E02-S02/S03 on a branch stacked on E02
 
 ## Validation
 Run the configured full gate, migration integration suite, and browser checks after implementation. No claim of completed vault slices until their prerequisites are present.
-
-

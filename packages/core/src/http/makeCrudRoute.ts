@@ -14,7 +14,11 @@ import { ValidationError } from './errors';
 type RouteContext = { params?: Promise<Record<string, string | string[] | undefined>> };
 
 /** What a handler receives besides its validated input: the request's DI scope and, for mutations, the session. */
-type Ctx<TSession> = { cradle: Cradle; session: TSession };
+type Ctx<TSession> = {
+  cradle: Cradle;
+  session: TSession;
+  background?: (task: () => Promise<void>) => void;
+};
 
 export interface CrudRouteConfig<TQuery, TCreate, TUpdate> {
   /** GET on the collection. Public unless `requireSession` is set. */
@@ -22,11 +26,20 @@ export interface CrudRouteConfig<TQuery, TCreate, TUpdate> {
     query: z.ZodType<TQuery>;
     handler: (query: TQuery, ctx: Ctx<Session | null>) => Promise<unknown>;
     requireSession?: boolean;
+    background?: (task: () => Promise<void>) => void;
   };
   /** GET with an `id` route param. Public unless `requireSession` is set. */
-  read?: { handler: (id: string, ctx: Ctx<Session | null>) => Promise<unknown>; requireSession?: boolean };
+  read?: {
+    handler: (id: string, ctx: Ctx<Session | null>) => Promise<unknown>;
+    requireSession?: boolean;
+    background?: (task: () => Promise<void>) => void;
+  };
   /** POST. Always requires a session and the CSRF header: a mutation cannot be made public by configuration. */
-  create?: { body: z.ZodType<TCreate>; handler: (input: TCreate, ctx: Ctx<Session>) => Promise<unknown> };
+  create?: {
+    body: z.ZodType<TCreate>;
+    handler: (input: TCreate, ctx: Ctx<Session>) => Promise<unknown>;
+    background?: (task: () => Promise<void>) => void;
+  };
   /** PUT with an `id` route param. Always requires a session and the CSRF header. */
   update?: { body: z.ZodType<TUpdate>; handler: (id: string, input: TUpdate, ctx: Ctx<Session>) => Promise<unknown> };
   /** DELETE with an `id` route param. Always requires a session and the CSRF header. */
@@ -59,11 +72,19 @@ export function makeCrudRoute<TQuery = never, TCreate = never, TUpdate = never>(
       const session = operation.requireSession ? await requireSession(request) : await optionalSession(request);
       if (hasId && config.read) {
         const id = await readId(context);
-        return withScope((cradle) => config.read!.handler(id, { cradle, session }));
+        return withScope((cradle) => config.read!.handler(id, {
+          cradle,
+          session,
+          ...(config.read?.background ? { background: config.read.background } : {}),
+        }));
       }
       const list = config.list!;
       const query = parseOrThrow(list.query, Object.fromEntries(new URL(request.url).searchParams));
-      return withScope((cradle) => list.handler(query, { cradle, session }));
+      return withScope((cradle) => list.handler(query, {
+        cradle,
+        session,
+        ...(list.background ? { background: list.background } : {}),
+      }));
     }),
 
     POST: apiHandler(async (request: Request) => {
@@ -73,7 +94,11 @@ export function makeCrudRoute<TQuery = never, TCreate = never, TUpdate = never>(
       assertCsrfSafe(request);
       const session = await requireSession(request);
       const input = parseOrThrow(create.body, await readJsonBody(request));
-      const created = await withScope((cradle) => create.handler(input, { cradle, session }));
+      const created = await withScope((cradle) => create.handler(input, {
+        cradle,
+        session,
+        ...(create.background ? { background: create.background } : {}),
+      }));
       return jsonResponse(created, { status: HTTP_STATUS.CREATED });
     }),
 

@@ -10,11 +10,16 @@ import { requireSession } from './auth';
 import { readJsonBody } from './body';
 
 type RouteContext = { params?: Promise<Record<string, string | string[] | undefined>> };
-type ActionContext = { cradle: Cradle; session: Session };
+type ActionContext = {
+  cradle: Cradle;
+  session: Session;
+  background?: (task: () => Promise<void>) => void;
+};
 
 export interface ActionRouteConfig<TBody> {
   body: z.ZodType<TBody>;
   handler: (id: string, body: TBody, ctx: ActionContext) => Promise<unknown>;
+  background?: (task: () => Promise<void>) => void;
 }
 
 /**
@@ -29,7 +34,11 @@ export function makeActionRoute<TBody>(config: ActionRouteConfig<TBody>) {
       const params = await context?.params;
       const id = parseOrThrow(idSchema, params?.id);
       const body = parseOrThrow(config.body, await readJsonBody(request));
-      return withScope((cradle) => config.handler(id, body, { cradle, session }));
+      return withScope((cradle) => config.handler(id, body, {
+        cradle,
+        session,
+        ...(config.background ? { background: config.background } : {}),
+      }));
     }),
   };
 }
