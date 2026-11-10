@@ -5,6 +5,8 @@ export * from './types';
 export * from './utils';
 export * from './constants';
 export * from './workflow/state-machine';
+export type { UnitOfWork } from './workflow/unit-of-work.port';
+export { SettlementRunner, createSettleOnRead, type SettlementTask, type SettlementTaskClass } from './workflow/settlement';
 export * from './workflow/booking-state-machine';
 export * from './workflow/payment-state-machine';
 export * from './http/errors';

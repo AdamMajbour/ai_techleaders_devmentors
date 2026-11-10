@@ -26,6 +26,7 @@ import {
 import { transitionStatus } from './transition';
 export { transitionStatus };
 export type { TransitionActor, TransitionStatusInput } from './transition';
+export { MikroOrmUnitOfWork } from './unit-of-work';
 export { PendingApprovalConflictError };
 
 /** `passwordHash` is hidden from serialization, which makes the type system require it; here it is optional. */
