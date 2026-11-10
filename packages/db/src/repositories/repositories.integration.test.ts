@@ -9,6 +9,7 @@ import {
   Booking,
   Invitation,
   LoginToken,
+  LedgerEntry,
   MentorProfile,
   Message,
   Payment,
@@ -26,6 +27,7 @@ import {
   ApprovalRequestRepository,
   BookingRepository,
   AvailabilitySlotRepository,
+  LedgerEntryRepository,
   InvitationRepository,
   LoginTokenRepository,
   MentorProfileRepository,
@@ -91,6 +93,7 @@ describe('migrations', () => {
       'bookings',
       'invitations',
       'login_tokens',
+      'ledger_entries',
       'mentor_availability_slots',
       'mentor_profiles',
       'messages',
@@ -115,6 +118,13 @@ describe('migrations', () => {
     expect(await publicTables()).not.toContain('notes');
     await orm.migrator.up();
     expect(await publicTables()).toContain('notes');
+  });
+
+  it('creates and drops the append-only ledger table through the reversible migration', async () => {
+    await orm.migrator.down('Migration20261110150000_ledger_entries');
+    expect(await publicTables()).not.toContain('ledger_entries');
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('ledger_entries');
   });
 
   it('removes the approval table and its partial index on migration down', async () => {
@@ -1332,6 +1342,30 @@ describe('NoteRepository', () => {
   });
 });
 
+describe('LedgerEntryRepository', () => {
+  it('records idempotent credits, rejects changed replays, and separates live balances', async () => {
+    const accountId = randomUUID();
+    const sourceId = randomUUID();
+    const repository = new LedgerEntryRepository(orm.em.fork());
+    const entry = {
+      accountId,
+      amountMinor: 267,
+      currency: 'EUR',
+      livemode: true,
+      sourceType: 'vault_answer',
+      sourceId,
+    };
+
+    await expect(repository.record([entry])).resolves.toBe(1);
+    await expect(repository.record([entry])).resolves.toBe(0);
+    await expect(repository.record([{ ...entry, amountMinor: 268 }])).rejects.toThrow(/ledger replay conflicts/i);
+    await expect(repository.record([{ ...entry, sourceId: randomUUID(), amountMinor: 50, livemode: false }])).resolves.toBe(1);
+    await expect(repository.balanceOf(accountId, true)).resolves.toBe(267);
+    await expect(repository.balanceOf(accountId, false)).resolves.toBe(50);
+    expect(await orm.em.fork().count(LedgerEntry, { accountId })).toBe(2);
+  });
+});
+
 describe('migrations (down)', () => {
   it('reverts the history table and renames the remaining tables back without losing rows', async () => {
     const created = await new UserRepository(orm.em.fork()).create({ email: 'rename@example.com', name: 'Rename' });
@@ -1347,7 +1381,8 @@ describe('migrations (down)', () => {
     await orm.migrator.up();
     expect(await publicTables()).toEqual([
       'approval_requests', 'articles', 'bookings', 'invitations', 'login_tokens',
-      'mentor_profiles', 'messages', 'mikro_orm_migrations', 'notes', 'payments', 'status_transitions', 'users',
+      'ledger_entries', 'mentor_availability_slots', 'mentor_profiles', 'messages', 'mikro_orm_migrations',
+      'notes', 'payments', 'status_transitions', 'users',
     ]);
   });
 

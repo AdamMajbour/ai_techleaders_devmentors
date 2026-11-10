@@ -3,6 +3,7 @@
 // MikroORM forbids using the global EM for context-specific work, so callers pass
 // a fork (`orm.em.fork()`) per request / script / test.
 import { LockMode, type EntityManager, type RequiredEntityData } from '@mikro-orm/core';
+import { randomUUID } from 'node:crypto';
 import {
   User,
   Article,
@@ -14,6 +15,7 @@ import {
   Payment,
   Message,
   Note,
+  LedgerEntry,
   AvailabilitySlot,
 } from '../entities';
 import {
@@ -818,6 +820,65 @@ export class NoteRepository {
     this.em.remove(note);
     await this.em.flush();
     return true;
+  }
+}
+
+export interface NewLedgerEntry {
+  accountId: string;
+  amountMinor: number;
+  currency: string;
+  livemode: boolean;
+  sourceType: string;
+  sourceId: string;
+}
+
+export class LedgerEntryRepository {
+  constructor(private readonly em: EntityManager) {}
+
+  async record(entries: readonly NewLedgerEntry[]): Promise<number> {
+    let insertedCount = 0;
+    for (const entry of entries) {
+      const now = new Date();
+      const rows = await this.em.getConnection().execute<Array<{ id: string }>>(
+        `insert into "ledger_entries" ("id", "account_id", "amount_minor", "currency", "livemode", "source_type", "source_id", "created_at", "updated_at")
+         values (?, ?, ?, ?, ?, ?, ?, ?, ?) on conflict ("source_type", "source_id", "account_id") do nothing returning "id"`,
+        [randomUUID(), entry.accountId, entry.amountMinor, entry.currency, entry.livemode, entry.sourceType, entry.sourceId, now, now],
+        'all',
+        this.em.getTransactionContext(),
+      );
+      if (Array.isArray(rows) && rows.length === 1) {
+        insertedCount += 1;
+        continue;
+      }
+      const existing = await this.em.getConnection().execute<NewLedgerEntry>(
+        `select "account_id" as "accountId", "amount_minor" as "amountMinor", "currency", "livemode", "source_type" as "sourceType", "source_id" as "sourceId"
+         from "ledger_entries" where "source_type" = ? and "source_id" = ? and "account_id" = ?`,
+        [entry.sourceType, entry.sourceId, entry.accountId],
+        'get',
+        this.em.getTransactionContext(),
+      );
+      if (!existing || existing.amountMinor !== entry.amountMinor || existing.currency !== entry.currency || existing.livemode !== entry.livemode) {
+        throw new StatusTransitionConflictError('A ledger replay conflicts with an existing credit.');
+      }
+    }
+    return insertedCount;
+  }
+
+  async balanceOf(accountId: string, livemode: boolean): Promise<number> {
+    const row = await this.em.getConnection().execute<{ balance: string | number }>(
+      `select coalesce(sum("amount_minor"), 0) as "balance" from "ledger_entries" where "account_id" = ? and "livemode" = ?`,
+      [accountId, livemode],
+      'get',
+      this.em.getTransactionContext(),
+    );
+    return Number(row?.balance ?? 0);
+  }
+
+  async findByAccount(accountId: string, livemode?: boolean): Promise<LedgerEntry[]> {
+    return this.em.find(LedgerEntry, {
+      accountId,
+      ...(livemode === undefined ? {} : { livemode }),
+    }, { orderBy: { createdAt: 'desc', id: 'asc' } });
   }
 }
 

@@ -16,6 +16,7 @@ import {
   MessageRepository,
   NoteRepository,
   AvailabilitySlotRepository,
+  LedgerEntryRepository,
   UserRepository,
 } from '@devmentor/db';
 import { createEventBus } from '../events/event-bus';
@@ -40,6 +41,7 @@ import { RefundService } from '../services/refunds/refund.service';
 import { MessageService } from '../services/messages/message.service';
 import { NoteService } from '../services/notes/note.service';
 import { systemClock } from '../utils/clock';
+import { LedgerService } from '../services/ledger/ledger.service';
 import type { Cradle, OrmLike } from './cradle';
 
 export type AppContainer = AwilixContainer<Cradle>;
@@ -93,6 +95,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     messageRepository: asFunction(({ em }: Cradle) => new MessageRepository(em)).scoped(),
     noteRepository: asFunction(({ em }: Cradle) => new NoteRepository(em)).scoped(),
     availabilitySlotRepository: asFunction(({ em }: Cradle) => new AvailabilitySlotRepository(em)).scoped(),
+    ledgerEntryRepository: asFunction(({ em }: Cradle) => new LedgerEntryRepository(em)).scoped(),
     userService: asClass(UserService).scoped(),
     authService: asClass(AuthService).scoped(),
     articleService: asClass(ArticleService).scoped(),
@@ -100,6 +103,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     mentorService: asClass(MentorService).scoped(),
     bookingService: asClass(BookingService).scoped(),
     availabilityService: asClass(AvailabilityService).scoped(),
+    ledgerService: asClass(LedgerService).scoped(),
     refundService: asClass(RefundService).scoped(),
     messageService: asClass(MessageService).scoped(),
     noteService: asClass(NoteService).scoped(),
