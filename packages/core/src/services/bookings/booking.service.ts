@@ -1,4 +1,4 @@
-import { ExclusionConstraintViolationError, StatusTransitionConflictError } from '@devmentor/db';
+import { ExclusionConstraintViolationError, StatusTransitionConflictError, type AvailabilitySlotRepository } from '@devmentor/db';
 import type {
   Booking,
   BookingRepository,
@@ -16,7 +16,7 @@ import type { Session } from '../../security/session';
 import type { Clock } from '../../utils/clock';
 import { parseOrThrow } from '../../validators/parse';
 import { bookingCreateSchema, type BookingCreateInput } from '../../validators/bookings/booking-create.schema';
-import { bookingAcceptSchema, type BookingAcceptInput } from '../../validators/bookings/booking-accept.schema';
+import { bookingAcceptSchema } from '../../validators/bookings/booking-accept.schema';
 import type { BookingListQuery } from '../../validators/bookings/booking-list.schema';
 import type { InvitationService } from '../auth/invitation.service';
 import type { ApprovalService } from '../approvals/approval.service';
@@ -28,6 +28,7 @@ import { toBookingDto, type BookingDto, type BookingPage, type BookingReadDto } 
 
 type Dependencies = {
   bookingRepository: BookingRepository;
+  availabilitySlotRepository: AvailabilitySlotRepository;
   mentorProfileRepository: MentorProfileRepository;
   paymentRepository: PaymentRepository;
   userRepository: UserRepository;
@@ -53,6 +54,7 @@ export type MockCheckoutOutcome = 'complete' | 'fail';
 
 export class BookingService {
   private readonly bookingRepository: BookingRepository;
+  private readonly availabilitySlotRepository: AvailabilitySlotRepository;
   private readonly mentorProfileRepository: MentorProfileRepository;
   private readonly paymentRepository: PaymentRepository;
   private readonly userRepository: UserRepository;
@@ -68,6 +70,7 @@ export class BookingService {
 
   constructor({
     bookingRepository,
+    availabilitySlotRepository,
     mentorProfileRepository,
     paymentRepository,
     userRepository,
@@ -82,6 +85,7 @@ export class BookingService {
     bookingSettings = getBookingSettings,
   }: Dependencies) {
     this.bookingRepository = bookingRepository;
+    this.availabilitySlotRepository = availabilitySlotRepository;
     this.mentorProfileRepository = mentorProfileRepository;
     this.paymentRepository = paymentRepository;
     this.userRepository = userRepository;
@@ -114,8 +118,13 @@ export class BookingService {
     const oldestAllowedLanding = now.getTime() - 24 * 60 * 60 * 1000;
     const requestedLanding = input.landedAt ? new Date(input.landedAt).getTime() : now.getTime();
     const landedAt = new Date(Math.min(now.getTime(), Math.max(oldestAllowedLanding, requestedLanding)));
-    const { booking } = await this.bookingRepository.createWithPayment(
-      {
+    let booking: Booking;
+    try {
+      ({ booking } = await this.availabilitySlotRepository.reserveWithBooking(
+        input.availabilitySlotId,
+        profile.userId,
+        now,
+        {
         seekerId: session.userId,
         mentorId: profile.userId,
         question: input.question,
@@ -127,8 +136,9 @@ export class BookingService {
         landedAt,
         startsAt: null,
         endsAt: null,
-      },
-      {
+        availabilitySlotId: input.availabilitySlotId,
+        },
+        {
         provider: this.paymentGateway.provider,
         livemode: false,
         providerSessionId: null,
@@ -136,8 +146,14 @@ export class BookingService {
         amountMinor: SESSION_25_PRICE_MINOR,
         currency: CURRENCY,
         status: 'pending',
-      },
-    );
+        },
+      ));
+    } catch (error) {
+      if (error instanceof StatusTransitionConflictError) {
+        throw new ConflictError('That time is no longer available. Refresh the mentor profile and choose another time.');
+      }
+      throw error;
+    }
 
     const idempotencyKey = `booking:${booking.id}:checkout`;
     let checkout: Awaited<ReturnType<PaymentGateway['createCheckout']>>;
@@ -269,19 +285,18 @@ export class BookingService {
   }
 
   async accept(session: Session, id: string, untrustedInput: unknown): Promise<BookingReadDto> {
-    const input: BookingAcceptInput = parseOrThrow(bookingAcceptSchema, untrustedInput);
+    parseOrThrow(bookingAcceptSchema, untrustedInput);
     const booking = await this.requireMentorBooking(session, id);
     if (booking.status !== 'paid') throw new ConflictError();
     const now = this.clock.now();
-    const startsAt = input.startsAt ? new Date(input.startsAt) : now;
+    const startsAt = booking.startsAt;
     if (
+      !startsAt ||
       !Number.isFinite(startsAt.getTime()) ||
       startsAt.getTime() < now.getTime() ||
       startsAt.getTime() > now.getTime() + ACCEPT_START_MAX_AHEAD_MS
     ) {
-      throw new ValidationError('Choose a start time from now through the next 7 days.', {
-        startsAt: ['Start time must not be in the past or more than 7 days ahead.'],
-      });
+      throw new ValidationError('The selected session time has passed or is no longer valid.');
     }
 
     try {

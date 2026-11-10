@@ -20,6 +20,7 @@ export * from './validators/articles/article-update.schema';
 export * from './validators/articles/article-list.schema';
 export * from './validators/mentors/mentor-profile.schema';
 export * from './validators/bookings/booking-create.schema';
+export * from './validators/bookings/availability-slot.schema';
 export * from './validators/bookings/booking-list.schema';
 export * from './validators/bookings/booking-action.schema';
 export * from './validators/bookings/booking-accept.schema';

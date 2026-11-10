@@ -15,6 +15,7 @@ import {
   PaymentRepository,
   MessageRepository,
   NoteRepository,
+  AvailabilitySlotRepository,
   UserRepository,
 } from '@devmentor/db';
 import { createEventBus } from '../events/event-bus';
@@ -34,6 +35,7 @@ import { ConfiguredMailer } from '../services/notifications/adapters/configured-
 import { ApprovalService, defaultApproverResolvers } from '../services/approvals/approval.service';
 import { MentorService } from '../services/mentors/mentor.service';
 import { BookingService } from '../services/bookings/booking.service';
+import { AvailabilityService } from '../services/bookings/availability.service';
 import { RefundService } from '../services/refunds/refund.service';
 import { MessageService } from '../services/messages/message.service';
 import { NoteService } from '../services/notes/note.service';
@@ -90,12 +92,14 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     paymentRepository: asFunction(({ em }: Cradle) => new PaymentRepository(em)).scoped(),
     messageRepository: asFunction(({ em }: Cradle) => new MessageRepository(em)).scoped(),
     noteRepository: asFunction(({ em }: Cradle) => new NoteRepository(em)).scoped(),
+    availabilitySlotRepository: asFunction(({ em }: Cradle) => new AvailabilitySlotRepository(em)).scoped(),
     userService: asClass(UserService).scoped(),
     authService: asClass(AuthService).scoped(),
     articleService: asClass(ArticleService).scoped(),
     approvalService: asClass(ApprovalService).scoped(),
     mentorService: asClass(MentorService).scoped(),
     bookingService: asClass(BookingService).scoped(),
+    availabilityService: asClass(AvailabilityService).scoped(),
     refundService: asClass(RefundService).scoped(),
     messageService: asClass(MessageService).scoped(),
     noteService: asClass(NoteService).scoped(),

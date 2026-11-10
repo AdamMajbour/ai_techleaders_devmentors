@@ -14,9 +14,11 @@ import {
   Payment,
   Message,
   Note,
+  AvailabilitySlot,
 } from '../entities';
 import {
   ExclusionConstraintViolationError,
+  StatusTransitionConflictError,
   PendingApprovalConflictError,
   isExclusionConstraintViolation,
   isUniqueConstraintViolation,
@@ -130,7 +132,7 @@ export type NewBooking = Pick<
   | 'landedAt'
   | 'startsAt'
   | 'endsAt'
->;
+> & Partial<Pick<Booking, 'availabilitySlotId'>>;
 
 export type NewPayment = Pick<
   Payment,
@@ -814,5 +816,86 @@ export class NoteRepository {
     this.em.remove(note);
     await this.em.flush();
     return true;
+  }
+}
+
+export type NewAvailabilitySlot = Pick<AvailabilitySlot, 'mentorId' | 'startsAt' | 'endsAt'>;
+
+export class AvailabilitySlotRepository {
+  constructor(private readonly em: EntityManager) {}
+
+  async create(data: NewAvailabilitySlot): Promise<AvailabilitySlot> {
+    const acceptedOverlap = await this.em.findOne(Booking, {
+      mentorId: data.mentorId,
+      status: 'accepted',
+      startsAt: { $lt: data.endsAt },
+      endsAt: { $gt: data.startsAt },
+    });
+    if (acceptedOverlap) throw new StatusTransitionConflictError('The slot overlaps an accepted session.');
+    const slot = this.em.create(AvailabilitySlot, { ...data, status: 'open', bookingId: null });
+    this.em.persist(slot);
+    await this.em.flush();
+    return slot;
+  }
+
+  async findById(id: string): Promise<AvailabilitySlot | null> {
+    return this.em.findOne(AvailabilitySlot, { id });
+  }
+
+  async findOpenForMentor(mentorId: string, from: Date, to: Date): Promise<AvailabilitySlot[]> {
+    return this.em.find(AvailabilitySlot, {
+      mentorId,
+      status: 'open',
+      startsAt: { $gte: from, $lte: to },
+    }, { orderBy: { startsAt: 'asc' } });
+  }
+
+  async cancelOpen(id: string, mentorId: string): Promise<boolean> {
+    return (await this.em.nativeUpdate(
+      AvailabilitySlot,
+      { id, mentorId, status: 'open' },
+      { status: 'cancelled', updatedAt: new Date() },
+    )) === 1;
+  }
+
+  async reserveWithBooking(
+    slotId: string,
+    mentorId: string,
+    now: Date,
+    bookingData: NewBooking,
+    paymentData: Omit<NewPayment, 'bookingId'>,
+  ): Promise<{ booking: Booking; payment: Payment }> {
+    return this.em.transactional(async (transactionalEm) => {
+      const slot = await transactionalEm.findOne(
+        AvailabilitySlot,
+        { id: slotId, mentorId, status: 'open' },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+      if (!slot) throw new StatusTransitionConflictError('That time is no longer available.');
+      if (slot.startsAt.getTime() <= now.getTime()) {
+        throw new StatusTransitionConflictError('That time is no longer available.');
+      }
+      const acceptedOverlap = await transactionalEm.findOne(Booking, {
+        mentorId,
+        status: 'accepted',
+        startsAt: { $lt: slot.endsAt },
+        endsAt: { $gt: slot.startsAt },
+      });
+      if (acceptedOverlap) throw new StatusTransitionConflictError('That time is no longer available.');
+      const booking = transactionalEm.create(Booking, {
+        ...bookingData,
+        startsAt: slot.startsAt,
+        endsAt: slot.endsAt,
+        availabilitySlotId: slot.id,
+      });
+      transactionalEm.persist(booking);
+      await transactionalEm.flush();
+      slot.status = 'reserved';
+      slot.bookingId = booking.id;
+      const payment = transactionalEm.create(Payment, { ...paymentData, bookingId: booking.id });
+      transactionalEm.persist(payment);
+      await transactionalEm.flush();
+      return { booking, payment };
+    });
   }
 }
