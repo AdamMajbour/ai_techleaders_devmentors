@@ -90,6 +90,11 @@ export function MentorProfileView({ slug, source }: { slug: string; source: Book
             profile.publicWorkUrl
           )}
         </p>
+        {profile.githubUrl ? (
+          <p className="m-0 text-body text-foreground">
+            GitHub: <TextLink href={profile.githubUrl}>{profile.githubUrl}</TextLink>
+          </p>
+        ) : null}
         <section aria-labelledby="mentor-activity">
           <h2 id="mentor-activity" className="m-0 text-label font-strong text-headline">
             Activity

@@ -10,6 +10,7 @@ export const MentorProfile = defineDomainEntity({
     bio: p.text(),
     technologies: p.text(),
     publicWorkUrl: p.string(),
+    githubUrl: p.string().nullable(),
     isListed: p.boolean(),
     lastActiveAt: p.datetime().nullable(),
   },
