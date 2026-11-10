@@ -42,6 +42,7 @@ import { MessageService } from '../services/messages/message.service';
 import { NoteService } from '../services/notes/note.service';
 import { systemClock } from '../utils/clock';
 import { LedgerService } from '../services/ledger/ledger.service';
+import { createConfiguredAnswerGenerator } from '../services/ai/answer-generator.factory';
 import type { Cradle, OrmLike } from './cradle';
 
 export type AppContainer = AwilixContainer<Cradle>;
@@ -104,6 +105,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     bookingService: asClass(BookingService).scoped(),
     availabilityService: asClass(AvailabilityService).scoped(),
     ledgerService: asClass(LedgerService).scoped(),
+    answerGenerator: asFunction(createConfiguredAnswerGenerator).singleton(),
     refundService: asClass(RefundService).scoped(),
     messageService: asClass(MessageService).scoped(),
     noteService: asClass(NoteService).scoped(),

@@ -33,6 +33,7 @@ import type { MessageService } from '../services/messages/message.service';
 import type { NoteService } from '../services/notes/note.service';
 import type { AvailabilityService } from '../services/bookings/availability.service';
 import type { LedgerService } from '../services/ledger/ledger.service';
+import type { AnswerGenerator } from '../services/ai/answer-generator.port';
 
 /** Every dependency the container can provide. A new service is one line here and one in container.ts. */
 export interface Cradle {
@@ -69,6 +70,7 @@ export interface Cradle {
   noteService: NoteService;
   availabilityService: AvailabilityService;
   ledgerService: LedgerService;
+  answerGenerator: AnswerGenerator;
   approverResolvers: ApproverResolvers;
   paymentGateway: PaymentGateway;
   mailer: Mailer;

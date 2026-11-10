@@ -112,6 +112,21 @@ const paymentBooleanSchema = z.preprocess((value) => {
   return value;
 }, z.boolean());
 
+const aiSettingsSchema = z.object({
+  AI_MODE: z.enum(['mock', 'anthropic']).default('mock'),
+  AI_ALLOW_MOCK_IN_PRODUCTION: paymentBooleanSchema,
+  AI_LIVE_ENABLED: paymentBooleanSchema,
+  ANTHROPIC_API_KEY: optionalPaymentValue,
+  ANTHROPIC_MODEL: z.preprocess((value) => value === undefined || value === '' ? 'claude-opus-5-5' : value, z.string().trim().min(1)),
+  PAYMENTS_LIVE_ENABLED: paymentBooleanSchema,
+  NODE_ENV: z.string().optional(),
+}).superRefine((settings, context) => {
+  if (settings.AI_MODE === 'mock' && settings.NODE_ENV === 'production'
+    && (!settings.AI_ALLOW_MOCK_IN_PRODUCTION || settings.PAYMENTS_LIVE_ENABLED)) {
+    context.addIssue({ code: 'custom', path: ['AI_MODE'], message: 'Mock AI is disabled in production unless rehearsal override is on and live payments are off.' });
+  }
+});
+
 const vaultSettingsSchema = z.object({
   VAULT_PUBLISH_ENABLED: paymentBooleanSchema,
   NODE_ENV: z.string().optional(),
@@ -160,6 +175,7 @@ export type MailerSettings = z.infer<typeof mailerEnvSchema>;
 export type PaymentSettings = z.infer<typeof paymentSettingsSchema>;
 export type BookingSettings = z.infer<typeof bookingSettingsSchema>;
 export type VaultSettings = { publishEnabled: boolean; isProduction: boolean };
+export type AISettings = z.infer<typeof aiSettingsSchema>;
 
 /** Validates an environment; throws a message that names the offending variables, never their values. */
 export function parseEnv(source: Record<string, string | undefined>): Env {
@@ -239,6 +255,24 @@ export function parseVaultSettings(source: Record<string, string | undefined>): 
 
 export function getVaultSettings(): VaultSettings {
   return parseVaultSettings(process.env);
+}
+
+export function parseAISettings(source: Record<string, string | undefined>): AISettings {
+  const result = aiSettingsSchema.safeParse(source);
+  if (result.success) return result.data;
+  const names = Object.keys(z.flattenError(result.error).fieldErrors).join(', ');
+  throw new Error(`Invalid AI configuration: ${names}. See .env.example.`);
+}
+
+export function getAISettings(): AISettings {
+  return parseAISettings(process.env);
+}
+
+/** Fails before charging unless the selected adapter is explicitly usable. */
+export function assertAIReadyToCharge(settings: AISettings): void {
+  if (settings.AI_MODE === 'anthropic' && (!settings.AI_LIVE_ENABLED || !settings.ANTHROPIC_API_KEY)) {
+    throw new Error('AI generation is not configured for paid answers.');
+  }
 }
 
 /** Invalid or empty operator configuration grants no operator access. */

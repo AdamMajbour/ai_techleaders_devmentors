@@ -61,11 +61,15 @@ export {
   getMailerSettings,
   getPaymentSettings,
   getVaultSettings,
+  getAISettings,
+  parseAISettings,
+  assertAIReadyToCharge,
   parseEnv,
   parseBookingSettings,
   parsePaymentSettings,
   parseVaultSettings,
   type VaultSettings,
+  type AISettings,
   getOperatorUserIds,
   parseOperatorUserIds,
 } from './config/env';
@@ -86,6 +90,18 @@ export {
 } from './services/mentors/mentor.service';
 export { BookingService, type BookingCreationResult } from './services/bookings/booking.service';
 export { LedgerService, type LedgerEntryDto } from './services/ledger/ledger.service';
+export {
+  GeneratorError,
+  type GeneratorErrorKind,
+  type AnswerGenerationInput,
+  type AnswerSourceNote,
+  type AnswerGenerator,
+  type GenerationCandidate,
+} from './services/ai/answer-generator.port';
+export { validateGeneration, type GenerationValidationOptions } from './services/ai/validate-generation';
+export { MockAnswerGenerator } from './services/ai/adapters/mock-answer-generator';
+export { AnthropicAnswerGenerator } from './services/ai/adapters/anthropic-answer-generator';
+export { createConfiguredAnswerGenerator, assertConfiguredAIReadyToCharge } from './services/ai/answer-generator.factory';
 export { PaymentService } from './services/payments/payment.service';
 export { RefundService } from './services/refunds/refund.service';
 export { MessageService, type MessageDto, type MessagePage } from './services/messages/message.service';

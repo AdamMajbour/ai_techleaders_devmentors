@@ -5,6 +5,8 @@ import {
   parseOperatorUserIds,
   parsePaymentSettings,
   parseVaultSettings,
+  parseAISettings,
+  assertAIReadyToCharge,
 } from './env';
 
 describe('parseEnv', () => {
@@ -174,5 +176,32 @@ describe('parseVaultSettings', () => {
     expect(parseVaultSettings({ NODE_ENV: 'production' })).toEqual({ publishEnabled: false, isProduction: true });
     expect(parseVaultSettings({ NODE_ENV: 'production', VAULT_PUBLISH_ENABLED: 'true' })).toEqual({ publishEnabled: true, isProduction: true });
     expect(parseVaultSettings({ NODE_ENV: 'development' })).toEqual({ publishEnabled: false, isProduction: false });
+  });
+});
+
+describe('AI settings', () => {
+  it('defaults to mock locally and fails closed for paid Anthropic generation', () => {
+    expect(parseAISettings({}).AI_MODE).toBe('mock');
+    expect(() => assertAIReadyToCharge(parseAISettings({ AI_MODE: 'anthropic', ANTHROPIC_API_KEY: 'key' })))
+      .toThrow(/not configured/i);
+    expect(() => assertAIReadyToCharge(parseAISettings({
+      AI_MODE: 'anthropic',
+      AI_LIVE_ENABLED: 'true',
+      ANTHROPIC_API_KEY: 'key',
+    }))).not.toThrow();
+  });
+
+  it('refuses mock generation in production unless rehearsal override is isolated from live payments', () => {
+    expect(() => parseAISettings({ NODE_ENV: 'production' })).toThrow(/AI_MODE/);
+    expect(parseAISettings({
+      NODE_ENV: 'production',
+      AI_ALLOW_MOCK_IN_PRODUCTION: 'true',
+      PAYMENTS_LIVE_ENABLED: 'false',
+    }).AI_MODE).toBe('mock');
+    expect(() => parseAISettings({
+      NODE_ENV: 'production',
+      AI_ALLOW_MOCK_IN_PRODUCTION: 'true',
+      PAYMENTS_LIVE_ENABLED: 'true',
+    })).toThrow(/AI_MODE/);
   });
 });
