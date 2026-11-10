@@ -17,7 +17,7 @@
 | Phase 2 | 2.3.2 | Add append-only mentor credit ledger | inline | done | dd7691a |
 | Phase 2 | 2.3.3 | Add validated AnswerGenerator port and Anthropic adapter | inline | done | 57b8648 |
 | Phase 2 | 2.3.4 | Add pilot preview-window helper | inline | done | 8070004 |
-| Phase 2 | 2.4 | Implement shared UI primitives required by vault | inline | todo | — |
+| Phase 2 | 2.4 | Reuse safe MarkdownView and add CrudForm checkbox plus ApprovalQueue | inline | done | fe69e50 |
 | Phase 3 | 3.1 | Implement vault purchase and generation | inline | todo | — |
 | Phase 3 | 3.2 | Implement mentor preview, approval and refund paths | inline | todo | — |
 | Phase 3 | 3.3 | Implement answer release, citations and mentor credits | inline | todo | — |
