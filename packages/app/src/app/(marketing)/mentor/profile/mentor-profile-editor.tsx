@@ -206,9 +206,10 @@ function MentorProfileForm({
   );
 }
 
-export function MentorProfileEditor() {
+export function MentorProfileEditor({ publicOrigin = 'http://localhost:3000' }: { publicOrigin?: string }) {
   const [reloads, setReloads] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
   const profileRequest = useAsync(
     () => apiCall<MentorProfileDto | null>('/api/mentors/me'),
     [reloads],
@@ -216,6 +217,8 @@ export function MentorProfileEditor() {
   const result = profileRequest.data;
   const profile = result?.ok ? result.data : undefined;
   const error = result && !result.ok ? result.error.message : profileRequest.error?.message;
+  const profilePath = profile ? `/m/${encodeURIComponent(profile.slug)}` : null;
+  const publicUrl = profile?.isListed && profilePath ? new URL(profilePath, publicOrigin).toString() : null;
 
   if (profileRequest.status === 'idle' || profileRequest.status === 'pending') {
     return (
@@ -268,6 +271,25 @@ export function MentorProfileEditor() {
           Profile saved.
         </p>
       )}
+      {publicUrl && profilePath ? (
+          <section aria-labelledby="published-profile-heading" className="flex flex-col items-start gap-group border-y border-border py-section">
+            <h2 id="published-profile-heading" className="m-0 text-section-title font-strong text-headline">Your profile is published</h2>
+            <p className="m-0 text-body text-muted-foreground">Share this link so people can view your public mentor profile.</p>
+            <Field label="Public profile link">
+              <Input readOnly value={publicUrl} onFocus={(event) => event.currentTarget.select()} />
+            </Field>
+            <div className="flex flex-wrap items-center gap-group">
+              <Button asChild variant="outline"><Link href={profilePath} target="_blank" rel="noreferrer">View public profile</Link></Button>
+              <Button type="button" onClick={() => {
+                void navigator.clipboard.writeText(publicUrl).then(
+                  () => setCopyMessage('Profile link copied.'),
+                  () => setCopyMessage('Copy failed. Select the profile link and copy it manually.'),
+                );
+              }}>Copy link</Button>
+            </div>
+            {copyMessage ? <p role="status" className="m-0 text-meta text-muted-foreground">{copyMessage}</p> : null}
+          </section>
+      ) : null}
       <MentorProfileForm
         key={profile?.id ?? 'new'}
         profile={profile}
@@ -275,7 +297,10 @@ export function MentorProfileEditor() {
           setSaved(true);
           setReloads((count) => count + 1);
         }}
-        onDirty={() => setSaved(false)}
+        onDirty={() => {
+          setSaved(false);
+          setCopyMessage(null);
+        }}
       />
     </main>
   );
