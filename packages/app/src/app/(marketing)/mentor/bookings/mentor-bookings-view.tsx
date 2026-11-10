@@ -10,8 +10,6 @@ import {
   Button,
   EmptyState,
   ErrorMessage,
-  Field,
-  Input,
   LoadingMessage,
   TextLink,
   apiCall,
@@ -26,7 +24,6 @@ function messageFrom<T>(result: ApiResult<T>): string | null {
 export function MentorBookingsView() {
   const [page, setPage] = useState(1);
   const [reloads, setReloads] = useState(0);
-  const [startTimes, setStartTimes] = useState<Record<string, string>>({});
   const [busyBookingId, setBusyBookingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const list = useAsync(
@@ -41,10 +38,7 @@ export function MentorBookingsView() {
     setBusyBookingId(booking.id);
     setActionError(null);
     try {
-      const startsAt = startTimes[booking.id];
-      const body = action === 'accept' && startsAt
-        ? { startsAt: new Date(startsAt).toISOString() }
-        : {};
+      const body = {};
       const response = await apiCall<BookingReadDto>(
         `/api/bookings/${encodeURIComponent(booking.id)}/${action}`,
         { method: 'POST', json: body },
@@ -96,23 +90,14 @@ export function MentorBookingsView() {
                   <BookingStatus status={booking.status} viewer="mentor" />
                   <span className="text-body text-foreground">{booking.counterpartName}</span>
                 </div>
-                {booking.status === 'accepted' && booking.startsAt ? (
+                {booking.startsAt ? (
                   <p className="m-0 text-body text-foreground">
-                    Starts {new Date(booking.startsAt).toLocaleString()}
+                    Session time: {new Date(booking.startsAt).toLocaleString()}
                   </p>
                 ) : null}
                 {booking.allowedActions.includes('accept') || booking.allowedActions.includes('decline') ? (
                   <div className="flex flex-col items-start gap-between-groups">
-                    <Field label="Session start (optional; defaults to now)">
-                      <Input
-                        type="datetime-local"
-                        value={startTimes[booking.id] ?? ''}
-                        onChange={(event) => setStartTimes((value) => ({
-                          ...value,
-                          [booking.id]: event.currentTarget.value,
-                        }))}
-                      />
-                    </Field>
+                    {booking.startsAt ? <p className="m-0 text-body text-foreground">Requested time: {new Date(booking.startsAt).toLocaleString()}</p> : null}
                     <div className="flex flex-wrap gap-group">
                       {booking.allowedActions.includes('accept') ? (
                         <Button

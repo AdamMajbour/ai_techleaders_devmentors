@@ -34,6 +34,11 @@ function success<T>(data: T): ApiResult<T> {
 
 beforeEach(() => {
   apiCall.mockReset();
+  apiCall.mockImplementation(async (path) => (
+    typeof path === 'string' && path.includes('/availability')
+      ? success([])
+      : success(unlistedProfile)
+  ) as never);
   window.sessionStorage.clear();
 });
 
@@ -72,16 +77,19 @@ describe('MentorProfileView', () => {
         mentorSlug: 'ada-lovelace',
         landedAt: landing,
       }));
+      const slot = { id: '3c0b2f5a-6f6e-4b53-9f0e-6b1f3b0a7a11', startsAt: '2026-11-06T13:00:00.000Z', endsAt: '2026-11-06T13:25:00.000Z' };
       apiCall
-        .mockResolvedValueOnce(success(unlistedProfile))
-        .mockResolvedValueOnce({
-          ok: false,
-          status: 503,
-          error: { code: 'unavailable', message: 'Checkout is temporarily unavailable.' },
-        });
+        .mockImplementation(async (path) => (
+          typeof path === 'string' && path.includes('/availability')
+            ? success([slot])
+            : typeof path === 'string' && path === '/api/bookings'
+              ? { ok: false, status: 503, error: { code: 'unavailable', message: 'Checkout is temporarily unavailable.' } }
+              : success(unlistedProfile)
+        ) as never);
       render(<MentorProfileView slug="ada-lovelace" source="list" />);
 
       await screen.findByRole('heading', { name: 'ada-lovelace' });
+      await user.selectOptions(await screen.findByRole('combobox', { name: 'Available session time' }), slot.id);
       const price = screen.getByRole('region', { name: 'Price' });
       const question = screen.getByRole('textbox', { name: /Your question/ });
       expect(price.compareDocumentPosition(question) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -96,6 +104,7 @@ describe('MentorProfileView', () => {
         method: 'POST',
         json: {
           mentorId: unlistedProfile.id,
+          availabilitySlotId: slot.id,
           question: 'How do I fix this issue in the service?',
           source: 'list',
           landedAt: landing,
