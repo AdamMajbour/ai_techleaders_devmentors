@@ -14,3 +14,5 @@ export { StatusTransition } from './workflow/status-transition.entity';
 export { Message } from './messages/message.entity';
 export { Note } from './notes/note.entity';
 export { LedgerEntry } from './ledger/ledger-entry.entity';
+export { VaultAnswer } from './vault/vault-answer.entity';
+export { VaultAnswerCitation } from './vault/vault-answer-citation.entity';

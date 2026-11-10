@@ -138,7 +138,7 @@ export type NewBooking = Pick<
   | 'endsAt'
 > & Partial<Pick<Booking, 'availabilitySlotId'>>;
 
-export type NewPayment = Pick<
+export type NewPayment = Omit<Pick<
   Payment,
   | 'bookingId'
   | 'provider'
@@ -148,7 +148,7 @@ export type NewPayment = Pick<
   | 'amountMinor'
   | 'currency'
   | 'status'
->;
+>, 'bookingId'> & { bookingId: string };
 
 export class BookingRepository {
   constructor(private readonly em: EntityManager) {}

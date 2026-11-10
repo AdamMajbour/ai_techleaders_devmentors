@@ -92,8 +92,8 @@ describe('migrations', () => {
       'articles',
       'bookings',
       'invitations',
-      'login_tokens',
       'ledger_entries',
+      'login_tokens',
       'mentor_availability_slots',
       'mentor_profiles',
       'messages',
@@ -102,6 +102,8 @@ describe('migrations', () => {
       'payments',
       'status_transitions',
       'users',
+      'vault_answer_citations',
+      'vault_answers',
     ]);
   });
 
@@ -125,6 +127,18 @@ describe('migrations', () => {
     expect(await publicTables()).not.toContain('ledger_entries');
     await orm.migrator.up();
     expect(await publicTables()).toContain('ledger_entries');
+  });
+
+  it('creates and drops vault answers, citations and payable-subject columns reversibly', async () => {
+    await orm.migrator.down('Migration20261110170000_vault_answers');
+    expect(await publicTables()).not.toContain('vault_answers');
+    const before = await orm.em.getConnection().execute(`select is_nullable from information_schema.columns where table_name = 'payments' and column_name = 'booking_id'`);
+    expect(before).toEqual([{ is_nullable: 'YES' }]);
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('vault_answers');
+    expect(await publicTables()).toContain('vault_answer_citations');
+    const after = await orm.em.getConnection().execute(`select is_nullable from information_schema.columns where table_name = 'payments' and column_name = 'booking_id'`);
+    expect(after).toEqual([{ is_nullable: 'YES' }]);
   });
 
   it('removes the approval table and its partial index on migration down', async () => {
@@ -1380,9 +1394,10 @@ describe('migrations (down)', () => {
 
     await orm.migrator.up();
     expect(await publicTables()).toEqual([
-      'approval_requests', 'articles', 'bookings', 'invitations', 'login_tokens',
-      'ledger_entries', 'mentor_availability_slots', 'mentor_profiles', 'messages', 'mikro_orm_migrations',
+      'approval_requests', 'articles', 'bookings', 'invitations', 'ledger_entries', 'login_tokens',
+      'mentor_availability_slots', 'mentor_profiles', 'messages', 'mikro_orm_migrations',
       'notes', 'payments', 'status_transitions', 'users',
+      'vault_answer_citations', 'vault_answers',
     ]);
   });
 
