@@ -11,6 +11,11 @@ function localInputValue(date: Date): string {
   return local.toISOString().slice(0, 16);
 }
 
+function defaultSlotStart(): string {
+  const minTime = Date.now() + 60 * 60_000;
+  return localInputValue(new Date(Math.ceil(minTime / (15 * 60_000)) * 15 * 60_000));
+}
+
 function formatTime(value: string): string {
   return new Intl.DateTimeFormat(undefined, {
     weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
@@ -18,7 +23,7 @@ function formatTime(value: string): string {
 }
 
 export function MentorAvailabilityView() {
-  const [startsAt, setStartsAt] = useState(() => localInputValue(new Date(Date.now() + 60 * 60_000)));
+  const [startsAt, setStartsAt] = useState(defaultSlotStart);
   const [reloads, setReloads] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

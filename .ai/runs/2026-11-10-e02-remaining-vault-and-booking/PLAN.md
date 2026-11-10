@@ -7,8 +7,8 @@
 | Gate | 0.1 | Reconcile specs, upstream branches, and predecessor | inline | done | — |
 | Phase 1 | 1.1 | Extend E01 spec with requester-approved selected-time booking | inline | done | 6db598e |
 | Phase 1 | 1.2 | Add persisted slots, owner APIs, atomic booking reservation, and terminal-state release | inline | done | 08a3b35 |
-| Phase 1 | 1.3 | Build mentor slot manager and seeker timezone-aware slot selector | inline | done | — |
-| Gate | 1.4 | Validate selected-time booking; update issue #8 | inline | in-progress | — |
+| Phase 1 | 1.3 | Build mentor slot manager and seeker timezone-aware slot selector | inline | done | e16e4af |
+| Gate | 1.4 | Finish slot integration evidence and update issue #8 | inline | in-progress | — |
 | Phase 2 | 2.1 | Implement shared workflow primitives required by vault | inline | todo | — |
 | Phase 2 | 2.2 | Implement generic payable subject/refund handling | inline | todo | — |
 | Phase 2 | 2.3 | Implement ledger and AnswerGenerator primitives | inline | todo | — |
@@ -30,4 +30,5 @@ Deliver selected-time mentor booking plus E02-S02/S03 on a branch stacked on E02
 
 ## Validation
 Run the configured full gate, migration integration suite, and browser checks after implementation. No claim of completed vault slices until their prerequisites are present.
+
 

@@ -50,6 +50,7 @@ describe('AvailabilityService', () => {
   it.each([
     '2026-11-05T12:15:00.000Z',
     '2026-11-05T12:00:00.000Z',
+    '2026-11-12T11:45:00.000Z',
     '2026-11-13T12:00:00.000Z',
   ])('rejects invalid slot start %s', async (startsAt) => {
     const { service, repository } = setup();

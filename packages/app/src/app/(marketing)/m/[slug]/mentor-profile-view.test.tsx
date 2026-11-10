@@ -89,6 +89,8 @@ describe('MentorProfileView', () => {
       render(<MentorProfileView slug="ada-lovelace" source="list" />);
 
       await screen.findByRole('heading', { name: 'ada-lovelace' });
+      expect(screen.getByRole('region', { name: 'Price' })).toHaveTextContent('25 EUR');
+      expect(screen.queryByRole('textbox', { name: /Your question/ })).not.toBeInTheDocument();
       await user.selectOptions(await screen.findByRole('combobox', { name: 'Available session time' }), slot.id);
       const price = screen.getByRole('region', { name: 'Price' });
       const question = screen.getByRole('textbox', { name: /Your question/ });

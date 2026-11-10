@@ -35,8 +35,8 @@ export function BookingQuestionForm({
       <h2 id="ask-mentor" className="m-0 text-section-title font-strong text-headline">
         Ask {profile.slug}
       </h2>
-      <PriceNotice amountMinor={SESSION_25_PRICE_MINOR} currency={CURRENCY} description={`for a 25-minute text session with ${profile.slug}`} refundRule="If the mentor declines or does not answer, you are refunded." />
-      <Field label="Available session time" hint={`Times are shown in your timezone (${timeZone}). Sessions last 25 minutes.`} error={error ?? undefined}>
+      <PriceNotice amountMinor={SESSION_25_PRICE_MINOR} currency={CURRENCY} description={`for a 25-minute text session with ${profile.slug}`} refundRule="If the mentor declines, does not answer, or does not attend, you are refunded." />
+      <Field label="Available session time" hint={`Times are shown in your timezone (${timeZone}). Sessions last 25 minutes.`} error={error ?? undefined} requirement="required">
         <Select value={slotId} onChange={(event) => setSlotId(event.currentTarget.value)} aria-label="Available session time">
           <option value="">Choose a time</option>
           {slots.map((slot) => <option key={slot.id} value={slot.id}>{formatSlot(slot.startsAt)}</option>)}

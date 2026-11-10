@@ -65,7 +65,7 @@ export class AvailabilityService {
     if (
       startsAt.getTime() % QUARTER_HOUR_MS !== 0 ||
       delta < MIN_LEAD_MS ||
-      delta > MAX_AHEAD_MS
+      delta + SLOT_MS > MAX_AHEAD_MS
     ) {
       throw new ValidationError('Choose a 25-minute slot at least 30 minutes from now and within the next 7 days.', {
         startsAt: ['Start must align to a 15-minute boundary and be 30 minutes to 7 days ahead.'],
