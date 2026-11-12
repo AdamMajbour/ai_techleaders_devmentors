@@ -21,6 +21,7 @@ import { ReviewItem, type ReviewItemData } from '../components/vault/ReviewItem'
 import { VaultAnswerView, type VaultAnswerViewProps } from '../components/vault/VaultAnswerView';
 import { NOTE_BODY, NOTICE_DRAFT_LABEL, NOTICE_ITEMS, NOTICE_VERSION } from '../../.storybook/blocks/sampleData';
 import { Page } from '../backend/layout/Page';
+import { ApprovalQueue } from '../backend/queues/ApprovalQueue';
 import { TestModeBanner } from './e01-views';
 
 const ok: ApiResult<unknown> = { ok: true, status: 200, data: {} };
@@ -149,6 +150,7 @@ export function PreviewsView({
   pendingId,
   errorId,
   actionError,
+  onRetry = () => {},
 }: {
   state: ListState;
   items: ReviewItemData[];
@@ -157,26 +159,22 @@ export function PreviewsView({
   pendingId?: string;
   errorId?: string;
   actionError?: string;
+  onRetry?: () => void;
 }) {
   return (
     <Page title="Answers to review">
       <p className="m-0 max-w-session text-body text-foreground">
         These answers were written by AI from notes that include yours. Read each one before the seeker does.
       </p>
-      {state === 'loading' ? (
-        <div aria-busy="true" className="flex flex-col gap-between-groups">
-          <LoadingMessage message="Loading answers to review…" />
-          <Skeleton className="h-6 w-1/3" />
-          <Skeleton className="h-16 w-full" />
-        </div>
-      ) : null}
-      {state === 'error' ? <ErrorMessage message="Answers to review could not be loaded. Check your connection and try again." onRetry={() => {}} /> : null}
-      {state === 'empty' ? (
-        <EmptyState title="Nothing to review" description="When an answer cites one of your notes, it appears here and we email you." />
-      ) : null}
-      {state === 'ready' ? (
-        <ul className="m-0 flex max-w-session list-none flex-col p-0">
-          {items.map((item) => (
+      <ApprovalQueue
+        state={state}
+        items={items}
+        emptyTitle="Nothing to review"
+        emptyDescription="When an answer cites one of your notes, it appears here and we email you."
+        errorMessage="Answers to review could not be loaded. Check your connection and try again."
+        loadingMessage="Loading answers to review…"
+        onRetry={onRetry}
+        renderItem={(item) => (
             <ReviewItem
               key={item.answerId}
               item={item}
@@ -189,9 +187,8 @@ export function PreviewsView({
               onApprove={() => {}}
               onReject={() => {}}
             />
-          ))}
-        </ul>
-      ) : null}
+        )}
+      />
     </Page>
   );
 }

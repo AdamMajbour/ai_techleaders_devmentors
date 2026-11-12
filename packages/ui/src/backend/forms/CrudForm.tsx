@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { ApiFieldErrors, ApiResult } from '../api/types';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Button } from '../../components/ui/button';
+import { Checkbox } from '../../components/ui/checkbox';
 import { Field } from '../../components/ui/field';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -12,11 +13,13 @@ import { Textarea } from '../../components/ui/textarea';
 export type CrudFormField = {
   name: string;
   label: string;
-  type?: 'text' | 'email' | 'password' | 'textarea';
+  type?: 'text' | 'email' | 'password' | 'textarea' | 'checkbox';
   autoComplete?: string;
   placeholder?: string;
   /** Help shown under the label, before the control. */
   hint?: string;
+  /** Longer explanatory text for consent or a setting; shown with the label. */
+  description?: string;
   /** Writes "(required)" or "(optional)" in the label. Mark the minority of fields. */
   requirement?: 'required' | 'optional';
 };
@@ -25,7 +28,7 @@ export interface CrudFormProps<TSchema extends z.ZodType> {
   /** The same Zod schema the API route validates with: one schema, two call sites. */
   schema: TSchema;
   fields: CrudFormField[];
-  initialValues?: Record<string, string>;
+  initialValues?: Record<string, string | boolean>;
   /** Receives the parsed (trimmed, normalized) values; resolves to the `apiCall` result. */
   onSubmit: (values: z.output<TSchema>) => Promise<ApiResult<unknown>>;
   onSuccess?: (data: unknown) => void;
@@ -33,7 +36,7 @@ export interface CrudFormProps<TSchema extends z.ZodType> {
   submitLabel?: string;
 }
 
-function fieldErrorsOf(schema: z.ZodType, values: Record<string, string>): ApiFieldErrors {
+function fieldErrorsOf(schema: z.ZodType, values: Record<string, unknown>): ApiFieldErrors {
   const parsed = schema.safeParse(values);
   return parsed.success ? {} : (z.flattenError(parsed.error).fieldErrors as ApiFieldErrors);
 }
@@ -58,8 +61,8 @@ export function CrudForm<TSchema extends z.ZodType>({
   submitLabel = 'Save',
 }: CrudFormProps<TSchema>) {
   const formId = useId();
-  const [values, setValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(fields.map((field) => [field.name, initialValues[field.name] ?? ''])),
+  const [values, setValues] = useState<Record<string, unknown>>(() =>
+    Object.fromEntries(fields.map((field) => [field.name, initialValues[field.name] ?? (field.type === 'checkbox' ? false : '')])),
   );
   const [fieldErrors, setFieldErrors] = useState<ApiFieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -135,21 +138,15 @@ export function CrudForm<TSchema extends z.ZodType>({
       {fields.map((field) => {
         const inputId = `${formId}-${field.name}`;
         const errors = fieldErrors[field.name];
-        const shared = {
-          name: field.name,
-          value: values[field.name],
-          placeholder: field.placeholder,
-          disabled: isSubmitting,
-          onChange: (event: { target: { value: string } }) => {
-            const next = { ...values, [field.name]: event.target.value };
-            edited.current.add(field.name);
-            setValues(next);
-            // Once an error is showing, re-check while the user fixes it so the message goes away at once.
-            if (fieldErrors[field.name]) setErrorsFor(field.name, fieldErrorsOf(schema, next)[field.name]);
-          },
-          onBlur: () => {
-            if (edited.current.has(field.name)) setErrorsFor(field.name, fieldErrorsOf(schema, values)[field.name]);
-          },
+        const setValue = (value: unknown) => {
+          const next = { ...values, [field.name]: value };
+          edited.current.add(field.name);
+          setValues(next);
+          // Once an error is showing, re-check while the user fixes it so the message goes away at once.
+          if (fieldErrors[field.name]) setErrorsFor(field.name, fieldErrorsOf(schema, next)[field.name]);
+        };
+        const onBlur = () => {
+          if (edited.current.has(field.name)) setErrorsFor(field.name, fieldErrorsOf(schema, values)[field.name]);
         };
 
         return (
@@ -157,14 +154,39 @@ export function CrudForm<TSchema extends z.ZodType>({
             key={field.name}
             id={inputId}
             label={field.label}
-            hint={field.hint}
+            hint={field.description ?? field.hint}
             requirement={field.requirement}
             error={errors ? errors.join(' ') : undefined}
+            orientation={field.type === 'checkbox' ? 'inline' : 'stacked'}
           >
-            {field.type === 'textarea' ? (
-              <Textarea {...shared} />
+            {field.type === 'checkbox' ? (
+              <Checkbox
+                name={field.name}
+                checked={values[field.name] === true}
+                disabled={isSubmitting}
+                onCheckedChange={(checked) => setValue(checked === true)}
+                onBlur={onBlur}
+              />
+            ) : field.type === 'textarea' ? (
+              <Textarea
+                name={field.name}
+                value={String(values[field.name] ?? '')}
+                placeholder={field.placeholder}
+                disabled={isSubmitting}
+                onChange={(event) => setValue(event.target.value)}
+                onBlur={onBlur}
+              />
             ) : (
-              <Input {...shared} type={field.type ?? 'text'} autoComplete={field.autoComplete} />
+              <Input
+                name={field.name}
+                value={String(values[field.name] ?? '')}
+                placeholder={field.placeholder}
+                disabled={isSubmitting}
+                type={field.type ?? 'text'}
+                autoComplete={field.autoComplete}
+                onChange={(event) => setValue(event.target.value)}
+                onBlur={onBlur}
+              />
             )}
           </Field>
         );

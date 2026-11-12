@@ -25,6 +25,7 @@ export const statusBadgeVariants = cva(
 );
 
 export interface StatusBadgeProps extends HTMLAttributes<HTMLSpanElement>, VariantProps<typeof statusBadgeVariants> {
+  children?: ReactNode;
   /** An optional lucide icon (size-4, aria-hidden). It supports the text, it never replaces it. */
   icon?: ReactNode;
 }

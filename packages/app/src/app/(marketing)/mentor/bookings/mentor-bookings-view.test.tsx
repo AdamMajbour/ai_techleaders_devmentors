@@ -24,8 +24,8 @@ const paid: BookingReadDto = {
   status: 'paid',
   source: 'link',
   landedAt: '2026-11-05T12:00:00.000Z',
-  startsAt: null,
-  endsAt: null,
+  startsAt: '2026-11-06T13:00:00.000Z',
+  endsAt: '2026-11-06T13:25:00.000Z',
   counterpartName: 'Sam Seeker',
   refundStatus: 'none',
   allowedActions: ['accept', 'decline'],
@@ -65,7 +65,7 @@ describe('MentorBookingsView', () => {
     expect(screen.queryByText(/@example\.com/)).not.toBeInTheDocument();
   });
 
-  it('posts accept with the server-default start and refreshes the accepted booking', async () => {
+  it('confirms the time selected by the seeker and refreshes the accepted booking', async () => {
     const accepted: BookingReadDto = {
       ...paid,
       status: 'accepted',
@@ -88,7 +88,7 @@ describe('MentorBookingsView', () => {
       '/api/bookings/booking-1/accept',
       { method: 'POST', json: {} },
     );
-    expect(await screen.findByText(/Starts/)).toBeInTheDocument();
+    expect(await screen.findByText(/Session time/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Accept' })).not.toBeInTheDocument();
     expect(screen.queryByText('seeker@example.com')).not.toBeInTheDocument();
   });

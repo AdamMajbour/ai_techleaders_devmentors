@@ -14,6 +14,11 @@ import {
   MentorProfileRepository,
   PaymentRepository,
   MessageRepository,
+  NoteRepository,
+  AvailabilitySlotRepository,
+  LedgerEntryRepository,
+  MikroOrmUnitOfWork,
+  VaultAnswerRepository,
   UserRepository,
 } from '@devmentor/db';
 import { createEventBus } from '../events/event-bus';
@@ -21,7 +26,7 @@ import { registerLoggingSubscriber } from '../events/logging-subscriber';
 import { registerMailSubscriber } from '../events/mail-subscriber';
 import { registerBookingMailMappings } from '../events/booking-mail';
 import { createLogger, type Logger } from '../logger';
-import { getBookingSettings } from '../config/env';
+import { getBookingSettings, getVaultSettings } from '../config/env';
 import { ArticleService } from '../services/articles/article.service';
 import { AuthService } from '../services/auth/auth.service';
 import { UserService } from '../services/auth/user.service';
@@ -33,9 +38,21 @@ import { ConfiguredMailer } from '../services/notifications/adapters/configured-
 import { ApprovalService, defaultApproverResolvers } from '../services/approvals/approval.service';
 import { MentorService } from '../services/mentors/mentor.service';
 import { BookingService } from '../services/bookings/booking.service';
+import { AvailabilityService } from '../services/bookings/availability.service';
 import { RefundService } from '../services/refunds/refund.service';
 import { MessageService } from '../services/messages/message.service';
+import { NoteService } from '../services/notes/note.service';
 import { systemClock } from '../utils/clock';
+import { LedgerService } from '../services/ledger/ledger.service';
+import { createConfiguredAnswerGenerator } from '../services/ai/answer-generator.factory';
+import { NoteSelector } from '../services/vault/note-selector';
+import { VaultAnswerPaymentHandler } from '../services/vault/vault-answer-payment.handler';
+import { VaultAnswerService } from '../services/vault/vault-answer.service';
+import { VaultReleaseService } from '../services/vault/vault-release.service';
+import { VaultGenerationTask } from '../services/vault/vault-generation.task';
+import { VaultReviewService } from '../services/vault/vault-review.service';
+import { VaultExpireReviewsTask } from '../services/vault/vault-expire-reviews.task';
+import { assertConfiguredAIReadyToCharge } from '../services/ai/answer-generator.factory';
 import type { Cradle, OrmLike } from './cradle';
 
 export type AppContainer = AwilixContainer<Cradle>;
@@ -74,6 +91,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     logger: asValue(logger),
     clock: asValue(systemClock),
     bookingSettings: asValue(getBookingSettings),
+    vaultSettings: asValue(getVaultSettings),
     eventBus: asValue(eventBus),
     orm: asValue(orm),
     em: asFunction(({ orm }: Cradle) => orm.em.fork()).scoped(),
@@ -86,14 +104,45 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     bookingRepository: asFunction(({ em }: Cradle) => new BookingRepository(em)).scoped(),
     paymentRepository: asFunction(({ em }: Cradle) => new PaymentRepository(em)).scoped(),
     messageRepository: asFunction(({ em }: Cradle) => new MessageRepository(em)).scoped(),
+    noteRepository: asFunction(({ em }: Cradle) => new NoteRepository(em)).scoped(),
+    availabilitySlotRepository: asFunction(({ em }: Cradle) => new AvailabilitySlotRepository(em)).scoped(),
+    ledgerEntryRepository: asFunction(({ em }: Cradle) => new LedgerEntryRepository(em)).scoped(),
+    unitOfWork: asFunction(({ em }: Cradle) => new MikroOrmUnitOfWork(em)).scoped(),
+    vaultAnswerRepository: asFunction(({ em }: Cradle) => new VaultAnswerRepository(em)).scoped(),
     userService: asClass(UserService).scoped(),
     authService: asClass(AuthService).scoped(),
     articleService: asClass(ArticleService).scoped(),
     approvalService: asClass(ApprovalService).scoped(),
     mentorService: asClass(MentorService).scoped(),
     bookingService: asClass(BookingService).scoped(),
+    availabilityService: asClass(AvailabilityService).scoped(),
+    ledgerService: asClass(LedgerService).scoped(),
+    answerGenerator: asFunction(() => createConfiguredAnswerGenerator()).singleton(),
+    noteSelector: asFunction(({ noteRepository, userRepository, logger }: Cradle) => new NoteSelector({ noteRepository, userRepository, logger })).scoped(),
+    vaultAnswerPaymentHandler: asFunction(({ vaultAnswerRepository, eventBus, clock }: Cradle) => new VaultAnswerPaymentHandler({ vaultAnswerRepository, eventBus, clock })).scoped(),
+    paymentSubjectHandlers: asFunction(({ vaultAnswerPaymentHandler }: Cradle) => [vaultAnswerPaymentHandler]).scoped(),
+    vaultAnswerService: asFunction((cradle: Cradle) => new VaultAnswerService({
+      vaultAnswerRepository: cradle.vaultAnswerRepository,
+      paymentRepository: cradle.paymentRepository,
+      noteSelector: cradle.noteSelector,
+      invitationService: cradle.invitationService,
+      paymentGateway: cradle.paymentGateway,
+      paymentService: cradle.paymentService,
+      eventBus: cradle.eventBus,
+      logger: cradle.logger,
+      clock: cradle.clock,
+      vaultSettings: cradle.vaultSettings,
+      assertAIReady: cradle.assertAIReady,
+      vaultGenerationTask: cradle.vaultGenerationTask,
+    })).scoped(),
+    vaultReleaseService: asFunction(({ vaultAnswerRepository, paymentRepository, ledgerEntryRepository, unitOfWork, eventBus, clock }: Cradle) => new VaultReleaseService({ vaultAnswerRepository, paymentRepository, ledgerEntryRepository, unitOfWork, eventBus, clock })).scoped(),
+    vaultGenerationTask: asFunction(({ vaultAnswerRepository, vaultReleaseService, noteSelector, answerGenerator, eventBus, logger, clock }: Cradle) => new VaultGenerationTask({ vaultAnswerRepository, vaultReleaseService, noteSelector, answerGenerator, eventBus, logger, clock })).scoped(),
+    vaultReviewService: asFunction(({ vaultAnswerRepository, paymentRepository, ledgerEntryRepository, noteRepository, vaultReleaseService, unitOfWork, eventBus, clock }: Cradle) => new VaultReviewService({ vaultAnswerRepository, paymentRepository, ledgerEntryRepository, noteRepository, vaultReleaseService, unitOfWork, eventBus, clock })).scoped(),
+    vaultExpireReviewsTask: asFunction(({ vaultAnswerRepository, eventBus, clock }: Cradle) => new VaultExpireReviewsTask({ vaultAnswerRepository, eventBus, clock })).scoped(),
+    assertAIReady: asValue(assertConfiguredAIReadyToCharge),
     refundService: asClass(RefundService).scoped(),
     messageService: asClass(MessageService).scoped(),
+    noteService: asClass(NoteService).scoped(),
     paymentService: asClass(PaymentService).scoped(),
     invitationService: asClass(InvitationService).scoped(),
     magicLinkService: asClass(MagicLinkService).scoped(),

@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
 export const MENTOR_PAGE_SIZE = 10;
+export const MENTOR_TECHNOLOGY_OPTIONS = ['aws','azure','c-sharp','docker','dot-net','go','java','javascript','kubernetes','mongodb','mysql','next-js','node-js','php','postgresql','python','react','ruby','rust','terraform','typescript'] as const;
+const optionalGithubUrlSchema = z.preprocess(
+  (value) => typeof value === 'string' && value.trim() === '' ? null : value,
+  z.url().refine((value) => ['github.com','www.github.com'].includes(new URL(value).hostname.toLowerCase()), 'Enter a GitHub profile URL.').nullable().optional(),
+);
 
 export const mentorListQuerySchema = z.object({
   technology: z.string().trim().max(80).optional(),
@@ -14,6 +19,7 @@ export const mentorProfileInputSchema = z.object({
   bio: z.string().trim().min(1).max(5000),
   technologies: z.string().trim().min(1).max(500),
   publicWorkUrl: z.url(),
+  githubUrl: optionalGithubUrlSchema,
   isListed: z.boolean().optional(),
 });
 
@@ -30,6 +36,7 @@ export const mentorProfileDtoSchema = z.object({
   bio: z.string(),
   technologies: z.string(),
   publicWorkUrl: z.url(),
+  githubUrl: z.url().nullable(),
   isListed: z.boolean(),
   activity: mentorActivitySchema,
 });

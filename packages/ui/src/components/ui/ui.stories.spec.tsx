@@ -26,6 +26,7 @@ import * as CreditsPanelStories from '../vault/CreditsPanel.stories';
 import * as ReviewItemStories from '../vault/ReviewItem.stories';
 import * as VaultAnswerViewStories from '../vault/VaultAnswerView.stories';
 import * as ReviewQueueStories from '../../patterns/review-queue.stories';
+import * as ApprovalQueueStories from '../../backend/queues/ApprovalQueue.stories';
 import * as E02Stories from '../../screens/e02.stories';
 import * as PilotCountsTableStories from '../pilot/PilotCountsTable.stories';
 import * as E03Stories from '../../screens/e03.stories';
@@ -131,6 +132,7 @@ const product = {
 const patterns = {
   'Paid action flow': PaidActionFlowStories,
   'Review queue': ReviewQueueStories,
+  'Approval queue primitive': ApprovalQueueStories,
   'Session thread': SessionThreadPatternStories,
   'Confirm destructive action': ConfirmDestructiveStories,
   'Detail view': DetailViewStories,

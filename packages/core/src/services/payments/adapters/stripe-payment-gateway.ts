@@ -28,7 +28,11 @@ function normalizeSession(
   type: 'checkout.completed' | 'checkout.expired' | 'checkout.failed',
 ): NormalizedPaymentEvent | null {
   const metadata = isRecord(session.metadata) ? session.metadata : null;
-  const bookingId = metadata?.bookingId;
+  const rawSubjectType = metadata?.subjectType;
+  const subjectType = rawSubjectType === 'vault_answer' ? 'vault_answer' : 'booking';
+  const subjectId = subjectType === 'vault_answer'
+    ? metadata?.subjectId
+    : metadata?.subjectId ?? metadata?.bookingId;
   const providerSessionId = session.id;
   const amountMinor = session.amount_total;
   const currency = session.currency;
@@ -36,7 +40,8 @@ function normalizeSession(
   const providerPaymentId = getId(session.payment_intent);
 
   if (
-    typeof bookingId !== 'string' ||
+    typeof subjectId !== 'string' ||
+    (rawSubjectType !== undefined && rawSubjectType !== 'booking' && rawSubjectType !== 'vault_answer') ||
     typeof providerSessionId !== 'string' ||
     typeof amountMinor !== 'number' ||
     !Number.isSafeInteger(amountMinor) ||
@@ -50,7 +55,7 @@ function normalizeSession(
     if (!providerPaymentId) return null;
     return {
       type,
-      bookingId,
+      ...(subjectType === 'vault_answer' ? { subjectType, subjectId } : { bookingId: subjectId }),
       providerSessionId,
       providerPaymentId,
       amountMinor,
@@ -61,7 +66,7 @@ function normalizeSession(
 
   return {
     type,
-    bookingId,
+    ...(subjectType === 'vault_answer' ? { subjectType, subjectId } : { bookingId: subjectId }),
     providerSessionId,
     ...(providerPaymentId === undefined ? {} : { providerPaymentId }),
     amountMinor,
@@ -92,6 +97,11 @@ export class StripePaymentGateway implements PaymentGateway {
       throw new Error('Stripe checkout currency must be a three-letter code.');
     }
 
+    const subjectType = input.subjectType ?? 'booking';
+    const subjectId = input.subjectId ?? input.bookingId;
+    if (!subjectId || (subjectType === 'vault_answer' && !input.subjectId)) {
+      throw new Error('A checkout subject is required.');
+    }
     const { stripe } = this.getStripe();
     const baseUrl = this.baseUrl();
     const session = await stripe.checkout.sessions.create(
@@ -103,12 +113,18 @@ export class StripePaymentGateway implements PaymentGateway {
             price_data: {
               currency: input.currency.toLowerCase(),
               unit_amount: input.amountMinor,
-              product_data: { name: 'DevMentor booking' },
+              product_data: { name: subjectType === 'vault_answer' ? 'DevMentor vault answer' : 'DevMentor booking' },
             },
           },
         ],
-        metadata: { bookingId: input.bookingId },
-        success_url: `${baseUrl}/bookings/${input.bookingId}/return?session_id={CHECKOUT_SESSION_ID}`,
+        metadata: {
+          subjectType,
+          subjectId,
+          ...(subjectType === 'booking' ? { bookingId: subjectId } : {}),
+        },
+        success_url: subjectType === 'vault_answer'
+          ? `${baseUrl}/vault/${subjectId}/return?session_id={CHECKOUT_SESSION_ID}`
+          : `${baseUrl}/bookings/${subjectId}/return?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/mentors?checkout=cancelled`,
       },
       { idempotencyKey: normalizedIdempotencyKey(input.idempotencyKey) },

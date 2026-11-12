@@ -19,6 +19,15 @@ export interface EventMap {
   'approvals.approval.approved': { approvalId: string };
   'approvals.approval.rejected': { approvalId: string };
   'messages.message.posted': { messageId: string; bookingId: string; authorId: string };
+  'notes.note.published': { noteId: string; mentorId: string };
+  'notes.note.taken_down': { noteId: string; mentorId: string };
+  'vault.answer.paid': { answerId: string };
+  'vault.answer.created': { answerId: string; seekerId: string };
+  'vault.answer.generated': { answerId: string };
+  'vault.answer.failed': { answerId: string };
+  'vault.answer.rejected': { answerId: string };
+  'vault.answer.expired': { answerId: string };
+  'vault.answer.released': { answerId: string };
 }
 
 export type EventName = keyof EventMap;

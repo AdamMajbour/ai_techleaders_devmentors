@@ -60,9 +60,16 @@ export {
   getEnv,
   getMailerSettings,
   getPaymentSettings,
+  getVaultSettings,
+  getAISettings,
+  parseAISettings,
+  assertAIReadyToCharge,
   parseEnv,
   parseBookingSettings,
   parsePaymentSettings,
+  parseVaultSettings,
+  type VaultSettings,
+  type AISettings,
   getOperatorUserIds,
   parseOperatorUserIds,
 } from './config/env';
@@ -82,9 +89,29 @@ export {
   type MentorProfileInput,
 } from './services/mentors/mentor.service';
 export { BookingService, type BookingCreationResult } from './services/bookings/booking.service';
+export { LedgerService, type LedgerEntryDto } from './services/ledger/ledger.service';
+export {
+  GeneratorError,
+  type GeneratorErrorKind,
+  type AnswerGenerationInput,
+  type AnswerSourceNote,
+  type AnswerGenerator,
+  type GenerationCandidate,
+} from './services/ai/answer-generator.port';
+export { validateGeneration, type GenerationValidationOptions } from './services/ai/validate-generation';
+export { MockAnswerGenerator } from './services/ai/adapters/mock-answer-generator';
+export { AnthropicAnswerGenerator } from './services/ai/adapters/anthropic-answer-generator';
+export { createConfiguredAnswerGenerator, assertConfiguredAIReadyToCharge } from './services/ai/answer-generator.factory';
+export { VaultAnswerPaymentHandler } from './services/vault/vault-answer-payment.handler';
+export { VaultReleaseService } from './services/vault/vault-release.service';
+export { VaultReviewService } from './services/vault/vault-review.service';
+export { VaultGenerationTask } from './services/vault/vault-generation.task';
+export { VaultExpireReviewsTask } from './services/vault/vault-expire-reviews.task';
+export { VaultAnswerService, type VaultAnswerCreationResult } from './services/vault/vault-answer.service';
 export { PaymentService } from './services/payments/payment.service';
 export { RefundService } from './services/refunds/refund.service';
 export { MessageService, type MessageDto, type MessagePage } from './services/messages/message.service';
+export { NoteService, type NoteDto, type NoteInput, type NoteSummaryDto } from './services/notes/note.service';
 export { AuthService } from './services/auth/auth.service';
 export { UserService } from './services/auth/user.service';
 export {

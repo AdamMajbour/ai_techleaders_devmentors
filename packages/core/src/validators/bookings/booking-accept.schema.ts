@@ -1,8 +1,6 @@
 import { z } from 'zod';
 
-export const bookingAcceptSchema = z.object({
-  startsAt: z.iso.datetime().optional(),
-}).strict();
+export const bookingAcceptSchema = z.object({}).strict();
 
 export const bookingDeclineSchema = z.object({}).strict();
 

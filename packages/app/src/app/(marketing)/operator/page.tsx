@@ -52,6 +52,7 @@ export default async function OperatorDashboardPage() {
 
       <nav aria-label="Admin tools" className="flex flex-wrap gap-group border-t border-border pt-panel-compact">
         <Link className="text-link underline" href="/operator/approvals">Review refund approvals ({approvals.items.length})</Link>
+        <Link className="text-link underline" href="/operator/vault-answers">Vault answer status</Link>
         <Link className="text-link underline" href="/operator/users">Browse users</Link>
       </nav>
     </main>

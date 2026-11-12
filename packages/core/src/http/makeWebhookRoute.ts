@@ -8,7 +8,11 @@ export type WebhookVerification = (rawBody: string, headers: Headers) => Promise
 
 export interface WebhookRouteConfig {
   verify: WebhookVerification;
-  handler: (rawBody: string, headers: Headers, ctx: { cradle: Cradle }) => Promise<unknown>;
+  handler: (rawBody: string, headers: Headers, ctx: {
+    cradle: Cradle;
+    background?: (task: () => Promise<void>) => void;
+  }) => Promise<unknown>;
+  background?: (task: () => Promise<void>) => void;
 }
 
 /**
@@ -22,7 +26,10 @@ export function makeWebhookRoute(config: WebhookRouteConfig) {
       const verified = await config.verify(rawBody, request.headers);
       if (!verified) throw new ValidationError('Invalid webhook signature.');
 
-      return withScope((cradle) => config.handler(rawBody, request.headers, { cradle }));
+      return withScope((cradle) => config.handler(rawBody, request.headers, {
+        cradle,
+        ...(config.background ? { background: config.background } : {}),
+      }));
     }),
   };
 }

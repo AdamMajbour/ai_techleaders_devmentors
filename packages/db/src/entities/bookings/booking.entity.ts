@@ -15,6 +15,7 @@ export const Booking = defineDomainEntity({
     landedAt: p.datetime(),
     startsAt: p.datetime().nullable(),
     endsAt: p.datetime().nullable(),
+    availabilitySlotId: p.uuid().nullable(),
   },
 });
 

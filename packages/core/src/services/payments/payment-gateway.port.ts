@@ -1,5 +1,8 @@
 export interface CreateCheckoutInput {
-  bookingId: string;
+  /** Legacy alias for a booking subject. */
+  bookingId?: string;
+  subjectType?: 'booking' | 'vault_answer';
+  subjectId?: string;
   amountMinor: number;
   currency: string;
   idempotencyKey: string;
@@ -18,7 +21,10 @@ export interface RefundInput {
 
 export interface CheckoutCompletedEvent {
   type: 'checkout.completed';
-  bookingId: string;
+  /** Legacy booking key retained for existing clients. */
+  bookingId?: string;
+  subjectType?: 'booking' | 'vault_answer';
+  subjectId?: string;
   providerSessionId: string;
   providerPaymentId: string;
   amountMinor: number;
@@ -28,7 +34,9 @@ export interface CheckoutCompletedEvent {
 
 export interface CheckoutExpiredEvent {
   type: 'checkout.expired';
-  bookingId: string;
+  bookingId?: string;
+  subjectType?: 'booking' | 'vault_answer';
+  subjectId?: string;
   providerSessionId: string;
   providerPaymentId?: string;
   amountMinor: number;
@@ -38,7 +46,9 @@ export interface CheckoutExpiredEvent {
 
 export interface CheckoutFailedEvent {
   type: 'checkout.failed';
-  bookingId: string;
+  bookingId?: string;
+  subjectType?: 'booking' | 'vault_answer';
+  subjectId?: string;
   providerSessionId: string;
   providerPaymentId?: string;
   amountMinor: number;

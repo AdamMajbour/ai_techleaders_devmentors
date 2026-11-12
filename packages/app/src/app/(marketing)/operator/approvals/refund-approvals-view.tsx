@@ -96,7 +96,7 @@ export function RefundApprovalsView() {
                   Seeker: {item.seekerName} · Mentor: {item.mentorName}
                 </p>
                 <p className="m-0 text-meta text-muted-foreground">
-                  Booking {item.bookingId} · Payment {item.paymentStatus.replaceAll('_', ' ')}
+                  {item.bookingId ? `Booking ${item.bookingId}` : 'Vault answer'} · Payment {item.paymentStatus.replaceAll('_', ' ')}
                 </p>
                 <div className="flex flex-wrap gap-group">
                   {item.allowedActions.includes('approve') || retry ? (
@@ -135,7 +135,7 @@ export function RefundApprovalsView() {
           if (!open && busyApprovalId === null) setRejecting(null);
         }}
         title="Reject this refund request?"
-        description={rejecting ? `${formatPrice(rejecting.amountMinor, rejecting.currency)} for booking ${rejecting.bookingId}. This decision cannot be undone.` : undefined}
+        description={rejecting ? `${formatPrice(rejecting.amountMinor, rejecting.currency)} for ${rejecting.bookingId ? `booking ${rejecting.bookingId}` : 'a vault answer'}. This decision cannot be undone.` : undefined}
         confirmLabel="Reject refund"
         tone="destructive"
         pending={rejecting !== null && busyApprovalId === rejecting.approvalId}

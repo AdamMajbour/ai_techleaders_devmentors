@@ -9,6 +9,18 @@ const bookingMachine = defineStateMachine({
   },
 });
 
+const vaultMachine = defineStateMachine({
+  states: ['paid', 'pending_preview', 'released'],
+  transitions: {
+    start: { from: ['paid'], to: 'pending_preview', actors: ['system'] },
+  },
+  public: ['status'],
+  fields: {
+    question: { visibleTo: { seeker: '*', assignee: ['pending_preview'] } },
+    answerText: { visibleTo: { seeker: ['released'], assignee: ['pending_preview'] } },
+  },
+});
+
 describe('state machine', () => {
   it('allows an action for a declared source state and actor', () => {
     expect(bookingMachine.can('paid', 'accept', 'mentor')).toBe(true);
@@ -27,5 +39,24 @@ describe('state machine', () => {
 
   it('rejects an undeclared status at runtime', () => {
     expect(bookingMachine.can('unknown' as never, 'pay', 'seeker')).toBe(false);
+  });
+
+  it('fails closed for fields not declared public or visible in the current state', () => {
+    expect(vaultMachine.pickVisible({
+      status: 'pending_preview',
+      question: 'How?',
+      answerText: 'Because.',
+      seekerName: 'Private',
+    }, 'pending_preview', 'assignee')).toEqual({
+      status: 'pending_preview',
+      question: 'How?',
+      answerText: 'Because.',
+    });
+    expect(vaultMachine.visibleFields('pending_preview', 'unknown')).toEqual(new Set(['status']));
+  });
+
+  it('shows answer text to the seeker only after release', () => {
+    expect(vaultMachine.pickVisible({ answerText: 'Answer' }, 'pending_preview', 'seeker')).toEqual({});
+    expect(vaultMachine.pickVisible({ answerText: 'Answer' }, 'released', 'seeker')).toEqual({ answerText: 'Answer' });
   });
 });
