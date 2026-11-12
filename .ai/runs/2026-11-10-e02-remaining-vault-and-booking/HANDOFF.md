@@ -8,9 +8,11 @@ PR #32 is open as a draft stacked on PR #29. Branch: `feat/e02-remaining-vault-s
 - Shared UI components are reused; feature flags remain closed by default.
 
 ## Current evidence and open gates
-- Type-check, lint (five pre-existing warnings), full unit suite (119 suites, 782 tests), Storybook JSDOM stories (323), production build, `check:agents`, DB integration (49), and E2E (33) pass.
+- Rechecked on 2026-11-12: type-check, lint (five pre-existing warnings), full unit suite (119 suites, 782 tests), production build, `check:agents`, DB integration (49), and E2E (33) pass. E2E now exits normally with no open handles after removing a redundant Chromium launch timeout timer.
+- D26 is recorded: vault refunds require operator approval, preview silence expires after 120 minutes, max three distinct citations, and only `released` answers count. Vault refund reasons are rejected by `REFUND_AUTO_APPROVE_REASONS` and covered by tests. D20 is complete: requester confirmed Founder B conducted the Mentor A interview and one mentor is sufficient; the supplied summary is linked in research.
+- Storybook JSDOM stories (323) and the local UI screenshots remain documented in the 2026-11-10 QA report.
 - Local QA descriptor is `.ai/qa/test-env.json`, with screenshots and report in `.ai/qa/artifacts_e02-local/`. Browser provider used Playwright/Chromium fallback because configured agent-browser is unavailable in this Windows session.
-- Independent PR review, staging rehearsal, and product/legal gates in the vault spec remain open. Do not enable live vault/AI/payment flags or move the spec to `implemented` until those gates are satisfied.
+- Independent PR review remains open. Legal and staging work were deferred at the requester's direction but still block launch. Live operator and scheduler evidence also remain open. Do not enable live vault/AI/payment flags or move the spec to `implemented` until those gates are satisfied.
 
 ## Next action
-Resume at PLAN Gate 4.1: inspect final diff/review findings, update PR #32 description, and keep it stacked/draft until #29 plus product/legal/staging gates are resolved.
+Resume at PLAN Gate 4.1: obtain independent review. PR #32 remains stacked and draft until the predecessor and required reviews are resolved.

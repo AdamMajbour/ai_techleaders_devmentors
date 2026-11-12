@@ -520,17 +520,10 @@ describe('operations', () => {
 describe('in a browser', () => {
   beforeAll(async () => {
     try {
-      // Add timeout to prevent hanging - 30s should be enough for Chromium to start
-      const launchPromise = chromium.launch({ 
+      browser = await chromium.launch({
         env: chromiumEnv() as Record<string, string>,
         timeout: 30000,
       });
-      browser = await Promise.race([
-        launchPromise,
-        new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Chromium launch timed out after 30s')), 30000)
-        ),
-      ]);
     } catch (error) {
       const chromiumLibs = process.env.CHROMIUM_LIBS_DIR || path.join(os.homedir(), '.cache/chromium-libs');
       throw new Error(

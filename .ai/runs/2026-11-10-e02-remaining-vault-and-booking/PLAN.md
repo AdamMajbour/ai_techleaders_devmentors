@@ -30,7 +30,7 @@ Deliver selected-time mentor booking plus E02-S02/S03 on a branch stacked on E02
 - Q9 in the E01 spec records the requester-approved 2026-11-10 scope change. The slot phase is independently implementable; remaining vault work is stacked with primitives and E02-S01.
 - Slots are discrete 25-minute UTC intervals published within the next 7 days and displayed in the seeker's local timezone. No recurring availability, external calendar sync, or rescheduling.
 - Preserve live payment/AI gates closed by default. Refund execution remains in the existing operator approval workflow unless separately approved auto-approval reasons are configured.
-- PR #29 remains draft with integration DB evidence and independent review unresolved.
+- PR #29 remains draft. Its notes/migration code is included in the validated PR #32 stack, whose PostgreSQL integration suite passes; an independent review for #29 remains outstanding.
 
 ## Validation
 - `npm run type-check` — passed after final E2E/UI corrections.
@@ -42,5 +42,7 @@ Deliver selected-time mentor booking plus E02-S02/S03 on a branch stacked on E02
 - `npm run check:agents` — passed.
 - `npm run test:integration -- --runInBand --silent` — 49/49 passed on isolated `devmentor_test`; covers migrations, atomic selected-slot claim/release, generation lease, preview approval/credits, and withdrawn consent.
 - `npm run test:e2e -- --runInBand` — 33/33 passed on dedicated `devmentor_e2e`; covers selected-time booking and mock vault purchase → cited mentor approval → released answer. Playwright/Chromium 1248 used because configured `agent-browser` is unavailable in this Windows session.
+- Recheck on 2026-11-12: all configured validation commands passed again; integration 49/49. The E2E suite initially exposed an un-cleared Chromium launch timeout; after removing the redundant timer, `npm run test:e2e -- --runInBand --detectOpenHandles` passed 33/33, exited normally, and reported no open handles. The E2E file lint passed.
+- Final recheck after recording D26 and restricting auto-approval config: type-check, lint, `check:agents`, 119 unit suites / 782 tests, production build, integration 49/49, and E2E 33/33 with no open handles all passed. The focused D26 configuration test also passed.
 - Local QA descriptor `.ai/qa/test-env.json` is running at `http://localhost:3001`; generated up script cold/warm was verified (12s / <1s). Screenshot and evidence report are under `.ai/qa/artifacts_e02-local/`.
-- Staging rehearsal, independent PR review, and product/legal gates remain open. Do not enable live flags or mark the spec implemented until they are satisfied.
+- Independent PR review remains open. D20 is complete based on the requester-confirmed Founder B interview with Mentor A. Legal and staging were deferred at the requester's direction but remain required for launch. Do not enable live flags or mark the spec implemented until the relevant gates are satisfied.

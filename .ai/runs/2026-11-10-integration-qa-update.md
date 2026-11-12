@@ -13,3 +13,17 @@
 - **Next action:** continue PR #32 review and stack lifecycle; do not mark the spec implemented or enable live flags until the listed owner/legal/staging evidence is recorded.
 
 Detailed product/legal gate register: `.ai/runs/2026-11-10-vault-product-legal-gates.md`.
+
+## Recheck — 2026-11-12
+
+- Re-ran the configured validation gate on `feat/e02-remaining-vault-slots`: type-check, lint, `check:agents`, unit tests (119 suites / 782 tests), and production build passed. Lint reports the same five warnings in unrelated existing files.
+- Re-ran `npm run test:integration -- --runInBand --silent`: **49/49 passed**.
+- Re-ran `npm run test:e2e -- --runInBand`: all **33/33 passed**, but Jest reported one open timeout left by the browser setup's redundant `Promise.race` timer. Removed that timer and relied on Playwright's built-in launch timeout; `npm run test:e2e -- --runInBand --detectOpenHandles` then passed **33/33**, exited with code 0, and reported no open handles.
+- This initial rerun was local and used mock payments/AI. It did not close the owner, legal, staging, or live-flip gates.
+
+## Owner records — 2026-11-12
+
+- Recorded D26 from the founder A decision supplied by the requester: vault refunds need operator approval; a silent preview expires after 120 minutes and creates a refund request; no more than three distinct mentors are cited; only `released` answers count toward D08. The existing Q4 rule (all cited mentors approve; one rejection stops release) remains in force.
+- The requester supplied one Mentor A summary for D20. It is recorded with provenance limits; interviewer/scope confirmation is still pending. No other mentor's acceptance is inferred.
+- Restricted `REFUND_AUTO_APPROVE_REASONS` to booking reasons, so vault refunds cannot be auto-approved through environment configuration. The environment-schema regression test and full validation gate pass.
+- Legal and staging work were deferred at the requester's direction. They remain launch blockers; live payment/AI/publication flags stay closed.

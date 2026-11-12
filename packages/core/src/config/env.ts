@@ -3,7 +3,7 @@ import { z } from 'zod';
 /** A secret shorter than this cannot hold 32 random bytes in any common encoding. */
 const MIN_SECRET_LENGTH = 32;
 const MAX_MENTOR_RESPONSE_WINDOW_MINUTES = 10_080;
-const refundAutoApproveReasons = ['mentor_declined', 'mentor_unresponsive', 'vault_rejected', 'vault_expired', 'vault_generation_failed', 'vault_cancelled'] as const;
+const refundAutoApproveReasons = ['mentor_declined', 'mentor_unresponsive'] as const;
 
 const publicSignupSchema = z.preprocess(
   (value) => {

@@ -40,6 +40,10 @@ describe('parseEnv', () => {
         .toThrow(/MENTOR_RESPONSE_WINDOW_MINUTES/);
       expect(() => parseBookingSettings({ REFUND_AUTO_APPROVE_REASONS: 'unknown' }))
         .toThrow(/REFUND_AUTO_APPROVE_REASONS/);
+      for (const reason of ['vault_rejected', 'vault_expired', 'vault_generation_failed', 'vault_cancelled']) {
+        expect(() => parseBookingSettings({ REFUND_AUTO_APPROVE_REASONS: reason }))
+          .toThrow(/REFUND_AUTO_APPROVE_REASONS/);
+      }
     });
   });
 
