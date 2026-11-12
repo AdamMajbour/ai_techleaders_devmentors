@@ -20,6 +20,7 @@ const profile = (overrides: Partial<MentorProfile> = {}) =>
     bio: 'A helpful mentor.',
     technologies: 'node-js typescript',
     publicWorkUrl: 'https://example.com',
+    githubUrl: null,
     isListed: true,
     lastActiveAt: null,
     createdAt: new Date('2026-01-01T00:00:00Z'),

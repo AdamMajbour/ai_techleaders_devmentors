@@ -29,6 +29,7 @@ import {
   LoginTokenRepository,
   MentorProfileRepository,
   MessageRepository,
+  NoteRepository,
   PaymentRepository,
   UserRepository,
   transitionStatus,
@@ -92,6 +93,7 @@ describe('migrations', () => {
       'mentor_profiles',
       'messages',
       'mikro_orm_migrations',
+      'notes',
       'payments',
       'status_transitions',
       'users',
@@ -104,6 +106,13 @@ describe('migrations', () => {
 
     await orm.migrator.up();
     expect(await publicTables()).toContain('messages');
+  });
+
+  it('creates and drops the notes table through the reversible migration', async () => {
+    await orm.migrator.down('Migration20261109220000_notes');
+    expect(await publicTables()).not.toContain('notes');
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('notes');
   });
 
   it('removes the approval table and its partial index on migration down', async () => {
@@ -1231,6 +1240,34 @@ describe('User password hash', () => {
   });
 });
 
+describe('NoteRepository', () => {
+  it('scopes reads to the mentor and the database rejects publication without fresh consent', async () => {
+    const repository = new NoteRepository(orm.em.fork());
+    const mentorId = randomUUID();
+    const saved = await repository.create({
+      mentorId,
+      title: 'A note',
+      body: 'Private markdown.',
+      status: 'draft',
+      aiNoticeVersion: null,
+      aiConsentedAt: null,
+      publishedAt: null,
+      takenDownAt: null,
+    });
+    await expect(repository.findOwnedById(saved.id, randomUUID())).resolves.toBeNull();
+    await expect(repository.create({
+      mentorId,
+      title: 'Unconsented note',
+      body: 'Must not enter the corpus.',
+      status: 'published',
+      aiNoticeVersion: null,
+      aiConsentedAt: null,
+      publishedAt: new Date(),
+      takenDownAt: null,
+    })).rejects.toThrow();
+  });
+});
+
 describe('migrations (down)', () => {
   it('reverts the history table and renames the remaining tables back without losing rows', async () => {
     const created = await new UserRepository(orm.em.fork()).create({ email: 'rename@example.com', name: 'Rename' });
@@ -1246,7 +1283,7 @@ describe('migrations (down)', () => {
     await orm.migrator.up();
     expect(await publicTables()).toEqual([
       'approval_requests', 'articles', 'bookings', 'invitations', 'login_tokens',
-      'mentor_profiles', 'messages', 'mikro_orm_migrations', 'payments', 'status_transitions', 'users',
+      'mentor_profiles', 'messages', 'mikro_orm_migrations', 'notes', 'payments', 'status_transitions', 'users',
     ]);
   });
 

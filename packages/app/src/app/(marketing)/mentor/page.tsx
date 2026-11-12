@@ -41,6 +41,16 @@ export default async function MentorWorkspacePage() {
           </TextLink>
         </div>
       </section>
+
+      <section aria-labelledby="notes-heading" className="flex flex-col gap-group border-t border-border py-section">
+        <h2 id="notes-heading" className="m-0 text-section-title font-strong text-headline">Private notes for AI answers</h2>
+        <p className="m-0 text-body text-muted-foreground">
+          Save the explanations you repeat. A note is only used for AI answers after you read the notice and publish it.
+        </p>
+        <div>
+          <Button asChild><Link href="/mentor/notes">Manage notes</Link></Button>
+        </div>
+      </section>
     </main>
   );
 }

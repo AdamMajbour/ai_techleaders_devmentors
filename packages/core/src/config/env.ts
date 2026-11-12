@@ -112,6 +112,11 @@ const paymentBooleanSchema = z.preprocess((value) => {
   return value;
 }, z.boolean());
 
+const vaultSettingsSchema = z.object({
+  VAULT_PUBLISH_ENABLED: paymentBooleanSchema,
+  NODE_ENV: z.string().optional(),
+});
+
 const paymentSettingsSchema = z.object({
   PAYMENTS_MODE: z.enum(['mock', 'stripe']).default('mock'),
   STRIPE_SECRET_KEY: optionalPaymentValue,
@@ -154,6 +159,7 @@ export type Env = z.infer<typeof envSchema>;
 export type MailerSettings = z.infer<typeof mailerEnvSchema>;
 export type PaymentSettings = z.infer<typeof paymentSettingsSchema>;
 export type BookingSettings = z.infer<typeof bookingSettingsSchema>;
+export type VaultSettings = { publishEnabled: boolean; isProduction: boolean };
 
 /** Validates an environment; throws a message that names the offending variables, never their values. */
 export function parseEnv(source: Record<string, string | undefined>): Env {
@@ -220,6 +226,19 @@ export function parseBookingSettings(source: Record<string, string | undefined>)
 
 export function getBookingSettings(): BookingSettings {
   return parseBookingSettings(process.env);
+}
+
+/** Production publication stays off until the E03-T02 review gate is recorded. */
+export function parseVaultSettings(source: Record<string, string | undefined>): VaultSettings {
+  const result = vaultSettingsSchema.safeParse(source);
+  if (!result.success) {
+    throw new Error('Invalid vault configuration: VAULT_PUBLISH_ENABLED. See .env.example.');
+  }
+  return { publishEnabled: result.data.VAULT_PUBLISH_ENABLED, isProduction: result.data.NODE_ENV === 'production' };
+}
+
+export function getVaultSettings(): VaultSettings {
+  return parseVaultSettings(process.env);
 }
 
 /** Invalid or empty operator configuration grants no operator access. */

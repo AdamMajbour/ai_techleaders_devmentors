@@ -88,9 +88,6 @@ export function MentorsView() {
           <h1 className="m-0 text-page-title font-strong text-headline">Mentors</h1>
           <p className="m-0 text-body text-muted-foreground">Browse mentors invited to the pilot.</p>
         </div>
-        <TextLink asChild>
-          <Link href="/mentor/profile">Edit mentor profile</Link>
-        </TextLink>
       </header>
 
       <Field label="Technology">

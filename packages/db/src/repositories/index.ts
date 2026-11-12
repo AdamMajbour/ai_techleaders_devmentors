@@ -13,6 +13,7 @@ import {
   Booking,
   Payment,
   Message,
+  Note,
 } from '../entities';
 import {
   ExclusionConstraintViolationError,
@@ -75,10 +76,10 @@ export class UserRepository {
 export type NewMentorProfile = Pick<
   MentorProfile,
   'userId' | 'slug' | 'headline' | 'bio' | 'technologies' | 'publicWorkUrl' | 'isListed' | 'lastActiveAt'
->;
+> & { githubUrl?: string | null };
 
 export type MentorProfileUpdate = Partial<
-  Pick<MentorProfile, 'slug' | 'headline' | 'bio' | 'technologies' | 'publicWorkUrl' | 'isListed' | 'lastActiveAt'>
+  Pick<MentorProfile, 'slug' | 'headline' | 'bio' | 'technologies' | 'publicWorkUrl' | 'githubUrl' | 'isListed' | 'lastActiveAt'>
 >;
 
 export class MentorProfileRepository {
@@ -101,7 +102,7 @@ export class MentorProfileRepository {
   }
 
   async create(data: NewMentorProfile): Promise<MentorProfile> {
-    const profile = this.em.create(MentorProfile, data);
+    const profile = this.em.create(MentorProfile, { ...data, githubUrl: data.githubUrl ?? null });
     this.em.persist(profile);
     await this.em.flush();
     return profile;
@@ -741,5 +742,77 @@ export class LoginTokenRepository {
   async findReusable(tokenHash: string, now: Date): Promise<string | null> {
     const token = await this.em.findOne(LoginToken, { tokenHash, reusable: true, expiresAt: { $gt: now } });
     return token?.email ?? null;
+  }
+}
+
+export type NewNote = Pick<
+  Note,
+  'mentorId' | 'title' | 'body' | 'status' | 'aiNoticeVersion' | 'aiConsentedAt' | 'publishedAt' | 'takenDownAt'
+>;
+
+export class NoteRepository {
+  constructor(private readonly em: EntityManager) {}
+
+  async findById(id: string): Promise<Note | null> {
+    return this.em.findOne(Note, { id });
+  }
+
+  async findOwnedById(id: string, mentorId: string): Promise<Note | null> {
+    return this.em.findOne(Note, { id, mentorId });
+  }
+
+  async findPage(mentorId: string, options: { limit: number; offset: number }): Promise<{ items: Note[]; total: number }> {
+    const [items, total] = await this.em.findAndCount(Note, { mentorId }, {
+      orderBy: { updatedAt: 'desc', id: 'asc' },
+      limit: options.limit,
+      offset: options.offset,
+    });
+    return { items, total };
+  }
+
+  async create(data: NewNote): Promise<Note> {
+    const note = this.em.create(Note, data as RequiredEntityData<Note>);
+    this.em.persist(note);
+    await this.em.flush();
+    return note;
+  }
+
+  async updateDraft(id: string, mentorId: string, data: Pick<Note, 'title' | 'body'>, now: Date): Promise<boolean> {
+    return (await this.em.nativeUpdate(
+      Note,
+      { id, mentorId, status: { $in: ['draft', 'taken_down'] } },
+      { ...data, updatedAt: now },
+    )) === 1;
+  }
+
+  async publish(id: string, mentorId: string, noticeVersion: string, now: Date): Promise<boolean> {
+    return (await this.em.nativeUpdate(
+      Note,
+      { id, mentorId, status: { $in: ['draft', 'taken_down'] } },
+      {
+        status: 'published',
+        aiNoticeVersion: noticeVersion,
+        aiConsentedAt: now,
+        publishedAt: now,
+        takenDownAt: null,
+        updatedAt: now,
+      },
+    )) === 1;
+  }
+
+  async takeDown(id: string, mentorId: string, now: Date): Promise<boolean> {
+    return (await this.em.nativeUpdate(
+      Note,
+      { id, mentorId, status: 'published' },
+      { status: 'taken_down', takenDownAt: now, updatedAt: now },
+    )) === 1;
+  }
+
+  async deleteDraft(id: string, mentorId: string): Promise<boolean> {
+    const note = await this.em.findOne(Note, { id, mentorId, status: { $in: ['draft', 'taken_down'] } });
+    if (!note) return false;
+    this.em.remove(note);
+    await this.em.flush();
+    return true;
   }
 }

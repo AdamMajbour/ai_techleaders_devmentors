@@ -20,6 +20,7 @@ const profile: MentorProfileDto = {
   bio: 'A practical mentor.',
   technologies: 'node-js typescript',
   publicWorkUrl: 'https://example.com/work',
+  githubUrl: null,
   isListed: true,
   activity: 'today',
 };
@@ -41,6 +42,7 @@ describe('MentorProfileEditor', () => {
       bio: 'I help with practical issues.',
       technologies: 'typescript',
       publicWorkUrl: 'https://example.com/grace',
+      githubUrl: null,
       isListed: false,
     };
     apiCall
@@ -67,6 +69,7 @@ describe('MentorProfileEditor', () => {
             bio: 'I help with practical issues.',
             technologies: 'typescript',
             publicWorkUrl: 'https://example.com/grace',
+            githubUrl: null,
             isListed: false,
           },
         }),
@@ -99,6 +102,7 @@ describe('MentorProfileEditor', () => {
             bio: profile.bio,
             technologies: profile.technologies,
             publicWorkUrl: profile.publicWorkUrl,
+            githubUrl: profile.githubUrl,
             isListed: true,
           },
         }),

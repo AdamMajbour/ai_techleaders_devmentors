@@ -19,6 +19,8 @@ export interface EventMap {
   'approvals.approval.approved': { approvalId: string };
   'approvals.approval.rejected': { approvalId: string };
   'messages.message.posted': { messageId: string; bookingId: string; authorId: string };
+  'notes.note.published': { noteId: string; mentorId: string };
+  'notes.note.taken_down': { noteId: string; mentorId: string };
 }
 
 export type EventName = keyof EventMap;

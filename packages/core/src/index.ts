@@ -13,6 +13,7 @@ export * from './validators/parse';
 export * from './validators/id.schema';
 export * from './validators/auth/register.schema';
 export * from './validators/auth/login.schema';
+export * from './validators/auth/user-profile.schema';
 export * from './validators/auth/magic-link.schema';
 export * from './validators/auth/operator-user-list.schema';
 export * from './validators/articles/article-create.schema';
@@ -25,6 +26,8 @@ export * from './validators/bookings/booking-action.schema';
 export * from './validators/bookings/booking-accept.schema';
 export * from './validators/approvals/refund-approval-action.schema';
 export * from './validators/messages/message.schema';
+export * from './validators/notes/note.schema';
+export { VAULT_NOTICE_DRAFT_LABEL, VAULT_NOTICE_ITEMS, VAULT_NOTICE_VERSION } from './validators/notes/notice';
 export type {
   ArticleDto,
   BookingDto,

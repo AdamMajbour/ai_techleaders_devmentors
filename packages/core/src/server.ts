@@ -60,9 +60,12 @@ export {
   getEnv,
   getMailerSettings,
   getPaymentSettings,
+  getVaultSettings,
   parseEnv,
   parseBookingSettings,
   parsePaymentSettings,
+  parseVaultSettings,
+  type VaultSettings,
   getOperatorUserIds,
   parseOperatorUserIds,
 } from './config/env';
@@ -85,6 +88,7 @@ export { BookingService, type BookingCreationResult } from './services/bookings/
 export { PaymentService } from './services/payments/payment.service';
 export { RefundService } from './services/refunds/refund.service';
 export { MessageService, type MessageDto, type MessagePage } from './services/messages/message.service';
+export { NoteService, type NoteDto, type NoteInput, type NoteSummaryDto } from './services/notes/note.service';
 export { AuthService } from './services/auth/auth.service';
 export { UserService } from './services/auth/user.service';
 export {
