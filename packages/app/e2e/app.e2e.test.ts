@@ -14,6 +14,7 @@ import path from 'node:path';
 import { chromium, type Browser } from 'playwright';
 import '../../db/src/load-env';
 import { closeORM, initializeORM, InvitationRepository } from '../../db/src';
+import { VAULT_NOTICE_VERSION } from '@devmentor/core';
 // Relative on purpose: app code must not import the db package, but a test may read its demo constants.
 import { DEMO_ARTICLE_TITLE, DEMO_AUTHOR } from '../../db/scripts/seed-data';
 
@@ -39,7 +40,14 @@ const env: NodeJS.ProcessEnv = {
   JWT_SECRET,
   PUBLIC_SIGNUP: 'true',
   PAYMENTS_MODE: 'mock',
+  NODE_ENV: 'production',
   MOCK_PAYMENT_E2E_ENABLED: 'true',
+  VAULT_ENABLED: 'true',
+  VAULT_PUBLISH_ENABLED: 'true',
+  AI_MODE: 'mock',
+  AI_ALLOW_MOCK_IN_PRODUCTION: 'true',
+  AI_LIVE_ENABLED: 'false',
+  PAYMENTS_LIVE_ENABLED: 'false',
   JEST_WORKER_ID: process.env.JEST_WORKER_ID ?? '1',
 };
 
@@ -121,7 +129,20 @@ let server: RunningServer;
 let baseUrl = '';
 let e2eOrm: Awaited<ReturnType<typeof initializeORM>> | undefined;
 
+async function cleanE2EDatabase(): Promise<void> {
+  if (E2E_DATABASE_NAME !== 'devmentor_e2e') {
+    throw new Error('Refusing to clean a database other than the dedicated devmentor_e2e database.');
+  }
+  await closeORM();
+  const cleanupOrm = await initializeORM({ dbName: E2E_DATABASE_NAME });
+  await cleanupOrm.em.getConnection().execute('drop function if exists "release_booking_availability_slot"() cascade');
+  await cleanupOrm.em.getConnection().execute('drop function if exists "release_mentor_availability_slot"() cascade');
+  await cleanupOrm.schema.dropSchema({ dropMigrationsTable: true });
+  await closeORM();
+}
+
 beforeAll(async () => {
+  await cleanE2EDatabase();
   run(['--workspace=@devmentor/db', 'run', 'migrate']);
   run(['--workspace=@devmentor/db', 'run', 'seed']);
   run(['run', 'build'], APP_DIR);
@@ -132,9 +153,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await browser?.close();
+  browser = undefined;
   server?.stop();
-  await closeORM();
-  run(['--workspace=@devmentor/db', 'run', 'migrate:down']);
+  await cleanE2EDatabase();
 }, 60_000);
 
 // --- helpers -----------------------------------------------------------------------------
@@ -499,17 +520,10 @@ describe('operations', () => {
 describe('in a browser', () => {
   beforeAll(async () => {
     try {
-      // Add timeout to prevent hanging - 30s should be enough for Chromium to start
-      const launchPromise = chromium.launch({ 
+      browser = await chromium.launch({
         env: chromiumEnv() as Record<string, string>,
         timeout: 30000,
       });
-      browser = await Promise.race([
-        launchPromise,
-        new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Chromium launch timed out after 30s')), 30000)
-        ),
-      ]);
     } catch (error) {
       const chromiumLibs = process.env.CHROMIUM_LIBS_DIR || path.join(os.homedir(), '.cache/chromium-libs');
       throw new Error(
@@ -623,13 +637,31 @@ describe('mock booking payment flow', () => {
     });
     expect(profileResponse.response.status).toBe(201);
     const profile = profileResponse.body.data;
-
+    let bookingAttempt = 0;
     const createBooking = async (question: string) => {
+      const slotStart = new Date(Math.ceil((Date.now() + (60 + bookingAttempt++ * 30) * 60_000) / (15 * 60_000)) * (15 * 60_000));
+      const slotResponse = await api('/api/mentors/me/availability', {
+        method: 'POST',
+        cookie: mentor.cookie,
+        json: { startsAt: slotStart.toISOString() },
+      });
+      if (slotResponse.response.status !== 200) {
+        const serverErrors = server.log().split('\n').flatMap((line) => {
+          if (!line.includes('"level":"error"')) return [];
+          try {
+            const parsed = JSON.parse(line) as { error?: { name?: string; message?: string } };
+            return [`${parsed.error?.name ?? 'Error'}: ${parsed.error?.message ?? 'unknown server error'}`];
+          } catch {
+            return [];
+          }
+        });
+        throw new Error(`Could not publish an availability slot: ${slotResponse.text}; ${serverErrors.join(' | ')}`);
+      }
       const landedAt = new Date().toISOString();
       const response = await api('/api/bookings', {
         method: 'POST',
         cookie: seeker.cookie,
-        json: { mentorId: profile.id, question, source: 'list', landedAt },
+        json: { mentorId: profile.id, availabilitySlotId: slotResponse.body.data.id, question, source: 'list', landedAt },
       });
       expect(response.response.status).toBe(201);
       expect(response.body.data.booking).toMatchObject({
@@ -642,6 +674,8 @@ describe('mock booking payment flow', () => {
         status: 'pending_payment',
         source: 'list',
         landedAt,
+        startsAt: slotResponse.body.data.startsAt,
+        endsAt: slotResponse.body.data.endsAt,
       });
       expect(response.body.data.checkoutUrl).toMatch(/^\/mock-payment\/checkout\//);
       return response.body.data;
@@ -691,3 +725,88 @@ describe('mock booking payment flow', () => {
     expect(unpaid.body.data.status).not.toBe('paid');
   }, 120_000);
 });
+
+describe('mock vault purchase and mentor preview', () => {
+  beforeAll(async () => {
+    if (browser) return;
+    browser = await chromium.launch({
+      env: chromiumEnv() as Record<string, string>,
+      timeout: 30_000,
+    });
+  });
+
+  afterAll(async () => {
+    await browser?.close();
+    browser = undefined;
+  });
+
+  it('shows the paid answer to the cited mentor first and releases it after approval', async () => {
+    const mentorName = 'Vault Mentor';
+    const seeker = await registerPilotUser('seeker', 'Vault Seeker');
+    const mentor = await registerPilotUser('mentor', mentorName);
+    const artifactsDir = path.join(ROOT, '.ai/qa/artifacts_e02-local');
+    fs.mkdirSync(artifactsDir, { recursive: true });
+    const noteTitle = `Vault note ${randomBytes(3).toString('hex')}`;
+    const createdNote = await api('/api/notes', {
+      method: 'POST',
+      cookie: mentor.cookie,
+      json: { title: noteTitle, body: 'A reliable service uses observable health checks and bounded retries.' },
+    });
+    expect(createdNote.response.status).toBe(201);
+    const published = await api(`/api/notes/${createdNote.body.data.id}/publish`, {
+      method: 'POST',
+      cookie: mentor.cookie,
+      json: { consent: true, noticeVersion: VAULT_NOTICE_VERSION },
+    });
+    expect(published.response.status).toBe(200);
+    expect(published.body.data.status).toBe('published');
+
+    const cookieFor = (user: { cookie: string }) => {
+      const pair = user.cookie.split(';')[0] ?? '';
+      const separator = pair.indexOf('=');
+      return { name: pair.slice(0, separator), value: pair.slice(separator + 1) };
+    };
+    const seekerPage = await browser!.newPage({ viewport: { width: 1100, height: 720 } });
+    await seekerPage.context().addCookies([{ ...cookieFor(seeker), url: baseUrl, httpOnly: true, sameSite: 'Lax' }]);
+    const browserProblems: string[] = [];
+    seekerPage.on('console', (message) => { if (message.type() === 'error') browserProblems.push(message.text()); });
+    seekerPage.on('response', (response) => { if (response.url().includes('/api/vault-answers') && response.status() >= 400) browserProblems.push(`${response.status()} ${response.url()}`); });
+    seekerPage.on('pageerror', (error) => browserProblems.push(String(error)));
+    await seekerPage.goto(`${baseUrl}/vault`, { waitUntil: 'domcontentloaded' });
+    expect(await seekerPage.getByRole('heading', { name: 'Ask the vault' }).count()).toBe(1);
+    const question = `How should I make a service more reliable? ${randomBytes(2).toString('hex')}`;
+    await seekerPage.getByLabel('Your question').fill(question);
+    await seekerPage.getByRole('checkbox').check();
+    await seekerPage.getByRole('button', { name: /Pay .*and send/ }).click();
+    await seekerPage.getByRole('heading', { name: 'Local mock checkout' }).waitFor({ timeout: 10_000 });
+    await seekerPage.getByRole('button', { name: 'Complete test payment' }).click();
+    await seekerPage.waitForURL(/\/vault\/[0-9a-f-]+$/);
+    await seekerPage.getByText('Waiting for the mentors whose notes were used').waitFor({ timeout: 10_000 }).catch(async () => {
+      await seekerPage.reload({ waitUntil: 'domcontentloaded' });
+      await seekerPage.getByText('Waiting for the mentors whose notes were used').waitFor({ timeout: 30_000 });
+    });
+
+    const mentorPage = await browser!.newPage({ viewport: { width: 1100, height: 720 } });
+    await mentorPage.context().addCookies([{ ...cookieFor(mentor), url: baseUrl, httpOnly: true, sameSite: 'Lax' }]);
+    mentorPage.on('pageerror', (error) => browserProblems.push(String(error)));
+    await mentorPage.goto(`${baseUrl}/mentor/previews`, { waitUntil: 'domcontentloaded' });
+    await mentorPage.getByText(question).waitFor();
+    await mentorPage.getByText(`A mock answer based on ${noteTitle}.`).waitFor();
+    await mentorPage.screenshot({ path: path.join(artifactsDir, 'vault-mentor-preview.png'), fullPage: true });
+    await mentorPage.setViewportSize({ width: 390, height: 844 });
+    await expectElementVisible(mentorPage.getByRole('button', { name: new RegExp(`Approve the answer that cites ${noteTitle}`) }));
+    await mentorPage.getByRole('button', { name: new RegExp(`Approve the answer that cites ${noteTitle}`) }).click();
+    await mentorPage.getByText('Nothing to review').waitFor();
+
+    await seekerPage.getByText('Generated by AI from the notes below. Not written by the mentor.').waitFor({ timeout: 10_000 });
+    await seekerPage.getByText(`${mentorName}, ${noteTitle}`).waitFor();
+    await seekerPage.screenshot({ path: path.join(artifactsDir, 'vault-answer-released.png'), fullPage: true });
+    expect(browserProblems).toEqual([]);
+    await mentorPage.close();
+    await seekerPage.close();
+  }, 120_000);
+});
+
+async function expectElementVisible(locator: import('playwright').Locator): Promise<void> {
+  await locator.waitFor({ state: 'visible' });
+}

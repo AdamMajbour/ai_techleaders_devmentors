@@ -22,6 +22,8 @@ export interface QuestionFormProps {
   fieldHint?: string;
   /** Defaults to the refund rule of R04. */
   refundRule?: string;
+  /** Hide the standard notice when the parent screen keeps price visible before a prior choice. */
+  showPriceNotice?: boolean;
   termsHref: string;
   /** The owner's wording about data and retention. Not written by the component. */
   termsHint?: ReactNode;
@@ -46,6 +48,7 @@ export function QuestionForm({
   priceDescription,
   fieldHint,
   refundRule = DEFAULT_REFUND_RULE,
+  showPriceNotice = true,
   termsHref,
   termsHint,
   onSubmit,
@@ -112,12 +115,12 @@ export function QuestionForm({
 
   return (
     <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} noValidate className="flex flex-col gap-between-groups">
-      <PriceNotice
+      {showPriceNotice ? <PriceNotice
         amountMinor={priceMinor}
         currency={currency}
         description={priceDescription ?? (mentorName ? `for a 25-minute text session with ${mentorName}` : 'for one answer')}
         refundRule={refundRule}
-      />
+      /> : null}
       <Field
         id={`${formId}-question`}
         label="Your question"

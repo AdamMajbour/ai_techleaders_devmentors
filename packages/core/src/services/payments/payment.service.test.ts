@@ -139,3 +139,68 @@ describe('PaymentService.handleEvent', () => {
     expect(emit.mock.calls).toEqual([['payments.payment.failed', { paymentId: 'payment-1' }]]);
   });
 });
+
+describe('PaymentService payable-subject dispatch', () => {
+  it('settles vault payments and runs the registered subject handler in the unit of work', async () => {
+    const settlement = { status: 'transitioned' as const, paymentId: 'payment-vault-1', paymentStatus: 'succeeded' };
+    const settleSubjectWebhookEvent = jest.fn().mockResolvedValue(settlement);
+    const onPaid = jest.fn();
+    const onFailed = jest.fn();
+    const work = jest.fn();
+    const unitOfWork = { run: async <T>(callback: () => Promise<T>): Promise<T> => { work(); return callback(); } };
+    const handler = {
+      type: 'vault_answer' as const,
+      expectedAmount: jest.fn().mockResolvedValue({ amountMinor: 1000, currency: 'EUR' }),
+      onPaid,
+      onFailed,
+    };
+    const service = new PaymentService({
+      paymentRepository: { settleWebhookEvent: jest.fn(), settleSubjectWebhookEvent } as never,
+      eventBus: { emit: jest.fn() } as unknown as EventBus,
+      logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() },
+      paymentSubjectHandlers: [handler],
+      unitOfWork,
+    });
+    await service.handleEvent({
+      type: 'checkout.completed',
+      subjectType: 'vault_answer',
+      subjectId: 'answer-1',
+      providerSessionId: 'session-1',
+      providerPaymentId: 'provider-1',
+      amountMinor: 1000,
+      currency: 'EUR',
+      livemode: false,
+    });
+
+    expect(settleSubjectWebhookEvent).toHaveBeenCalledWith(expect.objectContaining({
+      subjectType: 'vault_answer',
+      subjectId: 'answer-1',
+      expectedAmountMinor: 1000,
+      expectedCurrency: 'EUR',
+    }));
+    expect(work).toHaveBeenCalledTimes(1);
+    expect(onPaid).toHaveBeenCalledWith('answer-1', 'payment-vault-1');
+    expect(onFailed).not.toHaveBeenCalled();
+  });
+
+  it('does not call the subject handler for an amount mismatch', async () => {
+    const onPaid = jest.fn();
+    const service = new PaymentService({
+      paymentRepository: {
+        settleWebhookEvent: jest.fn(),
+        settleSubjectWebhookEvent: jest.fn().mockResolvedValue({ status: 'mismatch', paymentId: 'payment-1', fields: ['amountMinor'] }),
+      } as never,
+      eventBus: { emit: jest.fn() } as unknown as EventBus,
+      logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() },
+      paymentSubjectHandlers: [{
+        type: 'vault_answer', expectedAmount: jest.fn().mockResolvedValue({ amountMinor: 1000, currency: 'EUR' }),
+        onPaid, onFailed: jest.fn(),
+      }],
+    });
+    await service.handleEvent({
+      type: 'checkout.completed', subjectType: 'vault_answer', subjectId: 'answer-1',
+      providerSessionId: 'session-1', providerPaymentId: 'provider-1', amountMinor: 1001, currency: 'EUR',
+    });
+    expect(onPaid).not.toHaveBeenCalled();
+  });
+});

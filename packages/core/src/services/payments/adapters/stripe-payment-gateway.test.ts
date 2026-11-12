@@ -69,10 +69,13 @@ function createFakeGateway(): FakeStripeState {
 }
 
 function stripeSession(event: NormalizedPaymentEvent): Record<string, unknown> {
+  const metadata = event.subjectType === 'vault_answer'
+    ? { subjectType: event.subjectType, subjectId: event.subjectId }
+    : { bookingId: event.bookingId };
   return {
     id: event.providerSessionId,
     object: 'checkout.session',
-    metadata: { bookingId: event.bookingId },
+    metadata,
     amount_total: event.amountMinor,
     currency: event.currency.toLowerCase(),
     livemode: event.livemode,
@@ -164,6 +167,33 @@ describe('StripePaymentGateway', () => {
     expect(state.getSession()).toMatchObject({ metadata: { bookingId: input.bookingId } });
     expect(state.create.mock.calls[0][0].success_url)
       .toBe(`https://app.example.test/bookings/${input.bookingId}/return?session_id={CHECKOUT_SESSION_ID}`);
+  });
+
+  it('creates and normalizes a vault-answer checkout without booking metadata', async () => {
+    const state = createFakeGateway();
+    await state.gateway.createCheckout({
+      subjectType: 'vault_answer',
+      subjectId: 'answer-from-server',
+      amountMinor: 1000,
+      currency: 'EUR',
+      idempotencyKey: 'vault-answer-checkout',
+    });
+    expect(state.create.mock.calls[0][0]).toMatchObject({
+      metadata: { subjectType: 'vault_answer', subjectId: 'answer-from-server' },
+      success_url: 'https://app.example.test/vault/answer-from-server/return?session_id={CHECKOUT_SESSION_ID}',
+    });
+    state.setSession({
+      ...state.getSession(),
+      payment_intent: 'pi_vault_answer',
+      payment_status: 'paid',
+      status: 'complete',
+    });
+    await expect(state.gateway.getCheckout('cs_test_contract')).resolves.toMatchObject({
+      type: 'checkout.completed',
+      subjectType: 'vault_answer',
+      subjectId: 'answer-from-server',
+      amountMinor: 1000,
+    });
   });
 
   it('passes the approval id unchanged as the refund idempotency key', async () => {

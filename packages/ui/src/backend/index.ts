@@ -9,3 +9,4 @@ export * from './forms';
 export * from './tables';
 export * from './content';
 export * from './status';
+export * from './queues';

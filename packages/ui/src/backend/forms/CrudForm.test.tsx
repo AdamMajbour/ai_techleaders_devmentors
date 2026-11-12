@@ -207,5 +207,35 @@ describe('CrudForm', () => {
       await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
     });
   });
+
+  describe('checkbox fields', () => {
+    const consentSchema = z.object({ consent: z.literal(true) });
+    const consentField = [{
+      name: 'consent',
+      label: 'I agree to use these notes for AI answers',
+      type: 'checkbox' as const,
+      description: 'Read the notice before publishing.',
+      requirement: 'required' as const,
+    }];
+
+    it('shows a required checkbox error and keeps the description connected', async () => {
+      const onSubmit = jest.fn(async () => ok);
+      render(<CrudForm schema={consentSchema} fields={consentField} onSubmit={onSubmit} />);
+      const checkbox = screen.getByRole('checkbox', { name: 'I agree to use these notes for AI answers (required)' });
+      expect(checkbox).toHaveAccessibleDescription('Read the notice before publishing.');
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Save' }));
+      expect(onSubmit).not.toHaveBeenCalled();
+      expect(checkbox).toHaveAttribute('aria-invalid', 'true');
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+
+    it('submits the checkbox value as a boolean', async () => {
+      const onSubmit = jest.fn(async () => ok);
+      render(<CrudForm schema={consentSchema} fields={consentField} onSubmit={onSubmit} />);
+      await userEvent.setup().click(screen.getByRole('checkbox', { name: 'I agree to use these notes for AI answers (required)' }));
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Save' }));
+      await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({ consent: true }));
+    });
+  });
 });
 

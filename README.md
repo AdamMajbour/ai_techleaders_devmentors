@@ -308,7 +308,7 @@ MAIL_FROM=
 
 `APP_BASE_URL` is the public HTTP(S) origin used for verification links; it is required when a magic-link request is made and is never inferred from request headers. `MAILER_MODE` defaults to `console` for local development. For deployed mail, set `MAILER_MODE=http`, `MAILER_API_KEY` (Resend API key), and `MAIL_FROM` (for example `DevMentor <no-reply@example.com>`). Keep provider keys and `JWT_SECRET` in deployment secrets, never in source control. The console mailer is for local development only.
 
-Paid bookings use `MENTOR_RESPONSE_WINDOW_MINUTES` (default `120`, valid range 1–10,080). Leave `REFUND_AUTO_APPROVE_REASONS` empty: D25 is not recorded, and this phase only creates operator-only refund approvals. Supported values for a future, explicitly approved configuration are `mentor_declined` and `mentor_unresponsive`; no refund is executed by booking settlement. Run `npm run bookings:settle` from a scheduler for the same idempotent expiry pass that booking reads trigger.
+Paid bookings use `MENTOR_RESPONSE_WINDOW_MINUTES` (default `120`, valid range 1–10,080). Leave `REFUND_AUTO_APPROVE_REASONS` empty until the pilot decision is recorded: settlement creates operator-only refund approvals and never executes a refund. Run `npm run bookings:settle` from a scheduler for the same idempotent expiry pass that booking reads trigger.
 
 Payments default to `PAYMENTS_MODE=mock`. To use Stripe Checkout, set `PAYMENTS_MODE=stripe`, provide `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and keep `PAYMENTS_LIVE_ENABLED=false` for test keys. A live `sk_live_` key is refused unless `PAYMENTS_LIVE_ENABLED=true`; do not enable live payments before the pilot launch gates are complete. Stripe credentials are validated only when a payment operation or payment webhook is used, so builds and unrelated routes do not need them.
 
@@ -337,3 +337,6 @@ npm run build
 ## 📄 Licencja
 
 Proprietary — DevMentor
+
+
+Vault answers remain disabled by default (`VAULT_ENABLED=false`); mentor note publishing also requires `VAULT_PUBLISH_ENABLED=true`. AI generation defaults to mock, and live Anthropic calls require `AI_MODE=anthropic`, `AI_LIVE_ENABLED=true`, and `ANTHROPIC_API_KEY`. Keep these gates closed until the notice, terms, operator, scheduler, and rehearsal gates in the vault spec are recorded. Leave `REFUND_AUTO_APPROVE_REASONS` empty by default. Per D26, vault rejection, expiry, generation failure, and operator cancellation always require operator approval; vault reasons are rejected by the auto-approval setting. Schedule `npm run vault:settle` to expire overdue previews. Add `-- --include-ai` only on a scheduler with an explicit AI budget; this also invokes the external generation task. Neither command executes refunds.

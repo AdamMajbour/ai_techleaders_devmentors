@@ -23,8 +23,8 @@ function makeBooking(overrides: Partial<Booking> = {}): Booking {
     status: 'pending_payment',
     source: 'link',
     landedAt: NOW,
-    startsAt: null,
-    endsAt: null,
+    startsAt: new Date(NOW.getTime() + 60 * 60 * 1000),
+    endsAt: new Date(NOW.getTime() + 85 * 60 * 1000),
     createdAt: NOW,
     updatedAt: NOW,
     ...overrides,
@@ -73,7 +73,8 @@ function setup(options: {
     amountMinor: SESSION_25_PRICE_MINOR,
     providerSessionId: 'session-1',
   };
-  const createWithPayment = jest.fn(async (data: NewBooking) => {
+  const createWithPayment = jest.fn(async (data: NewBooking, _paymentData?: unknown) => {
+    void _paymentData;
     booking.landedAt = data.landedAt;
     return { booking, payment };
   });
@@ -171,6 +172,12 @@ function setup(options: {
       expirePaid,
       transitionStatus: transitionBooking,
     } as never,
+    availabilitySlotRepository: {
+      reserveWithBooking: jest.fn(async (_slotId: string, _mentorId: string, _now: Date, data: NewBooking, paymentData: unknown) => {
+        const result = await createWithPayment(data, paymentData);
+        return result;
+      }),
+    } as never,
     mentorProfileRepository: {
       findById,
       findByUserId: findMentorProfileByUserId,
@@ -231,6 +238,7 @@ function setup(options: {
 
 const input = (overrides: Record<string, unknown> = {}) => ({
   mentorId: PROFILE_ID,
+  availabilitySlotId: '3c0b2f5a-6f6e-4b53-9f0e-6b1f3b0a7a11',
   question: 'How do I fix this?',
   source: 'link',
   landedAt: NOW.toISOString(),
@@ -249,6 +257,7 @@ describe('BookingService.create', () => {
       expect.objectContaining({
         seekerId: SEEKER_ID,
         mentorId: MENTOR_ID,
+        availabilitySlotId: '3c0b2f5a-6f6e-4b53-9f0e-6b1f3b0a7a11',
         durationMinutes: SESSION_DURATION_MINUTES,
         priceMinor: SESSION_25_PRICE_MINOR,
         currency: CURRENCY,
@@ -280,15 +289,15 @@ describe('BookingService.create', () => {
   });
 
   describe('BookingService mentor actions', () => {
-    it('accepts at the server clock by default, sets the 25-minute end atomically, and exposes seeker e-mail only after acceptance', async () => {
+  it('confirms the seeker-selected slot and exposes seeker e-mail only after acceptance', async () => {
       const deps = setup();
       deps.booking.status = 'paid';
 
       const accepted = await deps.service.accept({ userId: MENTOR_ID }, 'booking-1', {});
 
       expect(deps.transitionBooking).toHaveBeenCalledWith('booking-1', 'accepted', MENTOR_ID, {
-        startsAt: NOW,
-        endsAt: new Date(NOW.getTime() + 25 * 60 * 1000),
+        startsAt: deps.booking.startsAt,
+        endsAt: deps.booking.endsAt,
       });
       expect(deps.updateMentorProfile).toHaveBeenCalledWith(PROFILE_ID, { lastActiveAt: NOW });
       expect(deps.emit).toHaveBeenCalledWith('bookings.booking.accepted', { bookingId: 'booking-1' });
@@ -296,32 +305,26 @@ describe('BookingService.create', () => {
         status: 'accepted',
         question: 'How do I fix this?',
         counterpartEmail: 'seeker@example.com',
-        startsAt: NOW.toISOString(),
-        endsAt: new Date(NOW.getTime() + 25 * 60 * 1000).toISOString(),
+        startsAt: deps.booking.startsAt?.toISOString(),
+        endsAt: deps.booking.endsAt?.toISOString(),
       });
     });
 
-    it('accepts a requested start within seven days and derives the end from it', async () => {
+    it('does not allow the mentor to replace the time chosen by the seeker', async () => {
       const deps = setup();
       deps.booking.status = 'paid';
-      const startsAt = new Date(NOW.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-      await deps.service.accept({ userId: MENTOR_ID }, 'booking-1', { startsAt: startsAt.toISOString() });
-
-      expect(deps.transitionBooking).toHaveBeenCalledWith('booking-1', 'accepted', MENTOR_ID, {
-        startsAt,
-        endsAt: new Date(startsAt.getTime() + 25 * 60 * 1000),
-      });
+      await expect(deps.service.accept({ userId: MENTOR_ID }, 'booking-1', { startsAt: '2026-11-05T20:00:00.000Z' }))
+        .rejects.toBeInstanceOf(ValidationError);
+      expect(deps.transitionBooking).not.toHaveBeenCalled();
     });
 
-    it.each([
-      ['in the past', new Date(NOW.getTime() - 1).toISOString()],
-      ['more than seven days ahead', new Date(NOW.getTime() + 7 * 24 * 60 * 60 * 1000 + 1).toISOString()],
-    ])('rejects an acceptance time %s', async (_label, startsAt) => {
+    it('rejects acceptance after the reserved slot start time has passed', async () => {
       const deps = setup();
       deps.booking.status = 'paid';
+      deps.booking.startsAt = new Date(NOW.getTime() - 1);
 
-      await expect(deps.service.accept({ userId: MENTOR_ID }, 'booking-1', { startsAt }))
+      await expect(deps.service.accept({ userId: MENTOR_ID }, 'booking-1', {}))
         .rejects.toBeInstanceOf(ValidationError);
       expect(deps.transitionBooking).not.toHaveBeenCalled();
       expect(deps.updateMentorProfile).not.toHaveBeenCalled();

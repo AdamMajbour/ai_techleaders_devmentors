@@ -4,7 +4,8 @@ export const Payment = defineDomainEntity({
   name: 'Payment',
   tableName: 'payments',
   properties: {
-    bookingId: p.uuid().unique(),
+    bookingId: p.uuid().nullable().unique(),
+    vaultAnswerId: p.uuid().nullable().unique(),
     provider: p.string(),
     livemode: p.boolean(),
     providerSessionId: p.string().nullable().unique(),

@@ -22,7 +22,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isNormalizedPaymentEvent(value: unknown): value is NormalizedPaymentEvent {
   if (!isRecord(value) || typeof value.type !== 'string') return false;
-  if (typeof value.bookingId !== 'string' || typeof value.providerSessionId !== 'string') return false;
+  if (typeof value.providerSessionId !== 'string') return false;
+  if (value.subjectType === 'vault_answer') {
+    if (typeof value.subjectId !== 'string') return false;
+  } else if (value.subjectType !== undefined && value.subjectType !== 'booking') {
+    return false;
+  } else if (typeof value.bookingId !== 'string' && typeof value.subjectId !== 'string') {
+    return false;
+  }
 
   if (value.type === 'checkout.completed') {
     return (
@@ -61,6 +68,10 @@ export class MockPaymentGateway implements PaymentGateway {
   private readonly refunds = new Map<string, RefundInput>();
 
   async createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult> {
+    const subjectId = input.subjectId ?? input.bookingId;
+    if (!subjectId || (input.subjectType === 'vault_answer' && !input.subjectId)) {
+      throw new Error('A checkout subject is required.');
+    }
     const existing = this.checkoutByIdempotencyKey.get(input.idempotencyKey);
     if (existing) {
       if (!this.sameCheckoutInput(existing.input, input)) {
@@ -74,7 +85,9 @@ export class MockPaymentGateway implements PaymentGateway {
       input: { ...input },
       result: {
         providerSessionId,
-        url: `/mock-payment/checkout/${input.bookingId}`,
+        url: input.subjectType === 'vault_answer'
+          ? `/mock-payment/vault-checkout/${subjectId}`
+          : `/mock-payment/checkout/${subjectId}`,
       },
     };
     this.checkouts.set(providerSessionId, stored);
@@ -120,7 +133,7 @@ export class MockPaymentGateway implements PaymentGateway {
     const checkout = this.requireCheckout(providerSessionId);
     const event: CheckoutCompletedEvent = {
       type: 'checkout.completed',
-      bookingId: checkout.input.bookingId,
+      ...this.eventSubjectFields(checkout.input),
       providerSessionId,
       providerPaymentId: details.providerPaymentId ?? `mock_payment_${providerSessionId}`,
       amountMinor: checkout.input.amountMinor,
@@ -135,7 +148,7 @@ export class MockPaymentGateway implements PaymentGateway {
     const checkout = this.requireCheckout(providerSessionId);
     const event: CheckoutExpiredEvent = {
       type: 'checkout.expired',
-      bookingId: checkout.input.bookingId,
+      ...this.eventSubjectFields(checkout.input),
       providerSessionId,
       amountMinor: checkout.input.amountMinor,
       currency: checkout.input.currency,
@@ -149,7 +162,7 @@ export class MockPaymentGateway implements PaymentGateway {
     const checkout = this.requireCheckout(providerSessionId);
     const event: CheckoutFailedEvent = {
       type: 'checkout.failed',
-      bookingId: checkout.input.bookingId,
+      ...this.eventSubjectFields(checkout.input),
       providerSessionId,
       ...(providerPaymentId === undefined ? {} : { providerPaymentId }),
       amountMinor: checkout.input.amountMinor,
@@ -177,10 +190,17 @@ export class MockPaymentGateway implements PaymentGateway {
 
   private sameCheckoutInput(left: CreateCheckoutInput, right: CreateCheckoutInput): boolean {
     return (
-      left.bookingId === right.bookingId &&
+      (left.subjectType ?? 'booking') === (right.subjectType ?? 'booking') &&
+      (left.subjectId ?? left.bookingId) === (right.subjectId ?? right.bookingId) &&
       left.amountMinor === right.amountMinor &&
       left.currency === right.currency &&
       left.idempotencyKey === right.idempotencyKey
     );
+  }
+
+  private eventSubjectFields(input: CreateCheckoutInput): Pick<NormalizedPaymentEvent, 'bookingId' | 'subjectType' | 'subjectId'> {
+    const subjectId = input.subjectId ?? input.bookingId;
+    if (input.subjectType === 'vault_answer') return { subjectType: 'vault_answer', subjectId };
+    return { bookingId: subjectId };
   }
 }

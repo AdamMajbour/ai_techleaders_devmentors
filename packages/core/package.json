@@ -12,9 +12,11 @@
   "scripts": {
     "type-check": "tsc --noEmit",
     "pilot:invite": "ts-node --project tsconfig.json scripts/pilot-invite.ts",
-    "bookings:settle": "ts-node --project tsconfig.json scripts/bookings-settle.ts"
+    "bookings:settle": "ts-node --project tsconfig.json scripts/bookings-settle.ts",
+    "vault:settle": "ts-node --project tsconfig.json scripts/vault-settle.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.7.0",
     "@devmentor/db": "*",
     "awilix": "^11",
     "bcryptjs": "^3.0.3",

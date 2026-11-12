@@ -1,4 +1,4 @@
-﻿import { randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { MikroORM } from '@mikro-orm/core';
@@ -9,10 +9,14 @@ import {
   Booking,
   Invitation,
   LoginToken,
+  LedgerEntry,
   MentorProfile,
   Message,
   Payment,
   StatusTransition,
+  Note,
+  VaultAnswerCitation,
+  VaultAnswerReview,
 } from '../entities';
 import {
   ExclusionConstraintViolationError,
@@ -25,6 +29,8 @@ import {
   ArticleRepository,
   ApprovalRequestRepository,
   BookingRepository,
+  AvailabilitySlotRepository,
+  LedgerEntryRepository,
   InvitationRepository,
   LoginTokenRepository,
   MentorProfileRepository,
@@ -32,6 +38,7 @@ import {
   NoteRepository,
   PaymentRepository,
   UserRepository,
+  VaultAnswerRepository,
   transitionStatus,
 } from './index';
 
@@ -69,6 +76,9 @@ beforeAll(async () => {
 async function resetDatabase(): Promise<void> {
   // Start from an empty database and build the schema with the real migrations.
   await orm.schema.dropSchema({ dropMigrationsTable: true });
+  // PostgreSQL functions are schema objects and survive MikroORM's table-only
+  // reset, unlike the trigger attached to the dropped bookings table.
+  await orm.em.getConnection().execute('drop function if exists "release_booking_availability_slot"() cascade');
   await orm.migrator.up();
   // Articles provide an existing mapped target table for exercising the generic transition runner.
   await orm.em.getConnection().execute('alter table "articles" add column "status" varchar(255)');
@@ -89,7 +99,9 @@ describe('migrations', () => {
       'articles',
       'bookings',
       'invitations',
+      'ledger_entries',
       'login_tokens',
+      'mentor_availability_slots',
       'mentor_profiles',
       'messages',
       'mikro_orm_migrations',
@@ -97,6 +109,9 @@ describe('migrations', () => {
       'payments',
       'status_transitions',
       'users',
+      'vault_answer_citations',
+      'vault_answer_reviews',
+      'vault_answers',
     ]);
   });
 
@@ -113,6 +128,26 @@ describe('migrations', () => {
     expect(await publicTables()).not.toContain('notes');
     await orm.migrator.up();
     expect(await publicTables()).toContain('notes');
+  });
+
+  it('creates and drops the append-only ledger table through the reversible migration', async () => {
+    await orm.migrator.down('Migration20261110150000_ledger_entries');
+    expect(await publicTables()).not.toContain('ledger_entries');
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('ledger_entries');
+  });
+
+  it('creates and drops vault answers, citations and payable-subject columns reversibly', async () => {
+    await orm.migrator.down('Migration20261110170000_vault_answers');
+    expect(await publicTables()).not.toContain('vault_answers');
+    const before = await orm.em.getConnection().execute(`select is_nullable from information_schema.columns where table_name = 'payments' and column_name = 'booking_id'`);
+    expect(before).toEqual([{ is_nullable: 'NO' }]);
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('vault_answers');
+    expect(await publicTables()).toContain('vault_answer_citations');
+    expect(await publicTables()).toContain('vault_answer_reviews');
+    const after = await orm.em.getConnection().execute(`select is_nullable from information_schema.columns where table_name = 'payments' and column_name = 'booking_id'`);
+    expect(after).toEqual([{ is_nullable: 'YES' }]);
   });
 
   it('removes the approval table and its partial index on migration down', async () => {
@@ -714,6 +749,86 @@ describe('InvitationRepository', () => {
   });
 });
 
+describe('AvailabilitySlotRepository', () => {
+  it('atomically reserves a slot for one booking and releases it when checkout fails', async () => {
+    const users = new UserRepository(orm.em.fork());
+    const seeker = await users.create({ email: `${randomUUID()}@example.com`, name: 'Seeker' });
+    const mentor = await users.create({ email: `${randomUUID()}@example.com`, name: 'Mentor' });
+    await new MentorProfileRepository(orm.em.fork()).create({
+      userId: mentor.id,
+      slug: `mentor-${randomUUID()}`,
+      headline: 'Mentor',
+      bio: 'Bio',
+      technologies: 'typescript',
+      publicWorkUrl: 'https://example.com',
+      isListed: true,
+      lastActiveAt: null,
+    });
+    const mentorId = mentor.id;
+    const now = new Date();
+    const startsAt = new Date(Math.ceil((now.getTime() + 60 * 60_000) / 900_000) * 900_000);
+    const slots = new AvailabilitySlotRepository(orm.em.fork());
+    const slot = await slots.create({
+      mentorId,
+      startsAt,
+      endsAt: new Date(startsAt.getTime() + 25 * 60_000),
+    });
+    const bookingData = {
+      seekerId: seeker.id,
+      mentorId,
+      question: 'Question',
+      durationMinutes: 25,
+      priceMinor: 2500,
+      currency: 'EUR',
+      status: 'pending_payment',
+      source: 'link' as const,
+      landedAt: now,
+      startsAt: null,
+      endsAt: null,
+      availabilitySlotId: slot.id,
+    };
+    const competingSeeker = await users.create({ email: `${randomUUID()}@example.com`, name: 'Other seeker' });
+    const competingBookingData = { ...bookingData, seekerId: competingSeeker.id };
+    const paymentData = {
+      provider: 'mock',
+      livemode: false,
+      providerSessionId: null,
+      providerPaymentId: null,
+      amountMinor: 2500,
+      currency: 'EUR',
+      status: 'pending',
+    };
+    const reservations = await Promise.allSettled([
+      slots.reserveWithBooking(slot.id, mentorId, now, bookingData, paymentData),
+      new AvailabilitySlotRepository(orm.em.fork()).reserveWithBooking(slot.id, mentorId, now, competingBookingData, paymentData),
+    ]);
+    const winner = reservations.filter((result) => result.status === 'fulfilled');
+    if (winner.length !== 1) {
+      throw new Error(`Expected one slot reservation; results: ${reservations.map((result) => result.status === 'rejected' ? String(result.reason) : 'fulfilled').join(' | ')}`);
+    }
+    expect(winner).toHaveLength(1);
+    expect((await new AvailabilitySlotRepository(orm.em.fork()).findById(slot.id))?.status).toBe('reserved');
+
+    const booking = winner[0];
+    if (booking.status !== 'fulfilled') throw new Error('Expected one successful slot reservation.');
+    await new BookingRepository(orm.em.fork()).failCheckout(booking.value.booking.id);
+    expect((await new AvailabilitySlotRepository(orm.em.fork()).findById(slot.id))?.status).toBe('open');
+  });
+
+  it('rejects overlapping published slots for the same mentor', async () => {
+    const mentorId = randomUUID();
+    const now = new Date();
+    const startsAt = new Date(Math.ceil((now.getTime() + 60 * 60_000) / 900_000) * 900_000);
+    const repository = new AvailabilitySlotRepository(orm.em.fork());
+    await repository.create({ mentorId, startsAt, endsAt: new Date(startsAt.getTime() + 25 * 60_000) });
+    await expect(repository.create({
+      mentorId,
+      startsAt: new Date(startsAt.getTime() + 15 * 60_000),
+      endsAt: new Date(startsAt.getTime() + 40 * 60_000),
+    })).rejects.toThrow();
+  });
+});
+
 describe('MentorProfileRepository', () => {
   it('enforces unique user and slug values, returns listed profiles, and resolves unlisted profiles by slug', async () => {
     const user = await new UserRepository(orm.em.fork()).create({
@@ -1265,6 +1380,114 @@ describe('NoteRepository', () => {
       publishedAt: new Date(),
       takenDownAt: null,
     })).rejects.toThrow();
+    expect(await repository.publish(saved.id, mentorId, 'notice-v1', new Date())).toBe(true);
+    expect(saved.status).toBe('published');
+    expect(saved.aiNoticeVersion).toBe('notice-v1');
+    expect(await repository.takeDown(saved.id, mentorId, new Date())).toBe(true);
+    expect(saved.status).toBe('taken_down');
+  });
+});
+
+describe('LedgerEntryRepository', () => {
+  it('records idempotent credits, rejects changed replays, and separates live balances', async () => {
+    const accountId = randomUUID();
+    const sourceId = randomUUID();
+    const repository = new LedgerEntryRepository(orm.em.fork());
+    const entry = {
+      accountId,
+      amountMinor: 267,
+      currency: 'EUR',
+      livemode: true,
+      sourceType: 'vault_answer',
+      sourceId,
+    };
+
+    await expect(repository.record([entry])).resolves.toBe(1);
+    await expect(repository.record([entry])).resolves.toBe(0);
+    await expect(repository.record([{ ...entry, amountMinor: 268 }])).rejects.toThrow(/ledger replay conflicts/i);
+    await expect(repository.record([{ ...entry, sourceId: randomUUID(), amountMinor: 50, livemode: false }])).resolves.toBe(1);
+    await expect(repository.balanceOf(accountId, true)).resolves.toBe(267);
+    await expect(repository.balanceOf(accountId, false)).resolves.toBe(50);
+    expect(await orm.em.fork().count(LedgerEntry, { accountId })).toBe(2);
+  });
+});
+
+describe('VaultAnswerRepository', () => {
+  it('claims a generation lease once, persists preview assignments, and releases credits atomically on the final approval', async () => {
+    const em = orm.em.fork();
+    const seekerId = randomUUID();
+    const mentorId = randomUUID();
+    const reviewerId = randomUUID();
+    const noteId = randomUUID();
+    const now = new Date('2026-11-10T12:00:00.000Z');
+    await em.persistAndFlush(em.create(Note, {
+      mentorId, title: 'Consented', body: 'Body', status: 'published', aiNoticeVersion: 'v1',
+      aiConsentedAt: now, publishedAt: now, takenDownAt: null,
+    }));
+    await em.persistAndFlush(em.create(Note, {
+      id: noteId, mentorId, title: 'Vault source', body: 'Body', status: 'published', aiNoticeVersion: 'v1',
+      aiConsentedAt: now, publishedAt: now, takenDownAt: null,
+    }));
+    const repository = new VaultAnswerRepository(em);
+    const { answer, payment } = await repository.createWithPayment({
+      seekerId, question: 'How does it work?', status: 'paid', priceMinor: 1000, currency: 'EUR',
+      answerText: null, failureReason: null, modelId: null, inputTokens: null, outputTokens: null,
+      generationAttempts: 0, generationStartedAt: null, previewRequired: true, reviewExpiresAt: null,
+    }, {
+      provider: 'mock', providerSessionId: 'vault-session', providerPaymentId: null, amountMinor: 1000,
+      currency: 'EUR', status: 'succeeded', livemode: false,
+    });
+    expect(await repository.claimGeneration(answer.id, now, 180_000)).toBe(true);
+    expect(await repository.claimGeneration(answer.id, now, 180_000)).toBe(false);
+    expect(await repository.persistGenerated({
+      answerId: answer.id, answerText: 'Answer', modelId: 'mock-v1', inputTokens: 10, outputTokens: 5,
+      citations: [{ answerId: answer.id, noteId, mentorId, mentorName: 'Mentor', noteTitle: 'Vault source', position: 0 }],
+      reviewerIds: [reviewerId], reviewExpiresAt: new Date(now.getTime() + 60_000), now, directRelease: false,
+    })).toBe(true);
+    expect((await repository.findById(answer.id))?.status).toBe('pending_preview');
+    await expect(repository.decideAndReleaseWithCredits({
+      answerId: answer.id, reviewerId,
+      decidedAt: new Date(now.getTime() + 30_000),
+      credits: [{ accountId: mentorId, amountMinor: 800, currency: 'EUR', livemode: payment.livemode, sourceType: 'vault_answer', sourceId: answer.id }],
+    })).resolves.toBe(true);
+    expect((await repository.findById(answer.id))?.status).toBe('released');
+    expect(await em.count(VaultAnswerReview, { answerId: answer.id, decision: 'approved' })).toBe(1);
+    expect(await em.count(LedgerEntry, { sourceId: answer.id, accountId: mentorId })).toBe(1);
+  });
+
+  it('rejects the last approval when a cited note loses consent and opens one refund request', async () => {
+    const em = orm.em.fork();
+    const seekerId = randomUUID();
+    const mentorId = randomUUID();
+    const reviewerId = randomUUID();
+    const noteId = randomUUID();
+    const now = new Date('2026-11-10T12:00:00.000Z');
+    const repository = new VaultAnswerRepository(em);
+    const { answer, payment } = await repository.createWithPayment({
+      seekerId, question: 'How?', status: 'pending_preview', priceMinor: 1000, currency: 'EUR',
+      answerText: 'Answer', failureReason: null, modelId: 'mock-v1', inputTokens: 10, outputTokens: 5,
+      generationAttempts: 1, generationStartedAt: now, previewRequired: true, reviewExpiresAt: new Date(now.getTime() + 60_000),
+    }, {
+      provider: 'mock', providerSessionId: 'vault-session-reject', providerPaymentId: null, amountMinor: 1000,
+      currency: 'EUR', status: 'succeeded', livemode: false,
+    });
+    await em.persistAndFlush(em.create(Note, {
+      id: noteId, mentorId, title: 'Taken down', body: 'Body', status: 'taken_down', aiNoticeVersion: 'v1',
+      aiConsentedAt: now, publishedAt: now, takenDownAt: now,
+    }));
+    await em.persistAndFlush(em.create(VaultAnswerCitation, {
+      answerId: answer.id, noteId, mentorId, mentorName: 'Mentor', noteTitle: 'Taken down', position: 0,
+    }));
+    await em.persistAndFlush(em.create(VaultAnswerReview, {
+      answerId: answer.id, reviewerId, decision: null, decidedAt: null, reason: null,
+    }));
+    await expect(repository.decideAndReleaseWithCredits({
+      answerId: answer.id, reviewerId, decidedAt: now,
+      credits: [{ accountId: mentorId, amountMinor: 800, currency: 'EUR', livemode: payment.livemode, sourceType: 'vault_answer', sourceId: answer.id }],
+    })).resolves.toBe(false);
+    expect((await repository.findById(answer.id))?.status).toBe('rejected');
+    expect(await em.count(LedgerEntry, { sourceId: answer.id })).toBe(0);
+    expect(await em.count(ApprovalRequest, { subjectId: payment.id, status: 'pending' })).toBe(1);
   });
 });
 
@@ -1282,8 +1505,10 @@ describe('migrations (down)', () => {
 
     await orm.migrator.up();
     expect(await publicTables()).toEqual([
-      'approval_requests', 'articles', 'bookings', 'invitations', 'login_tokens',
-      'mentor_profiles', 'messages', 'mikro_orm_migrations', 'notes', 'payments', 'status_transitions', 'users',
+      'approval_requests', 'articles', 'bookings', 'invitations', 'ledger_entries', 'login_tokens',
+      'mentor_availability_slots', 'mentor_profiles', 'messages', 'mikro_orm_migrations',
+      'notes', 'payments', 'status_transitions', 'users',
+      'vault_answer_citations', 'vault_answer_reviews', 'vault_answers',
     ]);
   });
 

@@ -34,7 +34,7 @@ function note(overrides: Partial<Note> = {}): Note {
 
 function setup(options: {
   isMentor?: boolean;
-  settings?: { publishEnabled: boolean; isProduction: boolean };
+  settings?: { enabled: boolean; publishEnabled: boolean; isProduction: boolean };
   initialNote?: Note;
 } = {}) {
   let current = options.initialNote ?? note();
@@ -60,7 +60,7 @@ function setup(options: {
   const emit = jest.spyOn(eventBus, 'emit');
   const invitationService = { isAcceptedMentor: jest.fn(async () => options.isMentor ?? true) };
   const clock: Clock = { now: () => new Date(NOW) };
-  const vaultSettings = jest.fn(() => options.settings ?? { publishEnabled: false, isProduction: false });
+  const vaultSettings = jest.fn(() => options.settings ?? { enabled: false, publishEnabled: false, isProduction: false });
   const service = new NoteService({
     noteRepository: repository as unknown as NoteRepository,
     invitationService,
@@ -100,17 +100,17 @@ describe('NoteService', () => {
   });
 
   it('keeps production publishing closed until the notice review flag is enabled', async () => {
-    const { service, repository } = setup({ settings: { publishEnabled: false, isProduction: true } });
+    const { service, repository } = setup({ settings: { enabled: false, publishEnabled: false, isProduction: true } });
     await expect(service.publish(SESSION, IDS.note, { consent: true, noticeVersion: VAULT_NOTICE_VERSION }))
       .rejects.toThrow('Publishing opens when the notice has been reviewed.');
     expect(repository.publish).not.toHaveBeenCalled();
   });
 
   it('returns the server publication gate so the UI matches enabled production configuration', async () => {
-    const closed = setup({ settings: { publishEnabled: false, isProduction: true } });
+    const closed = setup({ settings: { enabled: false, publishEnabled: false, isProduction: true } });
     await expect(closed.service.get(SESSION, IDS.note)).resolves.toMatchObject({ canPublish: false });
 
-    const open = setup({ settings: { publishEnabled: true, isProduction: true } });
+    const open = setup({ settings: { enabled: false, publishEnabled: true, isProduction: true } });
     await expect(open.service.get(SESSION, IDS.note)).resolves.toMatchObject({ canPublish: true });
   });
 
