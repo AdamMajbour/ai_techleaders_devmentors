@@ -215,6 +215,7 @@ describe('MentorService DTO and activity', () => {
     expect(Object.keys(dto).sort()).toEqual([
       'activity',
       'bio',
+      'githubUrl',
       'headline',
       'id',
       'isListed',

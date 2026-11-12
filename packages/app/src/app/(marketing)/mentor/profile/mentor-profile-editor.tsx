@@ -200,7 +200,11 @@ function MentorProfileForm({
         </Alert>
       )}
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Saving…' : values.isListed ? 'Publish profile' : profile ? 'Save profile' : 'Save profile'}
+        {isSubmitting
+          ? 'Saving…'
+          : !profile
+            ? values.isListed ? 'Create and publish profile' : 'Create profile'
+            : !profile.isListed && values.isListed ? 'Publish profile' : 'Save profile'}
       </Button>
     </form>
   );

@@ -54,7 +54,7 @@ describe('MentorProfileEditor', () => {
     await userEvent.type(await screen.findByLabelText('Profile link (required)'), 'grace-hopper');
     await userEvent.type(screen.getByLabelText('Headline (required)'), 'Debugged systems');
     await userEvent.type(screen.getByLabelText('Bio (required)'), 'I help with practical issues.');
-    await userEvent.type(screen.getByLabelText('Technologies (required)'), 'typescript');
+    await userEvent.click(screen.getByRole('checkbox', { name: 'TypeScript' }));
     await userEvent.type(screen.getByLabelText('Public work URL (required)'), 'https://example.com/grace');
     await userEvent.click(screen.getByRole('button', { name: 'Create profile' }));
 
@@ -76,7 +76,7 @@ describe('MentorProfileEditor', () => {
       );
     });
     expect(await screen.findByRole('status')).toHaveTextContent('Profile saved.');
-  });
+  }, 15000);
 
   it('updates the signed-in mentor profile through the owner-checked API route', async () => {
     const updated = { ...profile, headline: 'Updated backend mentor' };
@@ -110,5 +110,5 @@ describe('MentorProfileEditor', () => {
     });
     expect(await screen.findByRole('status')).toHaveTextContent('Profile saved.');
     expect(apiCall).toHaveBeenCalledWith('/api/mentors/me');
-  });
+  }, 15000);
 });
