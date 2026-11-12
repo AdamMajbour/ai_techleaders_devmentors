@@ -44,4 +44,3 @@ PR: #29
 - [x] 1.3 Add shared validators and unit/integration coverage for consent, ownership, and state transitions — 7993757
 - [x] 1.4 Build mentor notes pages from Storybook patterns and verify the full validation gate — fad1509
 
-
