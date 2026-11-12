@@ -1,4 +1,4 @@
-﻿# E02-S01 mentor notes — 2026-11-09
+# E02-S01 mentor notes — 2026-11-09
 
 ## Goal
 Implement E02-S01: invited mentors can create and manage private notes, publish only after fresh consent to the versioned AI-use notice, and take published notes down. The implementation ships as a PR based on `develop`, as requested by the repository owner for this run.
@@ -43,4 +43,3 @@ PR: #29
 - [x] 1.2 Implement owner-scoped note service and CRUD, publish, and take-down routes — 4101b28
 - [x] 1.3 Add shared validators and unit/integration coverage for consent, ownership, and state transitions — 7993757
 - [x] 1.4 Build mentor notes pages from Storybook patterns and verify the full validation gate — fad1509
-
