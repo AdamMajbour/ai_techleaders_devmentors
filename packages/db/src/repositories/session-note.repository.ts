@@ -4,8 +4,8 @@ import { SessionNote } from '../entities';
 export class SessionNoteRepository {
   constructor(private readonly em: EntityManager) {}
   findById(id: string) { return this.em.findOne(SessionNote, { id }); }
-  findByMentor(mentorId: string) {
-    return this.em.find(SessionNote, { mentorId }, { orderBy: { createdAt: 'desc', id: 'asc' } });
+  findByUser(userId: string) {
+    return this.em.find(SessionNote, { $or: [{ mentorId: userId }, { seekerId: userId }] }, { orderBy: { createdAt: 'desc', id: 'asc' } });
   }
   async create(data: RequiredEntityData<SessionNote>) {
     const note = this.em.create(SessionNote, data);

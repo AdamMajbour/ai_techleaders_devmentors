@@ -32,6 +32,7 @@ export type SessionNoteDto = {
   id: string;
   sessionId: string;
   mentorId: string;
+  seekerId: string;
   title: string;
   content: string;
   seekerApprovedAt: string | null;
@@ -45,6 +46,7 @@ export function toSessionNoteDto(note: import('@devmentor/db').SessionNote): Ses
     id: note.id,
     sessionId: note.sessionId,
     mentorId: note.mentorId,
+    seekerId: note.seekerId,
     title: note.title,
     content: note.content,
     seekerApprovedAt: note.seekerApprovedAt?.toISOString() ?? null,
