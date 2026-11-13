@@ -59,6 +59,7 @@ const e2e = {
   testEnvironment: "node",
   roots: ["<rootDir>/packages/app/e2e"],
   testMatch: ["**/*.e2e.test.ts"],
+  setupFiles: ["<rootDir>/packages/app/e2e/setup-env.ts"],
   transform: tsJest,
 };
 
