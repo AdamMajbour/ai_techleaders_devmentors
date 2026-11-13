@@ -1516,7 +1516,9 @@ describe('migrations (down)', () => {
     expect(await publicTables()).toEqual([
       'approval_requests', 'articles', 'bookings', 'invitations', 'ledger_entries', 'login_tokens',
       'mentor_availability_slots', 'mentor_profiles', 'messages', 'mikro_orm_migrations',
-      'notes', 'payments', 'status_transitions', 'users',
+      'notes', 'payments', 'payout_transfer_attempts', 'payout_transfers', 'retention_legal_hold_releases',
+      'retention_legal_holds', 'retention_sweep_runs', 'status_transitions', 'stripe_connect_accounts',
+      'terms_acceptances', 'terms_reviews', 'terms_versions', 'users',
       'vault_answer_citations', 'vault_answer_reviews', 'vault_answers',
     ]);
   });
