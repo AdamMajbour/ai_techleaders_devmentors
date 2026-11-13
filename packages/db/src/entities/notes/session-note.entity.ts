@@ -5,7 +5,7 @@ export const SessionNote = defineDomainEntity({
   name: 'SessionNote',
   tableName: 'session_notes',
   properties: {
-    sessionId: p.uuid().index(),
+    bookingId: p.uuid().index(),
     mentorId: p.uuid().index(),
     seekerId: p.uuid().index(),
     title: p.string(),

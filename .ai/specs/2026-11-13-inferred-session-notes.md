@@ -9,6 +9,10 @@ Status: implementation assumptions; the requested `.ai/specs/2026-10-01-sessions
 - E02's vault spec explicitly excludes session notes from its AI corpus. This implementation does not expose notes to E02.
 - E01's booking and messaging flows are specified but absent from this checkout. Consequently no code here proves a session exists or that its seeker is a participant. `sessionId` and `seekerId` are opaque UUIDs supplied by the mentor; the mentor can assign an arbitrary existing account. APIs restrict reads to the mentor and assigned seeker, but this is a provisional trust boundary, not proof of booking participation. E01 must replace it with authoritative participant resolution before production use.
 
+## E01 booking integration (minimal local prerequisite)
+
+Session notes now reference a booking ID and derive mentor/seeker identities from that booking. Note creation is mentor-only and requires booking status `accepted` or `completed`; read and consent are limited to the recorded participants. The local minimal booking table has participant IDs and status but no E01 transitions, payment linkage, status constraint, or authoritative ownership history. These remain prerequisites before production use.
+
 ## Implemented interim behavior
 
 Mentors can create, list, edit, and delete their own notes, assigning a seeker account ID. Assigned seekers can read and record or withdraw approval. Editing clears recorded approval. There is no public listing or endpoint; approval is only a consent record for a future publication flow. The model is separate from standalone E02 mentor-authored vault notes.
@@ -23,7 +27,7 @@ Mentors can create, list, edit, and delete their own notes, assigning a seeker a
 
 ## Follow-up required
 
-1. Implement E01 bookings and participant authorization; replace mentor-supplied seeker IDs with the booking participant.
+1. Complete E01 booking lifecycle/status constraints and payment-backed booking creation; this code supplies only participant identity and a status eligibility check.
 2. Add a reviewed publication destination and enforce recorded seeker approval there; the current approval does not expose any public route.
 3. Add retention/deletion behavior consistent with D15 and the approval exception.
 4. Resolve exact S02–S04 acceptance criteria from the missing spec or product owner before broadening behavior.

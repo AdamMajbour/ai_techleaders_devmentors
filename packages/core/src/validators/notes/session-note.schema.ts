@@ -1,8 +1,7 @@
 import { z } from 'zod';
 
 export const sessionNoteCreateSchema = z.object({
-  sessionId: z.uuid(),
-  seekerId: z.uuid(),
+  bookingId: z.uuid(),
   title: z.string().trim().min(1).max(160),
   content: z.string().trim().min(1).max(20000),
 });

@@ -30,7 +30,7 @@ export function toArticleDto(article: Article): ArticleDto {
 
 export type SessionNoteDto = {
   id: string;
-  sessionId: string;
+  bookingId: string;
   mentorId: string;
   seekerId: string;
   title: string;
@@ -44,7 +44,7 @@ export type SessionNoteDto = {
 export function toSessionNoteDto(note: import('@devmentor/db').SessionNote): SessionNoteDto {
   return {
     id: note.id,
-    sessionId: note.sessionId,
+    bookingId: note.bookingId,
     mentorId: note.mentorId,
     seekerId: note.seekerId,
     title: note.title,

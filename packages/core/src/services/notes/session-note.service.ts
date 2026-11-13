@@ -4,50 +4,19 @@ import { NotFoundError } from '../../http/errors';
 import type { Session } from '../../security/session';
 import type { SessionNoteCreateInput, SessionNoteUpdateInput } from '../../validators/notes/session-note.schema';
 import { toSessionNoteDto, type SessionNoteDto } from '../dto';
-
+import type { BookingService } from '../bookings/booking.service';
 export class SessionNoteService {
-  constructor(private readonly deps: { sessionNoteRepository: SessionNoteRepository }) {}
-  async list(session: Session): Promise<SessionNoteDto[]> {
-    return (await this.deps.sessionNoteRepository.findByUser(session.userId)).map(toSessionNoteDto);
-  }
-  async create(session: Session, input: SessionNoteCreateInput): Promise<SessionNoteDto> {
-    return toSessionNoteDto(await this.deps.sessionNoteRepository.create({
-      ...input, mentorId: session.userId, seekerApprovedAt: null, withdrawnAt: null,
-    }));
-  }
-  async get(session: Session, id: string): Promise<SessionNoteDto> {
-    const note = await this.deps.sessionNoteRepository.findById(id);
-    if (!note || (note.mentorId !== session.userId && note.seekerId !== session.userId)) {
-      throw new NotFoundError('Session note not found.');
-    }
-    return toSessionNoteDto(note);
-  }
-  async approve(session: Session, id: string, approved: boolean): Promise<SessionNoteDto> {
-    const note = await this.deps.sessionNoteRepository.findById(id);
-    if (!note) throw new NotFoundError('Session note not found.');
-    if (note.seekerId !== session.userId) throw new NotFoundError('Session note not found.');
-    const updated = await this.deps.sessionNoteRepository.update(id, {
-      seekerApprovedAt: approved ? new Date() : null,
-      withdrawnAt: approved ? null : new Date(),
-    });
-    if (!updated) throw new NotFoundError('Session note not found.');
-    return toSessionNoteDto(updated);
-  }
-  async update(session: Session, id: string, input: SessionNoteUpdateInput): Promise<SessionNoteDto> {
-    await this.findOwned(session, id);
-    const updated = await this.deps.sessionNoteRepository.update(id, { ...input, seekerApprovedAt: null });
-    if (!updated) throw new NotFoundError('Session note not found.');
-    return toSessionNoteDto(updated);
-  }
-  async remove(session: Session, id: string): Promise<{ id: string }> {
-    await this.findOwned(session, id);
-    await this.deps.sessionNoteRepository.delete(id);
-    return { id };
-  }
-  private async findOwned(session: Session, id: string) {
-    const note = await this.deps.sessionNoteRepository.findById(id);
-    if (!note) throw new NotFoundError('Session note not found.');
-    assertOwns(session, note.mentorId);
-    return note;
-  }
+ constructor(private readonly deps: { sessionNoteRepository: SessionNoteRepository; bookingService: BookingService }) {}
+ async list(session: Session): Promise<SessionNoteDto[]> { return (await this.deps.sessionNoteRepository.findByUser(session.userId)).map(toSessionNoteDto); }
+ async create(session: Session, input: SessionNoteCreateInput): Promise<SessionNoteDto> {
+  const booking = await this.deps.bookingService.getForNote(session, input.bookingId);
+  if (!booking) throw new NotFoundError('Eligible booking not found.');
+  if (booking.mentorId !== session.userId) throw new NotFoundError('Eligible booking not found.');
+  return toSessionNoteDto(await this.deps.sessionNoteRepository.create({ ...input, mentorId: booking.mentorId, seekerId: booking.seekerId, seekerApprovedAt: null, withdrawnAt: null }));
+ }
+ async get(session: Session, id: string): Promise<SessionNoteDto> { const note=await this.deps.sessionNoteRepository.findById(id); if(!note || (note.mentorId!==session.userId && note.seekerId!==session.userId)) throw new NotFoundError('Session note not found.'); return toSessionNoteDto(note); }
+ async approve(session: Session,id:string,approved:boolean):Promise<SessionNoteDto>{const note=await this.deps.sessionNoteRepository.findById(id);if(!note||note.seekerId!==session.userId)throw new NotFoundError('Session note not found.');const updated=await this.deps.sessionNoteRepository.update(id,{seekerApprovedAt:approved?new Date():null,withdrawnAt:approved?null:new Date()});if(!updated)throw new NotFoundError('Session note not found.');return toSessionNoteDto(updated);}
+ async update(session:Session,id:string,input:SessionNoteUpdateInput):Promise<SessionNoteDto>{await this.findOwned(session,id);const updated=await this.deps.sessionNoteRepository.update(id,{...input,seekerApprovedAt:null});if(!updated)throw new NotFoundError('Session note not found.');return toSessionNoteDto(updated);}
+ async remove(session:Session,id:string):Promise<{id:string}>{await this.findOwned(session,id);await this.deps.sessionNoteRepository.delete(id);return {id};}
+ private async findOwned(session:Session,id:string){const note=await this.deps.sessionNoteRepository.findById(id);if(!note)throw new NotFoundError('Session note not found.');assertOwns(session,note.mentorId);return note;}
 }
