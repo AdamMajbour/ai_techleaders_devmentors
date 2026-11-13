@@ -1,4 +1,4 @@
-/**
+﻿/**
  * End-to-end test against a real production server (`next build` + `next start`)
  * backed by a real PostgreSQL database. It uses its own database (`devmentor_e2e`),
  * migrates and seeds it through the same npm scripts developers use, and migrates it
@@ -14,7 +14,7 @@ import path from 'node:path';
 import { chromium, type Browser } from 'playwright';
 import { e2eDatabaseOptions as E2E_DATABASE_OPTIONS } from './e2e-database-config';
 const E2E_DATABASE_NAME = E2E_DATABASE_OPTIONS.dbName;
-require('../../db/src/load-env');
+import '../../db/src/load-env';
 import { closeORM, initializeORM, InvitationRepository, TermsRepository } from '../../db/src';
 import { VAULT_NOTICE_VERSION } from '@devmentor/core';
 // Relative on purpose: app code must not import the db package, but a test may read its demo constants.
@@ -946,7 +946,7 @@ describe('mock vault purchase and mentor preview', () => {
     await seekerPage.close();
   }, 120_000);
 
-  it('does not expose another seeker’s answer to an authenticated non-participant', async () => {
+  it('does not expose another seekerâ€™s answer to an authenticated non-participant', async () => {
     const seeker = await registerPilotUser('seeker', 'Private Answer Buyer');
     const otherSeeker = await registerPilotUser('seeker', 'Unrelated Seeker');
     const mentor = await registerPilotUser('mentor', 'Private Answer Mentor');
