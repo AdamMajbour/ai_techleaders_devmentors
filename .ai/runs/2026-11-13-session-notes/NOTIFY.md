@@ -1,1 +1,3 @@
 - 2026-11-13T22:35:00Z Run started. Reconstructed scope from product brief, backlog, E01/E02 specs and git history; requested E04 spec is missing.
+- 2026-11-13T22:45:00Z Implementation committed (`a009fa9`); type-check, lint, 159 unit tests passed. `npm run build` failed under ambient non-standard NODE_ENV; retry with NODE_ENV=production passed and listed the new routes.
+- 2026-11-13T22:46:00Z Run settled with a documented product boundary: no participant authorization exists until E01 is implemented.
