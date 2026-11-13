@@ -27,3 +27,5 @@ export { assertCsrfSafe } from './security/csrf';
 export { createRateLimiter, clientKey, type RateLimiter } from './security/rate-limit';
 export { withFailureLimit } from './security/guarded';
 export { loginLimiter, registerLimiter } from './security/limiters';
+
+export { SessionNoteService } from './services/notes/session-note.service';

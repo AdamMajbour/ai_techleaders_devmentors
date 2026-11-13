@@ -1,0 +1,1 @@
+- 2026-11-13T22:35:00Z Run started. Reconstructed scope from product brief, backlog, E01/E02 specs and git history; requested E04 spec is missing.
