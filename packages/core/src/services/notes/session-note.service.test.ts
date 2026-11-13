@@ -11,14 +11,14 @@ const stored = (overrides: Partial<SessionNote> = {}) => ({
   ...overrides,
 }) as SessionNote;
 function setup(repository: Partial<Record<keyof SessionNoteRepository, jest.Mock>> = {}) {
-  return new SessionNoteService({ sessionNoteRepository: repository as unknown as SessionNoteRepository });
+  return new SessionNoteService({ sessionNoteRepository: repository as unknown as SessionNoteRepository, bookingService: { getForNote: jest.fn(async () => ({ id: 'b1', mentorId: 'mentor-1', seekerId: 'seeker-1', status: 'accepted' })) } as never });
 }
 
 describe('SessionNoteService', () => {
   it('creates private notes with the authenticated mentor as owner', async () => {
     const create = jest.fn(async (data) => stored(data));
     const service = setup({ create });
-    const note = await service.create(ME, { sessionId: 'session-1', seekerId: 'seeker-1', title: 'T', content: 'C' });
+    const note = await service.create(ME, { bookingId: 'b1', title: 'T', content: 'C' });
     expect(create).toHaveBeenCalledWith(expect.objectContaining({ mentorId: ME.userId, seekerApprovedAt: null, withdrawnAt: null }));
     expect(note.seekerApprovedAt).toBeNull();
   });

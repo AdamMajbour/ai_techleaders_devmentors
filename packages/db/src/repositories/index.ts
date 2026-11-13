@@ -5,6 +5,8 @@
 import type { EntityManager, RequiredEntityData } from '@mikro-orm/core';
 import { User, Article } from '../entities';
 
+
+
 /** `passwordHash` is hidden from serialization, which makes the type system require it; here it is optional. */
 export type NewUser = Omit<RequiredEntityData<User>, 'passwordHash'> & { passwordHash?: string | null };
 
@@ -92,3 +94,5 @@ export class ArticleRepository {
 }
 
 export { SessionNoteRepository } from './session-note.repository';
+
+export { BookingRepository } from './booking.repository';

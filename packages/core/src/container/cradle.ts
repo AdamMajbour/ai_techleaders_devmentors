@@ -1,8 +1,9 @@
-import type { EntityManager, ArticleRepository, SessionNoteRepository, UserRepository } from '@devmentor/db';
+import type { EntityManager, ArticleRepository, SessionNoteRepository, UserRepository, BookingRepository } from '@devmentor/db';
 import type { EventBus } from '../events/event-bus';
 import type { Logger } from '../logger';
 import type { ArticleService } from '../services/articles/article.service';
 import type { AuthService } from '../services/auth/auth.service';
+import type { BookingService } from '../services/bookings/booking.service';
 import type { SessionNoteService } from '../services/notes/session-note.service';
 import type { UserService } from '../services/auth/user.service';
 
@@ -15,6 +16,8 @@ export interface Cradle {
   userRepository: UserRepository;
   articleRepository: ArticleRepository;
   sessionNoteRepository: SessionNoteRepository;
+  bookingRepository: BookingRepository;
+  bookingService: BookingService;
   userService: UserService;
   authService: AuthService;
   articleService: ArticleService;
