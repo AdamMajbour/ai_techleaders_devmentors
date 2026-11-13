@@ -10,6 +10,7 @@ type BookingCreated = {
 };
 
 type AvailabilitySlot = { id: string; startsAt: string; endsAt: string };
+type CurrentTerms = { id: string; version: string; sha256: string };
 
 export function BookingQuestionForm({
   profile,
@@ -23,6 +24,8 @@ export function BookingQuestionForm({
     () => apiCall<AvailabilitySlot[]>(`/api/mentors/${encodeURIComponent(profile.id)}/availability`),
     [profile.id],
   );
+  const termsRequest = useAsync(() => apiCall<CurrentTerms | null>('/api/terms/current?kind=seeker'), []);
+  const terms = termsRequest.data?.ok ? termsRequest.data.data : null;
   const slots = availability.data?.ok ? availability.data.data : [];
   const error = availability.error?.message ?? (availability.data && !availability.data.ok ? availability.data.error.message : null);
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -44,15 +47,17 @@ export function BookingQuestionForm({
       </Field>
       {availability.status === 'pending' || availability.status === 'idle' ? <LoadingMessage message="Loading available times…" /> : null}
       {availability.status === 'success' && slots.length === 0 ? <p className="m-0 text-body text-muted-foreground">No session times are available right now. Please check again later.</p> : null}
-      {slotId ? <QuestionForm
+      {slotId && terms ? <QuestionForm
         mentorName={profile.slug}
         priceMinor={SESSION_25_PRICE_MINOR}
         currency={CURRENCY}
         showPriceNotice={false}
         termsHref="#pilot-booking-terms"
+        termsVersionId={terms.id}
+        termsSha256={terms.sha256}
         termsHint="Your question is shared with this mentor only. Do not include passwords, tokens, or other secrets."
         maxLength={4000}
-        onSubmit={({ question }) => {
+        onSubmit={({ question, acceptedTerms, termsVersionId, termsSha256 }) => {
           const attribution = captureBookingAttribution(profile.slug, source);
           return apiCall<BookingCreated>('/api/bookings', {
             method: 'POST',
@@ -60,6 +65,9 @@ export function BookingQuestionForm({
               mentorId: profile.id,
               availabilitySlotId: slotId,
               question,
+              acceptedTerms,
+              termsVersionId,
+              termsSha256,
               source: attribution?.source ?? source,
               landedAt: attribution?.landedAt ?? new Date().toISOString(),
             },
@@ -76,6 +84,7 @@ export function BookingQuestionForm({
           }
         }}
       /> : null}
+      {slotId && !terms && termsRequest.status !== 'pending' && termsRequest.status !== 'idle' ? <p role="status" className="m-0 text-body text-muted-foreground">Checkout is unavailable until current reviewed pilot terms are published.</p> : null}
     </section>
   );
 }

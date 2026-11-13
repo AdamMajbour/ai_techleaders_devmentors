@@ -13,6 +13,7 @@ const IDS = {
   mentor: '2c0b2f5a-6f6e-4b53-9f0e-6b1f3b0a7a11',
 };
 const NOW = new Date('2026-11-09T12:00:00.000Z');
+const TERMS = { acceptedTerms: true as const, termsVersionId: '00000000-0000-4000-8000-000000000001', termsSha256: 'a'.repeat(64) };
 const SESSION = { userId: IDS.mentor };
 
 function note(overrides: Partial<Note> = {}): Note {
@@ -94,14 +95,14 @@ describe('NoteService', () => {
 
   it('refuses consent with a stale notice version before changing the note', async () => {
     const { service, repository } = setup();
-    await expect(service.publish(SESSION, IDS.note, { consent: true, noticeVersion: 'old-version' }))
+    await expect(service.publish(SESSION, IDS.note, { consent: true, noticeVersion: 'old-version', ...TERMS }))
       .rejects.toThrow('The notice changed. Read it again before you publish.');
     expect(repository.publish).not.toHaveBeenCalled();
   });
 
   it('keeps production publishing closed until the notice review flag is enabled', async () => {
     const { service, repository } = setup({ settings: { enabled: false, publishEnabled: false, isProduction: true } });
-    await expect(service.publish(SESSION, IDS.note, { consent: true, noticeVersion: VAULT_NOTICE_VERSION }))
+    await expect(service.publish(SESSION, IDS.note, { consent: true, noticeVersion: VAULT_NOTICE_VERSION, ...TERMS }))
       .rejects.toThrow('Publishing opens when the notice has been reviewed.');
     expect(repository.publish).not.toHaveBeenCalled();
   });
@@ -116,7 +117,7 @@ describe('NoteService', () => {
 
   it('records fresh versioned consent and emits only note and mentor ids on publish', async () => {
     const { service, repository, emit } = setup();
-    const published = await service.publish(SESSION, IDS.note, { consent: true, noticeVersion: VAULT_NOTICE_VERSION });
+    const published = await service.publish(SESSION, IDS.note, { consent: true, noticeVersion: VAULT_NOTICE_VERSION, ...TERMS });
     expect(repository.publish).toHaveBeenCalledWith(IDS.note, IDS.mentor, VAULT_NOTICE_VERSION, NOW);
     expect(published).toMatchObject({ status: 'published', aiNoticeVersion: VAULT_NOTICE_VERSION, aiConsentedAt: NOW.toISOString() });
     expect(emit).toHaveBeenCalledWith('notes.note.published', { noteId: IDS.note, mentorId: IDS.mentor });

@@ -80,6 +80,9 @@ export { registerMailSubscriber, type MailEventRegistrar } from './events/mail-s
 export { buildContainer, getContainer, withScope, type AppContainer } from './container/container';
 export type { Cradle, OrmLike } from './container/cradle';
 export { ArticleService } from './services/articles/article.service';
+export { TermsService, type TermsKind, type TermsScope } from './services/terms/terms.service';
+export { RetentionSweepTask, PILOT_RETENTION_DEADLINE } from './services/terms/retention-sweep.task';
+export { PilotMetricsService } from './services/terms/pilot-metrics.service';
 export {
   MentorService,
   normalizeMentorSlug,

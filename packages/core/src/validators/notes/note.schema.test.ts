@@ -8,8 +8,9 @@ describe('note validators', () => {
   });
 
   it('requires literal consent and a notice version', () => {
-    expect(notePublishSchema.safeParse({ consent: true, noticeVersion: 'working-draft-1' }).success).toBe(true);
-    expect(notePublishSchema.safeParse({ consent: false, noticeVersion: 'working-draft-1' }).success).toBe(false);
-    expect(notePublishSchema.safeParse({ consent: true, noticeVersion: '' }).success).toBe(false);
+    const terms = { acceptedTerms: true, termsVersionId: '00000000-0000-4000-8000-000000000001', termsSha256: 'a'.repeat(64) };
+    expect(notePublishSchema.safeParse({ consent: true, noticeVersion: 'working-draft-1', ...terms }).success).toBe(true);
+    expect(notePublishSchema.safeParse({ consent: false, noticeVersion: 'working-draft-1', ...terms }).success).toBe(false);
+    expect(notePublishSchema.safeParse({ consent: true, noticeVersion: '', ...terms }).success).toBe(false);
   });
 });

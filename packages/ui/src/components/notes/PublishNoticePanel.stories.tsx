@@ -12,6 +12,8 @@ const meta = {
   args: {
     noticeItems: NOTICE_ITEMS,
     noticeVersion: NOTICE_VERSION,
+    termsVersionId: '00000000-0000-4000-8000-000000000001',
+    termsSha256: 'a'.repeat(64),
     onPublish: fn(async () => ok) as PublishNoticePanelProps['onPublish'],
     onSuccess: fn(),
   },
@@ -29,18 +31,19 @@ type Story = StoryObj<typeof meta>;
 export const NotYetAgreed: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByRole('checkbox')).not.toBeChecked();
-    await expect(canvas.getByRole('button', { name: 'Publish note' })).toHaveAccessibleDescription('Tick the box to publish');
+    await expect(canvas.getAllByRole('checkbox').every((box) => box.getAttribute('aria-checked') === 'false')).toBe(true);
+    await expect(canvas.getByRole('button', { name: 'Publish note' })).toHaveAccessibleDescription('Read and accept both items to publish');
   },
 };
 
 export const PublishesAfterTheMentorAgrees: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole('checkbox'));
+    await userEvent.click(canvas.getAllByRole('checkbox')[0]);
+    await userEvent.click(canvas.getAllByRole('checkbox')[1]);
     await userEvent.click(canvas.getByRole('button', { name: 'Publish note' }));
     await waitFor(() => expect(args.onSuccess).toHaveBeenCalled());
-    await expect(args.onPublish).toHaveBeenCalledWith({ consent: true, noticeVersion: NOTICE_VERSION });
+    await expect(args.onPublish).toHaveBeenCalledWith({ consent: true, noticeVersion: NOTICE_VERSION, acceptedTerms: true, termsVersionId: '00000000-0000-4000-8000-000000000001', termsSha256: 'a'.repeat(64) });
   },
 };
 
@@ -48,7 +51,8 @@ export const Publishing: Story = {
   args: { onPublish: () => new Promise<ApiResult<unknown>>(() => {}) },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole('checkbox'));
+    await userEvent.click(canvas.getAllByRole('checkbox')[0]);
+    await userEvent.click(canvas.getAllByRole('checkbox')[1]);
     await userEvent.click(canvas.getByRole('button', { name: 'Publish note' }));
     await expect(canvas.getByRole('button', { name: 'Publishing…' })).toBeDisabled();
   },
@@ -58,7 +62,8 @@ export const NoticeChangedMeanwhile: Story = {
   args: { onPublish: async () => ({ ok: false, status: 409, error: { code: 'notice_changed', message: 'The notice changed. Read it again before you publish.' } }) },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole('checkbox'));
+    await userEvent.click(canvas.getAllByRole('checkbox')[0]);
+    await userEvent.click(canvas.getAllByRole('checkbox')[1]);
     await userEvent.click(canvas.getByRole('button', { name: 'Publish note' }));
     await expect(await canvas.findByRole('alert')).toHaveTextContent('The notice changed');
   },
@@ -72,7 +77,7 @@ export const PublishingNotOpenYet: Story = {
   args: { blockedReason: 'Publishing opens when the notice has been reviewed.' },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole('checkbox'));
+    await userEvent.click(canvas.getAllByRole('checkbox')[0]);
     await expect(canvas.getByRole('button', { name: 'Publish note' })).toHaveAccessibleDescription('Publishing opens when the notice has been reviewed.');
   },
 };

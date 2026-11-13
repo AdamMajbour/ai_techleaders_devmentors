@@ -5,6 +5,7 @@ import { VaultAnswerService } from './vault-answer.service';
 
 const seekerId = '10000000-0000-4000-8000-000000000001';
 const answerId = '20000000-0000-4000-8000-000000000001';
+const terms = { acceptedTerms: true as const, termsVersionId: '00000000-0000-4000-8000-000000000001', termsSha256: 'a'.repeat(64) };
 
 function setup(options: {
   notes?: Array<{ id: string; title: string; mentorId: string; mentorName: string; body: string }>;
@@ -65,7 +66,7 @@ describe('VaultAnswerService.create', () => {
   it('uses server price and creates a subject-specific checkout after preflight', async () => {
     const deps = setup();
     const result = await deps.service.create({ userId: seekerId }, {
-      question: '  How do I improve this query?  ',
+      question: '  How do I improve this query?  ', ...terms,
       priceMinor: 1,
     });
 
@@ -86,26 +87,26 @@ describe('VaultAnswerService.create', () => {
 
   it('does not charge when there are no notes or AI is not configured', async () => {
     const noNotes = setup({ notes: [] });
-    await expect(noNotes.service.create({ userId: seekerId }, { question: 'Question?' })).rejects.toThrow(/no mentor notes/i);
+    await expect(noNotes.service.create({ userId: seekerId }, { question: 'Question?', ...terms })).rejects.toThrow(/no mentor notes/i);
     expect(noNotes.createWithPayment).not.toHaveBeenCalled();
 
     const noAI = setup({ ready: false });
-    await expect(noAI.service.create({ userId: seekerId }, { question: 'Question?' })).rejects.toMatchObject({ status: 503 });
+    await expect(noAI.service.create({ userId: seekerId }, { question: 'Question?', ...terms })).rejects.toMatchObject({ status: 503 });
     expect(noAI.createWithPayment).not.toHaveBeenCalled();
   });
 
   it('keeps abandoned pending payments outside the open-answer cap and fails closed when vault is disabled', async () => {
     const atLimit = setup({ openCount: 3 });
-    await expect(atLimit.service.create({ userId: seekerId }, { question: 'Question?' })).rejects.toMatchObject({ status: 429 });
+    await expect(atLimit.service.create({ userId: seekerId }, { question: 'Question?', ...terms })).rejects.toMatchObject({ status: 429 });
     expect(atLimit.createWithPayment).not.toHaveBeenCalled();
     const disabled = setup({ enabled: false });
-    await expect(disabled.service.create({ userId: seekerId }, { question: 'Question?' })).rejects.toMatchObject({ status: 404 });
+    await expect(disabled.service.create({ userId: seekerId }, { question: 'Question?', ...terms })).rejects.toMatchObject({ status: 404 });
   });
 
   it('marks the answer and payment failed when checkout creation fails', async () => {
     const deps = setup();
     deps.createCheckout.mockRejectedValue(new Error('provider details'));
-    await expect(deps.service.create({ userId: seekerId }, { question: 'Question?' })).rejects.toMatchObject({ status: 503 });
+    await expect(deps.service.create({ userId: seekerId }, { question: 'Question?', ...terms })).rejects.toMatchObject({ status: 503 });
     expect(deps.failCheckout).toHaveBeenCalledWith(answerId);
   });
 });

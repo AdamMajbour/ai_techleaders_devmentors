@@ -20,13 +20,17 @@ import {
   MikroOrmUnitOfWork,
   VaultAnswerRepository,
   UserRepository,
+  TermsRepository,
+  RetentionRepository,
+  PilotMetricsRepository,
+  ConnectPayoutRepository,
 } from '@devmentor/db';
 import { createEventBus } from '../events/event-bus';
 import { registerLoggingSubscriber } from '../events/logging-subscriber';
 import { registerMailSubscriber } from '../events/mail-subscriber';
 import { registerBookingMailMappings } from '../events/booking-mail';
 import { createLogger, type Logger } from '../logger';
-import { getBookingSettings, getVaultSettings } from '../config/env';
+import { getBookingSettings, getPaymentSettings, getVaultSettings } from '../config/env';
 import { ArticleService } from '../services/articles/article.service';
 import { AuthService } from '../services/auth/auth.service';
 import { UserService } from '../services/auth/user.service';
@@ -53,6 +57,12 @@ import { VaultGenerationTask } from '../services/vault/vault-generation.task';
 import { VaultReviewService } from '../services/vault/vault-review.service';
 import { VaultExpireReviewsTask } from '../services/vault/vault-expire-reviews.task';
 import { assertConfiguredAIReadyToCharge } from '../services/ai/answer-generator.factory';
+import { TermsService } from '../services/terms/terms.service';
+import { RetentionSweepTask } from '../services/terms/retention-sweep.task';
+import { RetentionService } from '../services/terms/retention.service';
+import { StripeConnectGateway } from '../services/payouts/stripe-connect-gateway';
+import { ConnectPayoutService } from '../services/payouts/connect-payout.service';
+import { PilotMetricsService } from '../services/terms/pilot-metrics.service';
 import type { Cradle, OrmLike } from './cradle';
 
 export type AppContainer = AwilixContainer<Cradle>;
@@ -109,12 +119,32 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     ledgerEntryRepository: asFunction(({ em }: Cradle) => new LedgerEntryRepository(em)).scoped(),
     unitOfWork: asFunction(({ em }: Cradle) => new MikroOrmUnitOfWork(em)).scoped(),
     vaultAnswerRepository: asFunction(({ em }: Cradle) => new VaultAnswerRepository(em)).scoped(),
+    termsRepository: asFunction(({ em }: Cradle) => new TermsRepository(em)).scoped(),
+    retentionRepository: asFunction(({ em }: Cradle) => new RetentionRepository(em)).scoped(),
+    pilotMetricsRepository: asFunction(({ em }: Cradle) => new PilotMetricsRepository(em)).scoped(),
+    connectPayoutRepository: asFunction(({ em }: Cradle) => new ConnectPayoutRepository(em)).scoped(),
     userService: asClass(UserService).scoped(),
     authService: asClass(AuthService).scoped(),
     articleService: asClass(ArticleService).scoped(),
     approvalService: asClass(ApprovalService).scoped(),
     mentorService: asClass(MentorService).scoped(),
-    bookingService: asClass(BookingService).scoped(),
+    bookingService: asFunction((cradle: Cradle) => new BookingService({
+      bookingRepository: cradle.bookingRepository,
+      availabilitySlotRepository: cradle.availabilitySlotRepository,
+      mentorProfileRepository: cradle.mentorProfileRepository,
+      paymentRepository: cradle.paymentRepository,
+      userRepository: cradle.userRepository,
+      invitationService: cradle.invitationService,
+      paymentGateway: cradle.paymentGateway,
+      paymentService: cradle.paymentService,
+      eventBus: cradle.eventBus,
+      clock: cradle.clock,
+      approvalService: cradle.approvalService,
+      approvalRequestRepository: cradle.approvalRequestRepository,
+      refundService: cradle.refundService,
+      bookingSettings: cradle.bookingSettings,
+      termsService: cradle.termsService,
+    })).scoped(),
     availabilityService: asClass(AvailabilityService).scoped(),
     ledgerService: asClass(LedgerService).scoped(),
     answerGenerator: asFunction(() => createConfiguredAnswerGenerator()).singleton(),
@@ -134,15 +164,22 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
       vaultSettings: cradle.vaultSettings,
       assertAIReady: cradle.assertAIReady,
       vaultGenerationTask: cradle.vaultGenerationTask,
+      termsService: cradle.termsService,
     })).scoped(),
     vaultReleaseService: asFunction(({ vaultAnswerRepository, paymentRepository, ledgerEntryRepository, unitOfWork, eventBus, clock }: Cradle) => new VaultReleaseService({ vaultAnswerRepository, paymentRepository, ledgerEntryRepository, unitOfWork, eventBus, clock })).scoped(),
     vaultGenerationTask: asFunction(({ vaultAnswerRepository, vaultReleaseService, noteSelector, answerGenerator, eventBus, logger, clock }: Cradle) => new VaultGenerationTask({ vaultAnswerRepository, vaultReleaseService, noteSelector, answerGenerator, eventBus, logger, clock })).scoped(),
     vaultReviewService: asFunction(({ vaultAnswerRepository, paymentRepository, ledgerEntryRepository, noteRepository, vaultReleaseService, unitOfWork, eventBus, clock }: Cradle) => new VaultReviewService({ vaultAnswerRepository, paymentRepository, ledgerEntryRepository, noteRepository, vaultReleaseService, unitOfWork, eventBus, clock })).scoped(),
     vaultExpireReviewsTask: asFunction(({ vaultAnswerRepository, eventBus, clock }: Cradle) => new VaultExpireReviewsTask({ vaultAnswerRepository, eventBus, clock })).scoped(),
+    termsService: asFunction(({ termsRepository, clock }: Cradle) => new TermsService({ termsRepository, clock })).scoped(),
+    retentionSweepTask: asFunction(({ retentionRepository, unitOfWork, clock }: Cradle) => new RetentionSweepTask({ retentionRepository, unitOfWork, clock })).scoped(),
+    retentionService: asFunction(({ retentionRepository, clock }: Cradle) => new RetentionService({ retentionRepository, clock })).scoped(),
+    pilotMetricsService: asFunction(({ pilotMetricsRepository }: Cradle) => new PilotMetricsService(pilotMetricsRepository)).scoped(),
+    stripeConnectGateway: asFunction(() => new StripeConnectGateway(getPaymentSettings())).singleton(),
+    connectPayoutService: asFunction(({ connectPayoutRepository, stripeConnectGateway, invitationService, userRepository, termsService, clock }: Cradle) => new ConnectPayoutService({ repository: connectPayoutRepository, gateway: stripeConnectGateway, invitationService, userRepository, termsService, clock })).scoped(),
     assertAIReady: asValue(assertConfiguredAIReadyToCharge),
     refundService: asClass(RefundService).scoped(),
     messageService: asClass(MessageService).scoped(),
-    noteService: asClass(NoteService).scoped(),
+    noteService: asFunction(({ noteRepository, invitationService, eventBus, clock, vaultSettings, termsService }: Cradle) => new NoteService({ noteRepository, invitationService, eventBus, clock, vaultSettings, termsService })).scoped(),
     paymentService: asClass(PaymentService).scoped(),
     invitationService: asClass(InvitationService).scoped(),
     magicLinkService: asClass(MagicLinkService).scoped(),

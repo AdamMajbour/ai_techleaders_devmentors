@@ -16,6 +16,9 @@ export const noteListQuerySchema = z.object({
 export const notePublishSchema = z.object({
   consent: z.literal(true),
   noticeVersion: z.string().trim().min(1).max(100),
+  acceptedTerms: z.literal(true),
+  termsVersionId: z.uuid(),
+  termsSha256: z.string().regex(/^[0-9a-f]{64}$/),
 });
 
 export const noteTakeDownSchema = z.object({}).strict();

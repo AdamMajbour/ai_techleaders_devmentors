@@ -5,6 +5,7 @@ import { QuestionForm } from './QuestionForm';
 
 const ok: ApiResult<unknown> = { ok: true, status: 201, data: { checkoutUrl: 'https://pay.example/c/1' } };
 const QUESTION = 'Ingress upgrade from 1.9 to 1.28 fails on staging.';
+const TERMS = { termsVersionId: '00000000-0000-4000-8000-000000000001', termsSha256: 'a'.repeat(64) };
 
 function setup(props: Partial<React.ComponentProps<typeof QuestionForm>> = {}) {
   const onSubmit = jest.fn(async () => ok);
@@ -15,6 +16,8 @@ function setup(props: Partial<React.ComponentProps<typeof QuestionForm>> = {}) {
       priceMinor={2500}
       currency="EUR"
       termsHref="/terms"
+      termsVersionId="00000000-0000-4000-8000-000000000001"
+      termsSha256={'a'.repeat(64)}
       onSubmit={onSubmit}
       onSuccess={onSuccess}
       {...props}
@@ -66,10 +69,10 @@ describe('QuestionForm', () => {
     let resolve: (value: ApiResult<unknown>) => void = () => {};
     const onSubmit = jest.fn(() => new Promise<ApiResult<unknown>>((r) => (resolve = r)));
     const onSuccess = jest.fn();
-    render(<QuestionForm mentorName="Ada" priceMinor={2500} currency="EUR" termsHref="/terms" onSubmit={onSubmit} onSuccess={onSuccess} />);
+    render(<QuestionForm mentorName="Ada" priceMinor={2500} currency="EUR" termsHref="/terms" {...TERMS} onSubmit={onSubmit} onSuccess={onSuccess} />);
     await fillAndAccept(`  ${QUESTION}  `);
     await userEvent.click(screen.getByRole('button', { name: 'Pay 25 EUR and send' }));
-    expect(onSubmit).toHaveBeenCalledWith({ question: QUESTION, acceptedTerms: true });
+    expect(onSubmit).toHaveBeenCalledWith({ question: QUESTION, acceptedTerms: true, ...TERMS });
     expect(onSuccess).not.toHaveBeenCalled();
     resolve(ok);
     await waitFor(() => expect(onSuccess).toHaveBeenCalledWith({ checkoutUrl: 'https://pay.example/c/1' }));
@@ -77,7 +80,7 @@ describe('QuestionForm', () => {
 
   it('blocks everything while sending, so the question cannot be sent twice', async () => {
     const onSubmit = jest.fn(() => new Promise<ApiResult<unknown>>(() => {}));
-    render(<QuestionForm mentorName="Ada" priceMinor={2500} currency="EUR" termsHref="/terms" onSubmit={onSubmit} />);
+    render(<QuestionForm mentorName="Ada" priceMinor={2500} currency="EUR" termsHref="/terms" {...TERMS} onSubmit={onSubmit} />);
     await fillAndAccept();
     await userEvent.click(screen.getByRole('button', { name: 'Pay 25 EUR and send' }));
     expect(screen.getByRole('button', { name: 'Sending…' })).toBeDisabled();

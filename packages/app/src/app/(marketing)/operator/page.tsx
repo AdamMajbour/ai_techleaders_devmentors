@@ -20,6 +20,7 @@ export default async function OperatorDashboardPage() {
           <h1 className="m-0 text-page-title font-strong text-headline">Dashboard</h1>
           <p className="m-0 text-body text-muted-foreground">A clear view of the people and decisions in your pilot.</p>
         </div>
+        <Link className="text-link underline" href="/operator/terms">Pilot terms and review</Link>
       </header>
 
       <section aria-label="Pilot overview" className="grid gap-group border-y border-border py-panel-roomy sm:grid-cols-2">
@@ -51,6 +52,9 @@ export default async function OperatorDashboardPage() {
       </section>
 
       <nav aria-label="Admin tools" className="flex flex-wrap gap-group border-t border-border pt-panel-compact">
+        <Link className="text-link underline" href="/operator/pilot-metrics">Pilot metrics</Link>
+        <Link className="text-link underline" href="/operator/retention">Retention legal holds</Link>
+        <Link className="text-link underline" href="/operator/payouts">Pilot payouts</Link>
         <Link className="text-link underline" href="/operator/approvals">Review refund approvals ({approvals.items.length})</Link>
         <Link className="text-link underline" href="/operator/vault-answers">Vault answer status</Link>
         <Link className="text-link underline" href="/operator/users">Browse users</Link>

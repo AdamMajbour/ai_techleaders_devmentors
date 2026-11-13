@@ -13,6 +13,10 @@ import type {
   AvailabilitySlotRepository,
   LedgerEntryRepository,
   VaultAnswerRepository,
+  TermsRepository,
+  RetentionRepository,
+  PilotMetricsRepository,
+  ConnectPayoutRepository,
 } from '@devmentor/db';
 import type { EventBus } from '../events/event-bus';
 import type { Logger } from '../logger';
@@ -44,6 +48,12 @@ import type { VaultReleaseService } from '../services/vault/vault-release.servic
 import type { VaultGenerationTask } from '../services/vault/vault-generation.task';
 import type { VaultReviewService } from '../services/vault/vault-review.service';
 import type { VaultExpireReviewsTask } from '../services/vault/vault-expire-reviews.task';
+import type { TermsService } from '../services/terms/terms.service';
+import type { RetentionSweepTask } from '../services/terms/retention-sweep.task';
+import type { RetentionService } from '../services/terms/retention.service';
+import type { PilotMetricsService } from '../services/terms/pilot-metrics.service';
+import type { StripeConnectPort } from '../services/payouts/stripe-connect.port';
+import type { ConnectPayoutService } from '../services/payouts/connect-payout.service';
 
 /** Every dependency the container can provide. A new service is one line here and one in container.ts. */
 export interface Cradle {
@@ -68,6 +78,10 @@ export interface Cradle {
   ledgerEntryRepository: LedgerEntryRepository;
   unitOfWork: UnitOfWork;
   vaultAnswerRepository: VaultAnswerRepository;
+  termsRepository: TermsRepository;
+  retentionRepository: RetentionRepository;
+  pilotMetricsRepository: PilotMetricsRepository;
+  connectPayoutRepository: ConnectPayoutRepository;
   userService: UserService;
   authService: AuthService;
   articleService: ArticleService;
@@ -91,9 +105,15 @@ export interface Cradle {
   vaultGenerationTask: VaultGenerationTask;
   vaultReviewService: VaultReviewService;
   vaultExpireReviewsTask: VaultExpireReviewsTask;
+  termsService: TermsService;
+  retentionSweepTask: RetentionSweepTask;
+  retentionService: RetentionService;
+  pilotMetricsService: PilotMetricsService;
+  connectPayoutService: ConnectPayoutService;
   assertAIReady: () => void;
   approverResolvers: ApproverResolvers;
   paymentGateway: PaymentGateway;
+  stripeConnectGateway: StripeConnectPort;
   mailer: Mailer;
 }
 
