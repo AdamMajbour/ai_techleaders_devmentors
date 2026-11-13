@@ -10,17 +10,24 @@
     "./server": "./src/server.ts"
   },
   "scripts": {
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "pilot:invite": "ts-node --project tsconfig.json scripts/pilot-invite.ts",
+    "bookings:settle": "ts-node --project tsconfig.json scripts/bookings-settle.ts",
+    "vault:settle": "ts-node --project tsconfig.json scripts/vault-settle.ts",
+    "retention:sweep": "ts-node --project tsconfig.json scripts/retention-sweep.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.7.0",
     "@devmentor/db": "*",
     "awilix": "^11",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.12",
+    "stripe": "^23.1.0",
     "zod": "^4"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "ts-node": "^10",
     "typescript": "^5"
   }
 }

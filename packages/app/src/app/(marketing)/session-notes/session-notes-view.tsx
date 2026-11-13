@@ -16,8 +16,8 @@ export function SessionNotesView() {
   async function refresh() {
     const me = await apiCall<UserDto>('/api/auth/me');
     if (me.ok) setUserId(me.data.id);
-    const bookingResult = await apiCall<Array<{id:string; status:string}>>('/api/bookings');
-    if (bookingResult.ok) setBookings(bookingResult.data);
+    const bookingResult = await apiCall<{items:Array<{id:string; status:string}>}>('/api/bookings?role=mentor&page=1');
+    if (bookingResult.ok) setBookings(bookingResult.data.items);
     const result = await apiCall<SessionNoteDto[]>('/api/session-notes');
     if (result.ok) { setNotes(result.data); setMessage(result.data.length ? '' : 'No session notes yet.'); }
     else setMessage(result.error.message);

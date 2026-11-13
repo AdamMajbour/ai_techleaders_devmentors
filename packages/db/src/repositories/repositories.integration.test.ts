@@ -1,10 +1,46 @@
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { MikroORM } from '@mikro-orm/core';
 import type { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { closeORM, initializeORM } from '../config';
-import { isUniqueConstraintViolation } from '../errors';
-import { ArticleRepository, UserRepository } from './index';
+import {
+  ApprovalRequest,
+  Booking,
+  Invitation,
+  LoginToken,
+  LedgerEntry,
+  MentorProfile,
+  Message,
+  Payment,
+  StatusTransition,
+  Note,
+  VaultAnswerCitation,
+  VaultAnswerReview,
+} from '../entities';
+import {
+  ExclusionConstraintViolationError,
+  StatusTransitionConflictError,
+  isExclusionConstraintViolation,
+  isUniqueConstraintViolation,
+  PendingApprovalConflictError,
+} from '../errors';
+import {
+  ArticleRepository,
+  ApprovalRequestRepository,
+  BookingRepository,
+  AvailabilitySlotRepository,
+  LedgerEntryRepository,
+  InvitationRepository,
+  LoginTokenRepository,
+  MentorProfileRepository,
+  MessageRepository,
+  NoteRepository,
+  PaymentRepository,
+  UserRepository,
+  VaultAnswerRepository,
+  transitionStatus,
+} from './index';
 
 let orm: MikroORM<PostgreSqlDriver>;
 
@@ -35,9 +71,21 @@ beforeAll(async () => {
     logger: () => undefined,
     migrations: { migrationsList: await loadMigrations() },
   });
-  // Start from an empty database and build the schema with the real migrations.
-  await orm.schema.dropSchema({ dropMigrationsTable: true });
+});
+
+async function resetDatabase(): Promise<void> {
+  // Migration-created audit and payout tables are not all mapped as ORM entities,
+  // so MikroORM's metadata-based reset would leave them behind between tests.
+  // DATABASE_NAME is asserted before the first reset to confine this to the test DB.
+  await orm.em.getConnection().execute('drop schema public cascade');
+  await orm.em.getConnection().execute('create schema public');
   await orm.migrator.up();
+  // Articles provide an existing mapped target table for exercising the generic transition runner.
+  await orm.em.getConnection().execute('alter table "articles" add column "status" varchar(255)');
+}
+
+beforeEach(async () => {
+  await resetDatabase();
 });
 
 afterAll(async () => {
@@ -46,7 +94,935 @@ afterAll(async () => {
 
 describe('migrations', () => {
   it('create the application tables', async () => {
-    expect(await publicTables()).toEqual(['articles', 'mikro_orm_migrations', 'users']);
+    expect(await publicTables()).toEqual([
+      'approval_requests',
+      'articles',
+      'bookings',
+      'invitations',
+      'ledger_entries',
+      'login_tokens',
+      'mentor_availability_slots',
+      'mentor_profiles',
+      'messages',
+      'mikro_orm_migrations',
+      'notes',
+      'payments',
+      'payout_transfer_attempts',
+      'payout_transfers',
+      'retention_legal_hold_releases',
+      'retention_legal_holds',
+      'retention_sweep_runs',
+      'status_transitions',
+      'stripe_connect_accounts',
+      'terms_acceptances',
+      'terms_reviews',
+      'terms_versions',
+      'users',
+      'vault_answer_citations',
+      'vault_answer_reviews',
+      'vault_answers',
+    ]);
+  });
+
+  it('creates and removes the messages table through the reversible migration', async () => {
+    await orm.migrator.down('Migration20261106090000_messages');
+    expect(await publicTables()).not.toContain('messages');
+
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('messages');
+  });
+
+  it('creates and drops the notes table through the reversible migration', async () => {
+    await orm.migrator.down('Migration20261109220000_notes');
+    expect(await publicTables()).not.toContain('notes');
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('notes');
+  });
+
+  it('creates and drops the append-only ledger table through the reversible migration', async () => {
+    await orm.migrator.down('Migration20261110150000_ledger_entries');
+    expect(await publicTables()).not.toContain('ledger_entries');
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('ledger_entries');
+  });
+
+  it('creates and drops vault answers, citations and payable-subject columns reversibly', async () => {
+    await orm.migrator.down('Migration20261110170000_vault_answers');
+    expect(await publicTables()).not.toContain('vault_answers');
+    const before = await orm.em.getConnection().execute(`select is_nullable from information_schema.columns where table_name = 'payments' and column_name = 'booking_id'`);
+    expect(before).toEqual([{ is_nullable: 'NO' }]);
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('vault_answers');
+    expect(await publicTables()).toContain('vault_answer_citations');
+    expect(await publicTables()).toContain('vault_answer_reviews');
+    const after = await orm.em.getConnection().execute(`select is_nullable from information_schema.columns where table_name = 'payments' and column_name = 'booking_id'`);
+    expect(after).toEqual([{ is_nullable: 'YES' }]);
+  });
+
+  it('removes the approval table and its partial index on migration down', async () => {
+    await orm.migrator.down('Migration20261105214000_pending_refund_approval_uniqueness');
+    await orm.migrator.down('Migration20261105212000_refund_approval_uniqueness');
+    await orm.migrator.down('Migration20261105183000_approval_requests');
+    expect(await publicTables()).not.toContain('approval_requests');
+
+    const index = (await orm.em.getConnection().execute(
+      `select to_regclass('public.approval_requests_one_pending_per_subject') as name`,
+      [],
+      'get',
+    )) as unknown as { name: string | null } | undefined;
+    expect(index?.name).toBeNull();
+
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('approval_requests');
+  });
+
+  it('replaces the full refund uniqueness index with pending-only uniqueness reversibly', async () => {
+    await orm.migrator.down('Migration20261105214000_pending_refund_approval_uniqueness');
+    let rows = await orm.em.getConnection().execute(
+      `select pg_get_expr(i.indpred, i.indrelid) as predicate
+       from pg_index i
+       join pg_class c on c.oid = i.indexrelid
+       where c.relname = 'approval_requests_one_refund_per_subject'`,
+      [],
+      'get',
+    ) as unknown as { predicate: string | null } | undefined;
+    expect(rows?.predicate).not.toContain('pending');
+
+    await orm.migrator.up();
+    rows = await orm.em.getConnection().execute(
+      `select pg_get_expr(i.indpred, i.indrelid) as predicate
+       from pg_index i
+       join pg_class c on c.oid = i.indexrelid
+       where c.relname = 'approval_requests_one_refund_per_subject'`,
+      [],
+      'get',
+    ) as unknown as { predicate: string | null } | undefined;
+    expect(rows?.predicate).toContain("'pending'");
+  });
+
+  it('reverses and reapplies the invitation and login-token migration', async () => {
+    await orm.migrator.down('Migration20261105190000_pilot_invitations_login_tokens');
+    expect(await publicTables()).not.toContain('invitations');
+    expect(await publicTables()).not.toContain('login_tokens');
+
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('invitations');
+    expect(await publicTables()).toContain('login_tokens');
+  });
+
+  it('reverses and reapplies the mentor-profile migration', async () => {
+    await orm.migrator.down('Migration20261105192000_mentor_profiles');
+    expect(await publicTables()).not.toContain('mentor_profiles');
+
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('mentor_profiles');
+  });
+
+  it('reverses and reapplies the booking/payment migration and its indexes', async () => {
+    await orm.migrator.down('Migration20261105200000_bookings_payments');
+    expect(await publicTables()).not.toContain('bookings');
+    expect(await publicTables()).not.toContain('payments');
+
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('bookings');
+    expect(await publicTables()).toContain('payments');
+    const indexes = (await orm.em.getConnection().execute(
+      `select indexname from pg_indexes where schemaname = 'public' and tablename = 'bookings'`,
+    )) as { indexname: string }[];
+    expect(indexes.map(({ indexname }) => indexname)).toEqual(
+      expect.arrayContaining(['bookings_mentor_status_index', 'bookings_seeker_id_index']),
+    );
+  });
+
+  it('reverses only the overlap constraint and leaves btree_gist installed', async () => {
+    await orm.migrator.down('Migration20261105210000_booking_overlap');
+    const constraint = await orm.em.getConnection().execute(
+      `select conname from pg_constraint where conname = 'bookings_accepted_mentor_time_excl'`,
+    );
+    const extension = await orm.em.getConnection().execute(
+      `select extname from pg_extension where extname = 'btree_gist'`,
+    );
+    expect(constraint).toHaveLength(0);
+    expect(extension).toHaveLength(1);
+
+    await orm.migrator.up();
+    const restored = await orm.em.getConnection().execute(
+      `select conname from pg_constraint where conname = 'bookings_accepted_mentor_time_excl'`,
+    );
+    expect(restored).toHaveLength(1);
+  });
+});
+
+describe('booking and payment constraints', () => {
+  async function insertBooking(input: {
+    seekerId: string;
+    mentorId: string;
+    question?: string;
+    durationMinutes?: number;
+    priceMinor?: number;
+    currency?: string;
+    status?: string;
+    source?: string;
+    startsAt?: Date | null;
+    endsAt?: Date | null;
+  }): Promise<string> {
+    const id = randomUUID();
+    const now = new Date();
+    await orm.em.getConnection().execute(
+      `insert into "bookings" (
+        "id", "seeker_id", "mentor_id", "question", "duration_minutes", "price_minor",
+        "currency", "status", "source", "landed_at", "starts_at", "ends_at", "created_at", "updated_at"
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        input.seekerId,
+        input.mentorId,
+        input.question ?? 'A booking question',
+        input.durationMinutes ?? 25,
+        input.priceMinor ?? 2500,
+        input.currency ?? 'EUR',
+        input.status ?? 'pending_payment',
+        input.source ?? 'link',
+        now,
+        input.startsAt ?? null,
+        input.endsAt ?? null,
+        now,
+        now,
+      ],
+      'run',
+    );
+    return id;
+  }
+
+  async function insertPayment(
+    bookingId: string,
+    providerSessionId: string | null,
+    input: { amountMinor?: number; status?: string } = {},
+  ): Promise<string> {
+    const id = randomUUID();
+    const now = new Date();
+    await orm.em.getConnection().execute(
+      `insert into "payments" (
+        "id", "booking_id", "provider", "livemode", "provider_session_id", "provider_payment_id",
+        "amount_minor", "currency", "status", "created_at", "updated_at"
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        bookingId,
+        'mock',
+        false,
+        providerSessionId,
+        null,
+        input.amountMinor ?? 2500,
+        'EUR',
+        input.status ?? 'pending',
+        now,
+        now,
+      ],
+      'run',
+    );
+    return id;
+  }
+
+  it('settles only paid bookings past the window and makes expiry transitions idempotent', async () => {
+    const seeker = await new UserRepository(orm.em.fork()).create({
+      email: `${randomUUID()}@example.com`,
+      name: 'Seeker',
+    });
+    const mentor = await new UserRepository(orm.em.fork()).create({
+      email: `${randomUUID()}@example.com`,
+      name: 'Mentor',
+    });
+    await new MentorProfileRepository(orm.em.fork()).create({
+      userId: mentor.id,
+      slug: `mentor-${randomUUID()}`,
+      headline: 'Mentor',
+      bio: 'Bio',
+      technologies: 'typescript',
+      publicWorkUrl: 'https://example.com',
+      isListed: true,
+      lastActiveAt: null,
+    });
+    const id = await insertBooking({ seekerId: seeker.id, mentorId: mentor.id });
+    await transitionStatus(orm.em.fork(), {
+      entityType: 'Booking',
+      entityId: id,
+      from: ['pending_payment'],
+      to: 'paid',
+      actor: { kind: 'webhook' },
+    });
+
+    const repository = new BookingRepository(orm.em.fork());
+    const transition = (await orm.em.getConnection().execute(
+      `select "created_at" from "status_transitions"
+       where "entity_type" = 'Booking' and "entity_id" = ? and "to_status" = 'paid'`,
+      [id],
+      'get',
+    )) as { created_at: Date };
+    const paidAt = new Date(transition.created_at);
+    expect(await repository.findForSettlement({ before: new Date(paidAt.getTime() - 1) }))
+      .toEqual([]);
+    expect(await repository.findForSettlement({ before: paidAt }))
+      .toHaveLength(1);
+    const transitions = await Promise.all([
+      new BookingRepository(orm.em.fork()).expirePaid(id),
+      new BookingRepository(orm.em.fork()).expirePaid(id),
+    ]);
+    expect(transitions.filter(Boolean)).toHaveLength(1);
+    expect(transitions.filter((value) => !value)).toHaveLength(1);
+    await expect(repository.expirePaid(id)).resolves.toBe(false);
+    expect(await orm.em.fork().count(Booking, { id, status: 'expired' })).toBe(1);
+  });
+
+  it('enforces participant foreign keys, booking checks, and payment uniqueness', async () => {
+    const seeker = await new UserRepository(orm.em.fork()).create({
+      email: 'booking-seeker@example.com',
+      name: 'Booking Seeker',
+    });
+
+    const mentorUser = await new UserRepository(orm.em.fork()).create({
+      email: 'booking-mentor@example.com',
+      name: 'Booking Mentor',
+    });
+    await new MentorProfileRepository(orm.em.fork()).create({
+      userId: mentorUser.id,
+      slug: 'booking-mentor',
+      headline: 'Mentor',
+      bio: 'Mentor bio',
+      technologies: 'typescript',
+      publicWorkUrl: 'https://example.com',
+      isListed: true,
+      lastActiveAt: null,
+    });
+    const bookingId = await insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id });
+
+    expect(await orm.em.fork().count(Booking, { id: bookingId })).toBe(1);
+    await expect(
+      insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, question: 'q'.repeat(4001) }),
+    ).rejects.toThrow();
+    await expect(
+      insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, durationMinutes: 50 }),
+    ).rejects.toThrow();
+    await expect(
+      insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, source: 'unknown' }),
+    ).rejects.toThrow();
+    await expect(
+      insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, status: 'completed' }),
+    ).rejects.toThrow();
+    await expect(
+      insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, priceMinor: 0 }),
+    ).rejects.toThrow();
+    await expect(
+      insertBooking({
+        seekerId: seeker.id,
+        mentorId: mentorUser.id,
+        startsAt: new Date('2026-11-06T10:00:00.000Z'),
+      }),
+    ).rejects.toThrow();
+    await expect(
+      insertBooking({ seekerId: seeker.id, mentorId: randomUUID() }),
+    ).rejects.toThrow();
+
+    const paymentId = await insertPayment(bookingId, 'session-one');
+    expect(await orm.em.fork().count(Payment, { id: paymentId })).toBe(1);
+    await expect(insertPayment(bookingId, 'session-two')).rejects.toThrow();
+
+    const anotherBooking = await insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id });
+    await expect(insertPayment(anotherBooking, 'session-one')).rejects.toThrow();
+    await expect(insertPayment(randomUUID(), 'orphan-session')).rejects.toThrow();
+    await expect(insertPayment(anotherBooking, 'invalid-status', { status: 'captured' })).rejects.toThrow();
+    await expect(insertPayment(anotherBooking, 'invalid-amount', { amountMinor: 0 })).rejects.toThrow();
+  });
+
+  describe('accepted booking overlap exclusion', () => {
+    async function fixtures() {
+      const users = new UserRepository(orm.em.fork());
+      const seeker1 = await users.create({ email: `${randomUUID()}@example.com`, name: 'Seeker 1' });
+      const seeker2 = await users.create({ email: `${randomUUID()}@example.com`, name: 'Seeker 2' });
+      const mentor = await users.create({ email: `${randomUUID()}@example.com`, name: 'Mentor' });
+      await new MentorProfileRepository(orm.em.fork()).create({
+        userId: mentor.id,
+        slug: `mentor-${randomUUID()}`,
+        headline: 'Mentor',
+        bio: 'Bio',
+        technologies: 'typescript',
+        publicWorkUrl: 'https://example.com',
+        isListed: true,
+        lastActiveAt: null,
+      });
+      return {
+        mentorId: mentor.id,
+        first: await insertBooking({ seekerId: seeker1.id, mentorId: mentor.id, status: 'paid' }),
+        second: await insertBooking({ seekerId: seeker2.id, mentorId: mentor.id, status: 'paid' }),
+      };
+    }
+
+    const startsAt = new Date('2026-11-06T12:00:00.000Z');
+    const endsAt = new Date(startsAt.getTime() + 25 * 60 * 1000);
+    const accept = (bookingId: string, mentorId: string) =>
+      new BookingRepository(orm.em.fork()).transitionStatus(bookingId, 'accepted', mentorId, {
+        startsAt,
+        endsAt,
+      });
+
+    it('rejects a sequential overlapping acceptance with the db-layer conflict error', async () => {
+      const { mentorId, first, second } = await fixtures();
+      await accept(first, mentorId);
+
+      await expect(accept(second, mentorId)).rejects.toBeInstanceOf(ExclusionConstraintViolationError);
+      expect(await orm.em.fork().count(Booking, { id: second, status: 'paid' })).toBe(1);
+    });
+
+    it('allows only one concurrent overlapping acceptance', async () => {
+      const { mentorId, first, second } = await fixtures();
+      const attempts = await Promise.all([
+        accept(first, mentorId).then(() => 'accepted', (error: unknown) => error),
+        accept(second, mentorId).then(() => 'accepted', (error: unknown) => error),
+      ]);
+
+      expect(attempts.filter((result) => result === 'accepted')).toHaveLength(1);
+      const conflict = attempts.find((result) => result !== 'accepted');
+      expect(conflict).toBeInstanceOf(ExclusionConstraintViolationError);
+      expect(await orm.em.fork().count(Booking, { mentorId, status: 'accepted' })).toBe(1);
+    });
+
+    it('recognizes SQLSTATE 23P01 through a wrapped PostgreSQL error cause', () => {
+      expect(isExclusionConstraintViolation({ cause: { code: '23P01' } })).toBe(true);
+      expect(isExclusionConstraintViolation({ code: '23505' })).toBe(false);
+      expect(isExclusionConstraintViolation(new Error('not a database error'))).toBe(false);
+    });
+  });
+});
+
+describe('PaymentRepository webhook settlement', () => {
+  async function createPendingPair(options: {
+    bookingPrice?: number;
+    bookingCurrency?: string;
+    paymentAmount?: number;
+    paymentCurrency?: string;
+  } = {}) {
+    const seeker = await new UserRepository(orm.em.fork()).create({
+      email: `webhook-seeker-${randomUUID()}@example.com`,
+      name: 'Webhook Seeker',
+    });
+    const mentor = await new UserRepository(orm.em.fork()).create({
+      email: `webhook-mentor-${randomUUID()}@example.com`,
+      name: 'Webhook Mentor',
+    });
+    await new MentorProfileRepository(orm.em.fork()).create({
+      userId: mentor.id,
+      slug: `webhook-mentor-${randomUUID()}`,
+      headline: 'Webhook mentor',
+      bio: 'Bio',
+      technologies: 'typescript',
+      publicWorkUrl: 'https://example.com',
+      isListed: true,
+      lastActiveAt: null,
+    });
+    const bookingId = randomUUID();
+    const paymentId = randomUUID();
+    const providerSessionId = `session-${randomUUID()}`;
+    const now = new Date();
+    await orm.em.getConnection().execute(
+      `insert into "bookings" (
+        "id", "seeker_id", "mentor_id", "question", "duration_minutes", "price_minor",
+        "currency", "status", "source", "landed_at", "starts_at", "ends_at", "created_at", "updated_at"
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        bookingId,
+        seeker.id,
+        mentor.id,
+        'Question',
+        25,
+        options.bookingPrice ?? 2500,
+        options.bookingCurrency ?? 'EUR',
+        'pending_payment',
+        'link',
+        now,
+        null,
+        null,
+        now,
+        now,
+      ],
+      'run',
+    );
+    await orm.em.getConnection().execute(
+      `insert into "payments" (
+        "id", "booking_id", "provider", "livemode", "provider_session_id", "provider_payment_id",
+        "amount_minor", "currency", "status", "created_at", "updated_at"
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        paymentId,
+        bookingId,
+        'mock',
+        false,
+        providerSessionId,
+        null,
+        options.paymentAmount ?? 2500,
+        options.paymentCurrency ?? 'EUR',
+        'pending',
+        now,
+        now,
+      ],
+      'run',
+    );
+    return { bookingId, paymentId, providerSessionId };
+  }
+
+  it('commits both status transitions once and treats a replay as a no-op', async () => {
+    const pair = await createPendingPair();
+    const repository = new PaymentRepository(orm.em.fork());
+    const event = {
+      ...pair,
+      status: 'succeeded' as const,
+      amountMinor: 2500,
+      currency: 'EUR',
+      providerPaymentId: 'provider-payment-1',
+      livemode: true,
+    };
+
+    await expect(repository.settleWebhookEvent(event)).resolves.toEqual({
+      status: 'transitioned',
+      paymentId: pair.paymentId,
+      bookingId: pair.bookingId,
+    });
+    await expect(repository.settleWebhookEvent(event)).resolves.toEqual({ status: 'noop' });
+
+    const rows = (await orm.em.getConnection().execute(
+      `select b.status as "bookingStatus", p.status as "paymentStatus", p.provider_payment_id as "providerPaymentId",
+        p.livemode as "livemode"
+       from "bookings" b join "payments" p on p.booking_id = b.id where b.id = ?`,
+      [pair.bookingId],
+      'get',
+    )) as { bookingStatus: string; paymentStatus: string; providerPaymentId: string; livemode: boolean };
+    expect(rows).toEqual({
+      bookingStatus: 'paid',
+      paymentStatus: 'succeeded',
+      providerPaymentId: 'provider-payment-1',
+      livemode: true,
+    });
+    expect(await orm.em.fork().count(StatusTransition, { entityId: pair.bookingId })).toBe(1);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: pair.paymentId })).toBe(1);
+  });
+
+  it('does not transition on amount, currency, session, or booking mismatches', async () => {
+    const pair = await createPendingPair();
+    const persistedAmountMismatch = await createPendingPair({ paymentAmount: 2400 });
+    const persistedCurrencyMismatch = await createPendingPair({ paymentCurrency: 'USD' });
+    const repository = new PaymentRepository(orm.em.fork());
+    const baseEvent = {
+      ...pair,
+      status: 'succeeded' as const,
+      amountMinor: 2500,
+      currency: 'EUR',
+      providerPaymentId: 'provider-payment-2',
+      livemode: false,
+    };
+
+    await expect(repository.settleWebhookEvent({ ...baseEvent, amountMinor: 2501 })).resolves.toMatchObject({
+      status: 'mismatch',
+      fields: ['amountMinor'],
+    });
+    await expect(repository.settleWebhookEvent({ ...baseEvent, currency: 'USD' })).resolves.toMatchObject({
+      status: 'mismatch',
+      fields: ['currency'],
+    });
+    await expect(repository.settleWebhookEvent({ ...baseEvent, providerSessionId: 'another-session' })).resolves.toMatchObject({
+      status: 'mismatch',
+    });
+    await expect(repository.settleWebhookEvent({ ...baseEvent, bookingId: randomUUID() })).resolves.toMatchObject({
+      status: 'mismatch',
+    });
+    await expect(repository.settleWebhookEvent({
+      ...persistedAmountMismatch,
+      status: 'succeeded',
+      amountMinor: 2500,
+      currency: 'EUR',
+      providerPaymentId: 'provider-payment-3',
+      livemode: false,
+    })).resolves.toMatchObject({ status: 'mismatch', fields: ['amountMinor'] });
+    await expect(repository.settleWebhookEvent({
+      ...persistedCurrencyMismatch,
+      status: 'succeeded',
+      amountMinor: 2500,
+      currency: 'EUR',
+      providerPaymentId: 'provider-payment-4',
+      livemode: false,
+    })).resolves.toMatchObject({ status: 'mismatch', fields: ['currency'] });
+
+    expect(await orm.em.fork().count(StatusTransition, { entityId: pair.bookingId })).toBe(0);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: pair.paymentId })).toBe(0);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: persistedAmountMismatch.bookingId })).toBe(0);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: persistedAmountMismatch.paymentId })).toBe(0);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: persistedCurrencyMismatch.bookingId })).toBe(0);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: persistedCurrencyMismatch.paymentId })).toBe(0);
+  });
+
+  it('keeps failure terminal when a later completion arrives', async () => {
+    const pair = await createPendingPair();
+    const repository = new PaymentRepository(orm.em.fork());
+
+    await expect(
+      repository.settleWebhookEvent({ ...pair, status: 'failed', providerPaymentId: 'failed-payment-1' }),
+    ).resolves.toEqual({
+      status: 'transitioned',
+      paymentId: pair.paymentId,
+      bookingId: pair.bookingId,
+    });
+    await expect(
+      repository.settleWebhookEvent({
+        ...pair,
+        status: 'succeeded',
+        amountMinor: 2500,
+        currency: 'EUR',
+        providerPaymentId: 'late-payment',
+        livemode: false,
+      }),
+    ).resolves.toEqual({ status: 'noop' });
+
+    const statuses = (await orm.em.getConnection().execute(
+      `select b.status as "bookingStatus", p.status as "paymentStatus"
+       from "bookings" b join "payments" p on p.booking_id = b.id where b.id = ?`,
+      [pair.bookingId],
+      'get',
+    )) as { bookingStatus: string; paymentStatus: string };
+    expect(statuses).toEqual({ bookingStatus: 'payment_failed', paymentStatus: 'failed' });
+    expect(await orm.em.fork().count(StatusTransition, { entityId: pair.bookingId })).toBe(1);
+    expect(await orm.em.fork().count(StatusTransition, { entityId: pair.paymentId })).toBe(1);
+  });
+});
+
+describe('InvitationRepository', () => {
+  it('enforces lowercase unique e-mails and only accepted, unrevoked invitations are members', async () => {
+    const user = await new UserRepository(orm.em.fork()).create({
+      email: 'pilot-member@example.com',
+      name: 'Pilot Member',
+    });
+    const invitations = new InvitationRepository(orm.em.fork());
+    const unaccepted = await invitations.create({
+      email: 'not-accepted@example.com',
+      displayName: 'Not Accepted',
+      role: 'seeker',
+      invitedBy: null,
+      acceptedByUserId: null,
+      acceptedAt: null,
+      revokedAt: null,
+    });
+    expect(await invitations.isPilotMember(user.id)).toBe(false);
+    expect(await invitations.accept(unaccepted.email, user.id, new Date())).toBe(true);
+    expect(await invitations.isPilotMember(user.id)).toBe(true);
+    expect(await invitations.hasAcceptedRole(user.id, 'seeker')).toBe(true);
+    expect(await invitations.hasAcceptedRole(user.id, 'mentor')).toBe(false);
+    expect(await invitations.revoke(unaccepted.email, new Date())).toBe(true);
+    expect(await invitations.isPilotMember(user.id)).toBe(false);
+    expect(await invitations.hasAcceptedRole(user.id, 'seeker')).toBe(false);
+
+    const revoked = await invitations.create({
+      email: 'revoked@example.com',
+      displayName: 'Revoked',
+      role: 'mentor',
+      invitedBy: null,
+      acceptedByUserId: null,
+      acceptedAt: null,
+      revokedAt: null,
+    });
+
+    await invitations.revoke(revoked.email, new Date());
+    expect(await invitations.accept(revoked.email, user.id, new Date())).toBe(false);
+    expect(await invitations.isPilotMember(user.id)).toBe(false);
+
+    const invalidEmail = new InvitationRepository(orm.em.fork()).create({
+      email: 'UPPERCASE@example.com',
+      displayName: 'Invalid',
+      role: 'seeker',
+      invitedBy: null,
+      acceptedByUserId: null,
+      acceptedAt: null,
+      revokedAt: null,
+    });
+    await expect(invalidEmail).rejects.toThrow();
+    const duplicateEmail = new InvitationRepository(orm.em.fork()).create({
+      email: 'not-accepted@example.com',
+      displayName: 'Duplicate',
+      role: 'mentor',
+      invitedBy: null,
+      acceptedByUserId: null,
+      acceptedAt: null,
+      revokedAt: null,
+    });
+    await expect(duplicateEmail).rejects.toThrow();
+
+    expect(await orm.em.fork().findOne(Invitation, { email: 'not-accepted@example.com' })).toMatchObject({
+      role: 'seeker',
+    });
+  });
+});
+
+describe('AvailabilitySlotRepository', () => {
+  it('atomically reserves a slot for one booking and releases it when checkout fails', async () => {
+    const users = new UserRepository(orm.em.fork());
+    const seeker = await users.create({ email: `${randomUUID()}@example.com`, name: 'Seeker' });
+    const mentor = await users.create({ email: `${randomUUID()}@example.com`, name: 'Mentor' });
+    await new MentorProfileRepository(orm.em.fork()).create({
+      userId: mentor.id,
+      slug: `mentor-${randomUUID()}`,
+      headline: 'Mentor',
+      bio: 'Bio',
+      technologies: 'typescript',
+      publicWorkUrl: 'https://example.com',
+      isListed: true,
+      lastActiveAt: null,
+    });
+    const mentorId = mentor.id;
+    const now = new Date();
+    const startsAt = new Date(Math.ceil((now.getTime() + 60 * 60_000) / 900_000) * 900_000);
+    const slots = new AvailabilitySlotRepository(orm.em.fork());
+    const slot = await slots.create({
+      mentorId,
+      startsAt,
+      endsAt: new Date(startsAt.getTime() + 25 * 60_000),
+    });
+    const bookingData = {
+      seekerId: seeker.id,
+      mentorId,
+      question: 'Question',
+      durationMinutes: 25,
+      priceMinor: 2500,
+      currency: 'EUR',
+      status: 'pending_payment',
+      source: 'link' as const,
+      landedAt: now,
+      startsAt: null,
+      endsAt: null,
+      availabilitySlotId: slot.id,
+    };
+    const competingSeeker = await users.create({ email: `${randomUUID()}@example.com`, name: 'Other seeker' });
+    const competingBookingData = { ...bookingData, seekerId: competingSeeker.id };
+    const paymentData = {
+      provider: 'mock',
+      livemode: false,
+      providerSessionId: null,
+      providerPaymentId: null,
+      amountMinor: 2500,
+      currency: 'EUR',
+      status: 'pending',
+    };
+    const reservations = await Promise.allSettled([
+      slots.reserveWithBooking(slot.id, mentorId, now, bookingData, paymentData),
+      new AvailabilitySlotRepository(orm.em.fork()).reserveWithBooking(slot.id, mentorId, now, competingBookingData, paymentData),
+    ]);
+    const winner = reservations.filter((result) => result.status === 'fulfilled');
+    if (winner.length !== 1) {
+      throw new Error(`Expected one slot reservation; results: ${reservations.map((result) => result.status === 'rejected' ? String(result.reason) : 'fulfilled').join(' | ')}`);
+    }
+    expect(winner).toHaveLength(1);
+    expect((await new AvailabilitySlotRepository(orm.em.fork()).findById(slot.id))?.status).toBe('reserved');
+
+    const booking = winner[0];
+    if (booking.status !== 'fulfilled') throw new Error('Expected one successful slot reservation.');
+    await new BookingRepository(orm.em.fork()).failCheckout(booking.value.booking.id);
+    expect((await new AvailabilitySlotRepository(orm.em.fork()).findById(slot.id))?.status).toBe('open');
+  });
+
+  it('rejects overlapping published slots for the same mentor', async () => {
+    const mentorId = randomUUID();
+    const now = new Date();
+    const startsAt = new Date(Math.ceil((now.getTime() + 60 * 60_000) / 900_000) * 900_000);
+    const repository = new AvailabilitySlotRepository(orm.em.fork());
+    await repository.create({ mentorId, startsAt, endsAt: new Date(startsAt.getTime() + 25 * 60_000) });
+    await expect(repository.create({
+      mentorId,
+      startsAt: new Date(startsAt.getTime() + 15 * 60_000),
+      endsAt: new Date(startsAt.getTime() + 40 * 60_000),
+    })).rejects.toThrow();
+  });
+});
+
+describe('MentorProfileRepository', () => {
+  it('enforces unique user and slug values, returns listed profiles, and resolves unlisted profiles by slug', async () => {
+    const user = await new UserRepository(orm.em.fork()).create({
+      email: 'mentor-profile@example.com',
+      name: 'Mentor',
+    });
+    const repository = new MentorProfileRepository(orm.em.fork());
+    const saved = await repository.create({
+      userId: user.id,
+      slug: 'mentor-one',
+      headline: 'Backend mentor',
+      bio: 'Bio',
+      technologies: 'node-js typescript',
+      publicWorkUrl: 'https://example.com',
+      isListed: true,
+      lastActiveAt: null,
+    });
+    const otherUser = await new UserRepository(orm.em.fork()).create({
+      email: 'other-mentor-profile@example.com',
+      name: 'Other Mentor',
+    });
+
+    await expect(
+      new MentorProfileRepository(orm.em.fork()).create({
+        userId: user.id,
+        slug: 'different-slug',
+        headline: 'Duplicate owner',
+        bio: 'Bio',
+        technologies: 'typescript',
+        publicWorkUrl: 'https://example.com',
+        isListed: true,
+        lastActiveAt: null,
+      }),
+    ).rejects.toThrow();
+    await expect(
+      new MentorProfileRepository(orm.em.fork()).create({
+        userId: otherUser.id,
+        slug: 'mentor-one',
+        headline: 'Duplicate slug',
+        bio: 'Bio',
+        technologies: 'typescript',
+        publicWorkUrl: 'https://example.com',
+        isListed: false,
+        lastActiveAt: null,
+      }),
+    ).rejects.toThrow();
+
+    await repository.create({
+      userId: otherUser.id,
+      slug: 'mentor-two',
+      headline: 'Unlisted mentor',
+      bio: 'Bio',
+      technologies: 'python',
+      publicWorkUrl: 'https://example.com',
+      isListed: false,
+      lastActiveAt: null,
+    });
+    expect((await new MentorProfileRepository(orm.em.fork()).findListed()).map(({ id }) => id)).toEqual([saved.id]);
+    expect((await new MentorProfileRepository(orm.em.fork()).findBySlug('mentor-two'))).toMatchObject({
+      isListed: false,
+    });
+    expect(await orm.em.fork().findOne(MentorProfile, { id: saved.id })).toMatchObject({
+      technologies: 'node-js typescript',
+    });
+  });
+
+  it('allows only accepted, unrevoked mentor-role invitations to qualify for mentor profiles', async () => {
+    const users = new UserRepository(orm.em.fork());
+    const uninvited = await users.create({ email: 'uninvited@example.com', name: 'Uninvited' });
+    const seeker = await users.create({ email: 'seeker-profile@example.com', name: 'Seeker' });
+    const revokedMentor = await users.create({ email: 'revoked-mentor@example.com', name: 'Revoked Mentor' });
+    const mentor = await users.create({ email: 'accepted-mentor@example.com', name: 'Accepted Mentor' });
+    const invitations = new InvitationRepository(orm.em.fork());
+    const acceptedAt = new Date();
+    const createInvitation = (email: string, role: string, acceptedByUserId: string | null, revokedAt: Date | null) =>
+      invitations.create({
+        email,
+        displayName: email,
+        role,
+        invitedBy: null,
+        acceptedByUserId,
+        acceptedAt: acceptedByUserId ? acceptedAt : null,
+        revokedAt,
+      });
+
+    await createInvitation('seeker-profile-invite@example.com', 'seeker', seeker.id, null);
+    await createInvitation('revoked-mentor-invite@example.com', 'mentor', revokedMentor.id, acceptedAt);
+    await createInvitation('accepted-mentor-invite@example.com', 'mentor', mentor.id, null);
+
+    expect(await invitations.hasAcceptedRole(uninvited.id, 'mentor')).toBe(false);
+    expect(await invitations.hasAcceptedRole(seeker.id, 'mentor')).toBe(false);
+    expect(await invitations.hasAcceptedRole(revokedMentor.id, 'mentor')).toBe(false);
+    expect(await invitations.hasAcceptedRole(mentor.id, 'mentor')).toBe(true);
+    expect(await invitations.isPilotMember(seeker.id)).toBe(true);
+  });
+});
+
+
+describe('MessageRepository', () => {
+  it('stores participant messages and reads each booking in keyset order', async () => {
+    const users = new UserRepository(orm.em.fork());
+    const seeker = await users.create({ email: `${randomUUID()}@example.com`, name: 'Seeker' });
+    const mentor = await users.create({ email: `${randomUUID()}@example.com`, name: 'Mentor' });
+    const otherSeeker = await users.create({ email: `${randomUUID()}@example.com`, name: 'Other seeker' });
+    await new MentorProfileRepository(orm.em.fork()).create({
+      userId: mentor.id,
+      slug: `mentor-${randomUUID()}`,
+      headline: 'Mentor',
+      bio: 'Bio',
+      technologies: 'typescript',
+      publicWorkUrl: 'https://example.com',
+      isListed: true,
+      lastActiveAt: null,
+    });
+    const bookingId = randomUUID();
+    const otherBookingId = randomUUID();
+    const now = new Date();
+    const createBooking = (id: string, seekerId: string, status: string) => orm.em.getConnection().execute(
+      `insert into "bookings" (
+        "id", "seeker_id", "mentor_id", "question", "duration_minutes", "price_minor",
+        "currency", "status", "source", "landed_at", "starts_at", "ends_at", "created_at", "updated_at"
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, seekerId, mentor.id, 'Question', 25, 2500, 'EUR', status, 'link', now, status === 'accepted' ? now : null, status === 'accepted' ? new Date(now.getTime() + 25 * 60_000) : null, now, now],
+      'run',
+    );
+    await createBooking(bookingId, seeker.id, 'accepted');
+    await createBooking(otherBookingId, otherSeeker.id, 'paid');
+
+    const messages = new MessageRepository(orm.em.fork());
+    await messages.create({ bookingId, authorId: seeker.id, body: 'First message' });
+    await messages.create({ bookingId, authorId: mentor.id, body: 'Second message' });
+    await messages.create({ bookingId: otherBookingId, authorId: otherSeeker.id, body: 'Other booking' });
+
+    const first = await messages.findByBookingAfter(bookingId, null, 1);
+    expect(first).toHaveLength(1);
+    const second = await messages.findByBookingAfter(bookingId, { createdAt: first[0].createdAt, id: first[0].id }, 10);
+    expect(second).toHaveLength(1);
+    expect([first[0].body, second[0].body]).toEqual(expect.arrayContaining(['First message', 'Second message']));
+    expect(await orm.em.fork().count(Message, { bookingId })).toBe(2);
+
+    await expect(messages.create({ bookingId, authorId: seeker.id, body: 'm'.repeat(2001) })).rejects.toThrow();
+    await expect(messages.create({ bookingId, authorId: randomUUID(), body: 'Unknown author' })).rejects.toThrow();
+  });
+});
+
+describe('LoginTokenRepository', () => {
+  it('stores the opaque hash and consumes a valid token once under concurrent reuse', async () => {
+    const rawToken = Buffer.alloc(32, 7).toString('base64url');
+    const tokenHash = await import('node:crypto').then(({ createHash }) =>
+      createHash('sha256').update(Buffer.from(rawToken, 'base64url')).digest('hex'),
+    );
+    const now = new Date('2026-11-05T12:00:00.000Z');
+    const expiresAt = new Date(now.getTime() + 15 * 60 * 1000);
+    await new LoginTokenRepository(orm.em.fork()).create({
+      email: 'token@example.com',
+      tokenHash,
+      expiresAt,
+      consumedAt: null,
+    });
+
+    const stored = await orm.em.fork().findOne(LoginToken, { tokenHash });
+    expect(stored?.tokenHash).toBe(tokenHash);
+    expect(JSON.stringify(stored)).not.toContain(rawToken);
+
+    const results = await Promise.all([
+      new LoginTokenRepository(orm.em.fork()).consume(tokenHash, now),
+      new LoginTokenRepository(orm.em.fork()).consume(tokenHash, now),
+    ]);
+    expect(results.filter(Boolean)).toEqual(['token@example.com']);
+    await expect(new LoginTokenRepository(orm.em.fork()).consume(tokenHash, now)).resolves.toBeNull();
+  });
+
+  it('does not consume an expired token', async () => {
+    const tokenHash = 'a'.repeat(64);
+    const expiredAt = new Date('2026-11-05T11:59:59.999Z');
+    await new LoginTokenRepository(orm.em.fork()).create({
+      email: 'expired@example.com',
+      tokenHash,
+      expiresAt: expiredAt,
+      consumedAt: null,
+    });
+
+    await expect(
+      new LoginTokenRepository(orm.em.fork()).consume(tokenHash, new Date('2026-11-05T12:00:00.000Z')),
+    ).resolves.toBeNull();
   });
 });
 
@@ -97,6 +1073,68 @@ describe('UserRepository', () => {
     expect(await new UserRepository(orm.em.fork()).delete(created.id)).toBe(true);
     expect(await new UserRepository(orm.em.fork()).findById(created.id)).toBeNull();
     expect(await new UserRepository(orm.em.fork()).delete(created.id)).toBe(false);
+  });
+});
+
+describe('ApprovalRequestRepository', () => {
+  it('creates only one refund request when callers race', async () => {
+    const data = {
+      kind: 'refund',
+      subjectType: 'payment',
+      subjectId: randomUUID(),
+      reason: 'Mentor did not respond.',
+    };
+    const attempts = await Promise.all([
+      new ApprovalRequestRepository(orm.em.fork()).create(data).then(
+        (approval) => approval,
+        (error: unknown) => error,
+      ),
+      new ApprovalRequestRepository(orm.em.fork()).create(data).then(
+        (approval) => approval,
+        (error: unknown) => error,
+      ),
+    ]);
+
+    expect(attempts.filter((result) => !(result instanceof Error))).toHaveLength(1);
+    expect(attempts.filter((result) => result instanceof PendingApprovalConflictError)).toHaveLength(1);
+    expect(await orm.em.fork().count(ApprovalRequest, data)).toBe(1);
+  });
+
+  it('allows one pending refund per payment and a fresh request after a decision', async () => {
+    const data = {
+      kind: 'refund',
+      subjectType: 'booking',
+      subjectId: '00000000-0000-4000-8000-0000000000b1',
+      reason: 'Mentor declined.',
+    };
+    const created = await new ApprovalRequestRepository(orm.em.fork()).create(data);
+    const duplicate = new ApprovalRequestRepository(orm.em.fork()).create(data).catch((error: unknown) => error);
+
+    await expect(duplicate).resolves.toBeInstanceOf(PendingApprovalConflictError);
+    const decidedAt = new Date('2026-11-05T12:00:00.000Z');
+    await new ApprovalRequestRepository(orm.em.fork()).transitionStatus(
+      created.id,
+      'rejected',
+      '00000000-0000-4000-8000-0000000000b2',
+      decidedAt,
+    );
+
+    const decided = await new ApprovalRequestRepository(orm.em.fork()).findById(created.id);
+    expect(decided).toMatchObject({
+      status: 'rejected',
+      decidedBy: '00000000-0000-4000-8000-0000000000b2',
+      decidedAt,
+    });
+    const retried = await new ApprovalRequestRepository(orm.em.fork()).create(data);
+    expect(retried).toMatchObject({ status: 'pending', subjectId: data.subjectId });
+    await expect(
+      new ApprovalRequestRepository(orm.em.fork()).findPendingBySubject(
+        'refund', 'booking', data.subjectId,
+      ),
+    ).resolves.toMatchObject({ id: retried.id, status: 'pending' });
+    expect(retried.id).not.toBe(created.id);
+    expect(await new ApprovalRequestRepository(orm.em.fork()).findById(created.id))
+      .toMatchObject({ id: created.id, status: 'rejected' });
   });
 });
 
@@ -162,6 +1200,156 @@ describe('ArticleRepository paging, update and delete', () => {
   });
 });
 
+describe('ApprovalRequestRepository', () => {
+  it('enforces one pending approval per kind and typed subject, then persists a terminal decision', async () => {
+    const approvals = new ApprovalRequestRepository(orm.em.fork());
+    const subject = '00000000-0000-4000-8000-0000000000b1';
+    const created = await approvals.create({
+      kind: 'refund',
+      subjectType: 'payment',
+      subjectId: subject,
+      reason: 'Customer request',
+    });
+
+    const duplicate = await new ApprovalRequestRepository(orm.em.fork())
+      .create({ kind: 'refund', subjectType: 'payment', subjectId: subject, reason: 'Duplicate' })
+      .catch((error: unknown) => error);
+    expect(duplicate).toMatchObject({ name: 'PendingApprovalConflictError' });
+
+    await expect(
+      new ApprovalRequestRepository(orm.em.fork()).create({
+        kind: 'refund',
+        subjectType: 'booking',
+        subjectId: subject,
+        reason: 'Different subject type',
+      }),
+    ).resolves.toBeDefined();
+
+    const decidedAt = new Date('2026-11-05T12:00:00.000Z');
+    await expect(
+      new ApprovalRequestRepository(orm.em.fork()).transitionStatus(
+        created.id,
+        'approved',
+        '00000000-0000-4000-8000-0000000000b2',
+        decidedAt,
+      ),
+    ).resolves.toBe(true);
+
+    const stored = await new ApprovalRequestRepository(orm.em.fork()).findById(created.id);
+    expect(stored).toMatchObject({
+      status: 'approved',
+      decidedBy: '00000000-0000-4000-8000-0000000000b2',
+      decidedAt,
+    });
+    expect(await orm.em.fork().count(StatusTransition, { entityType: 'ApprovalRequest', entityId: created.id })).toBe(1);
+    await expect(
+      new ApprovalRequestRepository(orm.em.fork()).create({
+        kind: 'refund',
+        subjectType: 'payment',
+        subjectId: subject,
+        reason: 'Retry after prior decision',
+      }),
+    ).resolves.toBeDefined();
+    await expect(
+      orm.em.getConnection().execute(
+        'update "approval_requests" set "decided_by" = null where "id" = ?',
+        [created.id],
+        'run',
+      ),
+    ).rejects.toThrow();
+    expect(await orm.em.fork().count(ApprovalRequest, { id: created.id, status: 'approved' })).toBe(1);
+  });
+});
+
+describe('transitionStatus', () => {
+  async function createPendingArticle(): Promise<string> {
+    const article = await new ArticleRepository(orm.em.fork()).create({
+      title: 'Workflow target',
+      content: 'Transition test',
+      authorId: '00000000-0000-4000-8000-0000000000a4',
+    });
+    await orm.em.getConnection().execute(
+      'update "articles" set "status" = ? where "id" = ?',
+      ['pending', article.id],
+      'run',
+    );
+    return article.id;
+  }
+
+  it('allows only one concurrent transition and writes exactly one history row', async () => {
+    const articleId = await createPendingArticle();
+    const attempts = await Promise.all([
+      transitionStatus(orm.em.fork(), {
+        entityType: 'Article',
+        entityId: articleId,
+        from: ['pending'],
+        to: 'accepted',
+        actor: { kind: 'user', userId: '00000000-0000-4000-8000-0000000000a5' },
+      }).then(() => 'success', (error: unknown) => error),
+      transitionStatus(orm.em.fork(), {
+        entityType: 'Article',
+        entityId: articleId,
+        from: ['pending'],
+        to: 'declined',
+        actor: { kind: 'system' },
+      }).then(() => 'success', (error: unknown) => error),
+    ]);
+
+    expect(attempts.filter((result) => result === 'success')).toHaveLength(1);
+    const conflict = attempts.find((result) => result !== 'success');
+    expect(conflict).toBeInstanceOf(StatusTransitionConflictError);
+    const transitions = await orm.em.fork().find(StatusTransition, { entityType: 'Article', entityId: articleId });
+    expect(transitions).toHaveLength(1);
+  });
+
+  it('joins a caller transaction so its rollback also removes the history row', async () => {
+    const articleId = await createPendingArticle();
+    const em = orm.em.fork();
+
+    await expect(
+      em.transactional(async (transactionalEm) => {
+        await new UserRepository(transactionalEm).create({
+          email: 'transition-composition-rollback@example.com',
+          name: 'Rollback',
+        });
+        await transitionStatus(transactionalEm, {
+          entityType: 'Article',
+          entityId: articleId,
+          from: ['pending'],
+          to: 'accepted',
+          actor: { kind: 'system' },
+        });
+        throw new Error('roll back composition');
+      }),
+    ).rejects.toThrow('roll back composition');
+
+    const row = (await orm.em.getConnection().execute(
+      'select "status" from "articles" where "id" = ?',
+      [articleId],
+      'get',
+    )) as { status: string } | undefined;
+    expect(row?.status).toBe('pending');
+    expect(await orm.em.fork().count(StatusTransition, { entityType: 'Article', entityId: articleId })).toBe(0);
+    expect(await new UserRepository(orm.em.fork()).findByEmail('transition-composition-rollback@example.com')).toBeNull();
+  });
+
+  it('treats a replay as a no-op when ifAlready is enabled', async () => {
+    const articleId = await createPendingArticle();
+    const em = orm.em.fork();
+    const input = {
+      entityType: 'Article',
+      entityId: articleId,
+      from: ['pending'],
+      to: 'accepted',
+      actor: { kind: 'webhook' as const },
+    };
+
+    await expect(transitionStatus(em, input)).resolves.toBe(true);
+    await expect(transitionStatus(em.fork(), { ...input, ifAlready: true })).resolves.toBe(false);
+    expect(await orm.em.fork().count(StatusTransition, { entityType: 'Article', entityId: articleId })).toBe(1);
+  });
+});
+
 describe('User password hash', () => {
   it('is stored, loaded, and left out of the serialized entity', async () => {
     const created = await new UserRepository(orm.em.fork()).create({
@@ -176,19 +1364,163 @@ describe('User password hash', () => {
   });
 });
 
+describe('NoteRepository', () => {
+  it('scopes reads to the mentor and the database rejects publication without fresh consent', async () => {
+    const repository = new NoteRepository(orm.em.fork());
+    const mentorId = randomUUID();
+    const saved = await repository.create({
+      mentorId,
+      title: 'A note',
+      body: 'Private markdown.',
+      status: 'draft',
+      aiNoticeVersion: null,
+      aiConsentedAt: null,
+      publishedAt: null,
+      takenDownAt: null,
+    });
+    await expect(repository.findOwnedById(saved.id, randomUUID())).resolves.toBeNull();
+    await expect(repository.create({
+      mentorId,
+      title: 'Unconsented note',
+      body: 'Must not enter the corpus.',
+      status: 'published',
+      aiNoticeVersion: null,
+      aiConsentedAt: null,
+      publishedAt: new Date(),
+      takenDownAt: null,
+    })).rejects.toThrow();
+    expect(await repository.publish(saved.id, mentorId, 'notice-v1', new Date())).toBe(true);
+    expect(saved.status).toBe('published');
+    expect(saved.aiNoticeVersion).toBe('notice-v1');
+    expect(await repository.takeDown(saved.id, mentorId, new Date())).toBe(true);
+    expect(saved.status).toBe('taken_down');
+  });
+});
+
+describe('LedgerEntryRepository', () => {
+  it('records idempotent credits, rejects changed replays, and separates live balances', async () => {
+    const accountId = randomUUID();
+    const sourceId = randomUUID();
+    const repository = new LedgerEntryRepository(orm.em.fork());
+    const entry = {
+      accountId,
+      amountMinor: 267,
+      currency: 'EUR',
+      livemode: true,
+      sourceType: 'vault_answer',
+      sourceId,
+    };
+
+    await expect(repository.record([entry])).resolves.toBe(1);
+    await expect(repository.record([entry])).resolves.toBe(0);
+    await expect(repository.record([{ ...entry, amountMinor: 268 }])).rejects.toThrow(/ledger replay conflicts/i);
+    await expect(repository.record([{ ...entry, sourceId: randomUUID(), amountMinor: 50, livemode: false }])).resolves.toBe(1);
+    await expect(repository.balanceOf(accountId, true)).resolves.toBe(267);
+    await expect(repository.balanceOf(accountId, false)).resolves.toBe(50);
+    expect(await orm.em.fork().count(LedgerEntry, { accountId })).toBe(2);
+  });
+});
+
+describe('VaultAnswerRepository', () => {
+  it('claims a generation lease once, persists preview assignments, and releases credits atomically on the final approval', async () => {
+    const em = orm.em.fork();
+    const seekerId = randomUUID();
+    const mentorId = randomUUID();
+    const reviewerId = randomUUID();
+    const noteId = randomUUID();
+    const now = new Date('2026-11-10T12:00:00.000Z');
+    await em.persistAndFlush(em.create(Note, {
+      mentorId, title: 'Consented', body: 'Body', status: 'published', aiNoticeVersion: 'v1',
+      aiConsentedAt: now, publishedAt: now, takenDownAt: null,
+    }));
+    await em.persistAndFlush(em.create(Note, {
+      id: noteId, mentorId, title: 'Vault source', body: 'Body', status: 'published', aiNoticeVersion: 'v1',
+      aiConsentedAt: now, publishedAt: now, takenDownAt: null,
+    }));
+    const repository = new VaultAnswerRepository(em);
+    const { answer, payment } = await repository.createWithPayment({
+      seekerId, question: 'How does it work?', status: 'paid', priceMinor: 1000, currency: 'EUR',
+      answerText: null, failureReason: null, modelId: null, inputTokens: null, outputTokens: null,
+      generationAttempts: 0, generationStartedAt: null, previewRequired: true, reviewExpiresAt: null,
+    }, {
+      provider: 'mock', providerSessionId: 'vault-session', providerPaymentId: null, amountMinor: 1000,
+      currency: 'EUR', status: 'succeeded', livemode: false,
+    });
+    expect(await repository.claimGeneration(answer.id, now, 180_000)).toBe(true);
+    expect(await repository.claimGeneration(answer.id, now, 180_000)).toBe(false);
+    expect(await repository.persistGenerated({
+      answerId: answer.id, answerText: 'Answer', modelId: 'mock-v1', inputTokens: 10, outputTokens: 5,
+      citations: [{ answerId: answer.id, noteId, mentorId, mentorName: 'Mentor', noteTitle: 'Vault source', position: 0 }],
+      reviewerIds: [reviewerId], reviewExpiresAt: new Date(now.getTime() + 60_000), now, directRelease: false,
+    })).toBe(true);
+    expect((await repository.findById(answer.id))?.status).toBe('pending_preview');
+    await expect(repository.decideAndReleaseWithCredits({
+      answerId: answer.id, reviewerId,
+      decidedAt: new Date(now.getTime() + 30_000),
+      credits: [{ accountId: mentorId, amountMinor: 800, currency: 'EUR', livemode: payment.livemode, sourceType: 'vault_answer', sourceId: answer.id }],
+    })).resolves.toBe(true);
+    expect((await repository.findById(answer.id))?.status).toBe('released');
+    expect(await em.count(VaultAnswerReview, { answerId: answer.id, decision: 'approved' })).toBe(1);
+    expect(await em.count(LedgerEntry, { sourceId: answer.id, accountId: mentorId })).toBe(1);
+  });
+
+  it('rejects the last approval when a cited note loses consent and opens one refund request', async () => {
+    const em = orm.em.fork();
+    const seekerId = randomUUID();
+    const mentorId = randomUUID();
+    const reviewerId = randomUUID();
+    const noteId = randomUUID();
+    const now = new Date('2026-11-10T12:00:00.000Z');
+    const repository = new VaultAnswerRepository(em);
+    const { answer, payment } = await repository.createWithPayment({
+      seekerId, question: 'How?', status: 'pending_preview', priceMinor: 1000, currency: 'EUR',
+      answerText: 'Answer', failureReason: null, modelId: 'mock-v1', inputTokens: 10, outputTokens: 5,
+      generationAttempts: 1, generationStartedAt: now, previewRequired: true, reviewExpiresAt: new Date(now.getTime() + 60_000),
+    }, {
+      provider: 'mock', providerSessionId: 'vault-session-reject', providerPaymentId: null, amountMinor: 1000,
+      currency: 'EUR', status: 'succeeded', livemode: false,
+    });
+    await em.persistAndFlush(em.create(Note, {
+      id: noteId, mentorId, title: 'Taken down', body: 'Body', status: 'taken_down', aiNoticeVersion: 'v1',
+      aiConsentedAt: now, publishedAt: now, takenDownAt: now,
+    }));
+    await em.persistAndFlush(em.create(VaultAnswerCitation, {
+      answerId: answer.id, noteId, mentorId, mentorName: 'Mentor', noteTitle: 'Taken down', position: 0,
+    }));
+    await em.persistAndFlush(em.create(VaultAnswerReview, {
+      answerId: answer.id, reviewerId, decision: null, decidedAt: null, reason: null,
+    }));
+    await expect(repository.decideAndReleaseWithCredits({
+      answerId: answer.id, reviewerId, decidedAt: now,
+      credits: [{ accountId: mentorId, amountMinor: 800, currency: 'EUR', livemode: payment.livemode, sourceType: 'vault_answer', sourceId: answer.id }],
+    })).resolves.toBe(false);
+    expect((await repository.findById(answer.id))?.status).toBe('rejected');
+    expect(await em.count(LedgerEntry, { sourceId: answer.id })).toBe(0);
+    expect(await em.count(ApprovalRequest, { subjectId: payment.id, status: 'pending' })).toBe(1);
+  });
+});
+
 describe('migrations (down)', () => {
-  it('rename the tables back and keep their rows when the last migration is reverted', async () => {
+  it('reverts the history table and renames the remaining tables back without losing rows', async () => {
     const created = await new UserRepository(orm.em.fork()).create({ email: 'rename@example.com', name: 'Rename' });
 
-    await orm.migrator.down(); // add_user_password_hash
-    await orm.migrator.down(); // plural_table_names
+    await orm.migrator.down({ to: 'Migration20261031235000_status_transitions' });
+    expect(await publicTables()).toEqual(['articles', 'mikro_orm_migrations', 'users']);
+    await orm.migrator.up();
+    await orm.migrator.down({ to: 'Migration20261019180703_plural_table_names' });
     expect(await publicTables()).toEqual(['article', 'mikro_orm_migrations', 'user']);
     const rows: { email: string }[] = await orm.em.getConnection().execute('select email from "user" where id = ?', [created.id]);
     expect(rows).toEqual([{ email: 'rename@example.com' }]);
 
     await orm.migrator.up();
-    await orm.migrator.up();
-    expect(await publicTables()).toEqual(['articles', 'mikro_orm_migrations', 'users']);
+    expect(await publicTables()).toEqual([
+      'approval_requests', 'articles', 'bookings', 'invitations', 'ledger_entries', 'login_tokens',
+      'mentor_availability_slots', 'mentor_profiles', 'messages', 'mikro_orm_migrations',
+      'notes', 'payments', 'payout_transfer_attempts', 'payout_transfers', 'retention_legal_hold_releases',
+      'retention_legal_holds', 'retention_sweep_runs', 'status_transitions', 'stripe_connect_accounts',
+      'terms_acceptances', 'terms_reviews', 'terms_versions', 'users',
+      'vault_answer_citations', 'vault_answer_reviews', 'vault_answers',
+    ]);
   });
 
   it('remove the application tables when everything is reverted', async () => {

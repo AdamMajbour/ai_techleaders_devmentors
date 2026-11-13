@@ -1,0 +1,106 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as PilotCountsTableStories from '../../../src/components/pilot/PilotCountsTable.stories';
+
+<Meta of={PilotCountsTableStories} />
+
+# PilotCountsTable
+
+## 1. What it is for
+
+The numbers the founders read at the two reviews (E03-S03): each criterion of the pilot with its value, the provisional threshold of the decision record, the review date and where the criterion stands.
+
+<Canvas of={PilotCountsTableStories.AtTheFirstReview} />
+
+## 2. When to use it
+
+- The operator's page of pilot counts, on 30 November and 14 December 2026 (D08).
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A long, paginated list of records | `DataTable` | This table is a handful of criteria, read whole |
+| A mentor's earnings | `CreditsPanel` | A different audience and a ledger |
+| A chart | Not built | The criteria are single numbers with a threshold |
+
+## 4. Anatomy
+
+1. **A table** with column headers: Criterion, Value, Provisional threshold, Review, Status (R01.3).
+2. **What is counted**: live payments only, a vault answer counts when it is released.
+3. **A reminder** that the thresholds are provisional targets with no baseline.
+4. **When the numbers were computed**, when known.
+
+## 5. Variants
+
+| Status of a row | Words | Tone |
+|---|---|---|
+| `open` | Window still open | neutral |
+| `triggered` | Stop-or-revise condition met | danger |
+| `clear` | Condition not met | neutral |
+
+The criteria, thresholds and review dates are those of decision D08. They are passed in, so editing a threshold in the decision record does not change the component.
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Ready | The table and the notes under it | |
+| Windows still open | The values and "Window still open" | D08 (windows of 3 and 4 weeks) |
+| A condition met | "Stop-or-revise condition met" with the danger tone, and the words | WCAG 1.4.1 |
+| No condition met | "Condition not met" | |
+| No criteria | An empty state, no table | |
+| Loading | A loading text and skeletons, `aria-busy`, no numbers | Proposal |
+| Load failed | An error message with "Try again", no numbers | WCAG 3.3.3 |
+
+<Canvas of={PilotCountsTableStories.WindowsStillOpen} />
+<Canvas of={PilotCountsTableStories.NoConditionMet} />
+<Canvas of={PilotCountsTableStories.NoCriteria} />
+<Canvas of={PilotCountsTableStories.Loading} />
+<Canvas of={PilotCountsTableStories.LoadFailed} />
+
+## 7. Behavior and accessibility
+
+- **A real table** with a caption for screen readers and column headers.
+- **Values** are right-aligned with tabular figures.
+- **The status is words**, and the tone only supports it.
+- **The table states facts.** Whether to stop or revise is the founders' decision, and the component never says so.
+- **Test payments are not counted** and a refunded vault purchase is not counted (booking spec, Grill 9, and the vault spec).
+
+## 8. Content
+
+- **Value:** the number with its unit: "3 people", "74 min". Before the first answer: "No answer yet".
+- **Threshold:** as the condition of the record: "fewer than 5 people within 4 weeks of the start".
+- **The numbers in the stories are examples**, not pilot results. The pilot has not started.
+
+## 9. Responsiveness
+
+At 320 px the table scrolls horizontally inside its container.
+
+<Canvas of={PilotCountsTableStories.NarrowScreen} />
+
+## 10. API
+
+<ArgTypes of={PilotCountsTableStories} />
+
+## 11. Code
+
+```tsx
+import { PilotCountsTable } from '@devmentor/ui';
+
+<PilotCountsTable rows={report.rows} asOf={report.computedAt} status={status} onRetry={reload} />
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | The condition next to the number | The reader sees what the number is compared with |
+| Don't | "Pilot failed" | The decision belongs to the founders |
+| Do | Say test payments are not counted | The number means real money |
+| Don't | A green or red cell with no words | Colour alone |
+
+## 13. Related
+
+- **Components inside:** `Table`, `StatusBadge`, `EmptyState`, `ErrorMessage`, `Skeleton`.
+- **Confused with:** `DataTable`, `CreditsPanel`.
+- **Used in:** "E03 Terms and pilot counts" > Pilot counts.

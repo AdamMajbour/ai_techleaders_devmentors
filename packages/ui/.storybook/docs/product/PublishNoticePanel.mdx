@@ -1,0 +1,110 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as PublishNoticePanelStories from '../../../src/components/notes/PublishNoticePanel.stories';
+
+<Meta of={PublishNoticePanelStories} />
+
+# PublishNoticePanel
+
+## 1. What it is for
+
+The main trust moment of the vault: before a note can be used for AI answers, the mentor reads what happens to it and agrees, in plain words. The mentor agrees again every time they publish (D09).
+
+<Canvas of={PublishNoticePanelStories.NotYetAgreed} />
+
+## 2. When to use it
+
+- Beside the editor of a draft or a taken-down note (E02-S01).
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| The pilot terms for a seeker | `TermsConsent` | A checkbox in a payment form |
+| Taking a note down | `ConfirmDialog` | It is a question, not a consent |
+
+## 4. Anatomy
+
+1. **Heading**: "Before you publish this note".
+2. **One sentence of introduction.**
+3. **The notice**: a numbered list, one point per item.
+4. **The consent**: an unticked checkbox with its sentence.
+5. **Error** (when the server refuses): an `Alert`.
+6. **Button**: "Publish note", blocked with a reason until the box is ticked.
+
+## 5. Variants
+
+| Prop | Choose it when | Source |
+|---|---|---|
+| `noticeItems` | Always. The points are written by the product, not by the component | Vault spec, UI/UX |
+| `noticeVersion` | Always. Sent back with the consent so a changed notice is never accepted unread | Vault spec (`409` when it differs) |
+| `blockedReason` | Publishing is not open yet, for example the notice is not reviewed | Vault spec (`VAULT_PUBLISH_ENABLED`, E03-T02) |
+
+The text of the notice in Storybook is a **working draft**, marked "waiting for legal review". It shows the six points the spec requires: that the note goes to an AI provider for every answer, that the AI writes the answer, that the mentor sees answers first until 14 December 2026, that the seeker sees the mentor's name and the note title, the earnings, and that the note can be taken down.
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Not agreed | The box is empty, the button is blocked and says "Tick the box to publish" | Decision 2026-10-27 (`disabledReason`) |
+| Agreed | The button is active | |
+| Publishing | "Publishing…", the box and the button disabled | Form pattern |
+| Notice changed | An alert with the server's words: "The notice changed. Read it again before you publish." The box stays ticked | Vault spec |
+| Server unreachable | An alert, nothing is reported as published | Form pattern |
+| Not open yet | The button stays blocked with the owner's reason, even when the box is ticked | Vault spec |
+
+<Canvas of={PublishNoticePanelStories.PublishesAfterTheMentorAgrees} />
+<Canvas of={PublishNoticePanelStories.Publishing} />
+<Canvas of={PublishNoticePanelStories.NoticeChangedMeanwhile} />
+<Canvas of={PublishNoticePanelStories.PublishingNotOpenYet} />
+
+## 7. Behavior and accessibility
+
+- **Consent is never pre-ticked** and is not remembered from an earlier publication.
+- **The notice comes before the box**, in reading order.
+- **Success only after the server confirmed** (`onSuccess`).
+- **The blocked button stays focusable** and is described by its reason.
+- **An ordered list** names the number of points to a screen reader.
+
+## 8. Content
+
+- **Plain words, one sentence per point.** No legal text in the list.
+- **The sentence of the box:** "I have read this and I agree that this note is used this way."
+- **The wording itself** is owed by the verifier's review (E03-T02), and publishing in production stays closed until that review is recorded.
+
+## 9. Responsiveness
+
+One column. At 320 px the list items and the sentence of the box wrap.
+
+<Canvas of={PublishNoticePanelStories.NarrowScreen} />
+
+## 10. API
+
+<ArgTypes of={PublishNoticePanelStories} />
+
+## 11. Code
+
+```tsx
+import { PublishNoticePanel, apiCall } from '@devmentor/ui';
+
+<PublishNoticePanel
+  noticeItems={VAULT_NOTICE_ITEMS}
+  noticeVersion={VAULT_NOTICE_VERSION}
+  onPublish={(input) => apiCall(`/api/notes/${id}/publish`, { method: 'POST', json: input })}
+  onSuccess={() => router.refresh()}
+/>
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | Show the whole notice before the box | The mentor agrees to something they have read |
+| Don't | Tick the box in advance, or hide the notice behind a link | Consent is not assumed |
+| Do | Send the version of the notice that was shown | A changed notice is refused |
+| Don't | Report "published" before the server answered | The mentor would think the note is live |
+
+## 13. Related
+
+- **Components inside:** `Field`, `Checkbox`, `Button`, `Alert`.
+- **Confused with:** `TermsConsent` (a seeker's checkbox), `ConfirmDialog`.
+- **Used in:** `NoteEditor`'s screen: "E02 Notes and vault" > One note.

@@ -11,9 +11,9 @@ describe('registerSchema', () => {
     expect(registerSchema.parse(valid)).toEqual({ email: 'ada@example.com', name: 'Ada', password: 'correct horse battery' });
   });
 
-  it('enforces the password bounds (10 to bcrypt\'s 72)', () => {
-    expect(registerSchema.safeParse({ ...valid, password: 'x'.repeat(9) }).success).toBe(false);
-    expect(registerSchema.safeParse({ ...valid, password: 'x'.repeat(10) }).success).toBe(true);
+  it('enforces the password bounds (12 to bcrypt\'s 72)', () => {
+    expect(registerSchema.safeParse({ ...valid, password: 'x'.repeat(11) }).success).toBe(false);
+    expect(registerSchema.safeParse({ ...valid, password: 'x'.repeat(12) }).success).toBe(true);
     expect(registerSchema.safeParse({ ...valid, password: 'x'.repeat(72) }).success).toBe(true);
     expect(registerSchema.safeParse({ ...valid, password: 'x'.repeat(73) }).success).toBe(false);
   });

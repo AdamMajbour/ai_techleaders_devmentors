@@ -3,7 +3,10 @@ import type { User, UserRepository } from '@devmentor/db';
 import { createEventBus } from '../../events/event-bus';
 import { ConflictError, UnauthorizedError } from '../../http/errors';
 import { hashPassword } from '../../security/password';
+import type { InvitationDto } from './invitation.service';
+import type { Clock } from '../../utils/clock';
 import { AuthService } from './auth.service';
+import { INVALID_MAGIC_LINK_MESSAGE } from './magic-link.constants';
 
 // The ORM may only be imported by @devmentor/db, so the violation check is stubbed here
 // (it is covered against a real database by the db integration tests).
@@ -18,7 +21,25 @@ function setup(repository: Partial<Record<keyof UserRepository, jest.Mock>>) {
   const eventBus = createEventBus(silent);
   const registered = jest.fn();
   eventBus.on('auth.user.registered', registered);
-  return { service: new AuthService({ userRepository: repository as unknown as UserRepository, eventBus }), registered };
+  const invitationService = {
+    findUnrevokedByEmail: jest.fn<Promise<InvitationDto | null>, [string]>(async () => null),
+    acceptForUser: jest.fn<Promise<boolean>, [string, string, Date]>(async () => true),
+  };
+  const clock: Clock = { now: () => new Date('2026-11-05T12:00:00.000Z') };
+  const mentorService = { recordSignInActivity: jest.fn(async () => undefined) };
+  return {
+    service: new AuthService({
+      userRepository: repository as unknown as UserRepository,
+      eventBus,
+      invitationService: invitationService as never,
+      mentorService: mentorService as never,
+      clock,
+      logger: silent,
+    }),
+    registered,
+    invitationService,
+    mentorService,
+  };
 }
 
 const userWith = (passwordHash: string | null) =>
@@ -56,9 +77,10 @@ describe('AuthService.register', () => {
 describe('AuthService.login', () => {
   it('returns the user for the right password', async () => {
     const hash = await hashPassword('correct horse battery');
-    const { service } = setup({ findByEmail: jest.fn(async () => userWith(hash)) });
+    const { service, mentorService } = setup({ findByEmail: jest.fn(async () => userWith(hash)) });
 
     expect((await service.login({ email: 'ada@example.com', password: 'correct horse battery' })).id).toBe('u1');
+    expect(mentorService.recordSignInActivity).toHaveBeenCalledWith('u1');
   }, 20_000);
 
   it('gives the identical error for a wrong password, an unknown e-mail and an account without a password', async () => {
@@ -78,4 +100,101 @@ describe('AuthService.login', () => {
       expect((error as Error).message).toBe('Invalid credentials.');
     }
   }, 30_000);
+});
+
+describe('AuthService.signInWithMagicLink', () => {
+  const invitation: InvitationDto = {
+    id: 'invitation-1',
+    email: 'ada@example.com',
+    displayName: 'Ada Lovelace',
+    role: 'mentor',
+    invitedBy: null,
+    acceptedByUserId: null,
+    acceptedAt: null,
+    revokedAt: null,
+  };
+
+  it('creates a first-time invited user, copies the invitation name and accepts it', async () => {
+    const createdUser = { ...userWith(null), name: 'Ada Lovelace' };
+    const create = jest.fn(async () => createdUser);
+    const { service, registered, invitationService } = setup({
+      findByEmail: jest.fn(async () => null),
+      create,
+    });
+    invitationService.findUnrevokedByEmail.mockResolvedValue(invitation);
+
+    await expect(service.signInWithMagicLink('ada@example.com')).resolves.toMatchObject({
+      id: 'u1',
+      email: 'ada@example.com',
+      name: 'Ada Lovelace',
+    });
+
+    expect(create).toHaveBeenCalledWith({
+      email: 'ada@example.com',
+      name: 'Ada Lovelace',
+      passwordHash: null,
+    });
+    expect(invitationService.acceptForUser).toHaveBeenCalledWith(
+      'ada@example.com',
+      'u1',
+      new Date('2026-11-05T12:00:00.000Z'),
+    );
+    expect(registered).toHaveBeenCalledWith({ userId: 'u1' });
+  });
+
+  it('signs in an existing invited user without creating a duplicate account', async () => {
+    const existing = userWith(null);
+    const create = jest.fn();
+    const { service, registered, invitationService, mentorService } = setup({
+      findByEmail: jest.fn(async () => existing),
+      create,
+    });
+    invitationService.findUnrevokedByEmail.mockResolvedValue({
+      ...invitation,
+      acceptedByUserId: 'u1',
+      acceptedAt: new Date('2026-10-30T12:00:00.000Z'),
+    });
+
+    await expect(service.signInWithMagicLink('ada@example.com')).resolves.toMatchObject({ id: 'u1' });
+    expect(create).not.toHaveBeenCalled();
+    expect(invitationService.acceptForUser).toHaveBeenCalledWith(
+      'ada@example.com',
+      'u1',
+      new Date('2026-11-05T12:00:00.000Z'),
+    );
+    expect(registered).not.toHaveBeenCalled();
+    expect(mentorService.recordSignInActivity).toHaveBeenCalledWith('u1');
+  });
+
+  it('does not fail sign-in if mentor activity cannot be recorded', async () => {
+    const hash = await hashPassword('correct horse battery');
+    const { service, mentorService } = setup({ findByEmail: jest.fn(async () => userWith(hash)) });
+    mentorService.recordSignInActivity.mockRejectedValue(new Error('activity storage unavailable'));
+
+    await expect(service.login({ email: 'ada@example.com', password: 'correct horse battery' }))
+      .resolves.toMatchObject({ id: 'u1' });
+    expect(silent.warn).toHaveBeenCalledWith(
+      'Could not update mentor activity after sign-in.',
+      expect.objectContaining({ userId: 'u1' }),
+    );
+  }, 20_000);
+
+  it('rejects a revoked invitation and an invitation that cannot be accepted', async () => {
+    const { service, invitationService } = setup({
+      findByEmail: jest.fn(async () => null),
+      create: jest.fn(async () => userWith(null)),
+    });
+
+    await expect(service.signInWithMagicLink('ada@example.com')).rejects.toMatchObject({
+      name: 'UnauthorizedError',
+      message: INVALID_MAGIC_LINK_MESSAGE,
+    });
+
+    invitationService.findUnrevokedByEmail.mockResolvedValue(invitation);
+    invitationService.acceptForUser.mockResolvedValue(false);
+    await expect(service.signInWithMagicLink('ada@example.com')).rejects.toMatchObject({
+      name: 'UnauthorizedError',
+      message: INVALID_MAGIC_LINK_MESSAGE,
+    });
+  });
 });

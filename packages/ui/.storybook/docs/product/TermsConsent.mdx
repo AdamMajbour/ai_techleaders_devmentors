@@ -1,0 +1,92 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as TermsConsentStories from '../../../src/components/consents/TermsConsent.stories';
+
+<Meta of={TermsConsentStories} />
+
+# TermsConsent
+
+## 1. What it is for
+
+A visible checkbox with a sentence and a link, with which the user accepts the pilot terms before paying (E03-S01).
+
+<Canvas of={TermsConsentStories.Default} />
+
+## 2. When to use it
+
+- In `QuestionForm`, before the pay button.
+- Wherever the user must accept the same terms.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| Any other yes or no | `Checkbox` inside a `Field` | This one is about the terms |
+| A notice the user only has to read | Text or `Alert` | Nothing to accept |
+
+## 4. Anatomy
+
+1. **Checkbox**.
+2. **Sentence**: "I accept the pilot terms", with the words "pilot terms" as a link.
+3. **Hint** (optional): the owner's wording about what is kept.
+4. **Error** (optional): what to do.
+
+## 5. Variants
+
+| Prop | Choose it when |
+|---|---|
+| `hint` | The owner has wording about data or retention. Written by the owner of the terms, not by the component |
+| `error` | The user tried to continue without accepting |
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Default | Not ticked | Consent is never pre-ticked |
+| Ticked | A check mark (a shape, not only a colour) | WCAG 1.4.1 |
+| Error | A sentence with an icon, the box is marked invalid | WCAG 3.3.1 |
+| Focus | The focus ring | WCAG 2.4.7 |
+
+<Canvas of={TermsConsentStories.Checked} />
+<Canvas of={TermsConsentStories.WithError} />
+
+## 7. Behavior and accessibility
+
+- **Opening the terms does not accept them.** The link sits inside the label, and a click on a link opens its page and does not toggle the box (verified in a unit test with `fireEvent`; `user-event` emulates a label click on the link that a browser does not make).
+- **Space** toggles the box after Tab.
+- **The hint and the error** are the accessible description of the box.
+
+## 8. Content
+
+- **Sentence:** "I accept the pilot terms". No legal text in the label.
+- **Error:** "Tick the box to continue."
+- **The wording of the terms themselves** is owed by the legal review (E03-T01, E03-T02).
+
+## 9. Responsiveness
+
+The box stays at the first line of the text; the text wraps.
+
+## 10. API
+
+<ArgTypes of={TermsConsentStories} />
+
+## 11. Code
+
+```tsx
+import { TermsConsent } from '@devmentor/ui';
+
+<TermsConsent checked={accepted} onCheckedChange={setAccepted} termsHref="/terms" error={error} />
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | An unticked box | The user decides |
+| Don't | "By paying you accept the terms" with no box | Consent hidden in an action |
+| Do | A link that opens the full terms | The user can read what they accept |
+| Don't | The terms in a scroll box inside the form | Hard to read, hard to use |
+
+## 13. Related
+
+- **Components inside:** `Field`, `Checkbox`, `TextLink`.
+- **Used in:** `QuestionForm`. Patterns: Paid action flow.

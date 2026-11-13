@@ -1,0 +1,119 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as CardStories from '../../../src/components/ui/card.stories';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../src/components/ui/card';
+import { DoDont } from '../../blocks/DoDont';
+
+<Meta of={CardStories} />
+
+# Card (panel)
+
+## 1. What it is for
+
+A card is a panel that groups content which has to stand out from the page, such as the message box or a sign-in form.
+
+<Canvas of={CardStories.Playground} />
+
+## 2. When to use it
+
+- The sign-in and register forms (a single, self-contained task).
+- Candidates, not yet built that way: the message box in the session view and the notice panel before publishing. `Composer` and `PublishNoticePanel` are plain elements today.
+
+A card is a **last resort for emphasis**, not the default container. Rows of a list or table are divided by a hairline (R01.1), never wrapped in cards (A01: no card around everything).
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| Rows in a list or table | A hairline between rows (`border-border`) | Cards around every row is a generic look (R01.1, A01) |
+| A card inside a card | A hairline and spacing | Nested boxes add noise (A01) |
+| A message about status or an error | `Alert` | It has the right role and icon |
+| Content that interrupts the page | `Dialog` | A card does not take focus |
+
+## 4. Anatomy
+
+1. **Card**: the outline (`--border`) and the surface (`--card`). No shadow.
+2. **Header** (optional): title and description.
+3. **Content**: the body.
+4. **Footer** (optional): the actions.
+
+The component names `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter` are kept because existing screens use them.
+
+## 5. Variants
+
+| Density | Inside | Use it for | Source |
+|---|---|---|---|
+| `roomy` (default) | 24 px | The session view and standalone forms | K1, R02.1 |
+| `compact` | 12 px | Dense screens | K1, R01.3 |
+
+<Canvas of={CardStories.Densities} />
+
+## 6. States
+
+A card is not interactive, so it has no hover, focus or pressed state. Its content has them.
+
+| State | What the user sees | Source |
+|---|---|---|
+| Default | `--card` surface with a hairline outline, no shadow | R01.1 |
+| Loading | A skeleton inside the card (next batch). The card stays | Proposal |
+| Empty, error | An empty or error state inside the card (next batch) | Proposal |
+| Disabled, selected | Not applicable. If a card is chosen by the user, use a `Checkbox` or `Select` inside it | |
+
+## 7. Behavior and accessibility
+
+- **Structure:** a card is a plain container, not a landmark. Give `CardTitle` the heading level that fits the page (`as="h2"`, `"h3"`, `"h4"`), so the outline does not skip levels.
+- **Focus:** a card does not take focus. Never make a whole card clickable; put a link or a button inside.
+- **Contrast:** `--card-foreground` on `--card` is 15:1 (dark) and 17:1 (light).
+
+<Canvas of={CardStories.StructureAndHeadingLevel} />
+
+## 8. Content
+
+- **Title:** a noun phrase that names the task or object: "Your question", "Sign in".
+- **Description:** one sentence of context. Do not repeat the title.
+- **Long text:** wraps. A long title wraps onto several lines.
+
+<Canvas of={CardStories.LongContentNarrow} />
+
+## 9. Responsiveness
+
+Fills its container. At 320 px a card has the full width of the page minus the page margin. Do not set a fixed width.
+
+## 10. API
+
+<ArgTypes of={CardStories} />
+
+## 11. Code
+
+```tsx
+import { Card, CardContent, CardHeader, CardTitle } from '@devmentor/ui';
+
+<Card>
+  <CardHeader>
+    <CardTitle>Sign in</CardTitle>
+  </CardHeader>
+  <CardContent>…</CardContent>
+</Card>
+```
+
+```tsx
+// Typical: the message box of the session, on a compact screen.
+<Card density="compact">
+  <CardContent>
+    <Textarea aria-label="Message" />
+  </CardContent>
+</Card>
+```
+
+## 12. Do and don't
+
+<DoDont
+  doExample={<Card className="w-full" density="compact"><CardHeader><CardTitle>Your question</CardTitle></CardHeader></Card>}
+  doWhy="One panel groups one task."
+  dontExample={<Card className="w-full" density="compact"><CardContent><Card density="compact"><CardContent>Nested</CardContent></Card></CardContent></Card>}
+  dontWhy="A card inside a card is a generic look (A01)."
+/>
+
+## 13. Related
+
+- **Confused with:** `Alert` (a message), `Dialog` (an interruption).
+- **Used in patterns:** Form (standalone forms), Session thread (message box), Detail view.

@@ -4,7 +4,7 @@
   "tracker": "github",
   "browser": { "provider": "agent-browser" },
   "validation": {
-    "commands": ["npm run type-check", "npm run lint", "npm test", "npm run build"]
+    "commands": ["npm run type-check", "npm run lint", "npm run check:agents", "npm test", "npm run build"]
   },
   "labels": {
     "enabled": true,

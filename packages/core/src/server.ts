@@ -1,18 +1,160 @@
 // Core package, server-only entry (`@devmentor/core/server`): imports the database package,
 // so never import it from client components.
+import {
+  requirePilotMember as requirePilotMemberWithResolver,
+  type PilotMemberResolver,
+} from './http/auth';
+import type { Session } from './security/session';
+import { withScope } from './container/container';
+import type { InvitationService } from './services/auth/invitation.service';
+
 export { apiHandler, jsonResponse } from './http/apiHandler';
 export { makeCrudRoute, type CrudRouteConfig } from './http/makeCrudRoute';
-export { requireSession, optionalSession, assertOwns, issueSessionCookie, clearSessionCookie } from './http/auth';
+export { makeActionRoute, type ActionRouteConfig } from './http/makeActionRoute';
+export {
+  makeWebhookRoute,
+  type WebhookRouteConfig,
+  type WebhookVerification,
+} from './http/makeWebhookRoute';
+export {
+  MOCK_PAYMENT_SIGNATURE_HEADER,
+  MOCK_PAYMENT_SIGNATURE_VALUE,
+  verifyMockPaymentWebhook,
+} from './services/payments/mock-webhook-verifier';
+export { verifyConfiguredPaymentWebhook } from './services/payments/payment-gateway.factory';
+export { StripePaymentGateway } from './services/payments/adapters/stripe-payment-gateway';
+export { SessionNoteService } from './services/notes/session-note.service';
+
+export {
+  requireSession,
+  optionalSession,
+  assertOwns,
+  requireOperator,
+  assertParticipant,
+  issueSessionCookie,
+  clearSessionCookie,
+} from './http/auth';
+export type { PilotMemberResolver } from './http/auth';
+
+export function createPilotMemberResolver(
+  invitationService: Pick<InvitationService, 'isPilotMember'>,
+): PilotMemberResolver {
+  return (session: Session) => invitationService.isPilotMember(session.userId);
+}
+
+/** Uses the invitation-backed resolver by default; tests and specialized callers may override it. */
+export function requirePilotMember(
+  request: Request,
+  resolver?: PilotMemberResolver,
+  secret?: string,
+): Promise<Session> {
+  const defaultResolver: PilotMemberResolver = (session, resolverRequest) =>
+    withScope(async ({ invitationService }) =>
+      createPilotMemberResolver(invitationService)(session, resolverRequest),
+    );
+  return requirePilotMemberWithResolver(request, resolver ?? defaultResolver, secret);
+}
 export { readJsonBody } from './http/body';
-export { getEnv, parseEnv } from './config/env';
+export {
+  getBookingSettings,
+  getAppBaseUrl,
+  getEnv,
+  getMailerSettings,
+  getPaymentSettings,
+  getVaultSettings,
+  getAISettings,
+  parseAISettings,
+  assertAIReadyToCharge,
+  parseEnv,
+  parseBookingSettings,
+  parsePaymentSettings,
+  parseVaultSettings,
+  type VaultSettings,
+  type AISettings,
+  getOperatorUserIds,
+  parseOperatorUserIds,
+} from './config/env';
 export { createLogger, redact, type Logger, type LogContext } from './logger';
 export { createEventBus, type EventBus } from './events/event-bus';
 export type { EventMap, EventName } from './events/event-map';
+export { registerMailSubscriber, type MailEventRegistrar } from './events/mail-subscriber';
 export { buildContainer, getContainer, withScope, type AppContainer } from './container/container';
 export type { Cradle, OrmLike } from './container/cradle';
 export { ArticleService } from './services/articles/article.service';
+export { TermsService, type TermsKind, type TermsScope } from './services/terms/terms.service';
+export { RetentionSweepTask, PILOT_RETENTION_DEADLINE } from './services/terms/retention-sweep.task';
+export { PilotMetricsService } from './services/terms/pilot-metrics.service';
+export {
+  MentorService,
+  normalizeMentorSlug,
+  normalizeTechnologySlugs,
+  type MentorProfileChanges,
+  type MentorProfileDto,
+  type MentorProfileInput,
+} from './services/mentors/mentor.service';
+export { BookingService, type BookingCreationResult } from './services/bookings/booking.service';
+export { LedgerService, type LedgerEntryDto } from './services/ledger/ledger.service';
+export {
+  GeneratorError,
+  type GeneratorErrorKind,
+  type AnswerGenerationInput,
+  type AnswerSourceNote,
+  type AnswerGenerator,
+  type GenerationCandidate,
+} from './services/ai/answer-generator.port';
+export { validateGeneration, type GenerationValidationOptions } from './services/ai/validate-generation';
+export { MockAnswerGenerator } from './services/ai/adapters/mock-answer-generator';
+export { AnthropicAnswerGenerator } from './services/ai/adapters/anthropic-answer-generator';
+export { createConfiguredAnswerGenerator, assertConfiguredAIReadyToCharge } from './services/ai/answer-generator.factory';
+export { VaultAnswerPaymentHandler } from './services/vault/vault-answer-payment.handler';
+export { VaultReleaseService } from './services/vault/vault-release.service';
+export { VaultReviewService } from './services/vault/vault-review.service';
+export { VaultGenerationTask } from './services/vault/vault-generation.task';
+export { VaultExpireReviewsTask } from './services/vault/vault-expire-reviews.task';
+export { VaultAnswerService, type VaultAnswerCreationResult } from './services/vault/vault-answer.service';
+export { PaymentService } from './services/payments/payment.service';
+export { RefundService } from './services/refunds/refund.service';
+export { MessageService, type MessageDto, type MessagePage } from './services/messages/message.service';
+export { NoteService, type NoteDto, type NoteInput, type NoteSummaryDto } from './services/notes/note.service';
 export { AuthService } from './services/auth/auth.service';
 export { UserService } from './services/auth/user.service';
+export {
+  InvitationService,
+  normalizeInvitationEmail,
+  type InvitationDto,
+  type InviteInput,
+  type InvitationRole,
+} from './services/auth/invitation.service';
+export {
+  INVALID_MAGIC_LINK_MESSAGE,
+  MAGIC_LINK_TTL_MS,
+  MagicLinkService,
+} from './services/auth/magic-link.service';
+export {
+  ApprovalService,
+  defaultApproverResolvers,
+  type ApprovalDecision,
+  type ApprovalStatus,
+  type ApprovalRequestDetails,
+  type ApprovalSubject,
+  type ApproverResolver,
+  type ApproverResolvers,
+} from './services/approvals/approval.service';
+export type {
+  CheckoutCompletedEvent,
+  CheckoutExpiredEvent,
+  CheckoutFailedEvent,
+  CreateCheckoutInput,
+  CreateCheckoutResult,
+  NormalizedPaymentEvent,
+  PaymentGateway,
+  RefundInput,
+} from './services/payments/payment-gateway.port';
+export { MockPaymentGateway } from './services/payments/adapters/mock-payment-gateway';
+export { ConsoleMailer } from './services/notifications/adapters/console-mailer';
+export { HttpMailer } from './services/notifications/adapters/http-mailer';
+export { ConfiguredMailer } from './services/notifications/adapters/configured-mailer';
+export type { Mailer, MailMessage } from './services/notifications/mailer.port';
 export { hashPassword, verifyPassword, BCRYPT_COST } from './security/password';
 export {
   signSession,
@@ -26,6 +168,10 @@ export {
 export { assertCsrfSafe } from './security/csrf';
 export { createRateLimiter, clientKey, type RateLimiter } from './security/rate-limit';
 export { withFailureLimit } from './security/guarded';
-export { loginLimiter, registerLimiter } from './security/limiters';
-
-export { SessionNoteService } from './services/notes/session-note.service';
+export {
+  loginLimiter,
+  magicLinkConsumeLimiter,
+  magicLinkRequestLimiter,
+  registerLimiter,
+} from './security/limiters';
+export { systemClock, type Clock } from './utils/clock';

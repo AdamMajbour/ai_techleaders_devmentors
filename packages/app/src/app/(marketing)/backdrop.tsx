@@ -32,7 +32,8 @@ const PUSHERS: ReadonlyArray<readonly [number, number, number]> = [
   [4.1, 0.42, 0.65],
 ]
 const PUSHER_DRIFT = 0.13
-const GRAIN = "#f8fec6"
+// A canvas cannot use var(), so the colours are read from the design tokens when the backdrop mounts.
+const token = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "currentColor"
 const STILL_FRAME = 9.1
 
 const clamp = (n: number, lo: number, hi: number) => (n < lo ? lo : n > hi ? hi : n)
@@ -92,6 +93,8 @@ export default function Backdrop() {
   const markRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
+    const grain = token("--foreground")
+    const maskSolid = token("--mask-opaque")
     const canvas = duneRef.current
     const markCanvas = markRef.current
     const ctx = canvas?.getContext("2d")
@@ -120,7 +123,7 @@ export default function Backdrop() {
       if (!offCtx) return
       offCtx.translate(place.x, place.y)
       offCtx.scale(place.h / MARK_H, place.h / MARK_H)
-      offCtx.fillStyle = "#fff"
+      offCtx.fillStyle = maskSolid
       offCtx.fill(new Path2D(MARK_PATH), "nonzero")
       const data = offCtx.getImageData(0, 0, maskW, maskH).data
       mask = new Uint8Array(maskW * maskH)
@@ -182,10 +185,10 @@ export default function Backdrop() {
       buildField(t)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, w, h)
-      ctx.fillStyle = GRAIN
+      ctx.fillStyle = grain
       markCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
       markCtx.clearRect(0, 0, w, h)
-      markCtx.fillStyle = GRAIN
+      markCtx.fillStyle = grain
       const cols = Math.ceil(w / SPACING_X) + OVERSCAN * 2
       const rows = Math.ceil(h / SPACING_Y) + OVERSCAN * 2
       let prev = new Float32Array(cols)

@@ -1,6 +1,8 @@
 # Pilot vault answers (E02): mentor notes, AI-generated answers with mentor preview, credited purchase
 
-Status: Draft for review (gate answered by the requester 2026-10-27; not yet audited with `om-pre-implement-spec`). Source: issue #8 (E02) with #15, #16, #17; design authority `.ai/specs/product-brief.md`. **Depends on** `2026-10-27-pilot-primitives-2.md` (Phases 1, 3 and 4, and Phase 2, which lands after E01 is live) and through it on `2026-10-26-pilot-primitives.md` and `2026-10-26-pilot-booking-flow.md` (E01: payments, refunds, invitations). None of the three is implemented yet.
+Status: Code complete on stacked PR #32; not merged. D20 is recorded from one Mentor A interview conducted by Founder B, sufficient per requester confirmation; D26 is recorded (2026-11-12). Legal and staging gates are deferred at the requester's direction and remain launch blockers. Source: issue #8 (E02) with #15, #16, #17; design authority `.ai/specs/product-brief.md`. The first notes slice is implemented in predecessor PR #29; remaining vault slices and selected-time booking are implemented on stacked PR #32. The primitive dependencies are present in the stack.
+
+Related mentor-onboarding prototype (reference only): [`.ai/prototypes/discovery/mentor-onboarding/revision-001/`](../prototypes/discovery/mentor-onboarding/revision-001/).
 
 ## 📝 TLDR
 
@@ -12,7 +14,7 @@ Mentors answer the same questions unpaid and paste from a private doc (`[INTERVI
 |---|---|---|
 | Q1 | Separate "primitives 2" spec | This spec contains no primitive code |
 | Q2 | After the pilot start 2026-11-02 | Designed for a running pilot; see the schedule risk |
-| Q3 | Pay first, then generate, mentors preview, release; reject or expiry = refund (the requester accepted that "not charged" in #17 means charged then refunded) | Reuses E01's refund path; until D26 the refund waits for the operator, see Gate summary |
+| Q3 | Pay first, then generate, mentors preview, release; reject or expiry = refund (the requester accepted that "not charged" in #17 means charged then refunded) | Reuses E01's refund path; per D26, refunds wait for operator approval |
 | Q4 | All cited mentors must approve; one rejection rejects the answer (and the approval is vault-local, no shared engine, requester 2026-10-27) | `vault_answer_reviews`, decided in one transaction |
 | Q5 | The model gets all consenting notes of all mentors (except the buyer's own) in one prompt and cites by note id; no retrieval | `NoteSelector` seam; corpus cap |
 | Q6 | AI behind a port; Anthropic adapter plus mock; generation after the response with `generating` status and polling | `AI_MODE`, `AI_LIVE_ENABLED` gate |
@@ -31,7 +33,7 @@ Three slices, delivered in an order that differs from the backlog order for a te
 - **Corpus.** All published, AI-consented notes of all pilot mentors except the buyer's own, sorted by id, capped by `VAULT_MAX_CORPUS_CHARS` (newest first when over, with a warning). Sorted order keeps runs reproducible in tests and logs.
 - **Citations are snapshots.** Title and mentor name are copied into `vault_answer_citations` at generation, so a later rename or takedown cannot change what a seeker bought.
 - **Review.** One `vault_answer_reviews` row per distinct cited mentor, created with the citations. `VaultReviewService.decide` runs in one `UnitOfWork.run`: lock the answer row, record the decision, and in the same transaction either reject (status change plus a refund request row) or, on the last approval, release (status change plus ledger credits). There is no handler after commit and no repair task, because everything it does is database work; refund *execution* is the separate external task from primitives 2.
-- **Refunds** go through E01's `ApprovalService`, with the three new reasons `vault_rejected`, `vault_expired`, `vault_generation_failed`; auto-approved only when listed in `REFUND_AUTO_APPROVE_REASONS` after D26 (below), otherwise the operator approves.
+- **Refunds** go through E01's `ApprovalService`, with the reasons `vault_rejected`, `vault_expired`, `vault_generation_failed`, and `vault_cancelled`; D26 requires operator approval for vault refunds, and these reasons are not accepted by `REFUND_AUTO_APPROVE_REASONS`.
 
 Alternatives considered:
 - **Generate and preview before charging** (rejected by Q3): it spends mentors' time on unpaid questions and drops the "prepaid" count of D05.
@@ -135,7 +137,7 @@ New env (zod, lazy, `.env.example`; the app builds and boots without them):
 | `VAULT_PREVIEW_UNTIL` | end of 2026-12-14, Europe/Warsaw | read through `isPreviewRequired` (primitives 2) |
 | `VAULT_ENABLED` | `false` | when false every vault purchase and preview API route answers `404` and the pages are not linked; the flag is flipped per deployment by founder A only after the Phase 5 rehearsal record exists (no phase flips a default) |
 | `VAULT_PUBLISH_ENABLED` | `false` in production | when false publishing a note is refused in production; set after E03-T02 records the review of the notice |
-| `REFUND_AUTO_APPROVE_REASONS` | empty | E01 variable; E02 adds the reasons above; empty = every refund waits for the operator |
+| `REFUND_AUTO_APPROVE_REASONS` | empty | E01 booking reasons only; vault refund reasons are rejected by config and always require operator approval (D26) |
 
 ### Anthropic adapter (`core/services/ai/adapters/anthropic-answer-generator.ts`, server entry only; `@anthropic-ai/sdk` added to `core`)
 
@@ -196,13 +198,13 @@ Only what is unique:
 ## 📝 Risks & Impact Review
 
 - **Direction call, not a defect:** the vault is built on A01, which is accepted untested (D01). The first behavioural signal is three paid vault answers in four weeks, which needs the feature live by about 2026-11-16 to fit the 2026-12-14 review; if E02 goes live later, D08's window should be restated by founder A as "four weeks from E02 go-live" or the review will read an unfinished test. Nothing here decides that.
-- **Mentor consent is not yet obtained:** D20's interviews about share, AI use and previews are owed before 2026-11-02; until they happen D06, D09 and D11 are not mentor-accepted. The notice and the per-note consent are the product's honest answer, but mentors who have not been interviewed are being asked to opt in cold. Recommended gate: no mentor is asked to publish until D20 is recorded.
+- **Mentor evidence is limited to one interview:** the requester confirmed Founder B conducted the Mentor A interview and one mentor is sufficient for D20 (see the research note). No transcript or interview method was supplied; do not generalize it to other mentors. The notice and per-note consent remain required.
 - **Privacy exposure (new):** because of Q5, every purchase sends the entire corpus to the processor, not just the cited notes, and the question goes with it. The notice says so; the terms (E03-T01) must name the processor, its retention and the purpose, and the verifier reviews them before real notes are sent (`AI_LIVE_ENABLED` is the technical gate). The seeker's question is also read by cited mentors; E03-S01's terms must say so.
-- **Proposed decision D26 (owner founder A, supersedes part of D17):** (1) refunds after a vault answer is rejected, expires or fails to generate are automatic; (2) D09's and D14's "the mentor sees the answer before release" is implemented as an approval with a veto, silence meaning expiry and a refund (the requester chose this in Q4; it extends the wording of D09/D14 and is not stated in them), with at most 3 cited mentors per answer. D17 says refunds are approved by founder A; until D26 is recorded the new reasons stay out of `REFUND_AUTO_APPROVE_REASONS` and every refund waits for the operator, so the feature is code-complete either way. This is the same pattern as E01's D25 and can be recorded together with it. **Until then a seeker can be charged, rejected and wait for a refund that an operator must approve**, which is why a live vault purchase also requires `OPERATOR_USER_IDS` to be set (E01's operator bootstrap) and a named person watching the approvals page.
+- **D26 (founder A, recorded 2026-11-12; supersedes the proposed policy above):** vault refunds after rejection, expiry, generation failure, and operator cancellation require operator approval; they are never automatic. Mentor previews request an opinion; no decision within 120 minutes expires the answer and creates a refund request. At most three distinct mentors may be cited. Only answers reaching `released` count toward D08; refunded purchases are listed separately. The previously resolved Q4 rule remains: every cited mentor must approve before release, and one rejection rejects the answer. A live vault purchase therefore requires `OPERATOR_USER_IDS` and a named person watching the approvals queue.
 - **Refund friction:** an unanswerable question is charged and refunded; whether the provider returns its fee on refunds is not verified. The unanswerable rate will be visible in the data and may argue for a pre-check (a cheap `answerable` call before checkout) later; that is a product change, not designed here.
 - **No human review after the preview ends** (D18). The pilot ends the same day, so this is a post-pilot question, but if the product continues the date must not silently turn previews off; `isPreviewRequired` is configuration, and a post-pilot decision should replace it.
 - **AI cost is unmeasured.** Token counts are stored per answer so the owner can decide on model and effort from data.
-- **What counts toward D08's "3 book or pay" (decided by the requester 2026-10-27):** a vault purchase counts when the answer is `released`; purchases that were paid and then refunded (unanswerable, rejected, expired, cancelled) are reported separately and do not count. The brief's wording ("book or pay") is unchanged, so founder A should record this reading together with D26. E03-S03's query counts vault answers `released` with `payments.livemode = true` and lists the refunded ones apart.
+- **What counts toward D08's "3 book or pay" (confirmed again in D26 on 2026-11-12):** a vault purchase counts when the answer is `released`; purchases that were paid and then refunded (unanswerable, rejected, expired, cancelled) are reported separately and do not count. E03-S03's query counts vault answers `released` with `payments.livemode = true` and lists the refunded ones apart.
 - **Refund after release is not supported in code.** There is no ledger reversal and no operator route for it: founder A refunds in Stripe, deducts that amount from the mentor's payout when E03-S02 pays out, and notes it in `.ai/runs/`. Until payout exists no mentor has been paid, so the correction is a bookkeeping line, not a clawback.
 - **Hard to reverse:** ledger entries once real money exists, citation snapshots, the notice version (a published note's consent is tied to the text it saw).
 - **Schedule and size:** four phases after two prerequisite specs and E01; not estimated here because the E01 hour estimates were never validated; the audit should size it.
@@ -222,7 +224,7 @@ Only what is unique:
 
 ## 📝 Decisions in play
 
-Relied on: D01, D02 (the vault is a mentor asset, no seeker subscription), D05/D08/D13 (counts), D06, D09, D10, D11, D14, D15 (data and retention), D16, D17 (approval of refunds), D18, D19 (invited only), R02 (no session text enters the vault), R03, R04 (price before the question), N01, N02. **Proposed new record: D26**, as above (owner founder A; supersedes part of D17 for refunds and records the veto reading of D09/D14; the refund part is required before the new reasons are auto-approved). Nothing else here contradicts an active decision. D20 is a precondition, not a dependency of the code.
+Relied on: D01, D02 (the vault is a mentor asset, no seeker subscription), D05/D08/D13 (counts), D06, D09, D10, D11, D14, D15 (data and retention), D16, D17 (approval of refunds), D18, D19 (invited only), D20 (one requester-confirmed Founder B interview with Mentor A), D26 (operator-approved refunds and preview window), R02 (no session text enters the vault), R03, R04 (price before the question), N01, N02. D20 and D26 are recorded.
 
 ## 📋 Traceability (issue acceptance criteria → step → oracle)
 
@@ -232,7 +234,7 @@ Relied on: D01, D02 (the vault is a mentor asset, no seeker subscription), D05/D
 | #15 take-down removes the note (R03) | 1.2, 1.4, 3.4 | taken-down note absent from the corpus and the published list; pending answers citing it are rejected (3.3) |
 | #15 no consent → the system does not use the note (negative) | 1.1, 2.2 | check constraint on published rows; corpus query test with an unconsented published row injected directly |
 | #17 pays 10 EUR before the answer is shown (D16) | 2.3, 2.6 | client-sent price ignored; `answer_text` hidden until `released` by the generic `pickVisible` test |
-| #17 not charged if a mentor rejects | 3.2, 3.4 | reject → `rejected` → refund requested; refunded exactly once when approved (automatic only after D26, otherwise by the operator: "not charged" is met as charged-then-refunded, accepted by the requester) |
+| #17 not charged if a mentor rejects | 3.2, 3.4 | reject → `rejected` → refund requested; refunded exactly once after operator approval per D26 ("not charged" is met as charged-then-refunded, accepted by the requester) |
 | #16 mentor sees the answer before the seeker (D09, D18) | 3.3, 3.5 | seeker DTO has no text while `pending_preview`; assignee DTO has it |
 | #16 several mentors each see it (D14) | 3.1 | N cited mentors → N assignments; the fixture cites 3 mentors |
 | #16 rejection → the seeker does not receive it | 3.2 | one reject of three → `rejected`, text never visible |
@@ -294,10 +296,21 @@ Validation after every step: `npm run type-check && npm run lint && npm test && 
 |---|---|
 | D20 interviews recorded (founder B) | asking any mentor to publish notes |
 | E03-T02 review of the notice text and the processor in the terms | `VAULT_PUBLISH_ENABLED` in production; `AI_LIVE_ENABLED=true` |
-| D26 recorded (founder A) | setting the vault refund reasons in `REFUND_AUTO_APPROVE_REASONS` (code can merge) |
-| `OPERATOR_USER_IDS` set and a named person on the approvals page (or D26 recorded) | any live vault purchase |
+| `OPERATOR_USER_IDS` set and a named person on the approvals page | any live vault purchase (D26 requires operator approval for vault refunds) |
 | Platform cron configured to run settlement (primitives 2, Backend 1) and seen running on staging | any live vault purchase |
 | Phase 5 rehearsal record | founder A's live flip of `AI_LIVE_ENABLED` and `VAULT_ENABLED` |
 
+### Research question from mentor-onboarding walkthrough (not an acceptance criterion)
+
+For invited mentors who answer recurring questions with private notes: does the invitation make clear how the profile/session setup relates to those notes and the consent boundary? This synthetic hypothesis is not evidence of a barrier and does not add a notes feature to onboarding.
+
+Source: [walkthrough session 002](research/walkthroughs/2026-10-31-mentor-onboarding-session-002/report.md).
+
 ### Close-out
 Lesson entry for anything non-obvious (likely: the reject/take-down semantics); move this spec and `2026-10-27-pilot-primitives-2.md` to `.ai/specs/implemented/` after Phase 4 merges and the rehearsal record exists.
+
+## Implementation status (2026-11-10)
+
+The user requested selected-time mentor reservation in addition to this epic. The scoped amendment is recorded in `.ai/specs/2026-10-26-pilot-booking-flow.md` as Q9: mentors publish discrete 25-minute UTC slots within seven days; seekers select one before payment; the slot is reserved atomically with booking/payment and released on terminal checkout failure. Calendar sync, recurring availability and rescheduling remain out of scope.
+
+The vault purchase, AI generation, mentor review, refund and credit workflows remain gated by `VAULT_ENABLED=false` and the existing AI/payment settings. Per D26, vault refunds always require operator approval; the auto-approval setting accepts booking reasons only. `npm run vault:settle` expires previews and optionally runs generation with `-- --include-ai` under a scheduler budget. Local DB integration (49) and E2E (33) have passed; staging rehearsal and the legal, operator, and scheduler evidence remain open launch gates.

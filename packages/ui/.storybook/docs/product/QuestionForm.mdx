@@ -1,0 +1,114 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as QuestionFormStories from '../../../src/components/bookings/QuestionForm.stories';
+
+<Meta of={QuestionFormStories} />
+
+# QuestionForm
+
+## 1. What it is for
+
+The paid form of E01-S02: the seeker sees the price, writes a question, accepts the pilot terms and pays. It follows the Form and Paid action flow patterns.
+
+<Canvas of={QuestionFormStories.Empty} />
+
+## 2. When to use it
+
+- On a mentor's page, to ask a question for the price of one session.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| Any other form | Patterns: Form (`CrudForm`) | This one is specific to the paid question |
+| A message inside a session | `Composer` | No price, no terms |
+
+## 4. Anatomy
+
+1. `PriceNotice`: the price and the refund rule, first (R04).
+2. **Your question**: a `Textarea` with a `Field`.
+3. `TermsConsent`: the checkbox for the pilot terms, never ticked in advance.
+4. **Form error**: an `Alert`, when the whole form failed.
+5. **Button**: "Pay 25 EUR and send", with the amount written in it.
+
+## 5. Variants
+
+| Prop | Choose it when | Source |
+|---|---|---|
+| `mentorName` | A mentor reads the question. Leave it out when someone else does (a vault answer) | |
+| `priceDescription`, `refundRule`, `fieldHint` | The default wording does not fit. A vault answer sets all three | R04 |
+| `termsHint` | The owner has wording about data and retention | E03-S01 |
+| `minLength`, `maxLength` | The limits differ. 4000 is the limit of the booking spec. The minimum of 10 is a **proposal** | Booking spec (`question` up to 4000), Proposal |
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Empty | The button is blocked and says "Write your question to continue" | Decision 2026-10-27 (`disabledReason`) |
+| Too short | The button says "Add a little more detail: at least 10 characters" | |
+| Terms not accepted | The button says "Accept the pilot terms to continue" | |
+| Ready | The button is active | |
+| Sending | "Sending…", every field and the button disabled | Form rules (no double submit) |
+| Server rejects the question | The error under the field, focus moves to it, the text is kept | WCAG 3.3.1, Form rules |
+| Server refuses the consent | The error under the checkbox, focus moves to it, the question is kept | WCAG 3.3.1, Form rules |
+| Server unreachable | An alert with the reason, the text and the checkbox are kept | Form rules |
+| Left after editing | The question is checked when the user leaves the field | Form rules (blur after edit) |
+
+<Canvas of={QuestionFormStories.SubmitsAfterTheTermsAreAccepted} />
+<Canvas of={QuestionFormStories.Sending} />
+<Canvas of={QuestionFormStories.ServerRejectsTheQuestion} />
+<Canvas of={QuestionFormStories.ServerUnreachable} />
+
+## 7. Behavior and accessibility
+
+- **Success only after the server confirmed.** `onSuccess` is called when `onSubmit` resolves with `ok`, never before. The caller sends the user to the payment.
+- **The blocked button stays focusable** and is described by its reason (`aria-describedby`), so a keyboard user hears why.
+- **Ctrl or Cmd plus Enter** submits when nothing blocks it.
+- **Errors:** field errors are announced with the field. A form-level error is an alert.
+- **The price is on the button as well**, so the amount is known at the moment of the click.
+
+## 8. Content
+
+- **Button:** "Pay 25 EUR and send": the verb, the amount, the result.
+- **Reasons:** say what is missing, in the order the user fills the form.
+- **Server errors:** say whether money was taken: "Nothing was charged."
+
+## 9. Responsiveness
+
+One column at every width. At 320 px the long name of a mentor wraps in the price notice and the button wraps its label.
+
+<Canvas of={QuestionFormStories.LongNameNarrow} />
+
+## 10. API
+
+<ArgTypes of={QuestionFormStories} />
+
+## 11. Code
+
+```tsx
+import { apiCall, QuestionForm } from '@devmentor/ui';
+
+<QuestionForm
+  mentorName="Ada Kowalska"
+  priceMinor={2500}
+  currency="EUR"
+  termsHref="/terms"
+  // The route is the one the booking spec defines; it is not built yet. `mentorId` comes from the page.
+  onSubmit={(input) => apiCall<{ checkoutUrl: string }>('/api/bookings', { method: 'POST', json: { mentorId, ...input } })}
+  onSuccess={(data) => router.push((data as { checkoutUrl: string }).checkoutUrl)}
+/>
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | The price above the field | R04 |
+| Don't | A pre-ticked terms checkbox | Consent is never assumed |
+| Do | Keep the question after a failed payment | The user wrote it for a reason |
+| Don't | Clear the form when the server is slow | The text is lost |
+
+## 13. Related
+
+- **Components inside:** `PriceNotice`, `Field`, `Textarea`, `TermsConsent`, `Button`, `Alert`.
+- **Patterns:** Form, Paid action flow.
+- **Used in:** "E01 Booking flow" > Mentor page.

@@ -1,0 +1,112 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as ConfirmStories from '../../../src/patterns/confirm-destructive.stories';
+
+<Meta of={ConfirmStories} />
+
+# Confirm destructive action
+
+## 1. What it is for
+
+Before an action that deletes, cancels or cannot be undone, the user is asked once, with the object named, and learns whether it worked.
+
+<Canvas of={ConfirmStories.AsksFirstAndNamesTheObject} />
+
+## 2. When to use it
+
+- Take down a published note (R03).
+- Cancel a paid answer or a booking.
+- Anything a user could not easily get back.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A reversible action | Do it and offer undo | Questions on every click teach users to click through them |
+| Collecting input | Dialog or Form | A confirm dialog only asks yes or no |
+
+## 4. Anatomy
+
+`ConfirmDialog` is the implementation: a **question with the object's name**, a **consequence**, a **way out** and an **action named with a verb**. The pattern adds the request behind it.
+
+## 5. Behavior rules
+
+| Rule | Why | Source |
+|---|---|---|
+| The question **names the object**: `Take down "Ingress upgrade notes"?` | "Are you sure?" says nothing | WCAG 3.3.4 |
+| The way out is **easy to find** and has focus first | The least destructive action is the default | WAI-ARIA APG alert dialog |
+| The action is a **verb and an object**: "Take down note" | "OK" hides what happens | R04 (clear wording) |
+| While the request runs, **both buttons are blocked** and the action reads "Taking down…" | No double sends | Decision 2026-10-27 |
+| On **failure the dialog stays open** with the reason, so the user can retry | The user must not think it worked | WCAG 3.3.1 |
+| The dialog **closes only after the server confirmed** | Success is shown only when true | Decision 2026-10-27 |
+| The result is stated on the page ("The note was taken down.") as text | The dialog is gone, so the result must remain | WCAG 4.1.3 |
+
+## 6. States, one story each
+
+| State | Story |
+|---|---|
+| Closed | Closed |
+| Asking: object named, focus on the way out | AsksFirstAndNamesTheObject |
+| Cancelled: nothing happened | CancelClosesWithoutActing |
+| Pending | Pending |
+| Failed: stays open with the reason | FailureKeepsTheDialogOpen |
+| No network: stays open | NoNetworkKeepsTheDialogOpen |
+| Done: closes after the server confirmed | ClosesOnlyAfterTheServerConfirmed |
+| Long title, narrow screen | LongTitleNarrow |
+
+<Canvas of={ConfirmStories.Pending} />
+<Canvas of={ConfirmStories.FailureKeepsTheDialogOpen} />
+<Canvas of={ConfirmStories.ClosesOnlyAfterTheServerConfirmed} />
+
+## 7. Accessibility
+
+- `role="alertdialog"`, named by the title and described by the consequence; focus starts on the way out and is kept inside; `Escape` asks to close.
+- The error inside the dialog is `role="alert"`.
+- After closing, focus returns to the control that opened it, and the result is written as text.
+
+## 8. Content
+
+- **Title:** the question with the object's name.
+- **Description:** what happens and whether it can be undone.
+- **Action:** verb and object. **Way out:** "Cancel", or "Keep the note".
+- **Failure:** `The note could not be taken down.` followed by what the server said.
+
+<Canvas of={ConfirmStories.LongTitleNarrow} />
+
+## 9. Responsiveness
+
+At 320 px the buttons stack with the action on top. At 768 px and above they sit in one row with the action on the right.
+
+## 10. Code
+
+```tsx
+<ConfirmDialog
+  open={open}
+  onOpenChange={setOpen}
+  title={`Take down "${note.title}"?`}
+  description="Answers already sold stay."
+  confirmLabel="Take down note"
+  pendingLabel="Taking down…"
+  tone="destructive"
+  pending={pending}
+  error={error}
+  onConfirm={async () => {
+    const result = await apiCall(`/api/notes/${note.id}/take-down`, { method: 'POST', json: {} });
+    if (result.ok) setOpen(false);
+    else setError(result.error.message);
+  }}
+/>
+```
+
+## 11. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | Close the dialog after the request succeeded | A failure stays visible |
+| Don't | Close it first and report a failure later | The user believes it worked |
+| Do | `Take down "Ingress upgrade notes"?` and "Take down note" | The object and the action are named |
+| Don't | "Are you sure?" with "Yes" and "No" | The user must guess what "Yes" does |
+
+## 12. Related
+
+- **Components:** `ConfirmDialog`, `Button`, `Alert`.
+- **Patterns:** Detail view (the action's host), Form.

@@ -1,0 +1,102 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as CreditsPanelStories from '../../../src/components/vault/CreditsPanel.stories';
+
+<Meta of={CreditsPanelStories} />
+
+# CreditsPanel
+
+## 1. What it is for
+
+What a mentor has earned from vault answers that cited their notes. It is a ledger of credits. Nothing is paid out yet, and the panel says so.
+
+<Canvas of={CreditsPanelStories.WithCredits} />
+
+## 2. When to use it
+
+- On the notes page of a mentor (E02-S03).
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| Counts for the pilot (operator) | A table of counts (E03, batch 3D) | Different audience |
+| Earnings of a session | Not built | The spec credits vault answers only |
+
+## 4. Anatomy
+
+1. **Balance** with two decimals.
+2. **Test credits** line, only when there are some.
+3. **"Not paid out yet. Payout is arranged separately."**
+4. **A table** of credits: Date, Type, Amount.
+
+## 5. Variants
+
+None. The states below are the variants.
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| With credits | The balance, the line about payout, the table with column headers | R01.3 (clear column headers, accepted) |
+| With test credits | The same, and "Test credits, not counted", and "Test credit" in the table | Vault spec (the balance counts `livemode` credits only) |
+| No credits yet | An empty state: you earn a share when an answer that cites your note is released | |
+| Loading | A loading text and skeletons, `aria-busy`, no balance | Proposal |
+| Load failed | An error message with "Try again" and no balance | WCAG 3.3.3 |
+| Many entries | The table grows | |
+
+<Canvas of={CreditsPanelStories.WithTestCredits} />
+<Canvas of={CreditsPanelStories.NoCreditsYet} />
+<Canvas of={CreditsPanelStories.Loading} />
+<Canvas of={CreditsPanelStories.LoadFailed} />
+
+## 7. Behavior and accessibility
+
+- **A real table** with a caption for screen readers and column headers.
+- **Amounts** are right-aligned with tabular figures and two decimals ("4.00 EUR"), so digits line up.
+- **An entry carries the date of the answer, never the question or the text** (vault spec).
+- **Test credits are named in words**, not by colour.
+
+## 8. Content
+
+- **Format:** "6.67 EUR" in the balance and the table. The compact "25 EUR" is for sentences.
+- **Payout line:** "Not paid out yet. Payout is arranged separately." The payout itself is not specified (E03-S02 is not built).
+
+## 9. Responsiveness
+
+At 320 px the table scrolls horizontally inside its container.
+
+<Canvas of={CreditsPanelStories.NarrowScreen} />
+
+## 10. API
+
+<ArgTypes of={CreditsPanelStories} />
+
+## 11. Code
+
+```tsx
+import { CreditsPanel } from '@devmentor/ui';
+
+<CreditsPanel
+  balanceMinor={credits.balanceMinor}
+  testBalanceMinor={credits.testBalanceMinor}
+  currency={credits.currency}
+  entries={credits.entries}
+  status={status}
+  onRetry={reload}
+/>
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | Say it is not paid out yet | The mentor knows what the number is |
+| Don't | Show "Earnings" with no payout line | It reads as money in hand |
+| Do | Keep test credits out of the balance | They are not real money |
+| Don't | Show the seeker's question in the list | A credit carries only the date |
+
+## 13. Related
+
+- **Components inside:** `Table`, `EmptyState`, `ErrorMessage`, `Skeleton`.
+- **Confused with:** `DataTable` (paginated, for larger lists).
+- **Used in:** "E02 Notes and vault" > Notes.

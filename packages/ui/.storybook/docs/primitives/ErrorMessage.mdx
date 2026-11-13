@@ -1,0 +1,101 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as ErrorMessageStories from '../../../src/backend/feedback/ErrorMessage.stories';
+import { DoDont } from '../../blocks/DoDont';
+
+<Meta of={ErrorMessageStories} />
+
+# ErrorMessage (error state)
+
+## 1. What it is for
+
+An error message replaces content that could not be loaded. It says what happened and how to go on.
+
+<Canvas of={ErrorMessageStories.WithRetry} />
+
+## 2. When to use it
+
+- A list or a view whose request failed (no connection, server error).
+- A record that does not exist, or that the user cannot open.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A problem with one field | `Field` error | It belongs next to the control |
+| A message above a form or on a page that still works | `Alert` | The content is still usable |
+| An empty list | `EmptyState` | Empty is not an error |
+| A failure that needs a decision | `ConfirmDialog` with `error` | The dialog stays open for a retry |
+
+An error that requires action is **never a toast**.
+
+## 4. Anatomy
+
+1. **Icon**: an error mark, decorative.
+2. **Message**: what happened and what to do.
+3. **Retry** (optional): a "Try again" button.
+
+## 5. Variants
+
+One layout, centred in its container. With or without the retry button, depending on whether trying again can work.
+
+<Canvas of={ErrorMessageStories.WithoutRetry} />
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| With retry | Message and a "Try again" button | WCAG 3.3.3 |
+| Without retry | Message only. Used when trying again cannot help (no access, not found) | Proposal |
+| Hover, focus, pressed | Belong to the retry button | |
+| Loading again | The button is blocked and the region shows the loading state (the caller does this) | Proposal |
+
+## 7. Behavior and accessibility
+
+- **Role:** `role="alert"`, so the message is announced as soon as it appears.
+- **Icon and words:** the message has an icon and a sentence, so colour is not the only cue (WCAG 1.4.1).
+- **Focus:** nothing moves focus automatically. The retry button is reachable by keyboard.
+- **Contrast:** the destructive text colour passes 4.5:1 on the page in both themes (4.93:1 dark, 5.95:1 light).
+
+## 8. Content
+
+- **Say what happened and what to do:** "Questions could not be loaded. Check your connection and try again."
+- **Do not blame the user** and do not show raw error codes or stack traces.
+- **If money is involved, say what happened to it:** "You are not charged twice."
+- **Length:** one or two sentences.
+
+<Canvas of={ErrorMessageStories.LongMessageNarrow} />
+
+## 9. Responsiveness
+
+The message wraps and is capped at the reading measure (65 characters). At 320 px the retry button sits under the message.
+
+## 10. API
+
+<ArgTypes of={ErrorMessageStories} />
+
+## 11. Code
+
+```tsx
+import { ErrorMessage } from '@devmentor/ui';
+
+<ErrorMessage message="Questions could not be loaded. Check your connection and try again." onRetry={reload} />
+```
+
+```tsx
+// Typical: DataTable shows it when its `error` prop is set.
+<DataTable error={error} onRetry={reload} rows={rows} columns={columns} getRowId={(row) => row.id} />
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | "Questions could not be loaded. Check your connection and try again." and a "Try again" button | It says what happened and offers the way on |
+| Don't | "Error 500" | It says nothing the user can act on |
+| Do | "This question does not exist or you do not have access to it." without a retry | Retry cannot help here, so none is offered |
+| Don't | A toast that disappears after three seconds | The user may never read it |
+
+## 13. Related
+
+- **Confused with:** `Alert` (a message on a working page), `Field` error (one field) and `EmptyState`.
+- **Used in patterns:** List with filters, Detail view ("not found or no access"), Form (server error).

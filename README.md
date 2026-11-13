@@ -124,6 +124,10 @@ npm run db:seed
 npm run dev
 ```
 
+Seed adds three local demo accounts. On the sign-in page, use **Continue as mock mentee**, **mock mentor**, or **mock operator**. Their credentials are `mock-mentee@devmentor.test` / `mock-mentee-password`, `mock-mentor@devmentor.test` / `mock-mentor-password`, and `mock-operator@devmentor.test` / `mock-operator-password`. The operator UUID is included in `.env.example`; replace `OPERATOR_USER_IDS` with explicitly approved IDs in any deployed environment. Mentee and mentor access is invitation-backed, and operator pages and API routes require the configured operator ID.
+
+For GitHub role sign-in, set `DEMO_MENTEE_GITHUB_EMAIL`, `DEMO_MENTOR_GITHUB_EMAIL`, and `DEMO_OPERATOR_GITHUB_EMAIL` in `.env.local` to verified GitHub e-mail addresses. You can reuse one address for multiple roles for local testing, then use the corresponding **Continue as … with GitHub** button. These addresses map to the seeded `@devmentor.test` users; GitHub cannot verify the reserved `.test` addresses themselves. The operator account must also be listed in `OPERATOR_USER_IDS`.
+
 ### Dostępne komendy
 
 ```bash
@@ -134,6 +138,7 @@ npm run start        # Uruchom aplikację (po build)
 npm run migrate      # Uruchom migracje bazy danych
 npm run migrate:down # Wycofaj ostatnią migrację
 npm run db:seed      # Dane demo (idempotentne, wymaga migracji)
+npm run pilot:invite -- --help # Zaproszenia uczestników pilota
 npm run lint         # Sprawdź linting
 npm run type-check   # Sprawdzenie typów TypeScript
 npm run test         # Testy jednostkowe (bez bazy)
@@ -288,9 +293,26 @@ DATABASE_PASSWORD=postgres
 # Wymagane tylko przez trasy auth; aplikacja buduje się i startuje bez tego.
 JWT_SECRET=
 
-# Application
-NEXT_PUBLIC_API_URL=http://localhost:3000
+# Sign-in (magic link)
+PUBLIC_SIGNUP=false
+APP_BASE_URL=http://localhost:3000
+OPERATOR_USER_IDS=
+MENTOR_RESPONSE_WINDOW_MINUTES=120
+REFUND_AUTO_APPROVE_REASONS=
+
+# Mail delivery: console by default for development; HTTP mode uses Resend.
+MAILER_MODE=console
+MAILER_API_KEY=
+MAIL_FROM=
 ```
+
+`APP_BASE_URL` is the public HTTP(S) origin used for verification links; it is required when a magic-link request is made and is never inferred from request headers. `MAILER_MODE` defaults to `console` for local development. For deployed mail, set `MAILER_MODE=http`, `MAILER_API_KEY` (Resend API key), and `MAIL_FROM` (for example `DevMentor <no-reply@example.com>`). Keep provider keys and `JWT_SECRET` in deployment secrets, never in source control. The console mailer is for local development only.
+
+Paid bookings use `MENTOR_RESPONSE_WINDOW_MINUTES` (default `120`, valid range 1–10,080). Leave `REFUND_AUTO_APPROVE_REASONS` empty until the pilot decision is recorded: settlement creates operator-only refund approvals and never executes a refund. Run `npm run bookings:settle` from a scheduler for the same idempotent expiry pass that booking reads trigger.
+
+Payments default to `PAYMENTS_MODE=mock`. To use Stripe Checkout, set `PAYMENTS_MODE=stripe`, provide `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and keep `PAYMENTS_LIVE_ENABLED=false` for test keys. A live `sk_live_` key is refused unless `PAYMENTS_LIVE_ENABLED=true`; do not enable live payments before the pilot launch gates are complete. Stripe credentials are validated only when a payment operation or payment webhook is used, so builds and unrelated routes do not need them.
+
+The pilot uses invitation-based, one-time e-mail sign-in. Close public password registration with `PUBLIC_SIGNUP=false`. Invite founder A first with `npm run pilot:invite -- --email <email> --name <name> --role seeker`, have them request and consume a sign-in link, then run `npm run pilot:invite -- --list` to get their accepted user id. Set that id in `OPERATOR_USER_IDS` before inviting any other participants. Until it is set, no user has operator access.
 
 ## 🚀 Deployment
 
@@ -315,3 +337,6 @@ npm run build
 ## 📄 Licencja
 
 Proprietary — DevMentor
+
+
+Vault answers remain disabled by default (`VAULT_ENABLED=false`); mentor note publishing also requires `VAULT_PUBLISH_ENABLED=true`. AI generation defaults to mock, and live Anthropic calls require `AI_MODE=anthropic`, `AI_LIVE_ENABLED=true`, and `ANTHROPIC_API_KEY`. Keep these gates closed until the notice, terms, operator, scheduler, and rehearsal gates in the vault spec are recorded. Leave `REFUND_AUTO_APPROVE_REASONS` empty by default. Per D26, vault rejection, expiry, generation failure, and operator cancellation always require operator approval; vault reasons are rejected by the auto-approval setting. Schedule `npm run vault:settle` to expire overdue previews. Add `-- --include-ai` only on a scheduler with an explicit AI budget; this also invokes the external generation task. Neither command executes refunds.

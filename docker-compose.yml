@@ -1,5 +1,7 @@
 # Local PostgreSQL for development, integration tests and E2E (see .env.example).
 #   docker compose up -d db
+# If localhost:5432 is occupied, set POSTGRES_HOST_PORT=5433 in the root .env
+# and DATABASE_PORT=5433 in .env.local.
 # Credentials match the defaults in packages/db/src/config, so no .env.local is needed.
 services:
   db:
@@ -9,7 +11,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: devmentor
     ports:
-      - "5432:5432"
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - devmentor-db:/var/lib/postgresql/data
     healthcheck:

@@ -1,0 +1,175 @@
+/* DevMentor design tokens, three layers. The ONLY file allowed to contain colour literals.
+
+   Layer 1  raw values   --palette-*, --scale-*, --type-*  (named by appearance, used only here)
+   Layer 2  meaning      --background, --primary, --space-group, ...  (named by purpose)
+   Layer 3  component    --table-header-foreground, ...  (only where a component needs its own value)
+
+   Themes: dark is the default (:root). Light is [data-theme='light'], set on the document root so
+   dialogs and popovers rendered outside a story inherit it. [data-theme] also works on a single
+   element for side-by-side previews.
+
+   Sources: R01.x/R02.x/K1/A01 = lekcja-06/referencje.md, lekcja-06/tokeny.md. "proposal" = no
+   reference gives the value; it is listed for decision in packages/ui/POSTEP.md. */
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* ---- Layer 1: raw colour ---- */
+  --palette-ink-975: #1a1919;
+  --palette-ink-950: #141313;
+  --palette-ink-900: #1c1b1b;
+  --palette-ink-850: #262524;
+  --palette-ink-800: #2f2e2c;
+  --palette-stone-500: #948d85;
+  --palette-stone-550: #8a847c;
+  --palette-stone-600: #76706a;
+  --palette-stone-650: #6b655e;
+  --palette-cream-100: #edf5cd;
+  --palette-lime-400: #e5f520;
+  --palette-red-500: #ef4444;
+  --palette-red-700: #b91c1c;
+  --palette-emerald-400: #34d399;
+  --palette-emerald-700: #047857;
+  --palette-paper-50: #ffffff;
+  --palette-paper-100: #f7f5f2;
+  --palette-paper-200: #ece9e4;
+  --palette-paper-300: #e3e0da;
+  --palette-line-on-dark: rgba(255, 255, 255, 0.1);
+  --palette-line-on-light: rgba(26, 25, 25, 0.12);
+  --palette-shade-on-dark: rgba(0, 0, 0, 0.45);
+  --palette-shade-on-light: rgba(26, 25, 25, 0.12);
+  --palette-mask-solid: #000;
+  --palette-mask-partial: rgba(0, 0, 0, 0.55);
+
+  /* ---- Layer 1: raw scales ---- */
+  --scale-4: 4px;
+  --scale-8: 8px;
+  --scale-12: 12px;
+  --scale-16: 16px;
+  --scale-24: 24px;
+  --scale-32: 32px;
+  --scale-40: 40px;
+  --scale-48: 48px;
+  --type-12: 0.75rem;
+  --type-13: 0.8125rem;
+  --type-14: 0.875rem;
+  --type-18: 1.125rem;
+  --type-24: 1.5rem;
+
+  /* ---- Layer 2: colour meaning (dark) ---- */
+  --background: var(--palette-ink-950); /* page surface. P1 warm greys */
+  --foreground: var(--palette-cream-100); /* main text */
+  --headline: var(--foreground); /* headings and column headers. R01.3 */
+  --soft: var(--palette-stone-500); /* secondary text */
+  --card: var(--palette-ink-900); /* panels that must stand out. R01.1 rows use lines, not cards */
+  --card-foreground: var(--foreground);
+  --primary: var(--palette-lime-400); /* the one accent. R01.5 */
+  --primary-foreground: var(--palette-ink-975);
+  --secondary: var(--palette-ink-850);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--palette-ink-850); /* code and file-name surface. R01.2 */
+  --muted-foreground: var(--soft);
+  --accent: var(--palette-ink-800); /* subtle hover surface, NOT the brand accent */
+  --accent-foreground: var(--foreground);
+  --destructive: var(--palette-red-500);
+  --destructive-foreground: var(--palette-ink-975); /* WCAG 1.4.3: 4.66:1 on --destructive */
+  --border: var(--palette-line-on-dark); /* hairline between rows, decorative. R01.1 */
+  --input: var(--palette-stone-600); /* control outline. WCAG 1.4.11 needs 3:1 */
+  --ring: var(--primary); /* keyboard focus */
+  --link: var(--primary); /* links are always underlined as well. WCAG 1.4.1 */
+  --status-success: var(--palette-emerald-400); /* a running or healthy state, always with words beside it. 9.65:1 on --background. Approved 2026-10-28, settles K3 */
+
+  /* ---- Layer 3: component tokens ---- */
+  --table-header-foreground: var(--headline); /* R01.3 clear column headers */
+  --message-meta-foreground: var(--muted-foreground); /* R02.3 author and time */
+  --composer-border: var(--input); /* R02.2 message box */
+  --vignette-edge: var(--palette-shade-on-dark); /* darkening at the edges of the starter page backdrop. Decoration: no contrast requirement */
+  --vignette-center: transparent;
+  --cta-border-clear: transparent;
+  --mask-clear: transparent;
+  --mask-opaque: var(--palette-mask-solid); /* alpha masks only: the colour is never shown, only its alpha channel is read */
+  --mask-partial: var(--palette-mask-partial);
+
+  /* ---- Layer 2: space by relation (K1, R02.1; values approved 2026-10-27) ---- */
+  --space-group: var(--scale-8); /* inside a group: label and field, author and time */
+  --space-between-groups: var(--scale-16); /* between groups inside a panel */
+  --space-panel-compact: var(--scale-12); /* inside a row of a list or table (dense, K1) */
+  --space-panel-roomy: var(--scale-24); /* inside a panel in the session view (roomy, K1) */
+  --space-section: var(--scale-48); /* between page sections */
+
+  /* ---- Layer 3: controls (heights approved 2026-10-27: compact 32 px, default 40 px; both >= 24 px, WCAG 2.5.8) ---- */
+  --control-height-compact: var(--scale-32); /* list rows, filters, table actions. K1 dense */
+  --control-height: var(--scale-40); /* forms and the session view */
+  --control-padding-x-compact: var(--space-panel-compact);
+  --control-padding-x: var(--space-between-groups);
+  --focus-ring-width: 2px; /* keyboard focus: solid ring, 2 px offset in the page colour, no transparency */
+  --focus-ring-offset: 2px; /* matches ring-2 and ring-offset-2 in the components. WCAG 2.4.7, 1.4.11 */
+
+  /* ---- Layer 2: shape ---- */
+  --radius: 8px; /* existing value kept */
+  --border-width-hairline: 1px; /* R01.1 thin lines */
+
+  /* ---- Layer 2: typography (proposal: no reference gives sizes; R01.2 gives the code font) ---- */
+  --family-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; /* decision: system stack */
+  --family-code: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; /* R01.2 */
+  --font-size-page-title: var(--type-24);
+  --font-size-section-title: var(--type-18);
+  --font-size-body: var(--type-14);
+  --font-size-label: var(--type-13);
+  --font-size-meta: var(--type-12);
+  --font-size-code: var(--type-13);
+  --weight-regular: 400;
+  --weight-strong: 600;
+  --line-height-body: 1.5;
+  --line-height-heading: 1.25;
+  --measure-text: 65ch; /* proposal, WCAG 1.4.8 guidance for running text */
+
+  /* ---- Layer 2: layout (proposal) ---- */
+  --layout-content-max: 72rem; /* lists and tables: K1 dense */
+  --layout-session-max: 44rem; /* one-column session view: R02.1 */
+
+  /* ---- Layer 2: motion (proposal, M1-M3 are not approved) ---- */
+  --duration-fast: 100ms;
+  --duration-base: 150ms;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  /* Light values are an approved proposal (2026-10-27): no reference gives them.
+     The accent stays a fill only: lime on light has 1.11:1 as text or focus. */
+  --background: var(--palette-paper-100);
+  --foreground: var(--palette-ink-975);
+  --headline: var(--foreground);
+  --soft: var(--palette-stone-650);
+  --card: var(--palette-paper-50);
+  --card-foreground: var(--foreground);
+  --primary: var(--palette-lime-400);
+  --primary-foreground: var(--palette-ink-975);
+  --secondary: var(--palette-paper-200);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--palette-paper-200);
+  --muted-foreground: var(--soft);
+  --accent: var(--palette-paper-300);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--palette-red-700);
+  --destructive-foreground: var(--palette-paper-50);
+  --border: var(--palette-line-on-light);
+  --input: var(--palette-stone-550);
+  --ring: var(--palette-ink-975); /* decision (a): focus in text colour on light */
+  --link: var(--foreground); /* decision (a): links in text colour, underlined */
+  --status-success: var(--palette-emerald-700); /* 5.04:1 on --background, 5.48:1 on --card. Proposal approved 2026-10-28 */
+  --vignette-edge: var(--palette-shade-on-light);
+  --vignette-center: transparent;
+  --cta-border-clear: transparent;
+  --mask-clear: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root,
+  [data-theme] {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+  }
+}

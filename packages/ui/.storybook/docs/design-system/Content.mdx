@@ -1,0 +1,110 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Design system/Content" />
+
+# Content
+
+How the product talks. The interface is in English. The tone follows the references: facts in plain words, calm, concrete (R01, R02; the words are a proposal until confirmed).
+
+## Tone
+
+**Three sentences the product says**
+
+1. "Pay 25 EUR and send." The verb, the amount, the result.
+2. "If the mentor does not accept or does not show up, you are refunded." The condition and what follows (R04).
+3. "Active today. Not a promise of reply time." A fact, and what it does not promise.
+
+**Three sentences the product does not say**
+
+1. "Top mentor ★ 4.9." A rating or a ranking (N02, A03, A05).
+2. "Oops! Something went wrong 🙈" An error that says neither what happened nor what to do, with an emoji (A01, proposal P3: no emoji in the interface).
+3. "Unlock the power of AI to supercharge your career." Sales language (A05: "to jest coś sprzedażowego?").
+
+## Words
+
+One word for one thing. Decided by the owner on 2026-10-28 (the agent test); the booking record keeps its name in code.
+
+| Word | Means | Where it appears |
+|---|---|---|
+| **seeker** | The person who asks and pays. In the interface the seeker is "you" | Code, docs, specs. Not "mentee" and not "student" (the `(student)` route group of the standards is old) |
+| **mentor** | The person who answers | Everywhere |
+| **session** | What the seeker sees for a booking: text between one seeker and one mentor, prepaid, 25 minutes. **Every booking is a session for its seeker, whatever its status** | The seeker's interface: the list "My sessions", "See your sessions" |
+| **booking** | The record: `/api/bookings`, `BookingRow`, `BookingStatus` | Code and API. Not a word of the seeker's interface |
+| **question** | The text the seeker writes before paying | The question form. The mentor's list is "Questions for you", because the mentor decides on a question |
+
+## Lists: counts, empty states, rows
+
+Templates for any list with filters. `noun` is the plural of what the list holds, `Filter` is the label of the filter and `value` the chosen option. The source is the mentors list ("2 mentors for Python"); the templates were approved by the owner on 2026-10-28.
+
+| Where | Write |
+|---|---|
+| Count | `3 sessions`, `1 session`, `0 sessions`. With a filter: `1 session with status "Accepted"` (a status goes in quotes, one word or several). Shown only when the list has items |
+| Chip of an active filter | `Status: Accepted`: the label of the filter, a colon, the value. Hidden words: ", remove filter" |
+| Nothing yet | Title `No sessions yet`, then why and the next step |
+| No results for the filters | Title `No sessions with status "Accepted"`, then "No session has this status. Choose another status or clear the filter." and a **Clear filter** button (`variant="outline"`) |
+| Favorite mentors: nothing yet | "No favorite mentors yet. Browse mentors and save the ones you want to find again." with a **Find mentors** button |
+| Favorite mentors: no filter results | "No favorite mentors match {technology}. Choose another technology or clear the filter." with a **Clear filter** button (`variant="outline"`) |
+| Price in a row of a list (`ul`) | Whole amount without decimals: `25 EUR`, in tabular figures. `25.00 EUR` only in a table. The length of a session is added only where the seeker can choose between lengths (the pilot has one length). In a booking's row the price is the booking's own (`priceMinor`, `currency`), shown for **every status**: whether money was taken is told by the status badge and the refund line ("Payment failed", "Refunded"), never by hiding the price. It is never the mentor's current price. Style in a session row: `text-body font-strong tabular-nums text-headline`. The mentor's name in that row is plain text; the row's link is "Open" |
+| Date of an accepted session in a row | `3 Nov 2026, 14:25`: `formatDate` and `formatClock`, one line under the technologies, `text-label tabular-nums text-foreground`. The zone is the seeker's (`timeZone` of the profile, passed to both functions) and its name is not shown. A booking that has no start time shows no date |
+
+## Buttons: a verb and an object
+
+| Write | Not | Why |
+|---|---|---|
+| Pay 25 EUR and send | Submit | It says what will happen and what it costs |
+| Accept, Decline (the question from Sam) | OK, Yes | The name of the button says the action. A row adds the object for assistive technology |
+| Take down note | Yes, delete | The object is named |
+| Publish note | Continue | The user knows what is published |
+| Save draft | Save | The user knows it is not published |
+| Try again | Retry | Plain words |
+
+Source: Confirm destructive action pattern, Button page. The rule "a verb and an object" is a proposal supported by the Confirm pattern.
+
+## Errors: what happened and what to do
+
+| Write | Not |
+|---|---|
+| "The payment failed. Your card was not charged. Check the card details and try again." | "Payment error" |
+| "You already have a session at that time. Choose a later start or decline this one." | "Something went wrong" |
+| "Give the note a title." | "Invalid input" |
+| "The notice changed. Read it again before you publish." | "Conflict (409)" |
+
+An error about money always says whether money was taken. No blame, no exclamation marks. Source: WCAG 3.3.3, Form pattern.
+
+## Empty states: why it is empty and the next step
+
+| Where | Write |
+|---|---|
+| Seeker's sessions | "No sessions yet. Pick a mentor and ask your first question. Your sessions appear here." with a button "Find a mentor" |
+| Mentor's bookings | "No questions waiting. When someone pays for a question to you, it appears here." |
+| Notes | "No notes yet. Write down what you explain again and again. A note feeds AI answers only after you publish it." |
+| Answers to review | "Nothing to review. When an answer cites one of your notes, it appears here and we email you." |
+| Credits | "No credits yet. You earn a share when a vault answer that cites your note is released." |
+| Favorite mentors | Removing a favorite takes effect immediately, without confirmation or an undo; the seeker can save the mentor again from their profile |
+
+No illustration, no icon tile: the words and the next step are the content (A01).
+
+## Long text
+
+What a long value does in a row. Source: `MentorRow` and `BookingRow` (content sections); the table was approved by the owner on 2026-10-28 (agent test, round 2).
+
+| What | Behaviour |
+|---|---|
+| A name, a headline, a technology: text that identifies | Never cut. It wraps (`min-w-0` on the column, `break-words`) |
+| A question or a message the user wrote, in a row | Cut at three lines (`line-clamp-3`), the whole text behind the link (`BookingRow`) |
+| A list of technologies | One line joined with " · ", wraps at the separators |
+| An error or an empty-state sentence | Never cut, capped at `65ch` |
+
+## Dates, times, money and numbers
+
+| What | Format | Example | In code | Source |
+|---|---|---|---|---|
+| Date | Day, short month, year | 3 Nov 2026 | `formatDate(date, timeZone)` | Proposal |
+| Time of day | 24 hours | 14:25 | `formatClock(date, timeZone)` | Proposal |
+| Time zone | Pass it explicitly. For a seeker it is the `timeZone` of the seeker's profile (an IANA name). Where two people share a time, both see the same zone | `timeZone="Europe/Warsaw"` | the `timeZone` prop | Decided 2026-10-28 |
+| Length of time | Hours and minutes | 1 h 20 min | `formatDuration(minutes)` | Proposal |
+| Price in a sentence or on a button | Whole amounts without decimals, the currency code after the amount | 25 EUR | `formatPrice(amount, currency)` | Proposal |
+| Price in a table or a ledger | Always two decimals, so digits line up | 25.00 EUR | `formatPrice(amount, currency, 'exact')` | Proposal |
+| Counts | A number and a unit, in tabular figures | 3 people | `tabular-nums` | Proposal |
+
+No reference gives a format. All of the above are proposals, and the owner can change them in one place (`lib/format.ts`). The server and the client use the same functions. A price is stored in minor units (`priceMinor`) and never as a decimal number.

@@ -2,7 +2,29 @@
 import { Migrator } from '@mikro-orm/migrations';
 import { MikroORM, type Options } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { Article, SessionNote, User } from '../entities';
+import {
+  ApprovalRequest,
+  Article,
+  Booking,
+  Invitation,
+  LoginToken,
+  Message,
+  Note,
+  LedgerEntry,
+  VaultAnswer,
+  VaultAnswerCitation,
+  VaultAnswerReview,
+  TermsVersion,
+  TermsReview,
+  TermsAcceptance,
+  RetentionLegalHold,
+  AvailabilitySlot,
+  MentorProfile,
+  Payment,
+  StatusTransition,
+  User,
+  SessionNote,
+} from '../entities';
 
 export const mikroOrmConfig: Options<PostgreSqlDriver> = {
   driver: PostgreSqlDriver,
@@ -11,7 +33,7 @@ export const mikroOrmConfig: Options<PostgreSqlDriver> = {
   password: process.env.DATABASE_PASSWORD || 'postgres',
   host: process.env.DATABASE_HOST || 'localhost',
   port: parseInt(process.env.DATABASE_PORT || '5432'),
-  entities: [User, Article, SessionNote],
+  entities: [User, Invitation, LoginToken, Article, ApprovalRequest, MentorProfile, Booking, AvailabilitySlot, Payment, StatusTransition, Message, Note, LedgerEntry, VaultAnswer, VaultAnswerCitation, VaultAnswerReview, TermsVersion, TermsReview, TermsAcceptance, RetentionLegalHold, SessionNote],
   extensions: [Migrator],
   migrations: {
     path: './src/migrations',

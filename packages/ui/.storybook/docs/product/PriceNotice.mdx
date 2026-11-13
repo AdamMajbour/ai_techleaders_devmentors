@@ -1,0 +1,93 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as PriceNoticeStories from '../../../src/components/bookings/PriceNotice.stories';
+
+<Meta of={PriceNoticeStories} />
+
+# PriceNotice
+
+## 1. What it is for
+
+States what the seeker will pay, what it buys and when they get the money back, before they write anything. The price comes first (R04).
+
+<Canvas of={PriceNoticeStories.Playground} />
+
+## 2. When to use it
+
+- At the top of `QuestionForm` (E01-S02).
+- Before any other action that charges money, for example asking for a vault answer.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A price inside a table or a row | The price text in `MentorRow` or `BookingRow` | A notice is a block of its own |
+| An error about payment | `Alert` | A notice is not an alert: nothing is wrong |
+| The test-mode warning | `Alert` | It is about the environment |
+
+## 4. Anatomy
+
+1. **Amount and what it buys**: "25 EUR for a 25-minute text session with Ada Kowalska".
+2. **Refund rule**: when the money is returned, in one sentence.
+
+## 5. Variants
+
+None. One notice, one price. If a second price is ever needed, it is a second notice.
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Default | A bordered block, the amount in strong text with tabular figures | Proposal (P2: one prominent element per screen, from R01.6; the border is also a proposal) |
+| Interactive states | Not applicable: it is text | |
+| Loading, error | The page decides: do not show a price that is not known | |
+
+## 7. Behavior and accessibility
+
+- **Region:** a `section` named "Price", so a screen reader user can jump to it.
+- **Not live:** it is not `role="alert"` or `role="status"`. It is there before the user acts, not announced.
+- **Tabular figures:** the amount keeps its width.
+
+## 8. Content
+
+- **Amount (proposal):** whole amounts are shortened: "25 EUR", not "25.00 EUR". Tables use "25.00 EUR". No reference gives a price format.
+- **Description:** what the price buys, starting with "for".
+- **Refund rule:** says what the user pays now and when they are refunded: "You pay now, before you write. If the mentor does not accept or does not show up, you are refunded." (R04)
+
+<Canvas of={PriceNoticeStories.WholeAmountsAreShortened} />
+
+## 9. Responsiveness
+
+Full width of its container. Text wraps at every width.
+
+<Canvas of={PriceNoticeStories.LongTextNarrow} />
+
+## 10. API
+
+<ArgTypes of={PriceNoticeStories} />
+
+## 11. Code
+
+```tsx
+import { PriceNotice } from '@devmentor/ui';
+
+<PriceNotice
+  amountMinor={2500}
+  currency="EUR"
+  description="for a 25-minute text session with Ada Kowalska"
+  refundRule="You pay now, before you write. If the mentor does not accept or does not show up, you are refunded."
+/>
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | The price above the question field | R04: the seeker sees the price before writing |
+| Don't | The price on the button only | The seeker learns it after writing |
+| Do | "you are refunded" with the condition | The seeker knows when |
+| Don't | "100% satisfaction guaranteed" | Not the rule of the product |
+
+## 13. Related
+
+- **Used in:** `QuestionForm`, Patterns: Paid action flow.
+- **Confused with:** `Alert`, `StatusBadge`.

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * End-to-end test against a real production server (`next build` + `next start`)
  * backed by a real PostgreSQL database. It uses its own database (`devmentor_e2e`),
  * migrates and seeds it through the same npm scripts developers use, and migrates it
@@ -6,12 +6,17 @@
  * rendered in headless Chromium (computed styles, console errors, the login and article flows).
  */
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { chromium, type Browser } from 'playwright';
+import { e2eDatabaseOptions as E2E_DATABASE_OPTIONS } from './e2e-database-config';
+const E2E_DATABASE_NAME = E2E_DATABASE_OPTIONS.dbName;
+import '../../db/src/load-env';
+import { closeORM, initializeORM, InvitationRepository, TermsRepository } from '../../db/src';
+import { VAULT_NOTICE_VERSION } from '@devmentor/core';
 // Relative on purpose: app code must not import the db package, but a test may read its demo constants.
 import { DEMO_ARTICLE_TITLE, DEMO_AUTHOR } from '../../db/scripts/seed-data';
 
@@ -21,12 +26,33 @@ const ROOT = path.resolve(APP_DIR, '../..');
 // A fresh signing key per run: never a committed or shared secret.
 const JWT_SECRET = randomBytes(48).toString('base64');
 const PASSWORD = 'correct horse battery';
+if (
+  E2E_DATABASE_NAME !== 'devmentor_e2e'
+) {
+  throw new Error('E2E tests require a dedicated database and will not migrate a development/test database.');
+}
 
 const env: NodeJS.ProcessEnv = {
   ...process.env,
   NODE_ENV: 'production',
-  DATABASE_NAME: process.env.DATABASE_E2E_NAME || 'devmentor_e2e',
+  DATABASE_NAME: E2E_DATABASE_NAME,
+  DATABASE_HOST: E2E_DATABASE_OPTIONS.host,
+  DATABASE_PORT: String(E2E_DATABASE_OPTIONS.port),
+  DATABASE_USER: E2E_DATABASE_OPTIONS.user,
+  DATABASE_PASSWORD: E2E_DATABASE_OPTIONS.password,
   JWT_SECRET,
+  PUBLIC_SIGNUP: 'true',
+  PAYMENTS_MODE: 'mock',
+  NODE_ENV: 'production',
+  MOCK_PAYMENT_E2E_ENABLED: 'true',
+  VAULT_ENABLED: 'true',
+  VAULT_PUBLISH_ENABLED: 'true',
+  AI_MODE: 'mock',
+  AI_ALLOW_MOCK_IN_PRODUCTION: 'true',
+  AI_LIVE_ENABLED: 'false',
+  PAYMENTS_LIVE_ENABLED: 'false',
+  OPERATOR_USER_IDS: DEMO_AUTHOR.id,
+  JEST_WORKER_ID: process.env.JEST_WORKER_ID ?? '1',
 };
 
 jest.setTimeout(30_000);
@@ -44,8 +70,18 @@ function chromiumEnv(): NodeJS.ProcessEnv {
 
 type RunningServer = { url: string; log: () => string; stop: () => void };
 
-function run(args: string[], cwd = ROOT) {
-  execFileSync('npm', args, { cwd, env, stdio: 'pipe' });
+function run(args: string[], cwd = ROOT, extraEnv: NodeJS.ProcessEnv = {}): string {
+  const npmCli = process.env.npm_execpath;
+  return execFileSync(
+    npmCli ? process.execPath : process.platform === 'win32' ? 'npm.cmd' : 'npm',
+    npmCli ? [npmCli, ...args] : args,
+    {
+      cwd,
+      env: { ...env, ...extraEnv },
+      encoding: 'utf8',
+      shell: process.platform === 'win32' && !npmCli,
+    },
+  );
 }
 
 function freePort(): Promise<number> {
@@ -63,11 +99,10 @@ async function startServer(extraEnv: NodeJS.ProcessEnv = {}): Promise<RunningSer
   const port = await freePort();
   const url = `http://127.0.0.1:${port}`;
   let log = '';
-  // Own process group, so the whole npx -> next-server tree can be stopped afterwards.
-  const child: ChildProcess = spawn('npx', ['next', 'start', '--port', String(port)], {
+  const nextCli = path.join(ROOT, 'node_modules', 'next', 'dist', 'bin', 'next');
+  const child: ChildProcess = spawn(process.execPath, [nextCli, 'start', '--port', String(port)], {
     cwd: APP_DIR,
-    env: { ...env, ...extraEnv },
-    detached: true,
+    env: { ...env, APP_BASE_URL: url, MAILER_MODE: 'console', ...extraEnv },
   });
   child.stdout?.on('data', (chunk) => (log += chunk));
   child.stderr?.on('data', (chunk) => (log += chunk));
@@ -88,7 +123,7 @@ async function startServer(extraEnv: NodeJS.ProcessEnv = {}): Promise<RunningSer
     url,
     log: () => log,
     stop: () => {
-      if (child.pid) process.kill(-child.pid, 'SIGTERM');
+      child.kill('SIGTERM');
     },
   };
 }
@@ -96,10 +131,26 @@ async function startServer(extraEnv: NodeJS.ProcessEnv = {}): Promise<RunningSer
 let browser: Browser | undefined;
 let server: RunningServer;
 let baseUrl = '';
+let e2eOrm: Awaited<ReturnType<typeof initializeORM>> | undefined;
+
+async function cleanE2EDatabase(): Promise<void> {
+  if (E2E_DATABASE_NAME !== 'devmentor_e2e') {
+    throw new Error('Refusing to clean a database other than the dedicated devmentor_e2e database.');
+  }
+  await closeORM();
+  const cleanupOrm = await initializeORM(E2E_DATABASE_OPTIONS);
+  await cleanupOrm.em.getConnection().execute('drop schema public cascade; create schema public');
+  await cleanupOrm.em.getConnection().execute('drop function if exists "release_booking_availability_slot"() cascade');
+  await cleanupOrm.em.getConnection().execute('drop function if exists "release_mentor_availability_slot"() cascade');
+  await cleanupOrm.schema.dropSchema({ dropMigrationsTable: true });
+  await closeORM();
+}
 
 beforeAll(async () => {
+  await cleanE2EDatabase();
   run(['--workspace=@devmentor/db', 'run', 'migrate']);
   run(['--workspace=@devmentor/db', 'run', 'seed']);
+  await seedE2ETerms();
   run(['run', 'build'], APP_DIR);
 
   server = await startServer();
@@ -108,8 +159,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await browser?.close();
+  browser = undefined;
   server?.stop();
-  run(['--workspace=@devmentor/db', 'run', 'migrate:down']);
+  await cleanE2EDatabase();
 }, 60_000);
 
 // --- helpers -----------------------------------------------------------------------------
@@ -132,7 +184,61 @@ async function api(pathname: string, { method = 'GET', json, cookie, headers = {
   return { response, text, body: text ? JSON.parse(text) : null };
 }
 
+type E2ETerms = { id: string; sha256: string };
+
+async function currentTerms(kind: 'seeker' | 'mentor'): Promise<E2ETerms> {
+  const result = await api(`/api/terms/current?kind=${kind}`);
+  const data: unknown = result.body?.data;
+  if (
+    result.response.status !== 200 ||
+    typeof data !== 'object' ||
+    data === null ||
+    !('id' in data) || typeof data.id !== 'string' ||
+    !('sha256' in data) || typeof data.sha256 !== 'string'
+  ) {
+    throw new Error(`Current ${kind} terms are unavailable in the E2E fixture.`);
+  }
+  return { id: data.id, sha256: data.sha256 };
+}
+
+async function seedE2ETerms(): Promise<void> {
+  // E2E-only reviewed terms let the payment and publication flows exercise the
+  // same consent gates as the app without treating test fixtures as legal copy.
+  e2eOrm = await initializeORM(E2E_DATABASE_OPTIONS);
+  const repository = new TermsRepository(e2eOrm.em.fork());
+  const operatorId = DEMO_AUTHOR.id;
+  const now = new Date();
+  for (const kind of ['seeker', 'mentor'] as const) {
+    const body = `E2E fixture terms for ${kind}; not legal copy.`;
+    const sha256 = createHash('sha256').update(body, 'utf8').digest('hex');
+    const draft = await repository.createDraft({
+      kind,
+      version: 'e2e-1',
+      body,
+      sha256,
+      createdBy: operatorId,
+    });
+    await repository.recordReview({
+      termsVersionId: draft.id,
+      sha256,
+      reviewer: 'E2E fixture verifier',
+      scopes: ['terms', 'payment_handling', 'ai_notice_and_processors'],
+      outcome: 'pass',
+      reviewedAt: now,
+      note: 'Test fixture only.',
+      recordedBy: operatorId,
+    });
+    await repository.publish(draft.id, now);
+  }
+}
+
 let userCounter = 0;
+function operatorCookie(): string {
+  const now = Math.floor(Date.now() / 1000);
+  const signingInput = `${Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url')}.${Buffer.from(JSON.stringify({ sub: DEMO_AUTHOR.id, iat: now, exp: now + 24 * 60 * 60 })).toString('base64url')}`;
+  const signature = createHmac('sha256', JWT_SECRET).update(signingInput).digest('base64url');
+  return `devmentor_session=${signingInput}.${signature}`;
+}
 /** Registers a new user (each from its own client address, so the register limiter never interferes). */
 async function registerUser(name = 'Tester') {
   userCounter += 1;
@@ -144,6 +250,24 @@ async function registerUser(name = 'Tester') {
   });
   const setCookie = result.response.headers.get('set-cookie') ?? '';
   return { ...result, email, cookie: setCookie.split(';')[0], setCookie };
+}
+
+async function registerPilotUser(role: 'seeker' | 'mentor', name: string) {
+  const result = await registerUser(name);
+  if (result.response.status !== 201 || typeof result.body?.data?.id !== 'string') {
+    throw new Error(`Could not create the ${role} account for the booking E2E.`);
+  }
+  e2eOrm ??= await initializeORM(E2E_DATABASE_OPTIONS);
+  await new InvitationRepository(e2eOrm.em.fork()).create({
+    email: result.email,
+    displayName: name,
+    role,
+    invitedBy: null,
+    acceptedByUserId: result.body.data.id,
+    acceptedAt: new Date(),
+    revokedAt: null,
+  });
+  return result;
 }
 
 // --- pages ---------------------------------------------------------------------------------
@@ -168,7 +292,7 @@ describe('pages', () => {
     expect(css).toContain('.bg-primary');
   });
 
-  it.each(['/login', '/register', '/articles'])('serves %s', async (pathname) => {
+  it.each(['/login', '/auth/verify', '/register', '/articles'])('serves %s', async (pathname) => {
     expect((await fetch(`${baseUrl}${pathname}`)).status).toBe(200);
   });
 });
@@ -456,12 +580,18 @@ describe('operations', () => {
 describe('in a browser', () => {
   beforeAll(async () => {
     try {
-      browser = await chromium.launch({ env: chromiumEnv() as Record<string, string> });
+      browser = await chromium.launch({
+        env: chromiumEnv() as Record<string, string>,
+        timeout: 30000,
+      });
     } catch (error) {
+      const chromiumLibs = process.env.CHROMIUM_LIBS_DIR || path.join(os.homedir(), '.cache/chromium-libs');
       throw new Error(
-        'Could not start Chromium. Install it with `npx playwright install --with-deps chromium` ' +
-          '(root) or `npx playwright install chromium && python3 scripts/setup-chromium-libs.py` (no root).\n' +
-          String(error),
+        'Could not start Chromium. ' +
+        `CHROMIUM_LIBS_DIR=${chromiumLibs}\n` +
+        'Install it with `npx playwright install --with-deps chromium` (root) ' +
+        'or `npx playwright install chromium && python3 scripts/setup-chromium-libs.py` (no root).\n' +
+        String(error),
       );
     }
   });
@@ -475,7 +605,7 @@ describe('in a browser', () => {
       const isExpectedVisitorCheck = message.location().url.endsWith('/api/auth/me') && message.text().includes('401');
       if (message.type() === 'error' && !isExpectedVisitorCheck) problems.push(message.text());
     });
-    await page.goto(`${baseUrl}${pathname}`, { waitUntil: 'networkidle' });
+    await page.goto(`${baseUrl}${pathname}`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     return { page, problems };
   }
 
@@ -527,58 +657,375 @@ describe('in a browser', () => {
     await page.close();
   });
 
-  it('shows client-side validation messages from the shared schema on the login form', async () => {
+  it('validates e-mail before requesting a sign-in link', async () => {
     const { page, problems } = await open('/login');
 
     await page.click('button[type=submit]');
     expect(await page.locator('text=Enter a valid e-mail address').count()).toBe(1);
-    expect(await page.locator('text=Enter your password').count()).toBe(1);
     expect(await page.locator('input[name=email]').getAttribute('aria-invalid')).toBe('true');
     expect(problems).toEqual([]);
     await page.close();
   });
 
-  it('shows the generic server message for wrong credentials', async () => {
-    const { page } = await open('/login');
+    it('shows the same generic confirmation for an uninvited address', async () => {
+    const { page, problems } = await open('/login');
 
     await page.fill('input[name=email]', 'nobody-here@example.com');
-    await page.fill('input[name=password]', 'whatever-password');
     await page.click('button[type=submit]');
-
-    // `p[role=alert]`: Next.js has its own, empty, role=alert route announcer.
-    await page.waitForSelector('p[role=alert]');
-    expect(await page.locator('p[role=alert]').textContent()).toBe('Invalid credentials.');
-    await page.close();
-  });
-
-  it('registers, writes an article, deletes it and logs out through the UI', async () => {
-    const { page, problems } = await open('/register');
-    const email = `ui-${randomBytes(4).toString('hex')}@example.com`;
-
-    await page.fill('input[name=name]', 'Browser Tester');
-    await page.fill('input[name=email]', email);
-    await page.fill('input[name=password]', PASSWORD);
-    await page.click('button[type=submit]');
-    await page.waitForURL('**/articles');
-    await page.waitForSelector('text=New article');
-    expect(await page.locator('header >> text=Browser Tester').count()).toBe(1);
-
-    const title = `Browser article ${randomBytes(3).toString('hex')}`;
-    await page.fill('input[name=title]', title);
-    await page.fill('textarea[name=content]', 'Written through the form.');
-    await page.click('button:has-text("Publish")');
-
-    const row = page.locator('tr', { hasText: title });
-    await row.waitFor();
-    expect(await row.locator('td').nth(2).textContent()).toBe('You');
-
-    await row.locator('button:has-text("Delete")').click();
-    await row.waitFor({ state: 'detached' });
-
-    await page.click('button:has-text("Log out")');
-    await page.waitForSelector('a:has-text("Log in")');
-    expect(await page.locator('text=New article').count()).toBe(0);
+    await page.getByText('If an invitation exists for this address, a sign-in link has been sent. Check your e-mail.').waitFor();
     expect(problems).toEqual([]);
     await page.close();
   });
 });
+
+describe('mock booking payment flow', () => {
+  it('creates a booking, completes mock checkout, and keeps failed or abandoned payments unpaid', async () => {
+    const suffix = randomBytes(4).toString('hex');
+    const seeker = await registerPilotUser('seeker', 'Booking Seeker');
+    const mentor = await registerPilotUser('mentor', 'Booking Mentor');
+    const profileResponse = await api('/api/mentors', {
+      method: 'POST',
+      cookie: mentor.cookie,
+      json: {
+        slug: `e2e-mentor-${suffix}`,
+        headline: 'E2E mentor',
+        bio: 'A mentor profile for booking flow verification.',
+        technologies: 'typescript',
+        publicWorkUrl: 'https://example.com/work',
+        isListed: true,
+      },
+    });
+    expect(profileResponse.response.status).toBe(201);
+    const profile = profileResponse.body.data;
+    const seekerTerms = await currentTerms('seeker');
+    let bookingAttempt = 0;
+    const createBooking = async (question: string) => {
+      const slotStart = new Date(Math.ceil((Date.now() + (60 + bookingAttempt++ * 30) * 60_000) / (15 * 60_000)) * (15 * 60_000));
+      const slotResponse = await api('/api/mentors/me/availability', {
+        method: 'POST',
+        cookie: mentor.cookie,
+        json: { startsAt: slotStart.toISOString() },
+      });
+      if (slotResponse.response.status !== 200) {
+        const serverErrors = server.log().split('\n').flatMap((line) => {
+          if (!line.includes('"level":"error"')) return [];
+          try {
+            const parsed = JSON.parse(line) as { error?: { name?: string; message?: string } };
+            return [`${parsed.error?.name ?? 'Error'}: ${parsed.error?.message ?? 'unknown server error'}`];
+          } catch {
+            return [];
+          }
+        });
+        throw new Error(`Could not publish an availability slot: ${slotResponse.text}; ${serverErrors.join(' | ')}`);
+      }
+      const landedAt = new Date().toISOString();
+      const response = await api('/api/bookings', {
+        method: 'POST',
+        cookie: seeker.cookie,
+        json: {
+          mentorId: profile.id,
+          availabilitySlotId: slotResponse.body.data.id,
+          question,
+          source: 'list',
+          landedAt,
+          acceptedTerms: true,
+          termsVersionId: seekerTerms.id,
+          termsSha256: seekerTerms.sha256,
+        },
+      });
+      expect(response.response.status).toBe(201);
+      expect(response.body.data.booking).toMatchObject({
+        seekerId: seeker.body.data.id,
+        mentorId: expect.any(String),
+        question,
+        durationMinutes: 25,
+        priceMinor: 2500,
+        currency: 'EUR',
+        status: 'pending_payment',
+        source: 'list',
+        landedAt,
+        startsAt: slotResponse.body.data.startsAt,
+        endsAt: slotResponse.body.data.endsAt,
+      });
+      expect(response.body.data.checkoutUrl).toMatch(/^\/mock-payment\/checkout\//);
+      return response.body.data;
+    };
+
+    const paidAttempt = await createBooking('How do I keep this service reliable?');
+    const checkoutPage = await fetch(`${baseUrl}${paidAttempt.checkoutUrl}`);
+    expect(checkoutPage.status).toBe(200);
+    const completed = await api(`/api/bookings/${paidAttempt.booking.id}/mock-payment`, {
+      method: 'POST',
+      cookie: seeker.cookie,
+      json: { outcome: 'complete' },
+    });
+    expect(completed.response.status).toBe(200);
+    expect(completed.body.data.status).toBe('paid');
+
+    const afterWebhookReconcile = await api(`/api/bookings/${paidAttempt.booking.id}/reconcile-payment`, {
+      method: 'POST',
+      cookie: seeker.cookie,
+      json: {},
+    });
+    expect(afterWebhookReconcile.body.data.status).toBe('paid');
+
+    const failedAttempt = await createBooking('Why does my test fail intermittently?');
+    const failed = await api(`/api/bookings/${failedAttempt.booking.id}/mock-payment`, {
+      method: 'POST',
+      cookie: seeker.cookie,
+      json: { outcome: 'fail' },
+    });
+    expect(failed.response.status).toBe(200);
+    expect(failed.body.data.status).toBe('payment_failed');
+
+    const abandonedAttempt = await createBooking('How should I diagnose this timeout?');
+    const unpaid = await api(`/api/bookings/${abandonedAttempt.booking.id}/reconcile-payment`, {
+      method: 'POST',
+      cookie: seeker.cookie,
+      json: {},
+    });
+    expect(unpaid.body.data.status).toBe('pending_payment');
+
+    const mentorList = await api('/api/bookings?role=mentor', { cookie: mentor.cookie });
+    const mentorPaid = mentorList.body.data.items.find((item: { id: string }) => item.id === paidAttempt.booking.id);
+    const mentorFailed = mentorList.body.data.items.find((item: { id: string }) => item.id === failedAttempt.booking.id);
+    expect(mentorPaid.question).toBe('How do I keep this service reliable?');
+    expect(mentorFailed).toBeUndefined();
+    expect(mentorList.body.data.items.some((item: { id: string }) => item.id === abandonedAttempt.booking.id)).toBe(false);
+    expect(unpaid.body.data.status).not.toBe('paid');
+  }, 120_000);
+});
+
+describe('E03 terms and retention controls', () => {
+  it('rejects seeker acceptance when the submitted digest is stale', async () => {
+    const seeker = await registerPilotUser('seeker', 'Stale Terms Seeker');
+    const terms = await currentTerms('seeker');
+    const result = await api('/api/terms/accept', {
+      method: 'POST', cookie: seeker.cookie,
+      json: { kind: 'seeker', versionId: terms.id, sha256: '0'.repeat(64) },
+    });
+
+    expect(result.response.status).toBe(409);
+    expect(result.body.ok).toBe(false);
+    const accepted = await api('/api/terms/accepted?kind=seeker', { cookie: seeker.cookie });
+    expect(accepted.response.status).toBe(200);
+    expect(accepted.body.data).toEqual([]);
+  });
+
+  it('denies a non-operator access to legal holds', async () => {
+    const seeker = await registerPilotUser('seeker', 'Retention Access Seeker');
+
+    const result = await api('/api/operator/retention/holds', { cookie: seeker.cookie });
+
+    expect(result.response.status).toBe(403);
+    expect(result.body.ok).toBe(false);
+  });
+
+  it('rejects a legal hold without its required reason', async () => {
+    const invalid = await api('/api/operator/retention/holds', {
+      method: 'POST', cookie: operatorCookie(),
+      json: { contentType: 'note', contentId: DEMO_AUTHOR.id, reason: '   ' },
+    });
+    expect(invalid.response.status).toBe(400);
+    expect(invalid.body.ok).toBe(false);
+  });
+});
+
+describe('mentor profile publication', () => {
+  beforeAll(async () => {
+    if (browser) return;
+    browser = await chromium.launch({ env: chromiumEnv() as Record<string, string>, timeout: 30_000 });
+  });
+
+  afterAll(async () => {
+    if (browser) await browser.close();
+    browser = undefined;
+  });
+
+  it('blocks publishing until the mentor chooses at least one technology', async () => {
+    const mentor = await registerPilotUser('mentor', 'Profile Test Mentor');
+    const page = await browser!.newPage({ viewport: { width: 1100, height: 720 } });
+    try {
+      await page.context().addCookies([{ name: 'devmentor_session', value: mentor.cookie.slice('devmentor_session='.length), url: baseUrl, httpOnly: true, sameSite: 'Lax' }]);
+      await page.goto(`${baseUrl}/profile`, { waitUntil: 'domcontentloaded' });
+      await page.getByRole('link', { name: 'Edit mentor profile' }).click();
+      await page.getByRole('heading', { name: 'Create mentor profile' }).waitFor({ state: 'visible' });
+
+      await page.getByLabel('Profile link').fill(`mentor-without-technology-${randomBytes(3).toString('hex')}`);
+      await page.getByLabel('Headline').fill('Independent software mentor');
+      await page.getByLabel('Bio').fill('I help teams build and maintain reliable software.');
+      await page.getByLabel('Public work URL').fill('https://example.com/mentor-work');
+      await page.getByLabel('Publish this profile').check();
+      await page.getByRole('button', { name: 'Create and publish profile' }).click();
+
+      await page.locator('p[role="alert"]').waitFor({ state: 'visible' });
+      if (!(await page.getByRole('button', { name: 'Create and publish profile' }).isVisible())) {
+        throw new Error('Publish action should stay available after the validation error.');
+      }
+      if (await page.getByRole('heading', { name: 'Your profile is published' }).count() !== 0) {
+        throw new Error('The profile must remain unpublished when no technology is selected.');
+      }
+      await page.screenshot({ path: path.join(ROOT, '.ai/qa/artifacts/mentor-profile-requires-technology.png'), fullPage: true });
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('requires current vault notice consent before publishing a note', async () => {
+    const mentor = await registerPilotUser('mentor', 'Vault Consent Mentor');
+    const created = await api('/api/notes', {
+      method: 'POST', cookie: mentor.cookie,
+      json: { title: `Consent note ${randomBytes(3).toString('hex')}`, body: 'A note that requires explicit consent before publication.' },
+    });
+    expect(created.response.status).toBe(201);
+
+    const missingConsent = await api(`/api/notes/${created.body.data.id}/publish`, {
+      method: 'POST', cookie: mentor.cookie, json: { consent: false, noticeVersion: VAULT_NOTICE_VERSION },
+    });
+    expect(missingConsent.response.status).toBe(400);
+    expect((await api(`/api/notes/${created.body.data.id}`, { cookie: mentor.cookie })).body.data.status).toBe('draft');
+
+    const mentorTerms = await currentTerms('mentor');
+    const staleNotice = await api(`/api/notes/${created.body.data.id}/publish`, {
+      method: 'POST', cookie: mentor.cookie,
+      json: {
+        consent: true,
+        noticeVersion: 'stale-e2e-notice',
+        acceptedTerms: true,
+        termsVersionId: mentorTerms.id,
+        termsSha256: mentorTerms.sha256,
+      },
+    });
+    expect(staleNotice.response.status).toBe(409);
+    expect((await api(`/api/notes/${created.body.data.id}`, { cookie: mentor.cookie })).body.data.status).toBe('draft');
+  });
+});
+
+describe('mock vault purchase and mentor preview', () => {
+  beforeAll(async () => {
+    if (browser) return;
+    browser = await chromium.launch({
+      env: chromiumEnv() as Record<string, string>,
+      timeout: 30_000,
+    });
+  });
+
+  afterAll(async () => {
+    await browser?.close();
+    browser = undefined;
+  });
+
+  it('shows the paid answer to the cited mentor first and releases it after approval', async () => {
+    const mentorName = 'Vault Mentor';
+    const seeker = await registerPilotUser('seeker', 'Vault Seeker');
+    const mentor = await registerPilotUser('mentor', mentorName);
+    const artifactsDir = path.join(ROOT, '.ai/qa/artifacts_e02-local');
+    fs.mkdirSync(artifactsDir, { recursive: true });
+    const noteTitle = `Vault note ${randomBytes(3).toString('hex')}`;
+    const createdNote = await api('/api/notes', {
+      method: 'POST',
+      cookie: mentor.cookie,
+      json: { title: noteTitle, body: 'A reliable service uses observable health checks and bounded retries.' },
+    });
+    expect(createdNote.response.status).toBe(201);
+    const mentorTerms = await currentTerms('mentor');
+    const published = await api(`/api/notes/${createdNote.body.data.id}/publish`, {
+      method: 'POST',
+      cookie: mentor.cookie,
+      json: {
+        consent: true,
+        noticeVersion: VAULT_NOTICE_VERSION,
+        acceptedTerms: true,
+        termsVersionId: mentorTerms.id,
+        termsSha256: mentorTerms.sha256,
+      },
+    });
+    expect(published.response.status).toBe(200);
+    expect(published.body.data.status).toBe('published');
+
+    const cookieFor = (user: { cookie: string }) => {
+      const pair = user.cookie.split(';')[0] ?? '';
+      const separator = pair.indexOf('=');
+      return { name: pair.slice(0, separator), value: pair.slice(separator + 1) };
+    };
+    const seekerPage = await browser!.newPage({ viewport: { width: 1100, height: 720 } });
+    await seekerPage.context().addCookies([{ ...cookieFor(seeker), url: baseUrl, httpOnly: true, sameSite: 'Lax' }]);
+    const browserProblems: string[] = [];
+    seekerPage.on('console', (message) => { if (message.type() === 'error') browserProblems.push(message.text()); });
+    seekerPage.on('response', (response) => { if (response.url().includes('/api/vault-answers') && response.status() >= 400) browserProblems.push(`${response.status()} ${response.url()}`); });
+    seekerPage.on('pageerror', (error) => browserProblems.push(String(error)));
+    await seekerPage.goto(`${baseUrl}/vault`, { waitUntil: 'domcontentloaded' });
+    expect(await seekerPage.getByRole('heading', { name: 'Ask the vault' }).count()).toBe(1);
+    const question = `How should I make a service more reliable? ${randomBytes(2).toString('hex')}`;
+    await seekerPage.getByLabel('Your question').fill(question);
+    await seekerPage.getByRole('checkbox').check();
+    await seekerPage.getByRole('button', { name: /Pay .*and send/ }).click();
+    await seekerPage.getByRole('heading', { name: 'Local mock checkout' }).waitFor({ timeout: 10_000 });
+    await seekerPage.getByRole('button', { name: 'Complete test payment' }).click();
+    await seekerPage.waitForURL(/\/vault\/[0-9a-f-]+$/);
+    await seekerPage.getByText('Waiting for the mentors whose notes were used').waitFor({ timeout: 10_000 }).catch(async () => {
+      await seekerPage.reload({ waitUntil: 'domcontentloaded' });
+      await seekerPage.getByText('Waiting for the mentors whose notes were used').waitFor({ timeout: 30_000 });
+    });
+
+    const mentorPage = await browser!.newPage({ viewport: { width: 1100, height: 720 } });
+    await mentorPage.context().addCookies([{ ...cookieFor(mentor), url: baseUrl, httpOnly: true, sameSite: 'Lax' }]);
+    mentorPage.on('pageerror', (error) => browserProblems.push(String(error)));
+    await mentorPage.goto(`${baseUrl}/mentor/previews`, { waitUntil: 'domcontentloaded' });
+    await mentorPage.getByText(question).waitFor();
+    await mentorPage.getByText(`A mock answer based on ${noteTitle}.`).waitFor();
+    await mentorPage.screenshot({ path: path.join(artifactsDir, 'vault-mentor-preview.png'), fullPage: true });
+    await mentorPage.setViewportSize({ width: 390, height: 844 });
+    await expectElementVisible(mentorPage.getByRole('button', { name: new RegExp(`Approve the answer that cites ${noteTitle}`) }));
+    await mentorPage.getByRole('button', { name: new RegExp(`Approve the answer that cites ${noteTitle}`) }).click();
+    await mentorPage.getByText('Nothing to review').waitFor();
+
+    await seekerPage.getByText('Generated by AI from the notes below. Not written by the mentor.').waitFor({ timeout: 10_000 });
+    await seekerPage.getByText(`${mentorName}, ${noteTitle}`).waitFor();
+    await seekerPage.screenshot({ path: path.join(artifactsDir, 'vault-answer-released.png'), fullPage: true });
+    expect(browserProblems).toEqual([]);
+    await mentorPage.close();
+    await seekerPage.close();
+  }, 120_000);
+
+  it('does not expose another seekerâ€™s answer to an authenticated non-participant', async () => {
+    const seeker = await registerPilotUser('seeker', 'Private Answer Buyer');
+    const otherSeeker = await registerPilotUser('seeker', 'Unrelated Seeker');
+    const mentor = await registerPilotUser('mentor', 'Private Answer Mentor');
+    const note = await api('/api/notes', {
+      method: 'POST', cookie: mentor.cookie,
+      json: { title: `Private answer source ${randomBytes(3).toString('hex')}`, body: 'Health checks reveal whether a service is ready to receive traffic.' },
+    });
+    expect(note.response.status).toBe(201);
+    const mentorTerms = await currentTerms('mentor');
+    const published = await api(`/api/notes/${note.body.data.id}/publish`, {
+      method: 'POST', cookie: mentor.cookie,
+      json: { consent: true, noticeVersion: VAULT_NOTICE_VERSION, acceptedTerms: true, termsVersionId: mentorTerms.id, termsSha256: mentorTerms.sha256 },
+    });
+    expect(published.response.status).toBe(200);
+
+    const seekerPage = await browser!.newPage();
+    await seekerPage.context().addCookies([{ name: 'devmentor_session', value: seeker.cookie.slice('devmentor_session='.length), url: baseUrl, httpOnly: true, sameSite: 'Lax' }]);
+    try {
+      await seekerPage.goto(`${baseUrl}/vault`, { waitUntil: 'domcontentloaded' });
+      await seekerPage.getByLabel('Your question').fill(`Private access check ${randomBytes(2).toString('hex')}`);
+      await seekerPage.getByRole('checkbox').check();
+      await seekerPage.getByRole('button', { name: /Pay .*and send/ }).click();
+      await seekerPage.getByRole('heading', { name: 'Local mock checkout' }).waitFor();
+      await seekerPage.getByRole('button', { name: 'Complete test payment' }).click();
+      await seekerPage.waitForURL(/\/vault\/[0-9a-f-]+$/);
+      const answerId = seekerPage.url().split('/').at(-1);
+      expect(answerId).toBeTruthy();
+
+      const response = await api(`/api/vault-answers/${answerId}`, { cookie: otherSeeker.cookie });
+      expect(response.response.status).toBe(404);
+      expect(response.body.ok).toBe(false);
+    } finally {
+      await seekerPage.close();
+    }
+  }, 120_000);
+});
+
+async function expectElementVisible(locator: import('playwright').Locator): Promise<void> {
+  await locator.waitFor({ state: 'visible' });
+}

@@ -1,0 +1,33 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { ComponentTable } from '../../blocks/catalogue';
+import { DocLink } from '../../blocks/DocLink';
+
+<Meta title="Design system/Start here" />
+
+# DevMentor design system
+
+Read this page first. It tells you what the product feels like, how to build a screen with it in five steps, and which component to reach for.
+
+## What the product is like
+
+DevMentor is a calm, dense tool for a developer with a concrete blocker and a mentor who has done the same thing. A screen shows facts in plain words: what the mentor did, the price, where the money stands. It has one warm-grey look with one lime accent, and it never sells, scores or decorates.
+
+| Character (proposal, not confirmed) | Anti-character (proposal, not confirmed) |
+|---|---|
+| factual, dense, warm, calm, concrete | generic, loud, school-like, social, decorative |
+
+Source: `lekcja-06/referencje.md` (R01 density and warmth, R02 conversation and speed, A01 generic look) and the interviews in `.ai/specs/research/`. The words are the author's proposal and have not been confirmed by the owner.
+
+## Build a screen in five steps
+
+1. **Find the pattern.** A screen is almost always one of the <DocLink id="patterns-form--form">Form</DocLink>, <DocLink id="patterns-list-with-filters--listwithfilters">List with filters</DocLink>, <DocLink id="patterns-detail-view--detailview">Detail view</DocLink>, <DocLink id="patterns-confirm-destructive-action--confirmdestructiveaction">Confirm destructive action</DocLink>, <DocLink id="patterns-paid-action-flow--paidactionflow">Paid action flow</DocLink>, <DocLink id="patterns-session-thread--sessionthread">Session thread</DocLink> or <DocLink id="patterns-review-queue--reviewqueue">Review queue</DocLink>. Open it and start from its stories.
+2. **Choose components with** <DocLink id="design-system-how-to-choose--docs">How to choose</DocLink>. If a component for your case exists, use it. If it does not, read <DocLink id="design-system-what-is-missing--docs">What is missing</DocLink> before you write one.
+3. **Use semantic tokens.** `bg-card`, `text-muted-foreground`, `gap-group`, `p-panel-compact`, `text-body`. Never a colour value, a Tailwind palette class or an arbitrary value (a number in square brackets). `npm run check:tokens` finds them.
+4. **Design the data states.** Every screen has loading, empty, error and "many items" and "long text" states. A story for each is part of the screen.
+5. **Check <DocLink id="design-system-what-to-avoid--docs">What to avoid</DocLink>.** Then run the checks in <DocLink id="design-system-contributing--docs">Contributing</DocLink>.
+
+## All components
+
+Every component is imported from `@devmentor/ui`. Click a name for its page.
+
+<ComponentTable />

@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'feat/**']
 
 jobs:
   verify:
@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 20
 
     # The same defaults as docker-compose.yml and packages/db/src/config.
-    # The integration and E2E tests create their own databases (devmentor_test, devmentor_e2e).
+    # The integration tests use devmentor_test, E2E tests use devmentor_e2e.
     services:
       postgres:
         image: postgres:17
@@ -46,8 +46,19 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Agent task router validation
+        run: npm run check:agents
+
       - name: Unit and component tests
         run: npm test
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Create test databases
+        run: |
+          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 -c "CREATE DATABASE devmentor_test;"
+          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 -c "CREATE DATABASE devmentor_e2e;"
 
       - name: Database migrations (up, down, up) and seed
         run: |
@@ -69,3 +80,32 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
+
+  storybook-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Fails on any colour literal, Tailwind palette class or arbitrary Tailwind value outside tokens.css.
+      - name: Values outside the tokens
+        run: npm run check:tokens --workspace=@devmentor/ui
+
+      - name: Install Chromium for the story tests
+        run: npx playwright install --with-deps chromium
+
+      # Measures every colour pair in both themes from tokens.css and writes the file the Color page reads.
+      - name: Contrast of the tokens
+        run: npm run tokens:contrast --workspace=@devmentor/ui
+
+      # Plays every story in Chromium with the accessibility check, once in the dark and once in the light theme.
+      - name: Story tests (dark and light theme)
+        run: npm run test:stories --workspace=@devmentor/ui

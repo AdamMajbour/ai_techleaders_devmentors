@@ -1,0 +1,120 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as EmptyStateStories from '../../../src/backend/feedback/EmptyState.stories';
+import { DoDont } from '../../blocks/DoDont';
+
+<Meta of={EmptyStateStories} />
+
+# EmptyState
+
+## 1. What it is for
+
+An empty state explains why there is nothing to show and offers the next step.
+
+<Canvas of={EmptyStateStories.NothingHereYet} />
+
+## 2. When to use it
+
+- A list that has no records yet: no questions, no notes, no bookings.
+- A list that has records but none match the filters.
+- A review queue with nothing waiting.
+
+There are **two different cases** and they need different words and a different action:
+
+| Case | Say | Action |
+|---|---|---|
+| Nothing here yet | Why it is empty and what the first step is | Create it ("Find a mentor") |
+| No results for the filters | That the filters hide everything | Clear the filters |
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| Still loading | `Skeleton` and `LoadingMessage` | Empty is only true after loading |
+| The request failed | `ErrorMessage` | Failure is not emptiness |
+| The record does not exist or access is denied | `ErrorMessage` with its own wording | The user must know it is not "just empty" |
+
+## 4. Anatomy
+
+1. **Title**: what is empty, in plain words.
+2. **Description** (optional): why, and what to do.
+3. **Action** (optional): the next step, a `Button` or a `TextLink`.
+
+There is no illustration and no icon tile: the words and the next step are the content (A01).
+
+## 5. Variants
+
+One layout, centred in its container. The two cases differ in copy and action, not in style.
+
+<Canvas of={EmptyStateStories.NoResultsForFilters} />
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Default | Title, description, action, centred | |
+| With a link | The action is a `TextLink` where a button would be too loud | Proposal |
+| Hover, focus, pressed | Belong to the action | |
+| Loading, error | Not empty-state states: use `Skeleton` or `ErrorMessage` | |
+
+<Canvas of={EmptyStateStories.WithLinkInsteadOfButton} />
+
+## 7. Behavior and accessibility
+
+- **Static content:** it is plain text, not a live region, because it appears with the page and does not interrupt.
+- **Action:** reachable by keyboard like any button or link.
+- **Heading:** the title is a paragraph styled as strong text. If the empty state is a whole page section, give that section its own heading.
+- **No colour-only cue:** the message is in words.
+
+<Canvas of={EmptyStateStories.ActionIsReachable} />
+
+## 8. Content
+
+- **Title:** says what is empty: "No questions yet", "No mentors for Kubernetes".
+- **Description:** why and what next: "Ask a mentor your first question. You see the price before you write."
+- **Action:** a verb and an object ("Find a mentor", "Clear filter"), see the Button page.
+- **Tone:** calm and helpful, no jokes, no blame, no exclamation marks.
+
+<Canvas of={EmptyStateStories.LongTextNarrow} />
+
+## 9. Responsiveness
+
+Centred at every width, with the description capped at the reading measure (65 characters). At 320 px the text wraps and the action stays below it.
+
+## 10. API
+
+<ArgTypes of={EmptyStateStories} />
+
+## 11. Code
+
+```tsx
+import { Button, EmptyState } from '@devmentor/ui';
+
+<EmptyState title="No questions yet" action={<Button>Find a mentor</Button>} />
+```
+
+```tsx
+// Typical: the two cases of a filtered list.
+{hasFilters ? (
+  <EmptyState
+    title="No mentors for Kubernetes"
+    description="Try another technology or clear the filter."
+    action={<Button variant="outline" onClick={clearFilters}>Clear filter</Button>}
+  />
+) : (
+  <EmptyState title="No mentors yet" description="Mentors appear here after they accept their invitation." />
+)}
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | "No mentors for Kubernetes" with "Clear filter" | The user learns the filter hides results and can undo it |
+| Don't | "Nothing here yet" after filtering | It hides that a filter is active |
+| Do | "No questions yet. Ask a mentor your first question." with "Find a mentor" | It names the next step |
+| Don't | An illustration and "Oops, it's empty!" | A decorative picture and a joke hide what to do (A01) |
+
+## 13. Related
+
+- **Confused with:** `Skeleton` (loading) and `ErrorMessage` (failed).
+- **Used in patterns:** List with filters (both cases), Review queue, Detail view.

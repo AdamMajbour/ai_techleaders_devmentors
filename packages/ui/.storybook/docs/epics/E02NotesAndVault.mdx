@@ -1,0 +1,67 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Product/Epics/E02 Notes and vault" />
+
+# E02 Notes and vault
+
+A mentor publishes notes and is told they feed AI answers. A seeker buys a vault answer built from mentors' notes. The mentors whose notes are cited read the answer first, and are credited when it is released (backlog: E02, issue #8). Each state below is one story in **Product > Screens > E02 Notes and vault**.
+
+Sources: the vault spec (`.ai/specs/2026-10-27-pilot-vault-answers.md`), the backlog and the product brief (D09, D10, D14, R03, N02). The screens are examples built from the design system, with example data and no routing.
+
+## Steps of the flow
+
+1. A mentor writes a note and saves it as a draft (E02-S01).
+2. They read the notice, agree and publish it. They agree again every time they publish.
+3. A seeker asks the vault a question and pays 10 EUR (E02-S03).
+4. An AI writes an answer from the published notes of all mentors except the seeker's own.
+5. Every mentor whose note is cited reads the answer and approves or rejects it (E02-S02). One rejection rejects the answer and refunds the seeker.
+6. When every cited mentor has approved, the answer is released with its sources and the mentors are credited.
+
+## Screens and their states
+
+| Screen | Stories | States shown | Main components |
+|---|---|---|---|
+| **1. Notes and credits** (E02-S01, E02-S03) | Notes loading, ready, empty, error | loading, ready (all statuses), empty, error. The credits panel has its own loading, error, empty and test-credit states | `TextLink`, `StatusBadge`, `CreditsPanel`, `EmptyState` |
+| **2. One note** (E02-S01) | Note new, draft with notice, draft publishing not open, published, taken down | new (publish after saving), draft with the notice, publishing closed, published with Take down and its confirmation, taken down (publish again with a new consent) | `NoteEditor`, `PublishNoticePanel`, `ConfirmDialog` |
+| **3. Answers to review** (E02-S02) | Previews loading, ready, approve running, action refused, decided, time ran out, empty, error | eight states | `ReviewItem`, `EmptyState`, `ErrorMessage` |
+| **4. Ask the vault** (E02-S03) | Ask form, no notes yet, configuration refused | the form with the price first, no notes (an empty state instead of the form), a refusal before any payment | `PriceNotice`, `QuestionForm`, `EmptyState` |
+| **5. The vault answer** (E02-S03) | Answer loading, load failed, not found, generating, waiting for mentors, released, rejected, expired, notes did not cover, writing failed | ten states | `VaultAnswerView`, `MarkdownView`, `ErrorMessage` |
+
+## Rules this epic relies on
+
+| Rule | Where it shows | Source |
+|---|---|---|
+| The mentor reads the notice and agrees again every time they publish | One note | D09 |
+| A note can be taken down at any time | One note | R03 |
+| Every cited mentor reads the answer first, until 14 December 2026 | Answers to review | D09, D18 |
+| One rejection rejects the whole answer | Answers to review | Vault spec, Q4 |
+| The answer is labelled as AI-generated and lists "Mentor name, note title" | The vault answer | D10, D14 |
+| No ratings, no link to the note | The vault answer | N02, vault spec |
+| The price comes before the question | Ask the vault | R04 |
+| Nothing is charged when the vault cannot run | Ask the vault | Vault spec (a refusal before any payment) |
+| Credits are not a payout | Notes and credits | Vault spec, credits panel |
+
+## Source files
+
+| What | Where (`packages/ui/src`) |
+|---|---|
+| Components | `components/notes/{NoteEditor,PublishNoticePanel}.tsx`, `components/vault/{VaultAnswerView,ReviewItem,CreditsPanel}.tsx`, and `components/bookings/QuestionForm.tsx` for the question |
+| Screen compositions | `screens/e02-views.tsx` |
+| Screen stories | `screens/e02.stories.tsx` |
+| Pattern | `patterns/review-queue.stories.tsx` |
+| Example data and the working notice | `.storybook/blocks/sampleData.ts` |
+
+## Work still to do in the product
+
+- **Routes of the vault spec:** `/api/notes` and its actions (`publish`, `take-down`), `/api/vault-answers` (create, list, read, `reconcile-payment`, `approve`, `reject`), `GET /api/vault/previews`, `GET /api/mentor/credits`, and the operator routes.
+- **Pages:** `(mentor)/mentor/notes`, `/mentor/notes/[id]`, `(mentor)/mentor/previews`, `(student)/vault`, `/vault/[id]`.
+- **Wiring:** polling of a vault answer until it ends, the notice text and its version from the server (reviewed in E03-T02), the preview window from the server.
+
+## What is not covered yet
+
+- **The text of the notice is a working draft** (waiting for legal review, E03-T02). The screens show it as such.
+- **Real routing, data and API:** the routes of the vault spec are not built. The screens use example data.
+- **Payment return of a vault answer** reuses the payment return of E01 (Patterns: Paid action flow).
+- **A confirmation before Reject** is not built (see `ReviewItem`). Whether one is needed is a question for the owner.
+- **Payout of credits** has no spec (E03-S02 is not built).
+- **A monospace font in the note editor** is a proposal (R01.2).

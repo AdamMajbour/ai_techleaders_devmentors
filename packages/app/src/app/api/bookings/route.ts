@@ -1,5 +1,6 @@
-import { apiHandler, requireSession, withScope } from '@devmentor/core/server';
-export const GET = apiHandler(async (request) => {
- const session = await requireSession(request);
- return withScope(({ bookingService }) => bookingService.listForParticipant(session));
-});
+import { bookingsCrud } from './bookings-crud';
+
+export const dynamic = 'force-dynamic';
+
+/** GET /api/bookings?role=seeker|mentor&page= and POST /api/bookings. */
+export const { GET, POST } = bookingsCrud;

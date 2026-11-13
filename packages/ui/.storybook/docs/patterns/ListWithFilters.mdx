@@ -1,0 +1,160 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as ListStories from '../../../src/patterns/list-with-filters.stories';
+
+<Meta of={ListStories} />
+
+# List with filters
+
+## 1. What it is for
+
+A list the user narrows down with filters, always showing how many results there are and which filters are on.
+
+<Canvas of={ListStories.FilteringShowsTheActiveFilterAndCountsResults} />
+
+## 2. When to use it
+
+- The mentor list filtered by technology (D04).
+- A seeker's questions, a mentor's bookings, the operator's approvals.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A handful of fixed items | A plain list | Filters add weight for nothing |
+| One record | Detail view | There is nothing to filter |
+| A list where search by words matters | A field with search (not built yet) | See What is missing |
+
+## 4. Anatomy
+
+1. **Filters** (`Field` with a compact `Select`).
+2. **Active filters**: one removable chip per filter and "Clear all filters" (only while a filter is on).
+3. **Result count**: a polite status line, directly above the list. The order is the one of the story and of the screens: filters, chips, count.
+4. **The list**: a `DataTable` when the rows are compared by columns, or a `ul` of rows (`MentorRow`, `BookingRow`, or a row composed from them) when each row has a link or an action and the user reads rather than compares. Both kinds keep the same filters, count, chips and states.
+5. **States** inside the list: loading, empty (two kinds), error.
+
+## 5. Behavior rules
+
+| Rule | Why | Source |
+|---|---|---|
+| The result count is always visible and announced politely when it changes | The user learns what the filter did | WCAG 4.1.3 |
+| Every active filter is visible and removable with one action, and "Clear all filters" exists | The user can always get back | Proposal |
+| A filter chip says it can be removed in words ("remove filter"), not only with an X | The X is decoration | WCAG 1.1.1, 2.5.3 |
+| Changing a filter returns to page 1 | Page 3 of a smaller list may not exist | Proposal |
+| **Two different empty states:** "nothing here yet" (no action or a create action) and "no results for these filters" (with **Clear filter**) | One says the list is empty, the other that a filter hides it | Decision (stage 3 brief) |
+| The table has a caption | It names the table for assistive technology | WCAG 1.3.1 |
+| Dense rows and hairlines, no cards around rows | K1, R01.1 | K1, R01.1 |
+| **The filter bar is shown only when the list has items**, and it stays when a filter hides them all (then the count and "No … with …" explain). It is not shown while loading, on a load error or when nothing exists yet: there is nothing to filter | A filter over nothing is noise, and the user cannot act on it | Approved 2026-10-28 (agent test) |
+| The filter field is as wide as `max-w-session`, above the chip row. The skeleton of a `ul` row is three lines: the name (`h-6 w-1/3`), the description (`h-4 w-2/3`) and the details (`h-4 w-1/3`). These are scale values, not tokens | One width and one skeleton for every list | Approved 2026-10-28 (agent test) |
+| Filter state is not yet kept in the address | A shared link to a filtered list is useful, but the product has no decision for it | Proposal (see What is missing, "States and behaviours that are missing") |
+| A `ul` list builds its own loading, empty and error states from `LoadingMessage` and `Skeleton`, `EmptyState` and `ErrorMessage` (a `DataTable` has them built in). The skeleton repeats the lines of one row (name, description, details) three times, in a region with `aria-busy` | The page does not jump when rows arrive, and the states read the same in both kinds of list | Approved 2026-10-28 (agent test), example: `screens/e01-views.tsx` |
+| When loading the list fails while a filter is active, the error replaces the filter and the list. The chosen filter is kept and comes back after "Try again" | The user does not have to choose again | Approved 2026-10-28 (agent test) |
+| The status filter lists the options in the order of the status type, "All statuses" first, in the wording of the reader | The order follows the life of a record and the words match the badge in the row | Approved 2026-10-28 (agent test) |
+| Rows are in the order the server sends. The pilot has no sortable columns. The server sends newest first | One order to learn | Approved 2026-10-28 (agent test) |
+| A skeleton row is a `div` with `flex flex-col gap-group border-b border-border py-panel-compact` that holds the three blocks, so its padding and hairline match a real row | The page does not jump when rows arrive | Approved 2026-10-28 (agent test, round 2) |
+| A filter runs in the client while the whole list is loaded (the seeker's sessions in the pilot). A list paged by the server filters on the server with a query parameter and returns to page 1 | The user filters the whole list, not one page | Approved 2026-10-28 (client side for the seeker's list); the server rule too |
+| After a filter is removed with the chip or "Clear filter" the button disappears, so **focus moves to the filter's `Select`** | Keyboard focus is not lost to the page | Approved 2026-10-28 (agent test, round 2), WCAG 2.4.3 |
+| A `ul` shows every row. A list that can grow beyond 25 rows needs pagination first: do not ship it without | A long list without pages is slow to scan | Approved 2026-10-28 (agent test, round 2) |
+| Pagination belongs to the caller. It passes only the current page (at most 25 rows) to a `ul` list; the list renders the rows it receives | Keep fetching and pagination separate from the reusable list presentation | Owner decision, 2026-10-31 |
+| The loading region of a `ul` is `flex flex-col` with **no `gap`**: the `LoadingMessage` first, then the three skeleton rows, which bring their own padding and hairline | `LoadingMessage` already has `py-panel-roomy`, so a gap would add a second space | Approved 2026-10-28 (agent test, round 3) |
+| The **count belongs to the filter bar**: it is shown when the list has items (also when a filter hides them all) and not when nothing exists yet, while loading or on a load error | A count of 0 above "nothing here yet" says the same thing twice | Approved 2026-10-28 (agent test, round 3) |
+| "Try again" in an `ErrorMessage` swaps the error for the loading state of the list. "Try again" inside an `Alert` (refresh failed) is disabled and reads "Trying again…" while it runs, as "Accepting…" in `BookingRow` | One click cannot be sent twice (form rules) | Approved 2026-10-28 (agent test, round 3) |
+| A private list that answers 401 shows an `ErrorMessage` **without** retry: "Your session has expired. Sign in again.", and a `TextLink` "Sign in" | Trying again cannot work | Approved 2026-10-28 (agent test, round 3) |
+| A status goes in quotes in a count and in an empty title, **one word or several**: `1 session with status "Accepted"`, `No sessions with status "Not answered in time"`. The chip reads `Status: Accepted` (the label of the filter, a colon, the value), without quotes | A label reads as a name, not as a clause, and the form is the same for every status | Approved 2026-10-28 (agent test, round 3) |
+
+## 6. States, one story each
+
+| State | Story |
+|---|---|
+| Results | WithResults |
+| A filter is active: count, chip, clear | FilteringShowsTheActiveFilterAndCountsResults |
+| No results for the filters | NoResultsForTheFilters |
+| Nothing here yet | NothingHereYet |
+| Loading | Loading |
+| Load failed, with retry | LoadFailed |
+| Many rows with pagination | ManyRowsWithPagination |
+| Long text, narrow screen | LongTextNarrow |
+
+<Canvas of={ListStories.NoResultsForTheFilters} />
+<Canvas of={ListStories.NothingHereYet} />
+<Canvas of={ListStories.Loading} />
+<Canvas of={ListStories.LoadFailed} />
+<Canvas of={ListStories.ManyRowsWithPagination} />
+
+## 7. Accessibility
+
+- The count is `role="status"` (polite). The table is named by its caption.
+- A chip's accessible name includes its visible text and "remove filter".
+- Pagination is a labelled `nav`. "Previous" and "Next" are real buttons.
+- The loading region is `aria-busy`, and the loading text is announced.
+- **A `ul` of rows has no `aria-label`** when the page `h1` names it and it is the only list: the list announces its own count, and each row has a heading. Give it a label only when two lists share a page. Proposal (agent test 2026-10-28, round 4).
+
+## 8. Content
+
+- **Count:** "2 mentors for Python", "1 mentor", "0 mentors for Go". Templates for other lists, with the seeker's sessions as the example: **Content** > "Lists: counts, empty states, rows".
+- **No results:** "No mentors for Go. No mentor lists this technology yet. Try another technology or clear the filter."
+- **Nothing yet:** "No mentors yet. Mentors appear here after they accept their invitation."
+
+<Canvas of={ListStories.LongTextNarrow} />
+
+## 9. Responsiveness
+
+At 768 px and above filters sit above the list in a row. At 320 px they stack, and the table scrolls sideways inside its container. A list of rows for phones is planned (What is missing, "States and behaviours that are missing"). A `ul` of rows needs no such list: it wraps by itself.
+
+## 10. Code
+
+The filter bar is written in the story as the recipe. It becomes a shared component when a second screen needs it (Contributing).
+
+```tsx
+<DataTable
+  caption="Mentors in the pilot"
+  columns={columns}
+  rows={visible}
+  getRowId={(mentor) => mentor.id}
+  isLoading={isLoading}
+  error={error}
+  onRetry={reload}
+  emptyTitle={technology ? `No mentors for ${technology}` : 'No mentors yet'}
+  emptyAction={technology ? <Button variant="outline" onClick={clear}>Clear filter</Button> : undefined}
+  pagination={{ page, pageCount, onPageChange: setPage }}
+/>
+```
+
+A list of rows (a `ul`) writes the filter bar and the states by hand. The row is written in the screen until a row component exists (see What is missing):
+
+```tsx
+<ul className="m-0 flex list-none flex-col p-0">
+  {shown.map((session) => (
+    <li
+      key={session.id}
+      className="flex flex-col gap-between-groups border-b border-border py-panel-compact last:border-b-0 md:flex-row md:items-start md:justify-between"
+    >
+      {/* left: name (h2), headline, technologies, date. right: status, price, "Open" TextLink */}
+    </li>
+  ))}
+</ul>
+```
+
+The page loads the list with `useAsync` and `apiCall`, maps the result and keeps the filter in the view that renders the list, so a failed load does not reset it. A working example: `packages/app/src/app/(marketing)/articles/articles-view.tsx`.
+
+```tsx
+const list = useAsync(() => apiCall<Page<Row>>(url), [reloads]);
+const result = list.data;
+const error = result && !result.ok ? result.error.message : null;
+const rows = result?.ok ? result.data.items : undefined;
+const isLoading = list.status === 'idle' || list.status === 'pending';
+const reload = () => setReloads((count) => count + 1); // the retry
+```
+
+## 11. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | "No mentors for Go" with "Clear filter" | It tells the user a filter hides results and offers the way back |
+| Don't | "Nothing here yet" after filtering | It hides that a filter is on |
+| Do | A removable chip "Technology: Python, remove filter" | The active filter is visible and reversible |
+| Don't | A filter that can only be undone by reloading the page | The user is stuck |
+
+## 12. Related
+
+- **Components:** `DataTable`, `Table`, `Select`, `Field`, `EmptyState`, `ErrorMessage`, `Skeleton`.
+- **Patterns:** Detail view (opening a row).

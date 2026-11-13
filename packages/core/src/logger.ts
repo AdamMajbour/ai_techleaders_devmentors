@@ -7,9 +7,9 @@ export interface Logger {
 }
 
 const REDACTED = '[redacted]';
-const SENSITIVE_KEY = /pass(word)?|secret|token|jwt|authorization|cookie/i;
+const SENSITIVE_KEY = /pass(word)?|secret|token|jwt|authorization|cookie|question|body/i;
 
-/** Copies the context with secrets masked, so a log line can never carry a password or token. */
+/** Copies the context with sensitive values masked before it is logged. */
 export function redact(value: unknown): unknown {
   if (value instanceof Error) return { name: value.name, message: value.message, stack: value.stack };
   if (Array.isArray(value)) return value.map(redact);

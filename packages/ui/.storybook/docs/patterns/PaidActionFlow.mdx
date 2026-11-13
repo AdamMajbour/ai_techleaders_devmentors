@@ -1,0 +1,118 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as PaidStories from '../../../src/patterns/paid-action-flow.stories';
+
+<Meta of={PaidStories} />
+
+# Paid action flow
+
+## 1. What it is for
+
+An action that charges money: the seeker asks a question for a price, pays, comes back from the payment provider and learns where the booking stands. The pattern keeps the user informed about the money at every step.
+
+<Canvas of={PaidStories.PriceBeforeTheQuestion} />
+
+## 2. When to use it
+
+- Asking a mentor a question (E01-S02).
+- Any later action with a price, for example a vault answer (E02), once it is built.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| An action without money | Patterns: Form | No price, no return page |
+| Cancelling a booking or taking a note down | Confirm destructive action | The risk is losing something, not paying |
+
+## 4. Anatomy
+
+1. **Test-mode banner** (`Alert`), while payments are not live.
+2. **Price and refund rule** (`PriceNotice`), before the field.
+3. **The form** (`QuestionForm`): question, terms, a button that states the amount.
+4. **The return page** after the provider: confirming, taking longer, paid, failed, cancelled, could not be confirmed.
+5. **Where the money stands** after a decline or an expiry (`BookingStatus` with the refund line).
+
+## 5. Behavior rules
+
+| Rule | Why | Source |
+|---|---|---|
+| The **price and the refund rule come before the field** the user fills in | The seeker decides to write knowing the cost | R04 |
+| The **button says the amount** and, while blocked, **why** | The click is informed and the keyboard user hears the reason | Decision 2026-10-27 (`disabledReason`) |
+| What the user wrote is **kept after every failure** | The text is the user's work | Form rules |
+| **Success is shown only after the server confirmed** | A promise that the server did not make is a lie | Form rules |
+| The return page **reconciles with the provider** and does not wait for a webhook only: it checks for 60 seconds, then asks the provider | The user is not stuck on "confirming" | Booking spec, Grill 7 |
+| A failure says **whether money was taken** | The first worry of a user who paid | WCAG 3.3.3, Proposal (wording) |
+| The **test-mode banner** is visible wherever a price is | Test payments are not real and do not count toward the pilot | Booking spec, Grill 9 |
+| **Where the money stands** is written, never colour alone | Trust | WCAG 1.4.1, Booking spec |
+
+## 6. States, one story each
+
+| State | Story |
+|---|---|
+| Price first, then the field | PriceBeforeTheQuestion |
+| The button explains why it is blocked | ButtonSaysWhyItIsBlocked |
+| The payment fails and the question is kept | PaymentFailsAndTheQuestionIsKept |
+| Return: confirming | ReturnConfirming |
+| Return: taking longer than usual | ReturnTakesLonger |
+| Return: paid | ReturnPaid |
+| Return: failed | ReturnFailed |
+| Return: the user left the provider | ReturnCancelled |
+| Return: could not be confirmed | ReturnCouldNotBeConfirmed |
+| Refunds after a decline | WhereTheMoneyStandsAfterADecline |
+
+<Canvas of={PaidStories.ButtonSaysWhyItIsBlocked} />
+<Canvas of={PaidStories.PaymentFailsAndTheQuestionIsKept} />
+<Canvas of={PaidStories.ReturnConfirming} />
+<Canvas of={PaidStories.ReturnTakesLonger} />
+<Canvas of={PaidStories.ReturnPaid} />
+<Canvas of={PaidStories.ReturnFailed} />
+<Canvas of={PaidStories.ReturnCancelled} />
+<Canvas of={PaidStories.ReturnCouldNotBeConfirmed} />
+<Canvas of={PaidStories.WhereTheMoneyStandsAfterADecline} />
+
+## 7. Accessibility
+
+- A blocked button is `aria-disabled` and described by its reason, and stays in the keyboard order.
+- "Confirming" is a polite status. The failure is an alert. The page after payment has one `h1`.
+- The payment result is words, not an icon or a colour.
+
+## 8. Content
+
+- **Button:** "Pay 25 EUR and send".
+- **Failure:** "The payment failed. Your card was not charged. Check the card details and try again."
+- **Slow:** "This takes longer than usual. You can leave this page: we keep checking, and the session appears in your sessions when the payment is confirmed."
+- **Cancelled:** "You left the payment page. Nothing was charged and your question was not sent."
+
+## 9. Responsiveness
+
+One column at every width. At 320 px the notice, the form and the return messages wrap and nothing is cut.
+
+## 10. Code
+
+```tsx
+<MentorPage>
+  <TestModeBanner />
+  <QuestionForm
+    mentorName={mentor.name}
+    priceMinor={price}
+    currency="EUR"
+    termsHref="/terms"
+    onSubmit={createBooking}
+    onSuccess={(data) => router.push(checkoutUrl(data))}
+  />
+</MentorPage>
+```
+
+## 11. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | "Your card was not charged" on a failure | The user knows the money is safe |
+| Don't | "Payment error" | It hides whether money was taken |
+| Do | A return page that keeps checking and says so | The user can leave |
+| Don't | A spinner with no end and no explanation | The user does not know whether to pay again |
+
+## 12. Related
+
+- **Components:** `PriceNotice`, `QuestionForm`, `TermsConsent`, `BookingStatus`, `BookingRow`, `Alert`, `Button`.
+- **Patterns:** Form, Detail view, Confirm destructive action.
+- **Screens:** "E01 Booking flow" > Mentor page and Payment return.
