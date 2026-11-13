@@ -1,4 +1,4 @@
-/**
+﻿/**
  * End-to-end test against a real production server (`next build` + `next start`)
  * backed by a real PostgreSQL database. It uses its own database (`devmentor_e2e`),
  * migrates and seeds it through the same npm scripts developers use, and migrates it
@@ -6,12 +6,14 @@
  * rendered in headless Chromium (computed styles, console errors, the login and article flows).
  */
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { chromium, type Browser } from 'playwright';
+import { e2eDatabaseOptions as E2E_DATABASE_OPTIONS } from './e2e-database-config';
+const E2E_DATABASE_NAME = E2E_DATABASE_OPTIONS.dbName;
 import '../../db/src/load-env';
 import { closeORM, initializeORM, InvitationRepository, TermsRepository } from '../../db/src';
 import { VAULT_NOTICE_VERSION } from '@devmentor/core';
@@ -24,11 +26,8 @@ const ROOT = path.resolve(APP_DIR, '../..');
 // A fresh signing key per run: never a committed or shared secret.
 const JWT_SECRET = randomBytes(48).toString('base64');
 const PASSWORD = 'correct horse battery';
-const E2E_DATABASE_NAME = process.env.DATABASE_E2E_NAME || 'devmentor_e2e';
 if (
-  E2E_DATABASE_NAME === 'devmentor' ||
-  E2E_DATABASE_NAME === 'devmentor_test' ||
-  E2E_DATABASE_NAME === process.env.DATABASE_NAME
+  E2E_DATABASE_NAME !== 'devmentor_e2e'
 ) {
   throw new Error('E2E tests require a dedicated database and will not migrate a development/test database.');
 }
@@ -37,6 +36,10 @@ const env: NodeJS.ProcessEnv = {
   ...process.env,
   NODE_ENV: 'production',
   DATABASE_NAME: E2E_DATABASE_NAME,
+  DATABASE_HOST: E2E_DATABASE_OPTIONS.host,
+  DATABASE_PORT: String(E2E_DATABASE_OPTIONS.port),
+  DATABASE_USER: E2E_DATABASE_OPTIONS.user,
+  DATABASE_PASSWORD: E2E_DATABASE_OPTIONS.password,
   JWT_SECRET,
   PUBLIC_SIGNUP: 'true',
   PAYMENTS_MODE: 'mock',
@@ -48,6 +51,7 @@ const env: NodeJS.ProcessEnv = {
   AI_ALLOW_MOCK_IN_PRODUCTION: 'true',
   AI_LIVE_ENABLED: 'false',
   PAYMENTS_LIVE_ENABLED: 'false',
+  OPERATOR_USER_IDS: DEMO_AUTHOR.id,
   JEST_WORKER_ID: process.env.JEST_WORKER_ID ?? '1',
 };
 
@@ -134,7 +138,8 @@ async function cleanE2EDatabase(): Promise<void> {
     throw new Error('Refusing to clean a database other than the dedicated devmentor_e2e database.');
   }
   await closeORM();
-  const cleanupOrm = await initializeORM({ dbName: E2E_DATABASE_NAME });
+  const cleanupOrm = await initializeORM(E2E_DATABASE_OPTIONS);
+  await cleanupOrm.em.getConnection().execute('drop schema public cascade; create schema public');
   await cleanupOrm.em.getConnection().execute('drop function if exists "release_booking_availability_slot"() cascade');
   await cleanupOrm.em.getConnection().execute('drop function if exists "release_mentor_availability_slot"() cascade');
   await cleanupOrm.schema.dropSchema({ dropMigrationsTable: true });
@@ -199,7 +204,7 @@ async function currentTerms(kind: 'seeker' | 'mentor'): Promise<E2ETerms> {
 async function seedE2ETerms(): Promise<void> {
   // E2E-only reviewed terms let the payment and publication flows exercise the
   // same consent gates as the app without treating test fixtures as legal copy.
-  e2eOrm = await initializeORM({ dbName: E2E_DATABASE_NAME });
+  e2eOrm = await initializeORM(E2E_DATABASE_OPTIONS);
   const repository = new TermsRepository(e2eOrm.em.fork());
   const operatorId = DEMO_AUTHOR.id;
   const now = new Date();
@@ -228,6 +233,12 @@ async function seedE2ETerms(): Promise<void> {
 }
 
 let userCounter = 0;
+function operatorCookie(): string {
+  const now = Math.floor(Date.now() / 1000);
+  const signingInput = `${Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url')}.${Buffer.from(JSON.stringify({ sub: DEMO_AUTHOR.id, iat: now, exp: now + 24 * 60 * 60 })).toString('base64url')}`;
+  const signature = createHmac('sha256', JWT_SECRET).update(signingInput).digest('base64url');
+  return `devmentor_session=${signingInput}.${signature}`;
+}
 /** Registers a new user (each from its own client address, so the register limiter never interferes). */
 async function registerUser(name = 'Tester') {
   userCounter += 1;
@@ -246,7 +257,7 @@ async function registerPilotUser(role: 'seeker' | 'mentor', name: string) {
   if (result.response.status !== 201 || typeof result.body?.data?.id !== 'string') {
     throw new Error(`Could not create the ${role} account for the booking E2E.`);
   }
-  e2eOrm ??= await initializeORM({ dbName: E2E_DATABASE_NAME });
+  e2eOrm ??= await initializeORM(E2E_DATABASE_OPTIONS);
   await new InvitationRepository(e2eOrm.em.fork()).create({
     email: result.email,
     displayName: name,
@@ -785,6 +796,111 @@ describe('mock booking payment flow', () => {
   }, 120_000);
 });
 
+describe('E03 terms and retention controls', () => {
+  it('rejects seeker acceptance when the submitted digest is stale', async () => {
+    const seeker = await registerPilotUser('seeker', 'Stale Terms Seeker');
+    const terms = await currentTerms('seeker');
+    const result = await api('/api/terms/accept', {
+      method: 'POST', cookie: seeker.cookie,
+      json: { kind: 'seeker', versionId: terms.id, sha256: '0'.repeat(64) },
+    });
+
+    expect(result.response.status).toBe(409);
+    expect(result.body.ok).toBe(false);
+    const accepted = await api('/api/terms/accepted?kind=seeker', { cookie: seeker.cookie });
+    expect(accepted.response.status).toBe(200);
+    expect(accepted.body.data).toEqual([]);
+  });
+
+  it('denies a non-operator access to legal holds', async () => {
+    const seeker = await registerPilotUser('seeker', 'Retention Access Seeker');
+
+    const result = await api('/api/operator/retention/holds', { cookie: seeker.cookie });
+
+    expect(result.response.status).toBe(403);
+    expect(result.body.ok).toBe(false);
+  });
+
+  it('rejects a legal hold without its required reason', async () => {
+    const invalid = await api('/api/operator/retention/holds', {
+      method: 'POST', cookie: operatorCookie(),
+      json: { contentType: 'note', contentId: DEMO_AUTHOR.id, reason: '   ' },
+    });
+    expect(invalid.response.status).toBe(400);
+    expect(invalid.body.ok).toBe(false);
+  });
+});
+
+describe('mentor profile publication', () => {
+  beforeAll(async () => {
+    if (browser) return;
+    browser = await chromium.launch({ env: chromiumEnv() as Record<string, string>, timeout: 30_000 });
+  });
+
+  afterAll(async () => {
+    if (browser) await browser.close();
+    browser = undefined;
+  });
+
+  it('blocks publishing until the mentor chooses at least one technology', async () => {
+    const mentor = await registerPilotUser('mentor', 'Profile Test Mentor');
+    const page = await browser!.newPage({ viewport: { width: 1100, height: 720 } });
+    try {
+      await page.context().addCookies([{ name: 'devmentor_session', value: mentor.cookie.slice('devmentor_session='.length), url: baseUrl, httpOnly: true, sameSite: 'Lax' }]);
+      await page.goto(`${baseUrl}/profile`, { waitUntil: 'domcontentloaded' });
+      await page.getByRole('link', { name: 'Edit mentor profile' }).click();
+      await page.getByRole('heading', { name: 'Create mentor profile' }).waitFor({ state: 'visible' });
+
+      await page.getByLabel('Profile link').fill(`mentor-without-technology-${randomBytes(3).toString('hex')}`);
+      await page.getByLabel('Headline').fill('Independent software mentor');
+      await page.getByLabel('Bio').fill('I help teams build and maintain reliable software.');
+      await page.getByLabel('Public work URL').fill('https://example.com/mentor-work');
+      await page.getByLabel('Publish this profile').check();
+      await page.getByRole('button', { name: 'Create and publish profile' }).click();
+
+      await page.locator('p[role="alert"]').waitFor({ state: 'visible' });
+      if (!(await page.getByRole('button', { name: 'Create and publish profile' }).isVisible())) {
+        throw new Error('Publish action should stay available after the validation error.');
+      }
+      if (await page.getByRole('heading', { name: 'Your profile is published' }).count() !== 0) {
+        throw new Error('The profile must remain unpublished when no technology is selected.');
+      }
+      await page.screenshot({ path: path.join(ROOT, '.ai/qa/artifacts/mentor-profile-requires-technology.png'), fullPage: true });
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('requires current vault notice consent before publishing a note', async () => {
+    const mentor = await registerPilotUser('mentor', 'Vault Consent Mentor');
+    const created = await api('/api/notes', {
+      method: 'POST', cookie: mentor.cookie,
+      json: { title: `Consent note ${randomBytes(3).toString('hex')}`, body: 'A note that requires explicit consent before publication.' },
+    });
+    expect(created.response.status).toBe(201);
+
+    const missingConsent = await api(`/api/notes/${created.body.data.id}/publish`, {
+      method: 'POST', cookie: mentor.cookie, json: { consent: false, noticeVersion: VAULT_NOTICE_VERSION },
+    });
+    expect(missingConsent.response.status).toBe(400);
+    expect((await api(`/api/notes/${created.body.data.id}`, { cookie: mentor.cookie })).body.data.status).toBe('draft');
+
+    const mentorTerms = await currentTerms('mentor');
+    const staleNotice = await api(`/api/notes/${created.body.data.id}/publish`, {
+      method: 'POST', cookie: mentor.cookie,
+      json: {
+        consent: true,
+        noticeVersion: 'stale-e2e-notice',
+        acceptedTerms: true,
+        termsVersionId: mentorTerms.id,
+        termsSha256: mentorTerms.sha256,
+      },
+    });
+    expect(staleNotice.response.status).toBe(409);
+    expect((await api(`/api/notes/${created.body.data.id}`, { cookie: mentor.cookie })).body.data.status).toBe('draft');
+  });
+});
+
 describe('mock vault purchase and mentor preview', () => {
   beforeAll(async () => {
     if (browser) return;
@@ -870,6 +986,43 @@ describe('mock vault purchase and mentor preview', () => {
     expect(browserProblems).toEqual([]);
     await mentorPage.close();
     await seekerPage.close();
+  }, 120_000);
+
+  it('does not expose another seekerâ€™s answer to an authenticated non-participant', async () => {
+    const seeker = await registerPilotUser('seeker', 'Private Answer Buyer');
+    const otherSeeker = await registerPilotUser('seeker', 'Unrelated Seeker');
+    const mentor = await registerPilotUser('mentor', 'Private Answer Mentor');
+    const note = await api('/api/notes', {
+      method: 'POST', cookie: mentor.cookie,
+      json: { title: `Private answer source ${randomBytes(3).toString('hex')}`, body: 'Health checks reveal whether a service is ready to receive traffic.' },
+    });
+    expect(note.response.status).toBe(201);
+    const mentorTerms = await currentTerms('mentor');
+    const published = await api(`/api/notes/${note.body.data.id}/publish`, {
+      method: 'POST', cookie: mentor.cookie,
+      json: { consent: true, noticeVersion: VAULT_NOTICE_VERSION, acceptedTerms: true, termsVersionId: mentorTerms.id, termsSha256: mentorTerms.sha256 },
+    });
+    expect(published.response.status).toBe(200);
+
+    const seekerPage = await browser!.newPage();
+    await seekerPage.context().addCookies([{ name: 'devmentor_session', value: seeker.cookie.slice('devmentor_session='.length), url: baseUrl, httpOnly: true, sameSite: 'Lax' }]);
+    try {
+      await seekerPage.goto(`${baseUrl}/vault`, { waitUntil: 'domcontentloaded' });
+      await seekerPage.getByLabel('Your question').fill(`Private access check ${randomBytes(2).toString('hex')}`);
+      await seekerPage.getByRole('checkbox').check();
+      await seekerPage.getByRole('button', { name: /Pay .*and send/ }).click();
+      await seekerPage.getByRole('heading', { name: 'Local mock checkout' }).waitFor();
+      await seekerPage.getByRole('button', { name: 'Complete test payment' }).click();
+      await seekerPage.waitForURL(/\/vault\/[0-9a-f-]+$/);
+      const answerId = seekerPage.url().split('/').at(-1);
+      expect(answerId).toBeTruthy();
+
+      const response = await api(`/api/vault-answers/${answerId}`, { cookie: otherSeeker.cookie });
+      expect(response.response.status).toBe(404);
+      expect(response.body.ok).toBe(false);
+    } finally {
+      await seekerPage.close();
+    }
   }, 120_000);
 });
 
