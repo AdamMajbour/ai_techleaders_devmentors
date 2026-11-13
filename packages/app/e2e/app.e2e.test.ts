@@ -201,7 +201,7 @@ async function seedE2ETerms(): Promise<void> {
   // same consent gates as the app without treating test fixtures as legal copy.
   e2eOrm = await initializeORM({ dbName: E2E_DATABASE_NAME });
   const repository = new TermsRepository(e2eOrm.em.fork());
-  const operatorId = DEMO_PERSONAS.operator.id;
+  const operatorId = DEMO_AUTHOR.id;
   const now = new Date();
   for (const kind of ['seeker', 'mentor'] as const) {
     const body = `E2E fixture terms for ${kind}; not legal copy.`;
