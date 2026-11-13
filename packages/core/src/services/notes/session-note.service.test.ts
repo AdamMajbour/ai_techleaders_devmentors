@@ -5,13 +5,13 @@ import { SessionNoteService } from './session-note.service';
 
 const ME = { userId: 'mentor-1' };
 const stored = (overrides: Partial<SessionNote> = {}) => ({
-  id: 'note-1', sessionId: 'session-1', mentorId: 'mentor-1', title: 'A note', content: 'Private', seekerId: 'seeker-1',
+  id: 'note-1', bookingId: 'b1', mentorId: 'mentor-1', title: 'A note', content: 'Private', seekerId: 'seeker-1',
   seekerApprovedAt: null, withdrawnAt: null,
   createdAt: new Date('2026-11-01T00:00:00Z'), updatedAt: new Date('2026-11-01T00:00:00Z'),
   ...overrides,
 }) as SessionNote;
-function setup(repository: Partial<Record<keyof SessionNoteRepository, jest.Mock>> = {}) {
-  return new SessionNoteService({ sessionNoteRepository: repository as unknown as SessionNoteRepository, bookingService: { getForNote: jest.fn(async () => ({ id: 'b1', mentorId: 'mentor-1', seekerId: 'seeker-1', status: 'accepted' })) } as never });
+function setup(repository: Partial<Record<keyof SessionNoteRepository, jest.Mock>> = {}, booking: { getForNote: jest.Mock } = { getForNote: jest.fn(async () => ({ id: 'b1', mentorId: 'mentor-1', seekerId: 'seeker-1', status: 'accepted' })) }) {
+  return new SessionNoteService({ sessionNoteRepository: repository as unknown as SessionNoteRepository, bookingService: booking as never });
 }
 
 describe('SessionNoteService', () => {
@@ -19,8 +19,23 @@ describe('SessionNoteService', () => {
     const create = jest.fn(async (data) => stored(data));
     const service = setup({ create });
     const note = await service.create(ME, { bookingId: 'b1', title: 'T', content: 'C' });
-    expect(create).toHaveBeenCalledWith(expect.objectContaining({ mentorId: ME.userId, seekerApprovedAt: null, withdrawnAt: null }));
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ bookingId: 'b1', mentorId: 'mentor-1', seekerId: 'seeker-1', seekerApprovedAt: null, withdrawnAt: null }));
     expect(note.seekerApprovedAt).toBeNull();
+  });
+
+
+  it('rejects a booking when the caller is not a participant', async () => {
+    const create = jest.fn();
+    const service = setup({ create }, { getForNote: jest.fn(async () => null) });
+    await expect(service.create({ userId: 'stranger' }, { bookingId: 'b1', title: 'T', content: 'C' })).rejects.toBeInstanceOf(NotFoundError);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('rejects seeker note creation even when the seeker belongs to the booking', async () => {
+    const create = jest.fn();
+    const service = setup({ create }, { getForNote: jest.fn(async () => ({ id: 'b1', mentorId: 'mentor-1', seekerId: 'seeker-1', status: 'accepted' })) });
+    await expect(service.create({ userId: 'seeker-1' }, { bookingId: 'b1', title: 'T', content: 'C' })).rejects.toBeInstanceOf(NotFoundError);
+    expect(create).not.toHaveBeenCalled();
   });
 
   it('lists only through the current mentor id', async () => {
