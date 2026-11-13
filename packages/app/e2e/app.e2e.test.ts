@@ -6,7 +6,7 @@
  * rendered in headless Chromium (computed styles, console errors, the login and article flows).
  */
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
@@ -51,6 +51,7 @@ const env: NodeJS.ProcessEnv = {
   AI_ALLOW_MOCK_IN_PRODUCTION: 'true',
   AI_LIVE_ENABLED: 'false',
   PAYMENTS_LIVE_ENABLED: 'false',
+  OPERATOR_USER_IDS: DEMO_AUTHOR.id,
   JEST_WORKER_ID: process.env.JEST_WORKER_ID ?? '1',
 };
 
@@ -232,6 +233,12 @@ async function seedE2ETerms(): Promise<void> {
 }
 
 let userCounter = 0;
+function operatorCookie(): string {
+  const now = Math.floor(Date.now() / 1000);
+  const signingInput = `${Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url')}.${Buffer.from(JSON.stringify({ sub: DEMO_AUTHOR.id, iat: now, exp: now + 24 * 60 * 60 })).toString('base64url')}`;
+  const signature = createHmac('sha256', JWT_SECRET).update(signingInput).digest('base64url');
+  return `devmentor_session=${signingInput}.${signature}`;
+}
 /** Registers a new user (each from its own client address, so the register limiter never interferes). */
 async function registerUser(name = 'Tester') {
   userCounter += 1;
@@ -787,6 +794,41 @@ describe('mock booking payment flow', () => {
     expect(mentorList.body.data.items.some((item: { id: string }) => item.id === abandonedAttempt.booking.id)).toBe(false);
     expect(unpaid.body.data.status).not.toBe('paid');
   }, 120_000);
+});
+
+describe('E03 terms and retention controls', () => {
+  it('rejects seeker acceptance when the submitted digest is stale', async () => {
+    const seeker = await registerPilotUser('seeker', 'Stale Terms Seeker');
+    const terms = await currentTerms('seeker');
+    const result = await api('/api/terms/accept', {
+      method: 'POST', cookie: seeker.cookie,
+      json: { kind: 'seeker', versionId: terms.id, sha256: '0'.repeat(64) },
+    });
+
+    expect(result.response.status).toBe(409);
+    expect(result.body.ok).toBe(false);
+    const accepted = await api('/api/terms/accepted?kind=seeker', { cookie: seeker.cookie });
+    expect(accepted.response.status).toBe(200);
+    expect(accepted.body.data).toEqual([]);
+  });
+
+  it('denies a non-operator access to legal holds', async () => {
+    const seeker = await registerPilotUser('seeker', 'Retention Access Seeker');
+
+    const result = await api('/api/operator/retention/holds', { cookie: seeker.cookie });
+
+    expect(result.response.status).toBe(403);
+    expect(result.body.ok).toBe(false);
+  });
+
+  it('rejects a legal hold without its required reason', async () => {
+    const invalid = await api('/api/operator/retention/holds', {
+      method: 'POST', cookie: operatorCookie(),
+      json: { contentType: 'note', contentId: DEMO_AUTHOR.id, reason: '   ' },
+    });
+    expect(invalid.response.status).toBe(400);
+    expect(invalid.body.ok).toBe(false);
+  });
 });
 
 describe('mentor profile publication', () => {
