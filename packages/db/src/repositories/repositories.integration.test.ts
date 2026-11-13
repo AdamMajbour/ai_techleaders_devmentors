@@ -74,11 +74,11 @@ beforeAll(async () => {
 });
 
 async function resetDatabase(): Promise<void> {
-  // Start from an empty database and build the schema with the real migrations.
-  await orm.schema.dropSchema({ dropMigrationsTable: true });
-  // PostgreSQL functions are schema objects and survive MikroORM's table-only
-  // reset, unlike the trigger attached to the dropped bookings table.
-  await orm.em.getConnection().execute('drop function if exists "release_booking_availability_slot"() cascade');
+  // Migration-created audit and payout tables are not all mapped as ORM entities,
+  // so MikroORM's metadata-based reset would leave them behind between tests.
+  // DATABASE_NAME is asserted before the first reset to confine this to the test DB.
+  await orm.em.getConnection().execute('drop schema public cascade');
+  await orm.em.getConnection().execute('create schema public');
   await orm.migrator.up();
   // Articles provide an existing mapped target table for exercising the generic transition runner.
   await orm.em.getConnection().execute('alter table "articles" add column "status" varchar(255)');
@@ -107,7 +107,16 @@ describe('migrations', () => {
       'mikro_orm_migrations',
       'notes',
       'payments',
+      'payout_transfer_attempts',
+      'payout_transfers',
+      'retention_legal_hold_releases',
+      'retention_legal_holds',
+      'retention_sweep_runs',
       'status_transitions',
+      'stripe_connect_accounts',
+      'terms_acceptances',
+      'terms_reviews',
+      'terms_versions',
       'users',
       'vault_answer_citations',
       'vault_answer_reviews',
