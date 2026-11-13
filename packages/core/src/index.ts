@@ -16,3 +16,5 @@ export * from './validators/articles/article-list.schema';
 export type { ArticleDto, UserDto, Page } from './services/dto';
 export { CLIENT_HEADER_NAME, CLIENT_HEADER_VALUE } from './security/csrf';
 export type { Session } from './security/session';
+export * from './validators/notes/session-note.schema';
+export type { SessionNoteDto } from './services/dto';

@@ -3,3 +3,4 @@ import 'reflect-metadata';
 
 export { User } from './auth/user.entity';
 export { Article } from './articles/article.entity';
+export { SessionNote } from './notes/session-note.entity';

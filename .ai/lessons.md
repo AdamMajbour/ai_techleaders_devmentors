@@ -51,3 +51,4 @@ Praktyczne instrukcje dla przyszłych prac — co robić (lub czego nie robić) 
 ## Dalsze wymagane działania
 Jeśli jest coś, co trzeba jeszcze zrobić lub zbadać.
 ```
+- [Session notes depend on session identity](lessons/2026-11-13-session-notes-boundaries.md): a session UUID cannot establish participant access; keep notes owner-only until E01 exists, and do not merge them into the E02 vault corpus.

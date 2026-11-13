@@ -27,3 +27,31 @@ export function toArticleDto(article: Article): ArticleDto {
     updatedAt: article.updatedAt.toISOString(),
   };
 }
+
+export type SessionNoteDto = {
+  id: string;
+  sessionId: string;
+  mentorId: string;
+  seekerId: string;
+  title: string;
+  content: string;
+  seekerApprovedAt: string | null;
+  withdrawnAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export function toSessionNoteDto(note: import('@devmentor/db').SessionNote): SessionNoteDto {
+  return {
+    id: note.id,
+    sessionId: note.sessionId,
+    mentorId: note.mentorId,
+    seekerId: note.seekerId,
+    title: note.title,
+    content: note.content,
+    seekerApprovedAt: note.seekerApprovedAt?.toISOString() ?? null,
+    withdrawnAt: note.withdrawnAt?.toISOString() ?? null,
+    createdAt: note.createdAt.toISOString(),
+    updatedAt: note.updatedAt.toISOString(),
+  };
+}

@@ -90,3 +90,5 @@ export class ArticleRepository {
     return true;
   }
 }
+
+export { SessionNoteRepository } from './session-note.repository';
