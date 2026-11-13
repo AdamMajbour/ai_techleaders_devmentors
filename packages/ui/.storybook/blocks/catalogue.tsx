@@ -495,7 +495,7 @@ export const CATALOGUE: CatalogueEntry[] = [
     when: 'Beside the editor of a draft or a taken-down note.',
     whenNot: 'A seeker\'s terms (TermsConsent).',
     docs: 'product-notes-publishnoticepanel--docs',
-    preview: <PublishNoticePanel noticeItems={NOTICE_ITEMS.slice(0, 2)} noticeVersion={NOTICE_VERSION} onPublish={ok} />,
+    preview: <PublishNoticePanel noticeItems={NOTICE_ITEMS.slice(0, 2)} noticeVersion={NOTICE_VERSION} termsVersionId="00000000-0000-4000-8000-000000000001" termsSha256={'a'.repeat(64)} onPublish={ok} />,
   },
   {
     name: 'VaultAnswerView',

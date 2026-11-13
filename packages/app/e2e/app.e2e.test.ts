@@ -6,14 +6,14 @@
  * rendered in headless Chromium (computed styles, console errors, the login and article flows).
  */
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { chromium, type Browser } from 'playwright';
 import '../../db/src/load-env';
-import { closeORM, initializeORM, InvitationRepository } from '../../db/src';
+import { closeORM, initializeORM, InvitationRepository, TermsRepository } from '../../db/src';
 import { VAULT_NOTICE_VERSION } from '@devmentor/core';
 // Relative on purpose: app code must not import the db package, but a test may read its demo constants.
 import { DEMO_ARTICLE_TITLE, DEMO_AUTHOR } from '../../db/scripts/seed-data';
@@ -145,6 +145,7 @@ beforeAll(async () => {
   await cleanE2EDatabase();
   run(['--workspace=@devmentor/db', 'run', 'migrate']);
   run(['--workspace=@devmentor/db', 'run', 'seed']);
+  await seedE2ETerms();
   run(['run', 'build'], APP_DIR);
 
   server = await startServer();
@@ -176,6 +177,54 @@ async function api(pathname: string, { method = 'GET', json, cookie, headers = {
   });
   const text = await response.text();
   return { response, text, body: text ? JSON.parse(text) : null };
+}
+
+type E2ETerms = { id: string; sha256: string };
+
+async function currentTerms(kind: 'seeker' | 'mentor'): Promise<E2ETerms> {
+  const result = await api(`/api/terms/current?kind=${kind}`);
+  const data: unknown = result.body?.data;
+  if (
+    result.response.status !== 200 ||
+    typeof data !== 'object' ||
+    data === null ||
+    !('id' in data) || typeof data.id !== 'string' ||
+    !('sha256' in data) || typeof data.sha256 !== 'string'
+  ) {
+    throw new Error(`Current ${kind} terms are unavailable in the E2E fixture.`);
+  }
+  return { id: data.id, sha256: data.sha256 };
+}
+
+async function seedE2ETerms(): Promise<void> {
+  // E2E-only reviewed terms let the payment and publication flows exercise the
+  // same consent gates as the app without treating test fixtures as legal copy.
+  e2eOrm = await initializeORM({ dbName: E2E_DATABASE_NAME });
+  const repository = new TermsRepository(e2eOrm.em.fork());
+  const operatorId = DEMO_AUTHOR.id;
+  const now = new Date();
+  for (const kind of ['seeker', 'mentor'] as const) {
+    const body = `E2E fixture terms for ${kind}; not legal copy.`;
+    const sha256 = createHash('sha256').update(body, 'utf8').digest('hex');
+    const draft = await repository.createDraft({
+      kind,
+      version: 'e2e-1',
+      body,
+      sha256,
+      createdBy: operatorId,
+    });
+    await repository.recordReview({
+      termsVersionId: draft.id,
+      sha256,
+      reviewer: 'E2E fixture verifier',
+      scopes: ['terms', 'payment_handling', 'ai_notice_and_processors'],
+      outcome: 'pass',
+      reviewedAt: now,
+      note: 'Test fixture only.',
+      recordedBy: operatorId,
+    });
+    await repository.publish(draft.id, now);
+  }
 }
 
 let userCounter = 0;
@@ -637,6 +686,7 @@ describe('mock booking payment flow', () => {
     });
     expect(profileResponse.response.status).toBe(201);
     const profile = profileResponse.body.data;
+    const seekerTerms = await currentTerms('seeker');
     let bookingAttempt = 0;
     const createBooking = async (question: string) => {
       const slotStart = new Date(Math.ceil((Date.now() + (60 + bookingAttempt++ * 30) * 60_000) / (15 * 60_000)) * (15 * 60_000));
@@ -661,7 +711,16 @@ describe('mock booking payment flow', () => {
       const response = await api('/api/bookings', {
         method: 'POST',
         cookie: seeker.cookie,
-        json: { mentorId: profile.id, availabilitySlotId: slotResponse.body.data.id, question, source: 'list', landedAt },
+        json: {
+          mentorId: profile.id,
+          availabilitySlotId: slotResponse.body.data.id,
+          question,
+          source: 'list',
+          landedAt,
+          acceptedTerms: true,
+          termsVersionId: seekerTerms.id,
+          termsSha256: seekerTerms.sha256,
+        },
       });
       expect(response.response.status).toBe(201);
       expect(response.body.data.booking).toMatchObject({
@@ -753,10 +812,17 @@ describe('mock vault purchase and mentor preview', () => {
       json: { title: noteTitle, body: 'A reliable service uses observable health checks and bounded retries.' },
     });
     expect(createdNote.response.status).toBe(201);
+    const mentorTerms = await currentTerms('mentor');
     const published = await api(`/api/notes/${createdNote.body.data.id}/publish`, {
       method: 'POST',
       cookie: mentor.cookie,
-      json: { consent: true, noticeVersion: VAULT_NOTICE_VERSION },
+      json: {
+        consent: true,
+        noticeVersion: VAULT_NOTICE_VERSION,
+        acceptedTerms: true,
+        termsVersionId: mentorTerms.id,
+        termsSha256: mentorTerms.sha256,
+      },
     });
     expect(published.response.status).toBe(200);
     expect(published.body.data.status).toBe('published');

@@ -1,0 +1,12 @@
+import { parseOrThrow, termsReviewSchema } from '@devmentor/core';
+import { apiHandler, assertCsrfSafe, requireOperator, requireSession, withScope } from '@devmentor/core/server';
+
+export const dynamic = 'force-dynamic';
+
+export const POST = apiHandler(async (request: Request) => {
+  assertCsrfSafe(request);
+  const session = await requireSession(request);
+  requireOperator(session);
+  const input = parseOrThrow(termsReviewSchema, await request.json());
+  return withScope(({ termsService }) => termsService.recordReview(session, input));
+});

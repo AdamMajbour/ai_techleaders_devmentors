@@ -14,6 +14,7 @@ import type { InvitationService } from '../auth/invitation.service';
 import { NoteSelector } from './note-selector';
 import { vaultAnswerDtoSchema, vaultAnswerCreateSchema, type VaultAnswerDto } from '../../validators/vault/vault-answer.schema';
 import { vaultAnswerStateMachine } from '../../workflow/vault-answer-state-machine';
+import type { TermsService } from '../terms/terms.service';
 
 type Dependencies = {
   vaultAnswerRepository: Pick<VaultAnswerRepository, 'createWithPayment' | 'findById' | 'findForSeeker' | 'countOpenForSeeker' | 'failCheckout' | 'findCitations' | 'findReviewFor'>;
@@ -28,6 +29,7 @@ type Dependencies = {
   vaultSettings: () => VaultSettings;
   assertAIReady?: () => void;
   vaultGenerationTask?: { run(input: { limit: number }): Promise<{ processed: number }> };
+  termsService?: Pick<TermsService, 'assertReady' | 'assertCurrent' | 'acceptAtCheckout'>;
 };
 
 export interface VaultAnswerCreationResult {
@@ -49,6 +51,8 @@ export class VaultAnswerService {
     if (!parsed.success) throw new AppError('The question is invalid.', 'validation_failed', 400);
     if (!(await this.dependencies.invitationService.isPilotMember(session.userId))) throw new NotFoundError();
     if (!(await this.dependencies.invitationService.isAcceptedSeeker(session.userId))) throw new ForbiddenError();
+
+    if (this.dependencies.termsService) await this.dependencies.termsService.assertCurrent('seeker', { versionId: parsed.data.termsVersionId, sha256: parsed.data.termsSha256 });
 
     try {
       this.assertAIReady();
@@ -89,6 +93,16 @@ export class VaultAnswerService {
       currency: CURRENCY,
       status: 'pending',
     });
+
+    if (this.dependencies.termsService) {
+      try {
+        await this.dependencies.termsService.acceptAtCheckout(session.userId, 'seeker', 'vault_answer', answer.id, { versionId: parsed.data.termsVersionId, sha256: parsed.data.termsSha256 });
+      } catch (error) {
+        try { await this.dependencies.vaultAnswerRepository.failCheckout(answer.id); }
+        catch (persistenceError) { throw new AggregateError([error, persistenceError], 'Terms consent failed and the vault answer could not be closed.'); }
+        throw error;
+      }
+    }
 
     let checkout: Awaited<ReturnType<PaymentGateway['createCheckout']>>;
     try {

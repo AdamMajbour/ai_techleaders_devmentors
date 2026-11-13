@@ -54,6 +54,7 @@ describe('parseEnv', () => {
         STRIPE_SECRET_KEY: undefined,
         STRIPE_WEBHOOK_SECRET: undefined,
         PAYMENTS_LIVE_ENABLED: false,
+        STRIPE_CONNECT_ENABLED: false,
       });
     });
 
@@ -88,6 +89,12 @@ describe('parseEnv', () => {
       expect(() => parsePaymentSettings({
         PAYMENTS_LIVE_ENABLED: 'yes',
       })).toThrow(/PAYMENTS_LIVE_ENABLED/);
+    });
+
+    it('enables the Connect rehearsal only with a Stripe test key', () => {
+      expect(parsePaymentSettings({ PAYMENTS_MODE: 'stripe', STRIPE_SECRET_KEY: 'sk_test_valid123', STRIPE_CONNECT_ENABLED: 'true' }).STRIPE_CONNECT_ENABLED).toBe(true);
+      expect(() => parsePaymentSettings({ STRIPE_CONNECT_ENABLED: 'true' })).toThrow(/STRIPE_CONNECT_ENABLED/);
+      expect(() => parsePaymentSettings({ PAYMENTS_MODE: 'stripe', STRIPE_SECRET_KEY: 'sk_live_secret123', PAYMENTS_LIVE_ENABLED: 'true', STRIPE_CONNECT_ENABLED: 'true' })).toThrow(/STRIPE_CONNECT_ENABLED/);
     });
   });
 

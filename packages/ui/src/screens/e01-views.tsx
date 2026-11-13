@@ -164,6 +164,8 @@ export function MentorProfileView({ mentor, onSubmit }: { mentor: MentorRowData;
         priceMinor={2500}
         currency="EUR"
         termsHref="#terms"
+        termsVersionId="00000000-0000-4000-8000-000000000001"
+        termsSha256={'a'.repeat(64)}
         termsHint="Your question is kept until the pilot ends and then deleted."
         onSubmit={onSubmit}
       />

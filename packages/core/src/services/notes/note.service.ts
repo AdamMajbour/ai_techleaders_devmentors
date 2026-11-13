@@ -18,6 +18,7 @@ import {
   type NoteSummaryDto,
 } from '../../validators/notes/note.schema';
 import { VAULT_NOTICE_VERSION } from '../../validators/notes/notice';
+import type { TermsService } from '../terms/terms.service';
 
 export type { NoteDto, NoteInput, NoteSummaryDto };
 
@@ -27,6 +28,7 @@ type Dependencies = {
   eventBus: EventBus;
   clock: Clock;
   vaultSettings: () => VaultSettings;
+  termsService?: Pick<TermsService, 'acceptForNotePublication'>;
 };
 
 function toNoteDto(note: Note, canPublish: boolean): NoteDto {
@@ -57,13 +59,15 @@ export class NoteService {
   private readonly eventBus: EventBus;
   private readonly clock: Clock;
   private readonly vaultSettings: () => VaultSettings;
+  private readonly termsService?: Pick<TermsService, 'acceptForNotePublication'>;
 
-  constructor({ noteRepository, invitationService, eventBus, clock, vaultSettings }: Dependencies) {
+  constructor({ noteRepository, invitationService, eventBus, clock, vaultSettings, termsService }: Dependencies) {
     this.noteRepository = noteRepository;
     this.invitationService = invitationService;
     this.eventBus = eventBus;
     this.clock = clock;
     this.vaultSettings = vaultSettings;
+    this.termsService = termsService;
   }
 
   async list(session: Session, { page }: NoteListQuery): Promise<Page<NoteSummaryDto>> {
@@ -134,6 +138,7 @@ export class NoteService {
     }
     const existing = await this.find(id);
     assertOwns(session, existing.mentorId);
+    if (this.termsService) await this.termsService.acceptForNotePublication(session.userId, { versionId: input.termsVersionId, sha256: input.termsSha256 });
     const now = this.clock.now();
     if (!(await this.noteRepository.publish(id, session.userId, VAULT_NOTICE_VERSION, now))) {
       throw new ConflictError('Only a draft or taken-down note can be published.');

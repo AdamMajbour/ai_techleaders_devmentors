@@ -38,6 +38,8 @@ beforeEach(() => {
   apiCall.mockImplementation(async (path) => (
     typeof path === 'string' && path.includes('/availability')
       ? success([])
+      : typeof path === 'string' && path.includes('/api/terms/current')
+        ? success({ id: '00000000-0000-4000-8000-000000000001', version: 'pilot-1', sha256: 'a'.repeat(64) })
       : success(unlistedProfile)
   ) as never);
   window.sessionStorage.clear();
@@ -83,6 +85,8 @@ describe('MentorProfileView', () => {
         .mockImplementation(async (path) => (
           typeof path === 'string' && path.includes('/availability')
             ? success([slot])
+            : typeof path === 'string' && path.includes('/api/terms/current')
+              ? success({ id: '00000000-0000-4000-8000-000000000001', version: 'pilot-1', sha256: 'a'.repeat(64) })
             : typeof path === 'string' && path === '/api/bookings'
               ? { ok: false, status: 503, error: { code: 'unavailable', message: 'Checkout is temporarily unavailable.' } }
               : success(unlistedProfile)
@@ -109,6 +113,9 @@ describe('MentorProfileView', () => {
           mentorId: unlistedProfile.id,
           availabilitySlotId: slot.id,
           question: 'How do I fix this issue in the service?',
+          acceptedTerms: true,
+          termsVersionId: '00000000-0000-4000-8000-000000000001',
+          termsSha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
           source: 'list',
           landedAt: landing,
         },

@@ -2,6 +2,9 @@ import { z } from 'zod';
 
 export const vaultAnswerCreateSchema = z.object({
   question: z.string().trim().min(1).max(2000),
+  acceptedTerms: z.literal(true),
+  termsVersionId: z.uuid(),
+  termsSha256: z.string().regex(/^[0-9a-f]{64}$/),
 });
 
 export const vaultAnswerIdSchema = z.object({ id: z.uuid() });

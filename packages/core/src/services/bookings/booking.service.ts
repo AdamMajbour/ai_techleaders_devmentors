@@ -23,6 +23,7 @@ import type { ApprovalService } from '../approvals/approval.service';
 import type { RefundService } from '../refunds/refund.service';
 import type { PaymentGateway } from '../payments/payment-gateway.port';
 import type { PaymentService } from '../payments/payment.service';
+import type { TermsService } from '../terms/terms.service';
 import { MockPaymentGateway } from '../payments/adapters/mock-payment-gateway';
 import { toBookingDto, type BookingDto, type BookingPage, type BookingReadDto } from '../dto';
 
@@ -41,6 +42,7 @@ type Dependencies = {
   approvalRequestRepository: Pick<ApprovalRequestRepository, 'findBySubjectStatuses'>;
   refundService: Pick<RefundService, 'approveAutomatically'>;
   bookingSettings?: typeof getBookingSettings;
+  termsService?: Pick<TermsService, 'assertReady' | 'assertCurrent' | 'acceptAtCheckout'>;
 };
 
 const ACCEPT_START_MAX_AHEAD_MS = 7 * 24 * 60 * 60 * 1000;
@@ -67,6 +69,7 @@ export class BookingService {
   private readonly approvalRequestRepository: Dependencies['approvalRequestRepository'];
   private readonly refundService: Dependencies['refundService'];
   private readonly bookingSettings: NonNullable<Dependencies['bookingSettings']>;
+  private readonly termsService?: Dependencies['termsService'];
 
   constructor({
     bookingRepository,
@@ -83,6 +86,7 @@ export class BookingService {
     approvalRequestRepository,
     refundService,
     bookingSettings = getBookingSettings,
+    termsService,
   }: Dependencies) {
     this.bookingRepository = bookingRepository;
     this.availabilitySlotRepository = availabilitySlotRepository;
@@ -98,6 +102,7 @@ export class BookingService {
     this.approvalRequestRepository = approvalRequestRepository;
     this.refundService = refundService;
     this.bookingSettings = bookingSettings;
+    this.termsService = termsService;
   }
 
   async create(session: Session, untrustedInput: unknown): Promise<BookingCreationResult> {
@@ -118,6 +123,7 @@ export class BookingService {
     const oldestAllowedLanding = now.getTime() - 24 * 60 * 60 * 1000;
     const requestedLanding = input.landedAt ? new Date(input.landedAt).getTime() : now.getTime();
     const landedAt = new Date(Math.min(now.getTime(), Math.max(oldestAllowedLanding, requestedLanding)));
+    if (this.termsService) await this.termsService.assertCurrent('seeker', { versionId: input.termsVersionId, sha256: input.termsSha256 });
     let booking: Booking;
     try {
       ({ booking } = await this.availabilitySlotRepository.reserveWithBooking(
@@ -153,6 +159,16 @@ export class BookingService {
         throw new ConflictError('That time is no longer available. Refresh the mentor profile and choose another time.');
       }
       throw error;
+    }
+
+    if (this.termsService) {
+      try {
+        await this.termsService.acceptAtCheckout(session.userId, 'seeker', 'booking', booking.id, { versionId: input.termsVersionId, sha256: input.termsSha256 });
+      } catch (error) {
+        try { await this.bookingRepository.failCheckout(booking.id); }
+        catch (persistenceError) { throw new AggregateError([error, persistenceError], 'Terms consent failed and the booking could not be closed.'); }
+        throw error;
+      }
     }
 
     const idempotencyKey = `booking:${booking.id}:checkout`;

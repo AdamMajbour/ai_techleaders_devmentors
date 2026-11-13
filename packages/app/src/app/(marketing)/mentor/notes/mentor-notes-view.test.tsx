@@ -43,6 +43,6 @@ describe('MentorNoteDetail', () => {
     expect(await screen.findByRole('heading', { name: 'Before you publish this note' })).toBeVisible();
     expect(screen.getByText(/sent to an AI provider every time a seeker asks a question/)).toBeVisible();
     expect(screen.getByLabelText(/I have read this and I agree/)).not.toBeChecked();
-    expect(screen.getByRole('button', { name: 'Publish note' })).toHaveAccessibleDescription('Tick the box to publish');
+    expect(screen.getByRole('button', { name: 'Publish note' })).toHaveAccessibleDescription('Read and accept both items to publish');
   });
 });

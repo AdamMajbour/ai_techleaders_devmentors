@@ -32,6 +32,9 @@ export * from './validators/approvals/refund-approval-action.schema';
 export * from './validators/messages/message.schema';
 export * from './validators/notes/note.schema';
 export * from './validators/vault/vault-answer.schema';
+export * from './validators/terms/terms.schema';
+export * from './validators/terms/pilot-metrics.schema';
+export * from './validators/terms/retention.schema';
 export { VAULT_NOTICE_DRAFT_LABEL, VAULT_NOTICE_ITEMS, VAULT_NOTICE_VERSION } from './validators/notes/notice';
 export type {
   ArticleDto,

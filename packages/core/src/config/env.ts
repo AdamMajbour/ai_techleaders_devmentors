@@ -138,6 +138,7 @@ const paymentSettingsSchema = z.object({
   STRIPE_SECRET_KEY: optionalPaymentValue,
   STRIPE_WEBHOOK_SECRET: optionalPaymentValue,
   PAYMENTS_LIVE_ENABLED: paymentBooleanSchema,
+  STRIPE_CONNECT_ENABLED: paymentBooleanSchema,
 }).superRefine((settings, context) => {
   if (
     settings.STRIPE_SECRET_KEY &&
@@ -168,6 +169,9 @@ const paymentSettingsSchema = z.object({
       path: ['PAYMENTS_LIVE_ENABLED'],
       message: 'Must be true to use a live Stripe secret key',
     });
+  }
+  if (settings.STRIPE_CONNECT_ENABLED && (settings.PAYMENTS_MODE !== 'stripe' || !settings.STRIPE_SECRET_KEY?.startsWith('sk_test_'))) {
+    context.addIssue({ code: 'custom', path: ['STRIPE_CONNECT_ENABLED'], message: 'The E03 Express Connect pilot requires Stripe test mode and a test secret key.' });
   }
 });
 

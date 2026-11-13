@@ -24,6 +24,7 @@
     "pilot:invite": "npm --workspace=@devmentor/core run pilot:invite --",
     "bookings:settle": "npm --workspace=@devmentor/core run bookings:settle --",
     "vault:settle": "npm --workspace=@devmentor/core run vault:settle --",
+    "retention:sweep": "npm --workspace=@devmentor/core run retention:sweep --",
     "test:integration": "jest --selectProjects db",
     "test:all": "jest",
     "test:e2e": "jest --selectProjects e2e --runInBand",

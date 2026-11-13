@@ -25,10 +25,12 @@ export interface QuestionFormProps {
   /** Hide the standard notice when the parent screen keeps price visible before a prior choice. */
   showPriceNotice?: boolean;
   termsHref: string;
+  termsVersionId: string;
+  termsSha256: string;
   /** The owner's wording about data and retention. Not written by the component. */
   termsHint?: ReactNode;
   /** Sends the question and starts the payment. Resolves to the `apiCall` result. */
-  onSubmit: (input: { question: string; acceptedTerms: true }) => Promise<ApiResult<unknown>>;
+  onSubmit: (input: { question: string; acceptedTerms: true; termsVersionId: string; termsSha256: string }) => Promise<ApiResult<unknown>>;
   /** Called only after the server confirmed. The caller sends the user to the payment. */
   onSuccess?: (data: unknown) => void;
   /** Shortest question that is accepted. A proposal, not a decision. */
@@ -50,6 +52,8 @@ export function QuestionForm({
   refundRule = DEFAULT_REFUND_RULE,
   showPriceNotice = true,
   termsHref,
+  termsVersionId,
+  termsSha256,
   termsHint,
   onSubmit,
   onSuccess,
@@ -85,7 +89,7 @@ export function QuestionForm({
     if (pending || blockedReason) return;
     setFormError(undefined);
     setPending(true);
-    const result = await onSubmit({ question: trimmed, acceptedTerms: true });
+    const result = await onSubmit({ question: trimmed, acceptedTerms: true, termsVersionId, termsSha256 });
     setPending(false);
     if (result.ok) {
       onSuccess?.(result.data);

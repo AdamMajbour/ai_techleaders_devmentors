@@ -13,8 +13,10 @@ export interface PublishNoticePanelProps {
   noticeItems: string[];
   /** The version the server expects. Sent back with the consent so a changed notice is never accepted unread. */
   noticeVersion: string;
+  termsVersionId: string;
+  termsSha256: string;
   /** Publishes the note. Resolves to the `apiCall` result. */
-  onPublish: (input: { consent: true; noticeVersion: string }) => Promise<ApiResult<unknown>>;
+  onPublish: (input: { consent: true; noticeVersion: string; acceptedTerms: true; termsVersionId: string; termsSha256: string }) => Promise<ApiResult<unknown>>;
   /** Called only after the server confirmed. */
   onSuccess?: (data: unknown) => void;
   /** Why publishing is not possible now (for example the notice is not yet reviewed). Blocks the button and says why. */
@@ -23,19 +25,20 @@ export interface PublishNoticePanelProps {
 
 // The main trust moment of the vault (D09): the mentor reads what happens to the note and agrees to it, every time
 // they publish. Consent is never pre-ticked and is not kept from an earlier publication.
-export function PublishNoticePanel({ noticeItems, noticeVersion, onPublish, onSuccess, blockedReason }: PublishNoticePanelProps) {
+export function PublishNoticePanel({ noticeItems, noticeVersion, termsVersionId, termsSha256, onPublish, onSuccess, blockedReason }: PublishNoticePanelProps) {
   const headingId = useId();
   const [consent, setConsent] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | undefined>();
-  const reason = blockedReason ?? (consent ? undefined : 'Tick the box to publish');
+  const reason = blockedReason ?? (consent && acceptedTerms ? undefined : 'Read and accept both items to publish');
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (pending || reason) return;
     setError(undefined);
     setPending(true);
-    const result = await onPublish({ consent: true, noticeVersion });
+    const result = await onPublish({ consent: true, noticeVersion, acceptedTerms: true, termsVersionId, termsSha256 });
     setPending(false);
     if (result.ok) onSuccess?.(result.data);
     else setError(result.error.message);
@@ -55,6 +58,9 @@ export function PublishNoticePanel({ noticeItems, noticeVersion, onPublish, onSu
       <form onSubmit={submit} noValidate className="flex flex-col gap-between-groups">
         <Field orientation="inline" label="I have read this and I agree that this note is used this way.">
           <Checkbox checked={consent} disabled={pending} onCheckedChange={(value) => setConsent(value === true)} />
+        </Field>
+        <Field orientation="inline" label={<span>I accept the current <a href="/terms" className="underline">mentor pilot terms</a>.</span>}>
+          <Checkbox checked={acceptedTerms} disabled={pending} onCheckedChange={(value) => setAcceptedTerms(value === true)} />
         </Field>
         {error ? (
           <Alert variant="destructive">

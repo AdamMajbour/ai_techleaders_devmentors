@@ -78,6 +78,8 @@ export function MentorNoteDetail({ noteId }: { noteId?: string }) {
   const [savedNote, setSavedNote] = useState<NoteDto | null>(null);
   const [saved, setSaved] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const termsRequest = useAsync(() => apiCall<{ id: string; sha256: string } | null>('/api/terms/current?kind=mentor'), []);
+  const currentTerms = termsRequest.data?.ok ? termsRequest.data.data : null;
   const request = useAsync(
     () => noteId ? apiCall<NoteDto>(`/api/notes/${encodeURIComponent(noteId)}`) : Promise.resolve(null),
     [noteId, reloads],
@@ -149,9 +151,11 @@ export function MentorNoteDetail({ noteId }: { noteId?: string }) {
           {status === 'draft' || status === 'taken_down' ? (
             <>
               <p className="m-0 text-label text-muted-foreground">{VAULT_NOTICE_DRAFT_LABEL}</p>
-              <PublishNoticePanel
+              {currentTerms ? <PublishNoticePanel
                 noticeItems={[...VAULT_NOTICE_ITEMS]}
                 noticeVersion={VAULT_NOTICE_VERSION}
+                termsVersionId={currentTerms.id}
+                termsSha256={currentTerms.sha256}
                 blockedReason={note?.canPublish === false ? 'Publishing opens when the notice has been reviewed.' : undefined}
                 onPublish={(input) => apiCall<NoteDto>(`/api/notes/${encodeURIComponent(note!.id)}/publish`, { method: 'POST', json: input })}
                 onSuccess={(data) => {
@@ -162,7 +166,7 @@ export function MentorNoteDetail({ noteId }: { noteId?: string }) {
                     retryLoad();
                   }
                 }}
-              />
+              /> : <p role="status" className="m-0 text-body text-muted-foreground">Publishing is unavailable until reviewed mentor terms are published.</p>}
             </>
           ) : null}
         </>

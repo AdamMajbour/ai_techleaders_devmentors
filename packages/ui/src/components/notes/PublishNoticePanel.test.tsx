@@ -9,7 +9,7 @@ const ITEMS = ['The note is sent to an AI provider every time an answer is writt
 function setup(props: Partial<React.ComponentProps<typeof PublishNoticePanel>> = {}) {
   const onPublish = jest.fn(async () => ok);
   const onSuccess = jest.fn();
-  render(<PublishNoticePanel noticeItems={ITEMS} noticeVersion="v1" onPublish={onPublish} onSuccess={onSuccess} {...props} />);
+  render(<PublishNoticePanel noticeItems={ITEMS} noticeVersion="v1" termsVersionId="00000000-0000-4000-8000-000000000001" termsSha256={'a'.repeat(64)} onPublish={onPublish} onSuccess={onSuccess} {...props} />);
   return { onPublish, onSuccess };
 }
 
@@ -20,22 +20,23 @@ describe('PublishNoticePanel', () => {
     expect(items).toHaveLength(2);
     expect(items[0]).toHaveTextContent('sent to an AI provider every time');
     const list = screen.getByRole('list');
-    const box = screen.getByRole('checkbox');
+    const box = screen.getAllByRole('checkbox')[0];
     expect(list.compareDocumentPosition(box) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('never pre-ticks the consent and blocks the button with the reason', () => {
     setup();
-    expect(screen.getByRole('checkbox')).not.toBeChecked();
-    expect(screen.getByRole('button', { name: 'Publish note' })).toHaveAccessibleDescription('Tick the box to publish');
+    expect(screen.getAllByRole('checkbox').every((box) => !(box as HTMLInputElement).checked)).toBe(true);
+    expect(screen.getByRole('button', { name: 'Publish note' })).toHaveAccessibleDescription('Read and accept both items to publish');
   });
 
   it('publishes with the consent and the version of the notice that was shown', async () => {
     const { onPublish, onSuccess } = setup();
-    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(screen.getAllByRole('checkbox')[0]);
+    await userEvent.click(screen.getAllByRole('checkbox')[1]);
     await userEvent.click(screen.getByRole('button', { name: 'Publish note' }));
     await waitFor(() => expect(onSuccess).toHaveBeenCalledWith({ status: 'published' }));
-    expect(onPublish).toHaveBeenCalledWith({ consent: true, noticeVersion: 'v1' });
+    expect(onPublish).toHaveBeenCalledWith({ consent: true, noticeVersion: 'v1', acceptedTerms: true, termsVersionId: '00000000-0000-4000-8000-000000000001', termsSha256: 'a'.repeat(64) });
   });
 
   it('does not publish while the box is not ticked', async () => {
@@ -48,24 +49,27 @@ describe('PublishNoticePanel', () => {
     const { onSuccess } = setup({
       onPublish: async () => ({ ok: false, status: 409, error: { code: 'notice_changed', message: 'The notice changed. Read it again before you publish.' } }),
     });
-    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(screen.getAllByRole('checkbox')[0]);
+    await userEvent.click(screen.getAllByRole('checkbox')[1]);
     await userEvent.click(screen.getByRole('button', { name: 'Publish note' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('The notice changed. Read it again');
     expect(onSuccess).not.toHaveBeenCalled();
-    expect(screen.getByRole('checkbox')).toBeChecked();
+    expect(screen.getAllByRole('checkbox')[0]).toBeChecked();
   });
 
   it('blocks everything while publishing', async () => {
     setup({ onPublish: () => new Promise<ApiResult<unknown>>(() => {}) });
-    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(screen.getAllByRole('checkbox')[0]);
+    await userEvent.click(screen.getAllByRole('checkbox')[1]);
     await userEvent.click(screen.getByRole('button', { name: 'Publish note' }));
     expect(screen.getByRole('button', { name: 'Publishing…' })).toBeDisabled();
-    expect(screen.getByRole('checkbox')).toBeDisabled();
+    expect(screen.getAllByRole('checkbox').every((box) => (box as HTMLInputElement).disabled)).toBe(true);
   });
 
   it('keeps the button blocked, with the owner’s reason, even when the box is ticked', async () => {
     setup({ blockedReason: 'Publishing opens when the notice has been reviewed.' });
-    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(screen.getAllByRole('checkbox')[0]);
+    await userEvent.click(screen.getAllByRole('checkbox')[1]);
     expect(screen.getByRole('button', { name: 'Publish note' })).toHaveAccessibleDescription('Publishing opens when the notice has been reviewed.');
   });
 });

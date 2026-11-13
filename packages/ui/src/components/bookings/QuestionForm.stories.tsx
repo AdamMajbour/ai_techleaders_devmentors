@@ -15,6 +15,8 @@ const meta = {
     priceMinor: 2500,
     currency: 'EUR',
     termsHref: '#terms',
+    termsVersionId: '00000000-0000-4000-8000-000000000001',
+    termsSha256: 'a'.repeat(64),
     termsHint: 'Your question is kept until the pilot ends and then deleted.',
     // A mock at runtime. Typed as the prop so a story can replace it with a plain function.
     onSubmit: fn(async () => ok) as QuestionFormProps['onSubmit'],
@@ -49,7 +51,7 @@ export const SubmitsAfterTheTermsAreAccepted: Story = {
     const canvas = await fill(canvasElement);
     await userEvent.click(canvas.getByRole('button', { name: 'Pay 25 EUR and send' }));
     await waitFor(() => expect(args.onSuccess).toHaveBeenCalledWith({ checkoutUrl: '#checkout' }));
-    await expect(args.onSubmit).toHaveBeenCalledWith({ question: QUESTION, acceptedTerms: true });
+    await expect(args.onSubmit).toHaveBeenCalledWith({ question: QUESTION, acceptedTerms: true, termsVersionId: '00000000-0000-4000-8000-000000000001', termsSha256: 'a'.repeat(64) });
   },
 };
 

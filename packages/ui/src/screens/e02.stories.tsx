@@ -28,7 +28,7 @@ export const NoteDraftWithNotice: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByRole('listitem')).toHaveLength(6);
-    await expect(canvas.getByRole('button', { name: 'Publish note' })).toHaveAccessibleDescription('Tick the box to publish');
+    await expect(canvas.getByRole('button', { name: 'Publish note' })).toHaveAccessibleDescription('Read and accept both items to publish');
   },
 };
 export const NoteDraftPublishingNotOpen: Story = {
