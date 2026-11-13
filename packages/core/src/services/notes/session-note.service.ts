@@ -21,15 +21,6 @@ export class SessionNoteService {
     if (!updated) throw new NotFoundError('Session note not found.');
     return toSessionNoteDto(updated);
   }
-  async setSeekerApproval(session: Session, id: string, approved: boolean): Promise<SessionNoteDto> {
-    await this.findOwned(session, id);
-    const updated = await this.deps.sessionNoteRepository.update(id, {
-      seekerApprovedAt: approved ? new Date() : null,
-      withdrawnAt: approved ? null : new Date(),
-    });
-    if (!updated) throw new NotFoundError('Session note not found.');
-    return toSessionNoteDto(updated);
-  }
   async remove(session: Session, id: string): Promise<{ id: string }> {
     await this.findOwned(session, id);
     await this.deps.sessionNoteRepository.delete(id);
