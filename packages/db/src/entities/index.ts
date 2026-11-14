@@ -21,3 +21,4 @@ export { TermsVersion } from './terms/terms-version.entity';
 export { TermsReview } from './terms/terms-review.entity';
 export { TermsAcceptance } from './terms/terms-acceptance.entity';
 export { RetentionLegalHold } from './terms/retention-legal-hold.entity';
+export { SessionNote } from './notes/session-note.entity';

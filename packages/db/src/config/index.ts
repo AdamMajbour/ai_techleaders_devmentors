@@ -23,6 +23,7 @@ import {
   Payment,
   StatusTransition,
   User,
+  SessionNote,
 } from '../entities';
 
 export const mikroOrmConfig: Options<PostgreSqlDriver> = {
@@ -32,7 +33,7 @@ export const mikroOrmConfig: Options<PostgreSqlDriver> = {
   password: process.env.DATABASE_PASSWORD || 'postgres',
   host: process.env.DATABASE_HOST || 'localhost',
   port: parseInt(process.env.DATABASE_PORT || '5432'),
-  entities: [User, Invitation, LoginToken, Article, ApprovalRequest, MentorProfile, Booking, AvailabilitySlot, Payment, StatusTransition, Message, Note, LedgerEntry, VaultAnswer, VaultAnswerCitation, VaultAnswerReview, TermsVersion, TermsReview, TermsAcceptance, RetentionLegalHold],
+  entities: [User, Invitation, LoginToken, Article, ApprovalRequest, MentorProfile, Booking, AvailabilitySlot, Payment, StatusTransition, Message, Note, LedgerEntry, VaultAnswer, VaultAnswerCitation, VaultAnswerReview, TermsVersion, TermsReview, TermsAcceptance, RetentionLegalHold, SessionNote],
   extensions: [Migrator],
   migrations: {
     path: './src/migrations',

@@ -1857,3 +1857,4 @@ export class AvailabilitySlotRepository {
     });
   }
 }
+export { SessionNoteRepository } from './session-note.repository';

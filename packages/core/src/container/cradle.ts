@@ -17,6 +17,7 @@ import type {
   RetentionRepository,
   PilotMetricsRepository,
   ConnectPayoutRepository,
+  SessionNoteRepository,
 } from '@devmentor/db';
 import type { EventBus } from '../events/event-bus';
 import type { Logger } from '../logger';
@@ -54,6 +55,7 @@ import type { RetentionService } from '../services/terms/retention.service';
 import type { PilotMetricsService } from '../services/terms/pilot-metrics.service';
 import type { StripeConnectPort } from '../services/payouts/stripe-connect.port';
 import type { ConnectPayoutService } from '../services/payouts/connect-payout.service';
+import type { SessionNoteService } from '../services/notes/session-note.service';
 
 /** Every dependency the container can provide. A new service is one line here and one in container.ts. */
 export interface Cradle {
@@ -82,6 +84,7 @@ export interface Cradle {
   retentionRepository: RetentionRepository;
   pilotMetricsRepository: PilotMetricsRepository;
   connectPayoutRepository: ConnectPayoutRepository;
+  sessionNoteRepository: SessionNoteRepository;
   userService: UserService;
   authService: AuthService;
   articleService: ArticleService;
@@ -110,6 +113,7 @@ export interface Cradle {
   retentionService: RetentionService;
   pilotMetricsService: PilotMetricsService;
   connectPayoutService: ConnectPayoutService;
+  sessionNoteService: SessionNoteService;
   assertAIReady: () => void;
   approverResolvers: ApproverResolvers;
   paymentGateway: PaymentGateway;

@@ -253,6 +253,11 @@ export class BookingService {
     return this.toParticipantDto(booking, session, this.clock.now().toISOString());
   }
 
+  async getForNote(session: Session, id: string): Promise<BookingReadDto | null> {
+    const booking = await this.getById(session, id);
+    return booking.status === 'accepted' ? booking : null;
+  }
+
   async reconcilePayment(session: Session, id: string): Promise<BookingReadDto> {
     if (!session?.userId) throw new UnauthorizedError();
     const booking = await this.bookingRepository.findById(id);

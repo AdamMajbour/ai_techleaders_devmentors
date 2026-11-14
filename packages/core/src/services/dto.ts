@@ -1,10 +1,14 @@
-import type { Article, Booking, User } from '@devmentor/db';
+import type { Article, Booking, SessionNote, User } from '@devmentor/db';
 import type { BookingStatus } from '../workflow/booking-state-machine';
 
 /** What leaves the core package. Entities never do, so a password hash cannot reach a response. */
 export type UserDto = { id: string; email: string; name: string; avatar: string | null; createdAt: string };
 
 export type ArticleDto = { id: string; title: string; content: string; authorId: string; createdAt: string; updatedAt: string };
+export type SessionNoteDto = { id: string; bookingId: string; mentorId: string; seekerId: string; title: string; content: string; seekerApprovedAt: string | null; withdrawnAt: string | null; createdAt: string; updatedAt: string };
+export function toSessionNoteDto(note: SessionNote): SessionNoteDto {
+  return { id: note.id, bookingId: note.bookingId, mentorId: note.mentorId, seekerId: note.seekerId, title: note.title, content: note.content, seekerApprovedAt: note.seekerApprovedAt?.toISOString() ?? null, withdrawnAt: note.withdrawnAt?.toISOString() ?? null, createdAt: note.createdAt.toISOString(), updatedAt: note.updatedAt.toISOString() };
+}
 
 export type BookingDto = {
   id: string;

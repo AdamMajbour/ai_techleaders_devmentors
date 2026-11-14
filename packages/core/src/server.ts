@@ -23,6 +23,7 @@ export {
 } from './services/payments/mock-webhook-verifier';
 export { verifyConfiguredPaymentWebhook } from './services/payments/payment-gateway.factory';
 export { StripePaymentGateway } from './services/payments/adapters/stripe-payment-gateway';
+export { SessionNoteService } from './services/notes/session-note.service';
 
 export {
   requireSession,

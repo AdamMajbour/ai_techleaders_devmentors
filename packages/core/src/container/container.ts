@@ -24,6 +24,7 @@ import {
   RetentionRepository,
   PilotMetricsRepository,
   ConnectPayoutRepository,
+  SessionNoteRepository,
 } from '@devmentor/db';
 import { createEventBus } from '../events/event-bus';
 import { registerLoggingSubscriber } from '../events/logging-subscriber';
@@ -62,6 +63,7 @@ import { RetentionSweepTask } from '../services/terms/retention-sweep.task';
 import { RetentionService } from '../services/terms/retention.service';
 import { StripeConnectGateway } from '../services/payouts/stripe-connect-gateway';
 import { ConnectPayoutService } from '../services/payouts/connect-payout.service';
+import { SessionNoteService } from '../services/notes/session-note.service';
 import { PilotMetricsService } from '../services/terms/pilot-metrics.service';
 import type { Cradle, OrmLike } from './cradle';
 
@@ -123,6 +125,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     retentionRepository: asFunction(({ em }: Cradle) => new RetentionRepository(em)).scoped(),
     pilotMetricsRepository: asFunction(({ em }: Cradle) => new PilotMetricsRepository(em)).scoped(),
     connectPayoutRepository: asFunction(({ em }: Cradle) => new ConnectPayoutRepository(em)).scoped(),
+    sessionNoteRepository: asFunction(({ em }: Cradle) => new SessionNoteRepository(em)).scoped(),
     userService: asClass(UserService).scoped(),
     authService: asClass(AuthService).scoped(),
     articleService: asClass(ArticleService).scoped(),
@@ -176,6 +179,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     pilotMetricsService: asFunction(({ pilotMetricsRepository }: Cradle) => new PilotMetricsService(pilotMetricsRepository)).scoped(),
     stripeConnectGateway: asFunction(() => new StripeConnectGateway(getPaymentSettings())).singleton(),
     connectPayoutService: asFunction(({ connectPayoutRepository, stripeConnectGateway, invitationService, userRepository, termsService, clock }: Cradle) => new ConnectPayoutService({ repository: connectPayoutRepository, gateway: stripeConnectGateway, invitationService, userRepository, termsService, clock })).scoped(),
+    sessionNoteService: asFunction(({ sessionNoteRepository, bookingService }: Cradle) => new SessionNoteService({ sessionNoteRepository, bookingService })).scoped(),
     assertAIReady: asValue(assertConfiguredAIReadyToCharge),
     refundService: asClass(RefundService).scoped(),
     messageService: asClass(MessageService).scoped(),
