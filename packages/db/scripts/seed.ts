@@ -2,8 +2,10 @@
 // Usage: npm run db:seed   (migrations must be applied first)
 import '../src/load-env';
 import bcrypt from 'bcryptjs';
-import { ArticleRepository, closeORM, initializeORM, InvitationRepository, MentorProfileRepository, UserRepository } from '../src';
+import { ArticleRepository, AvailabilitySlotRepository, closeORM, initializeORM, InvitationRepository, MentorProfileRepository, TermsRepository, UserRepository } from '../src';
 import { DEMO_ARTICLE_TITLE, DEMO_AUTHOR, DEMO_LEARNER, DEMO_PERSONAS } from './seed-data';
+import { ensureDemoSeekerTerms } from './demo-seeker-terms';
+import { assertDemoSeedAllowed } from './seed-environment';
 
 const SEED_BCRYPT_COST = 12;
 
@@ -12,6 +14,8 @@ function hashDemoPassword(password: string): Promise<string> {
 }
 
 async function main(): Promise<void> {
+  assertDemoSeedAllowed(process.env);
+
   const orm = await initializeORM();
   const em = orm.em.fork();
   const users = new UserRepository(em);
@@ -65,6 +69,23 @@ async function main(): Promise<void> {
     });
   }
 
+  const availabilitySlots = new AvailabilitySlotRepository(em);
+  const now = new Date();
+  const bookableFrom = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  const bookableUntil = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const existingSlots = await availabilitySlots.findOpenForMentor(mentorUserId, bookableFrom, bookableUntil);
+  if (!existingSlots.some((slot) => slot.endsAt.getTime() - slot.startsAt.getTime() === 25 * 60 * 1000)) {
+    const firstStartMs = Math.ceil((now.getTime() + 8 * 60 * 60 * 1000) / (15 * 60 * 1000)) * (15 * 60 * 1000);
+    const startsAt = new Date(firstStartMs);
+    await availabilitySlots.create({
+      mentorId: mentorUserId,
+      startsAt,
+      endsAt: new Date(startsAt.getTime() + 25 * 60 * 1000),
+    });
+  }
+
+  await ensureDemoSeekerTerms(new TermsRepository(em), operator.id, now);
+
   const existing = await articles.findByAuthor(DEMO_AUTHOR.id);
   if (!existing.some((article) => article.title === DEMO_ARTICLE_TITLE)) {
     await articles.create({
@@ -74,7 +95,7 @@ async function main(): Promise<void> {
     });
   }
 
-  console.log('Seeded 6 users, 1 mentor profile, and 1 article.');
+  console.log('Seeded demo users, a mentor profile, a bookable 25-minute demo slot, seeker demo terms, and 1 article.');
   console.log(`Demo operator ID: ${operator.id}${operatorIds.has(operator.id) ? ' (operator panel enabled).' : ' (add it to OPERATOR_USER_IDS to enable the operator panel).'}`);
 }
 

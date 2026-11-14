@@ -16,6 +16,7 @@ jest.mock('@devmentor/ui', () => {
 });
 
 const apiCall = ui.apiCall as jest.MockedFunction<typeof ui.apiCall>;
+let originalLocation: Location;
 
 const unlistedProfile: MentorProfileDto = {
   id: '0c0b2f5a-6f6e-4b53-9f0e-6b1f3b0a7a11',
@@ -34,6 +35,7 @@ function success<T>(data: T): ApiResult<T> {
 }
 
 beforeEach(() => {
+  originalLocation = window.location;
   apiCall.mockReset();
   apiCall.mockImplementation(async (path) => (
     typeof path === 'string' && path.includes('/availability')
@@ -43,6 +45,10 @@ beforeEach(() => {
       : success(unlistedProfile)
   ) as never);
   window.sessionStorage.clear();
+});
+
+afterEach(() => {
+  Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
 });
 
 describe('MentorProfileView', () => {
@@ -74,6 +80,8 @@ describe('MentorProfileView', () => {
 
   it('shows the 25 EUR price before the question and submits the preserved attribution', async () => {
       const user = userEvent.setup();
+      const assign = jest.fn();
+      Object.defineProperty(window, 'location', { configurable: true, value: { assign } as unknown as Location });
       const landing = '2026-11-05T12:00:00.000Z';
       window.sessionStorage.setItem(BOOKING_ATTRIBUTION_STORAGE_KEY, JSON.stringify({
         source: 'list',
@@ -88,7 +96,7 @@ describe('MentorProfileView', () => {
             : typeof path === 'string' && path.includes('/api/terms/current')
               ? success({ id: '00000000-0000-4000-8000-000000000001', version: 'pilot-1', sha256: 'a'.repeat(64) })
             : typeof path === 'string' && path === '/api/bookings'
-              ? { ok: false, status: 503, error: { code: 'unavailable', message: 'Checkout is temporarily unavailable.' } }
+              ? success({ checkoutUrl: 'https://checkout.example/session' })
               : success(unlistedProfile)
         ) as never);
       render(<MentorProfileView slug="ada-lovelace" source="list" />);
@@ -120,7 +128,27 @@ describe('MentorProfileView', () => {
           landedAt: landing,
         },
       }));
-      expect(await screen.findByRole('alert')).toHaveTextContent('Checkout is temporarily unavailable.');
+      expect(assign).toHaveBeenCalledWith('https://checkout.example/session');
+  });
+
+  it('keeps checkout unavailable when no reviewed seeker terms are published', async () => {
+    const user = userEvent.setup();
+    const slot = { id: '3c0b2f5a-6f6e-4b53-9f0e-6b1f3b0a7a11', startsAt: '2026-11-16T13:00:00.000Z', endsAt: '2026-11-16T13:25:00.000Z' };
+    apiCall.mockImplementation(async (path) => (
+      typeof path === 'string' && path.includes('/availability')
+        ? success([slot])
+        : typeof path === 'string' && path.includes('/api/terms/current')
+          ? success(null)
+          : success(unlistedProfile)
+    ) as never);
+    render(<MentorProfileView slug="ada-lovelace" source="link" />);
+
+    await screen.findByRole('heading', { name: 'ada-lovelace' });
+    await user.selectOptions(await screen.findByRole('combobox', { name: 'Available session time' }), slot.id);
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Checkout is unavailable until current reviewed pilot terms are published.');
+    expect(screen.queryByRole('textbox', { name: /Your question/ })).not.toBeInTheDocument();
+    expect(apiCall).not.toHaveBeenCalledWith('/api/bookings', expect.anything());
   });
 
   it('keeps a valid landing time stable and replaces malformed storage safely', () => {
