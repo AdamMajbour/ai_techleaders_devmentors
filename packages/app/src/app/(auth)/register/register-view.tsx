@@ -11,7 +11,7 @@ const FIELDS = [
   { name: "password", label: "Password (10 to 72 characters)", type: "password", autoComplete: "new-password" },
 ] as const;
 
-export function RegisterView() {
+export function RegisterView({ publicSignupEnabled }: { publicSignupEnabled: boolean }) {
   const router = useRouter();
 
   return (
@@ -27,13 +27,23 @@ export function RegisterView() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <CrudForm
-            schema={registerSchema}
-            fields={[...FIELDS]}
-            submitLabel="Create account"
-            onSubmit={(values) => apiCall<UserDto>("/api/auth/register", { method: "POST", json: values })}
-            onSuccess={() => router.push("/articles")}
-          />
+          {publicSignupEnabled ? (
+            <div className="flex flex-col gap-between-groups">
+              <a href="/api/auth/github?mode=register" className="flex h-control w-full items-center justify-center rounded-md border border-input text-body underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                Create account with GitHub
+              </a>
+              <p className="m-0 text-center text-body text-muted-foreground">or create an account with e-mail and password</p>
+              <CrudForm
+                schema={registerSchema}
+                fields={[...FIELDS]}
+                submitLabel="Create account"
+                onSubmit={(values) => apiCall<UserDto>("/api/auth/register", { method: "POST", json: values })}
+                onSuccess={() => { router.push("/"); router.refresh(); }}
+              />
+            </div>
+          ) : (
+            <p className="m-0 text-body">Public registration is currently closed. Sign in with an invitation or contact the person who invited you.</p>
+          )}
         </CardContent>
       </Card>
     </main>

@@ -41,4 +41,10 @@ export const DEMO_PERSONAS = {
     name: 'Ada Test Mentor',
     invitationRole: 'mentor',
   },
+  noBioMentor: {
+    id: 'd27a86ee-19ac-40a3-9b13-195759b686b0',
+    email: 'mentor-without-bio@devmentor.test',
+    name: 'Sam Example',
+    invitationRole: 'mentor',
+  },
 } as const;

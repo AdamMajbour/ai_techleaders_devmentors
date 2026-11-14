@@ -4,7 +4,7 @@ import { UnauthorizedError } from '@devmentor/core';
 export const dynamic = 'force-dynamic';
 
 const personas = {
-  mentee: { email: 'mock-mentee@devmentor.test', destination: '/' },
+  mentee: { email: 'mock-mentee@devmentor.test', destination: '/seeker' },
   mentor: { email: 'mock-mentor@devmentor.test', destination: '/mentor' },
   operator: { email: 'mock-operator@devmentor.test', destination: '/operator' },
 } as const;

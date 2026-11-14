@@ -78,7 +78,7 @@ describe('MentorProfileView', () => {
     });
   });
 
-  it('shows the 25 EUR price before the question and submits the preserved attribution', async () => {
+  it('shows the 25 PLN price before the question and submits the preserved attribution', async () => {
       const user = userEvent.setup();
       const assign = jest.fn();
       Object.defineProperty(window, 'location', { configurable: true, value: { assign } as unknown as Location });
@@ -102,13 +102,13 @@ describe('MentorProfileView', () => {
       render(<MentorProfileView slug="ada-lovelace" source="list" />);
 
       await screen.findByRole('heading', { name: 'ada-lovelace' });
-      expect(screen.getByRole('region', { name: 'Price' })).toHaveTextContent('25 EUR');
+      expect(screen.getByRole('region', { name: 'Price' })).toHaveTextContent('25 PLN');
       expect(screen.queryByRole('textbox', { name: /Your question/ })).not.toBeInTheDocument();
       await user.selectOptions(await screen.findByRole('combobox', { name: 'Available session time' }), slot.id);
       const price = screen.getByRole('region', { name: 'Price' });
       const question = screen.getByRole('textbox', { name: /Your question/ });
       expect(price.compareDocumentPosition(question) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-      expect(price).toHaveTextContent('25 EUR');
+      expect(price).toHaveTextContent('25 PLN');
       expect(question).toHaveAttribute('maxLength', '4000');
 
       await user.type(question, 'How do I fix this issue in the service?');
@@ -120,6 +120,7 @@ describe('MentorProfileView', () => {
         json: {
           mentorId: unlistedProfile.id,
           availabilitySlotId: slot.id,
+          durationMinutes: 25,
           question: 'How do I fix this issue in the service?',
           acceptedTerms: true,
           termsVersionId: '00000000-0000-4000-8000-000000000001',

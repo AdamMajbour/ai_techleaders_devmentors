@@ -21,6 +21,7 @@
     "db:up": "node scripts/db-up.mjs",
     "db:migrate": "npm run migrate",
     "db:seed": "npm --workspace=@devmentor/db run seed",
+    "db:seed:lesson-14": "npm --workspace=@devmentor/db run seed:lesson-14",
     "pilot:invite": "npm --workspace=@devmentor/core run pilot:invite --",
     "bookings:settle": "npm --workspace=@devmentor/core run bookings:settle --",
     "vault:settle": "npm --workspace=@devmentor/core run vault:settle --",
@@ -28,6 +29,7 @@
     "test:integration": "jest --selectProjects db",
     "test:all": "jest",
     "test:e2e": "jest --selectProjects e2e --runInBand",
+    "test:browser:install": "playwright install chromium",
     "audit:prod": "npm audit --omit=dev --audit-level=critical",
     "check:agents": "node .ai/scripts/validate-task-router.js"
   },

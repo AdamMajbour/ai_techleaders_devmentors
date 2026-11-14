@@ -14,13 +14,13 @@ function Sample({ selected = false }: { selected?: boolean }) {
       <TableBody>
         <TableRow data-state={selected ? 'selected' : undefined}>
           <TableCell>Senior Python engineer</TableCell>
-          <TableCell className="text-right tabular-nums">25.00 EUR</TableCell>
+          <TableCell className="text-right tabular-nums">25.00 PLN</TableCell>
         </TableRow>
       </TableBody>
       <TableFooter>
         <TableRow>
           <TableCell>Total</TableCell>
-          <TableCell className="text-right tabular-nums">25.00 EUR</TableCell>
+          <TableCell className="text-right tabular-nums">25.00 PLN</TableCell>
         </TableRow>
       </TableFooter>
     </Table>

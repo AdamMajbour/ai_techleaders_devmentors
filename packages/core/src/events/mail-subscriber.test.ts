@@ -66,6 +66,7 @@ describe('mail subscriber', () => {
         to: 'seeker@example.com',
         mentorName: 'Ada Mentor',
         startsAt: '2026-11-06T12:00:00.000Z',
+        durationMinutes: 50,
       })),
     };
     registerMailSubscriber(bus, mailer, logger, (onMail) => registerBookingMailMappings(onMail, loader));
@@ -81,7 +82,7 @@ describe('mail subscriber', () => {
     expect(mailer.send).toHaveBeenNthCalledWith(2, {
       to: 'seeker@example.com',
       template: 'booking-accepted',
-      data: { mentorName: 'Ada Mentor', startsAt: '2026-11-06T12:00:00.000Z' },
+      data: { mentorName: 'Ada Mentor', startsAt: '2026-11-06T12:00:00.000Z', durationMinutes: 50 },
     });
     expect(loader.paidQuestion).toHaveBeenCalledWith('booking-1');
     expect(loader.acceptedBooking).toHaveBeenCalledWith('booking-1');

@@ -21,7 +21,7 @@ export const ConsentAtPaymentNotYetAccepted: Story = {
     const canvas = within(canvasElement);
     await userEvent.type(canvas.getByLabelText(/Your question/), QUESTION);
     await expect(canvas.getByRole('checkbox', { name: /pilot terms/ })).not.toBeChecked();
-    await expect(canvas.getByRole('button', { name: 'Pay 25 EUR and send' })).toHaveAccessibleDescription('Accept the pilot terms to continue');
+    await expect(canvas.getByRole('button', { name: 'Pay 25 PLN and send' })).toHaveAccessibleDescription('Accept the pilot terms to continue');
   },
 };
 
@@ -40,7 +40,7 @@ export const ConsentAtPaymentServerWantsTheCurrentTerms: Story = {
     const canvas = within(canvasElement);
     await userEvent.type(canvas.getByLabelText(/Your question/), QUESTION);
     await userEvent.click(canvas.getByRole('checkbox', { name: /pilot terms/ }));
-    await userEvent.click(canvas.getByRole('button', { name: 'Pay 25 EUR and send' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Pay 25 PLN and send' }));
     await expect(await canvas.findByRole('alert')).toHaveTextContent('The terms changed');
     await waitFor(() => expect(canvas.getByRole('checkbox', { name: /pilot terms/ })).toHaveFocus());
   },

@@ -135,7 +135,7 @@ describe('StripePaymentGateway', () => {
     const input = {
       bookingId: 'booking-from-server',
       amountMinor: 3450,
-      currency: 'EUR',
+      currency: 'PLN',
       idempotencyKey: 'booking-checkout-stable',
     };
 
@@ -175,7 +175,7 @@ describe('StripePaymentGateway', () => {
       subjectType: 'vault_answer',
       subjectId: 'answer-from-server',
       amountMinor: 1000,
-      currency: 'EUR',
+      currency: 'PLN',
       idempotencyKey: 'vault-answer-checkout',
     });
     expect(state.create.mock.calls[0][0]).toMatchObject({
@@ -220,7 +220,7 @@ describe('StripePaymentGateway', () => {
     await expect(noSecretKey.createCheckout({
       bookingId: 'booking-1',
       amountMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       idempotencyKey: 'checkout-1',
     })).rejects.toThrow(/STRIPE_SECRET_KEY/);
 
@@ -231,7 +231,7 @@ describe('StripePaymentGateway', () => {
     await expect(noWebhookSecret.createCheckout({
       bookingId: 'booking-1',
       amountMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       idempotencyKey: 'checkout-1',
     })).rejects.toThrow(/STRIPE_WEBHOOK_SECRET/);
 
@@ -242,7 +242,7 @@ describe('StripePaymentGateway', () => {
     await expect(badLiveKey.createCheckout({
       bookingId: 'booking-1',
       amountMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       idempotencyKey: 'checkout-1',
     })).rejects.toThrow(/PAYMENTS_LIVE_ENABLED/);
   });

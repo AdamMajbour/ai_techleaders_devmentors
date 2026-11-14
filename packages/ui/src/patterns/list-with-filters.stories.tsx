@@ -11,10 +11,10 @@ import { TextLink } from '../components/ui/text-link';
 type Mentor = { id: string; role: string; technologies: string[]; work: string; price: string };
 
 const MENTORS: Mentor[] = [
-  { id: '1', role: 'Senior Python engineer', technologies: ['Python', 'PostgreSQL'], work: 'Conference talks', price: '25.00 EUR' },
-  { id: '2', role: 'Frontend engineer', technologies: ['React', 'TypeScript'], work: 'Open-source repositories', price: '25.00 EUR' },
-  { id: '3', role: 'Platform engineer', technologies: ['Kubernetes', 'Python'], work: 'Technical articles', price: '25.00 EUR' },
-  { id: '4', role: 'Backend engineer', technologies: ['PostgreSQL', 'TypeScript'], work: 'Talks and notes', price: '25.00 EUR' },
+  { id: '1', role: 'Senior Python engineer', technologies: ['Python', 'PostgreSQL'], work: 'Conference talks', price: '25.00 PLN' },
+  { id: '2', role: 'Frontend engineer', technologies: ['React', 'TypeScript'], work: 'Open-source repositories', price: '25.00 PLN' },
+  { id: '3', role: 'Platform engineer', technologies: ['Kubernetes', 'Python'], work: 'Technical articles', price: '25.00 PLN' },
+  { id: '4', role: 'Backend engineer', technologies: ['PostgreSQL', 'TypeScript'], work: 'Talks and notes', price: '25.00 PLN' },
 ];
 const TECHNOLOGIES = ['Python', 'React', 'TypeScript', 'Kubernetes', 'PostgreSQL', 'Go'];
 const MANY: Mentor[] = Array.from({ length: 23 }, (_, i) => ({
@@ -22,7 +22,7 @@ const MANY: Mentor[] = Array.from({ length: 23 }, (_, i) => ({
   role: `Mentor ${i + 1}, ${['Python', 'React', 'Kubernetes'][i % 3]} engineer`,
   technologies: [['Python', 'React', 'Kubernetes'][i % 3]],
   work: 'Public work',
-  price: '25.00 EUR',
+  price: '25.00 PLN',
 }));
 const PAGE_SIZE = 10;
 
@@ -172,7 +172,7 @@ export const ManyRowsWithPagination: Story = {
 export const LongTextNarrow: Story = {
   args: {
     rows: [
-      { id: '9', role: 'Senior platform engineer who has upgraded ingress controllers on bare metal clusters for several years', technologies: ['Kubernetes', 'Python', 'PostgreSQL'], work: 'Technical articles about ingress upgrades', price: '25.00 EUR' },
+      { id: '9', role: 'Senior platform engineer who has upgraded ingress controllers on bare metal clusters for several years', technologies: ['Kubernetes', 'Python', 'PostgreSQL'], work: 'Technical articles about ingress upgrades', price: '25.00 PLN' },
     ],
   },
   render: (args) => (

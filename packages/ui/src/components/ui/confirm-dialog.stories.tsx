@@ -39,8 +39,8 @@ export const Default: Story = {
   args: {
     tone: 'default',
     title: 'Send your question to Ada?',
-    description: 'You pay 25 EUR now. If the mentor does not answer in time, you are refunded.',
-    confirmLabel: 'Pay 25 EUR and send',
+    description: 'You pay 25 PLN now. If the mentor does not answer in time, you are refunded.',
+    confirmLabel: 'Pay 25 PLN and send',
   },
 };
 
@@ -58,7 +58,7 @@ export const LongTitleNarrow: Story = {
   parameters: framed,
   args: {
     title: 'Cancel your paid vault answer "Why does my ingress upgrade fail after the admission webhook starts on staging?"',
-    description: 'The answer has not been released yet. Your 10 EUR is returned to your card within a few days.',
+    description: 'The answer has not been released yet. Your 10 PLN is returned to your card within a few days.',
     confirmLabel: 'Cancel answer and refund',
     cancelLabel: 'Keep the answer',
   },

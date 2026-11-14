@@ -18,7 +18,7 @@ const pendingBooking: BookingReadDto = {
   question: 'A private question',
   durationMinutes: 25,
   priceMinor: 2500,
-  currency: 'EUR',
+  currency: 'PLN',
   status: 'pending_payment',
   source: 'link',
   landedAt: '2026-11-05T12:00:00.000Z',

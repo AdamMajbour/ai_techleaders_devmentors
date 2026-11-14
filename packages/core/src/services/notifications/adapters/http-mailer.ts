@@ -64,18 +64,20 @@ function bookingAcceptedContent(message: MailMessage): { subject: string; text: 
   if (
     message.template !== 'booking-accepted' ||
     typeof message.data.mentorName !== 'string' ||
-    typeof message.data.startsAt !== 'string'
+    typeof message.data.startsAt !== 'string' ||
+    (message.data.durationMinutes !== 25 && message.data.durationMinutes !== 50)
   ) {
     throw new Error('Unsupported e-mail template.');
   }
   const startsAt = new Date(message.data.startsAt);
   if (!Number.isFinite(startsAt.getTime())) throw new Error('Invalid booking start time.');
   const mentorName = message.data.mentorName;
+  const durationMinutes = message.data.durationMinutes;
   const startsAtLabel = `${startsAt.toISOString()} (UTC)`;
   return {
     subject: 'Your DevMentor session is accepted',
-    text: `${mentorName} accepted your booking. Your 25-minute session starts at ${startsAtLabel}.`,
-    html: `<p>${escapeHtml(mentorName)} accepted your booking.</p><p>Your 25-minute session starts at ${escapeHtml(startsAtLabel)}.</p>`,
+    text: `${mentorName} accepted your booking. Your ${durationMinutes}-minute session starts at ${startsAtLabel}.`,
+    html: `<p>${escapeHtml(mentorName)} accepted your booking.</p><p>Your ${durationMinutes}-minute session starts at ${escapeHtml(startsAtLabel)}.</p>`,
   };
 }
 

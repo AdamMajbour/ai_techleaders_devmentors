@@ -31,7 +31,7 @@ describe('MockPaymentGateway deterministic behavior', () => {
     const input = {
       bookingId: 'booking-1',
       amountMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       idempotencyKey: 'checkout-1',
     };
 
@@ -42,7 +42,7 @@ describe('MockPaymentGateway deterministic behavior', () => {
     const checkout = await new MockPaymentGateway().createCheckout({
       bookingId: 'booking-1',
       amountMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       idempotencyKey: 'checkout-1',
     });
 
@@ -55,7 +55,7 @@ describe('MockPaymentGateway deterministic behavior', () => {
       subjectType: 'vault_answer',
       subjectId: 'answer-1',
       amountMinor: 1000,
-      currency: 'EUR',
+      currency: 'PLN',
       idempotencyKey: 'vault:answer-1:checkout',
     });
     expect(checkout.url).toBe('/mock-payment/vault-checkout/answer-1');
@@ -69,7 +69,7 @@ describe('MockPaymentGateway deterministic behavior', () => {
     await gateway.createCheckout({
       bookingId: 'booking-1',
       amountMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       idempotencyKey: 'checkout-1',
     });
 
@@ -77,7 +77,7 @@ describe('MockPaymentGateway deterministic behavior', () => {
       gateway.createCheckout({
         bookingId: 'booking-1',
         amountMinor: 3000,
-        currency: 'EUR',
+        currency: 'PLN',
         idempotencyKey: 'checkout-1',
       }),
     ).rejects.toThrow('Idempotency key was reused with different checkout details.');
@@ -88,7 +88,7 @@ describe('MockPaymentGateway deterministic behavior', () => {
     const checkout = await gateway.createCheckout({
       bookingId: 'booking-1',
       amountMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       idempotencyKey: 'checkout-1',
     });
     gateway.completeCheckout(checkout.providerSessionId);

@@ -29,5 +29,8 @@ export const POST = apiHandler(async (request) => {
     }),
   );
 
-  return jsonResponse({ user }, { headers: { "Set-Cookie": await issueSessionCookie(user.id) } });
+  const destination = await withScope(({ invitationService }) => invitationService.isAcceptedMentor(user.id))
+    ? "/mentor"
+    : "/seeker";
+  return jsonResponse({ user, destination }, { headers: { "Set-Cookie": await issueSessionCookie(user.id) } });
 });

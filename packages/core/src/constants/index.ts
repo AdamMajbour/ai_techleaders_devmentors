@@ -30,8 +30,13 @@ export const ERROR_MESSAGES = {
 export const PASSWORD_MAX_LENGTH = 72;
 
 export const SESSION_25_PRICE_MINOR = 2500;
-export const CURRENCY = 'EUR';
+export const SESSION_50_PRICE_MINOR = 5000;
+export const CURRENCY = 'PLN';
 export const SESSION_DURATION_MINUTES = 25;
+export const SESSION_OPTIONS = [
+  { durationMinutes: 25, priceMinor: SESSION_25_PRICE_MINOR },
+  { durationMinutes: 50, priceMinor: SESSION_50_PRICE_MINOR },
+] as const;
 export const VAULT_ANSWER_PRICE_MINOR = 1000;
 export const MENTOR_SHARE_BP = 8000;
 export { DEFAULT_VAULT_PREVIEW_UNTIL, isPreviewRequired } from './pilot';

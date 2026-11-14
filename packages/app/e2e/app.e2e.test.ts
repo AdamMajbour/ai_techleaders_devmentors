@@ -1,4 +1,4 @@
-﻿/**
+/**
  * End-to-end test against a real production server (`next build` + `next start`)
  * backed by a real PostgreSQL database. It uses its own database (`devmentor_e2e`),
  * migrates and seeds it through the same npm scripts developers use, and migrates it
@@ -725,6 +725,7 @@ describe('mock booking payment flow', () => {
         json: {
           mentorId: profile.id,
           availabilitySlotId: slotResponse.body.data.id,
+          durationMinutes: 25,
           question,
           source: 'list',
           landedAt,
@@ -740,7 +741,7 @@ describe('mock booking payment flow', () => {
         question,
         durationMinutes: 25,
         priceMinor: 2500,
-        currency: 'EUR',
+        currency: 'PLN',
         status: 'pending_payment',
         source: 'list',
         landedAt,

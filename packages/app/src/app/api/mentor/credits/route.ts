@@ -10,7 +10,7 @@ export const GET = apiHandler(async (request: Request) => {
     return {
       balanceMinor: balances.balanceMinor,
       testBalanceMinor: balances.testBalanceMinor,
-      currency: 'EUR',
+      currency: 'PLN',
       entries: entries.map((entry) => ({ id: entry.id, date: entry.createdAt, amountMinor: entry.amountMinor, livemode: entry.livemode })),
     };
   });

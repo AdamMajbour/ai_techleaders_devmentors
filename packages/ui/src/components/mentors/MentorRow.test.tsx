@@ -13,7 +13,7 @@ const mentor: MentorRowData = {
 function renderRow(props: Partial<React.ComponentProps<typeof MentorRow>> = {}) {
   return render(
     <ul>
-      <MentorRow mentor={mentor} priceMinor={2500} currency="EUR" href="/m/ada" {...props} />
+      <MentorRow mentor={mentor} priceMinor={2500} currency="PLN" href="/m/ada" {...props} />
     </ul>,
   );
 }
@@ -30,7 +30,7 @@ describe('MentorRow', () => {
 
   it('shows the price and the session length', () => {
     renderRow({ sessionMinutes: 25 });
-    expect(screen.getByText('25 EUR')).toHaveClass('tabular-nums');
+    expect(screen.getByText('25 PLN')).toHaveClass('tabular-nums');
     expect(screen.getByText('for 25 minutes of text')).toBeVisible();
   });
 

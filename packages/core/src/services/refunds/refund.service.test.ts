@@ -34,7 +34,7 @@ function setup(options: {
     status: options.paymentStatus ?? 'succeeded',
     providerPaymentId: 'provider-payment-1',
     amountMinor: 2500,
-    currency: 'EUR',
+    currency: 'PLN',
   };
   const findById = jest.fn(async () => approval as never);
   const decide = jest.fn(async (_actor: { userId: string }, _id: string, status: 'approve' | 'reject') => {

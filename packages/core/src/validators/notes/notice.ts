@@ -6,6 +6,6 @@ export const VAULT_NOTICE_ITEMS = [
   'The AI writes the answer. You do not.',
   'Until 14 December 2026 you see every answer that cites your note before the seeker does.',
   'The seeker sees your name and the title of the note.',
-  'You earn 80% of 10 EUR, split equally among the mentors whose notes are cited. Payout is not available yet.',
+  'You earn 80% of 10 PLN, split equally among the mentors whose notes are cited. Payout is not available yet.',
   'You can take the note down at any time. That rejects answers waiting for review. It does not withdraw answers that were already released.',
 ] as const;

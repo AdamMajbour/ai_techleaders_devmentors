@@ -14,7 +14,7 @@ function answer(overrides: Partial<VaultAnswer> = {}): VaultAnswer {
   const now = new Date('2026-11-10T12:00:00.000Z');
   return {
     id: answerId, seekerId: '10000000-0000-4000-8000-000000000001', question: 'How can I index a database query?',
-    status: 'paid', priceMinor: 1000, currency: 'EUR', answerText: null, failureReason: null, modelId: null,
+    status: 'paid', priceMinor: 1000, currency: 'PLN', answerText: null, failureReason: null, modelId: null,
     inputTokens: null, outputTokens: null, generationAttempts: 1, generationStartedAt: now,
     previewRequired: true, reviewExpiresAt: null, createdAt: now, updatedAt: now, ...overrides,
   } as VaultAnswer;

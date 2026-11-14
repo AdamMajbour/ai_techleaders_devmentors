@@ -63,7 +63,7 @@ function QuestionDetail({ state, onOpen, onRetry }: { state: DetailState; onOpen
       </header>
       {state === 'declined' ? (
         <Alert>
-          <AlertDescription>The mentor declined. Your 25.00 EUR is being refunded to your card.</AlertDescription>
+          <AlertDescription>The mentor declined. Your 25.00 PLN is being refunded to your card.</AlertDescription>
         </Alert>
       ) : null}
       <dl className="m-0 grid gap-between-groups md:grid-cols-2">
@@ -73,7 +73,7 @@ function QuestionDetail({ state, onOpen, onRetry }: { state: DetailState; onOpen
         </div>
         <div className="flex flex-col gap-group">
           <dt className="text-label font-strong text-headline">Paid</dt>
-          <dd className="m-0 text-body tabular-nums">25.00 EUR</dd>
+          <dd className="m-0 text-body tabular-nums">25.00 PLN</dd>
         </div>
       </dl>
       <section aria-labelledby="question-text" className="flex flex-col gap-group">

@@ -6,7 +6,7 @@ const operatorId = '00000000-0000-4000-8000-000000000002';
 
 function setup(options: { accepted?: boolean } = {}) {
   let account: { userId: string; stripeAccountId: string; country: 'PL'; detailsSubmitted: boolean; payoutsEnabled: boolean; transfersEnabled: boolean; checkedAt: Date | null } | null = null;
-  const credit = { ledgerEntryId: '00000000-0000-4000-8000-000000000003', mentorId, amountMinor: 800, currency: 'EUR' };
+  const credit = { ledgerEntryId: '00000000-0000-4000-8000-000000000003', mentorId, amountMinor: 800, currency: 'PLN' };
   const allocation = { id: '00000000-0000-4000-8000-000000000004', ...credit, stripeTransferId: null, status: 'pending' as const, failureCode: null, attempts: 0, idempotencyKey: 'credit-3', initiatedBy: operatorId, createdAt: new Date(), updatedAt: new Date() };
   const repository = {
     connectAccount: jest.fn(async () => account),

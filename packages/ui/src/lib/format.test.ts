@@ -2,18 +2,18 @@ import { formatClock, formatDate, formatDuration, formatPrice } from './format';
 
 describe('formatPrice', () => {
   it('drops the decimals of a whole amount in the compact style', () => {
-    expect(formatPrice(2500, 'EUR')).toBe('25 EUR');
-    expect(formatPrice(1000, 'EUR')).toBe('10 EUR');
+    expect(formatPrice(2500, 'PLN')).toBe('25 PLN');
+    expect(formatPrice(1000, 'PLN')).toBe('10 PLN');
   });
 
   it('keeps two decimals when the amount is not whole', () => {
-    expect(formatPrice(1250, 'EUR')).toBe('12.50 EUR');
-    expect(formatPrice(5, 'EUR')).toBe('0.05 EUR');
+    expect(formatPrice(1250, 'PLN')).toBe('12.50 PLN');
+    expect(formatPrice(5, 'PLN')).toBe('0.05 PLN');
   });
 
   it('always shows two decimals in the exact style, so digits line up in a table', () => {
-    expect(formatPrice(2500, 'EUR', 'exact')).toBe('25.00 EUR');
-    expect(formatPrice(800, 'EUR', 'exact')).toBe('8.00 EUR');
+    expect(formatPrice(2500, 'PLN', 'exact')).toBe('25.00 PLN');
+    expect(formatPrice(800, 'PLN', 'exact')).toBe('8.00 PLN');
   });
 });
 

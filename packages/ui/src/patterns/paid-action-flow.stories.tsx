@@ -29,7 +29,7 @@ export const ButtonSaysWhyItIsBlocked: Story = {
   render: () => <MentorProfileView mentor={MENTORS[0]} onSubmit={async () => ok} />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const button = canvas.getByRole('button', { name: 'Pay 25 EUR and send' });
+    const button = canvas.getByRole('button', { name: 'Pay 25 PLN and send' });
     await expect(button).toHaveAccessibleDescription('Write your question to continue');
     await userEvent.type(canvas.getByLabelText(/Your question/), QUESTION);
     await expect(button).toHaveAccessibleDescription('Accept the pilot terms to continue');
@@ -47,7 +47,7 @@ export const PaymentFailsAndTheQuestionIsKept: Story = {
     const canvas = within(canvasElement);
     await userEvent.type(canvas.getByLabelText(/Your question/), QUESTION);
     await userEvent.click(canvas.getByRole('checkbox', { name: /pilot terms/ }));
-    await userEvent.click(canvas.getByRole('button', { name: 'Pay 25 EUR and send' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Pay 25 PLN and send' }));
     await expect(await canvas.findByRole('alert')).toHaveTextContent('Nothing was charged');
     await expect(canvas.getByLabelText(/Your question/)).toHaveValue(QUESTION);
   },

@@ -94,7 +94,7 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
           userRepository.findById(booking.mentorId),
         ]);
         if (!seeker || !mentor) return null;
-        return { to: seeker.email, mentorName: mentor.name, startsAt: booking.startsAt.toISOString() };
+        return { to: seeker.email, mentorName: mentor.name, startsAt: booking.startsAt.toISOString(), durationMinutes: booking.durationMinutes };
       }),
     });
   });

@@ -20,8 +20,8 @@ export interface AvailabilitySlotDto {
 }
 
 const MIN_LEAD_MS = 30 * 60 * 1000;
+const MIN_BOOKING_LEAD_MS = 2 * 60 * 60 * 1000;
 const MAX_AHEAD_MS = 7 * 24 * 60 * 60 * 1000;
-const SLOT_MS = 25 * 60 * 1000;
 const QUARTER_HOUR_MS = 15 * 60 * 1000;
 
 function toDto(slot: AvailabilitySlot): AvailabilitySlotDto {
@@ -49,8 +49,8 @@ export class AvailabilityService {
     }
     const now = this.clock.now();
     const slots = await this.availabilitySlotRepository.findOpenForMentor(
-      mentorId,
-      now,
+      profile.userId,
+      new Date(now.getTime() + MIN_BOOKING_LEAD_MS),
       new Date(now.getTime() + MAX_AHEAD_MS),
     );
     return slots.map(toDto);
@@ -77,17 +77,17 @@ export class AvailabilityService {
     if (
       startsAt.getTime() % QUARTER_HOUR_MS !== 0 ||
       delta < MIN_LEAD_MS ||
-      delta + SLOT_MS > MAX_AHEAD_MS
+      delta + input.durationMinutes * 60 * 1000 > MAX_AHEAD_MS
     ) {
-      throw new ValidationError('Choose a 25-minute slot at least 30 minutes from now and within the next 7 days.', {
-        startsAt: ['Start must align to a 15-minute boundary and be 30 minutes to 7 days ahead.'],
+      throw new ValidationError('Choose a 25- or 50-minute session at least 30 minutes from now and within the next 7 days.', {
+        startsAt: ['Start must align to a 15-minute boundary and the full session must fit within the next 7 days.'],
       });
     }
     try {
       const slot = await this.availabilitySlotRepository.create({
         mentorId: session.userId,
         startsAt,
-        endsAt: new Date(startsAt.getTime() + SLOT_MS),
+        endsAt: new Date(startsAt.getTime() + input.durationMinutes * 60 * 1000),
       });
       return toDto(slot);
     } catch (error) {

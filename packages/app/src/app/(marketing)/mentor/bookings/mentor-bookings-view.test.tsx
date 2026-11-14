@@ -20,7 +20,7 @@ const paid: BookingReadDto = {
   question: 'How do I resolve this race condition?',
   durationMinutes: 25,
   priceMinor: 2500,
-  currency: 'EUR',
+  currency: 'PLN',
   status: 'paid',
   source: 'link',
   landedAt: '2026-11-05T12:00:00.000Z',

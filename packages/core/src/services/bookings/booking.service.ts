@@ -7,7 +7,7 @@ import type {
   PaymentRepository,
   UserRepository,
 } from '@devmentor/db';
-import { CURRENCY, SESSION_25_PRICE_MINOR, SESSION_DURATION_MINUTES } from '../../constants';
+import { CURRENCY, SESSION_OPTIONS } from '../../constants';
 import type { EventBus } from '../../events/event-bus';
 import { assertOwns, assertParticipant, requireOperator } from '../../http/auth';
 import { ConflictError, ForbiddenError, NotFoundError, UnauthorizedError, ValidationError } from '../../http/errors';
@@ -118,12 +118,17 @@ export class BookingService {
     if (!(await this.invitationService.isAcceptedMentor(profile.userId))) {
       throw new NotFoundError('Mentor profile not found.');
     }
+    const sessionOption = SESSION_OPTIONS.find((option) => option.durationMinutes === input.durationMinutes);
+    if (!sessionOption) throw new ValidationError('Choose a supported session length.');
 
     const now = this.clock.now();
     const oldestAllowedLanding = now.getTime() - 24 * 60 * 60 * 1000;
     const requestedLanding = input.landedAt ? new Date(input.landedAt).getTime() : now.getTime();
     const landedAt = new Date(Math.min(now.getTime(), Math.max(oldestAllowedLanding, requestedLanding)));
-    if (this.termsService) await this.termsService.assertCurrent('seeker', { versionId: input.termsVersionId, sha256: input.termsSha256 });
+    const mockCheckoutOnly = this.paymentGateway instanceof MockPaymentGateway && process.env.NODE_ENV !== 'production';
+    if (this.termsService && !mockCheckoutOnly) {
+      await this.termsService.assertCurrent('seeker', { versionId: input.termsVersionId, sha256: input.termsSha256 });
+    }
     let booking: Booking;
     try {
       ({ booking } = await this.availabilitySlotRepository.reserveWithBooking(
@@ -134,8 +139,8 @@ export class BookingService {
         seekerId: session.userId,
         mentorId: profile.userId,
         question: input.question,
-        durationMinutes: SESSION_DURATION_MINUTES,
-        priceMinor: SESSION_25_PRICE_MINOR,
+        durationMinutes: sessionOption.durationMinutes,
+        priceMinor: sessionOption.priceMinor,
         currency: CURRENCY,
         status: 'pending_payment',
         source: input.source,
@@ -149,19 +154,19 @@ export class BookingService {
         livemode: false,
         providerSessionId: null,
         providerPaymentId: null,
-        amountMinor: SESSION_25_PRICE_MINOR,
+        amountMinor: sessionOption.priceMinor,
         currency: CURRENCY,
         status: 'pending',
         },
       ));
     } catch (error) {
       if (error instanceof StatusTransitionConflictError) {
-        throw new ConflictError('That time is no longer available. Refresh the mentor profile and choose another time.');
+        throw new ConflictError('That time is no longer available or is inside the two-hour booking cutoff. Refresh the mentor profile and choose another time.');
       }
       throw error;
     }
 
-    if (this.termsService) {
+    if (this.termsService && !mockCheckoutOnly) {
       try {
         await this.termsService.acceptAtCheckout(session.userId, 'seeker', 'booking', booking.id, { versionId: input.termsVersionId, sha256: input.termsSha256 });
       } catch (error) {
@@ -176,7 +181,7 @@ export class BookingService {
     try {
       checkout = await this.paymentGateway.createCheckout({
         bookingId: booking.id,
-        amountMinor: SESSION_25_PRICE_MINOR,
+        amountMinor: sessionOption.priceMinor,
         currency: CURRENCY,
         idempotencyKey,
       });
@@ -323,7 +328,7 @@ export class BookingService {
     try {
       await this.bookingRepository.transitionStatus(id, 'accepted', session.userId, {
         startsAt,
-        endsAt: new Date(startsAt.getTime() + SESSION_DURATION_MINUTES * 60 * 1000),
+        endsAt: new Date(startsAt.getTime() + booking.durationMinutes * 60 * 1000),
       });
     } catch (error) {
       if (error instanceof ExclusionConstraintViolationError) {

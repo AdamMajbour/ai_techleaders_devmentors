@@ -35,7 +35,7 @@ describe('MentorAvailabilityView', () => {
 
     await screen.findByText('The session time is now available to seekers.');
     await waitFor(() => expect(apiCall).toHaveBeenCalledWith('/api/mentors/me/availability', {
-      method: 'POST', json: { startsAt: new Date('2026-11-12T13:00').toISOString() },
+      method: 'POST', json: { startsAt: new Date('2026-11-12T13:00').toISOString(), durationMinutes: 25 },
     }));
     expect(await screen.findByRole('heading', { name: 'Open times' })).toBeInTheDocument();
     expect(screen.getByRole('list')).toHaveTextContent(/12/);

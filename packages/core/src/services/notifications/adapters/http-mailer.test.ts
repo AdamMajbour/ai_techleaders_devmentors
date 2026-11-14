@@ -81,7 +81,7 @@ describe('HttpMailer', () => {
     await mailer.send({
       to: 'seeker@example.com',
       template: 'booking-accepted',
-      data: { mentorName: 'Ada <Mentor>', startsAt: '2026-11-06T12:00:00.000Z' },
+      data: { mentorName: 'Ada <Mentor>', startsAt: '2026-11-06T12:00:00.000Z', durationMinutes: 50 },
     });
 
     const first = JSON.parse(String(fetcher.mock.calls[0][1]?.body));
@@ -96,7 +96,7 @@ describe('HttpMailer', () => {
     expect(second).toMatchObject({
       to: ['seeker@example.com'],
       subject: 'Your DevMentor session is accepted',
-      text: expect.stringContaining('2026-11-06T12:00:00.000Z (UTC)'),
+      text: expect.stringMatching(/50-minute session starts at 2026-11-06T12:00:00\.000Z \(UTC\)/),
       html: expect.stringContaining('Ada &lt;Mentor&gt;'),
     });
   });

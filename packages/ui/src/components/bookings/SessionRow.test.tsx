@@ -7,7 +7,7 @@ const accepted: SessionRowData = {
   mentor: ADA,
   status: 'accepted',
   priceMinor: 2500,
-  currency: 'EUR',
+  currency: 'PLN',
   startsAt: '2026-11-03T13:00:00Z',
 };
 
@@ -24,7 +24,7 @@ describe('SessionRow', () => {
     renderRow(accepted);
     expect(screen.getByRole('heading', { level: 2, name: 'Ada Kowalska' })).toBeInTheDocument();
     expect(screen.getByText('Accepted')).toBeInTheDocument();
-    expect(screen.getByText('25 EUR')).toBeInTheDocument();
+    expect(screen.getByText('25 PLN')).toBeInTheDocument();
   });
 
   it('shows the date of an accepted session in the time zone of the seeker', () => {

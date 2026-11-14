@@ -23,7 +23,7 @@ describe('StripeConnectGateway', () => {
   it('uses stable idempotency for transfers and reads connected-account readiness', async () => {
     const deps = setup();
     await expect(deps.gateway.accountStatus('acct_test_1')).resolves.toEqual({ detailsSubmitted: true, payoutsEnabled: true, transfersEnabled: true });
-    await expect(deps.gateway.createTransfer({ stripeAccountId: 'acct_test_1', amountMinor: 500, currency: 'EUR', idempotencyKey: 'pilot-credit-1', ledgerEntryId: 'ledger-1' })).resolves.toBe('tr_test_1');
+    await expect(deps.gateway.createTransfer({ stripeAccountId: 'acct_test_1', amountMinor: 500, currency: 'PLN', idempotencyKey: 'pilot-credit-1', ledgerEntryId: 'ledger-1' })).resolves.toBe('tr_test_1');
     expect(deps.transfersCreate).toHaveBeenCalledWith(expect.objectContaining({ amount: 500, destination: 'acct_test_1', metadata: { devmentor_ledger_entry_id: 'ledger-1' } }), { idempotencyKey: 'pilot-credit-1' });
     await expect(deps.gateway.retrieveTransfer('tr_test_1')).resolves.toEqual({ id: 'tr_test_1', reversed: false });
   });

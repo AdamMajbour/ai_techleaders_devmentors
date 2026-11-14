@@ -14,7 +14,7 @@ function setup(props: Partial<React.ComponentProps<typeof QuestionForm>> = {}) {
     <QuestionForm
       mentorName="Ada"
       priceMinor={2500}
-      currency="EUR"
+      currency="PLN"
       termsHref="/terms"
       termsVersionId="00000000-0000-4000-8000-000000000001"
       termsSha256={'a'.repeat(64)}
@@ -37,13 +37,13 @@ describe('QuestionForm', () => {
     const price = screen.getByRole('region', { name: 'Price' });
     const field = screen.getByLabelText(/Your question/);
     expect(price.compareDocumentPosition(field) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(price).toHaveTextContent('25 EUR for a 25-minute text session with Ada');
+    expect(price).toHaveTextContent('25 PLN for a 25-minute text session with Ada');
     expect(price).toHaveTextContent('you are refunded');
   });
 
   it('blocks the button and says what is missing, in order', async () => {
     setup();
-    const button = screen.getByRole('button', { name: 'Pay 25 EUR and send' });
+    const button = screen.getByRole('button', { name: 'Pay 25 PLN and send' });
     expect(button).toHaveAttribute('aria-disabled', 'true');
     expect(button).toHaveAccessibleDescription('Write your question to continue');
 
@@ -56,12 +56,12 @@ describe('QuestionForm', () => {
 
     await userEvent.click(screen.getByRole('checkbox', { name: /pilot terms/ }));
     // The blocked button is wrapped with its reason, so it is a new element once nothing blocks it.
-    expect(screen.getByRole('button', { name: 'Pay 25 EUR and send' })).not.toHaveAttribute('aria-disabled');
+    expect(screen.getByRole('button', { name: 'Pay 25 PLN and send' })).not.toHaveAttribute('aria-disabled');
   });
 
   it('does not submit while blocked', async () => {
     const { onSubmit } = setup();
-    await userEvent.click(screen.getByRole('button', { name: 'Pay 25 EUR and send' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Pay 25 PLN and send' }));
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -69,9 +69,9 @@ describe('QuestionForm', () => {
     let resolve: (value: ApiResult<unknown>) => void = () => {};
     const onSubmit = jest.fn(() => new Promise<ApiResult<unknown>>((r) => (resolve = r)));
     const onSuccess = jest.fn();
-    render(<QuestionForm mentorName="Ada" priceMinor={2500} currency="EUR" termsHref="/terms" {...TERMS} onSubmit={onSubmit} onSuccess={onSuccess} />);
+    render(<QuestionForm mentorName="Ada" priceMinor={2500} currency="PLN" termsHref="/terms" {...TERMS} onSubmit={onSubmit} onSuccess={onSuccess} />);
     await fillAndAccept(`  ${QUESTION}  `);
-    await userEvent.click(screen.getByRole('button', { name: 'Pay 25 EUR and send' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Pay 25 PLN and send' }));
     expect(onSubmit).toHaveBeenCalledWith({ question: QUESTION, acceptedTerms: true, ...TERMS });
     expect(onSuccess).not.toHaveBeenCalled();
     resolve(ok);
@@ -80,9 +80,9 @@ describe('QuestionForm', () => {
 
   it('blocks everything while sending, so the question cannot be sent twice', async () => {
     const onSubmit = jest.fn(() => new Promise<ApiResult<unknown>>(() => {}));
-    render(<QuestionForm mentorName="Ada" priceMinor={2500} currency="EUR" termsHref="/terms" {...TERMS} onSubmit={onSubmit} />);
+    render(<QuestionForm mentorName="Ada" priceMinor={2500} currency="PLN" termsHref="/terms" {...TERMS} onSubmit={onSubmit} />);
     await fillAndAccept();
-    await userEvent.click(screen.getByRole('button', { name: 'Pay 25 EUR and send' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Pay 25 PLN and send' }));
     expect(screen.getByRole('button', { name: 'Sending…' })).toBeDisabled();
     expect(screen.getByLabelText(/Your question/)).toBeDisabled();
     expect(onSubmit).toHaveBeenCalledTimes(1);
@@ -96,7 +96,7 @@ describe('QuestionForm', () => {
     }));
     setup({ onSubmit });
     await fillAndAccept();
-    await userEvent.click(screen.getByRole('button', { name: 'Pay 25 EUR and send' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Pay 25 PLN and send' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('The question is too long for one session.');
     await waitFor(() => expect(screen.getByLabelText(/Your question/)).toHaveFocus());
     expect(screen.getByLabelText(/Your question/)).toHaveValue(QUESTION);
@@ -110,11 +110,11 @@ describe('QuestionForm', () => {
     }));
     setup({ onSubmit });
     await fillAndAccept();
-    await userEvent.click(screen.getByRole('button', { name: 'Pay 25 EUR and send' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Pay 25 PLN and send' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('The server could not be reached.');
     expect(screen.getByLabelText(/Your question/)).toHaveValue(QUESTION);
     expect(screen.getByRole('checkbox', { name: /pilot terms/ })).toBeChecked();
-    expect(screen.getByRole('button', { name: 'Pay 25 EUR and send' })).not.toHaveAttribute('aria-disabled');
+    expect(screen.getByRole('button', { name: 'Pay 25 PLN and send' })).not.toHaveAttribute('aria-disabled');
   });
 
   it('checks the question when the user leaves it after editing', async () => {
@@ -138,7 +138,7 @@ describe('QuestionForm', () => {
 
   it('writes the price into the button, so the user knows what will be charged', () => {
     setup({ priceMinor: 1000 });
-    expect(screen.getByRole('button', { name: 'Pay 10 EUR and send' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pay 10 PLN and send' })).toBeInTheDocument();
   });
 
   it('works without a mentor, for a vault answer: own description and hint, own limit', async () => {
@@ -149,17 +149,17 @@ describe('QuestionForm', () => {
       fieldHint: 'Mentors whose notes are cited read your question before you get the answer.',
       maxLength: 2000,
     });
-    expect(screen.getByRole('region', { name: 'Price' })).toHaveTextContent("10 EUR for one answer written by AI from mentors' notes");
+    expect(screen.getByRole('region', { name: 'Price' })).toHaveTextContent("10 PLN for one answer written by AI from mentors' notes");
     expect(screen.getByLabelText(/Your question/)).toHaveAccessibleDescription('Mentors whose notes are cited read your question before you get the answer.');
     expect(screen.getByLabelText(/Your question/)).toHaveAttribute('maxlength', '2000');
     await fillAndAccept();
-    await userEvent.click(screen.getByRole('button', { name: 'Pay 10 EUR and send' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Pay 10 PLN and send' }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
   });
 
   it('has a sensible default without a mentor name', () => {
     setup({ mentorName: undefined });
-    expect(screen.getByRole('region', { name: 'Price' })).toHaveTextContent('25 EUR for one answer');
+    expect(screen.getByRole('region', { name: 'Price' })).toHaveTextContent('25 PLN for one answer');
     expect(screen.getByLabelText(/Your question/)).toHaveAccessibleDescription(/^Paste the error/);
   });
 
@@ -171,7 +171,7 @@ describe('QuestionForm', () => {
     }));
     setup({ onSubmit });
     await fillAndAccept();
-    await userEvent.click(screen.getByRole('button', { name: 'Pay 25 EUR and send' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Pay 25 PLN and send' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Accept the current pilot terms to continue.');
     await waitFor(() => expect(screen.getByRole('checkbox', { name: /pilot terms/ })).toHaveFocus());
     expect(screen.getByLabelText(/Your question/)).toHaveValue(QUESTION);

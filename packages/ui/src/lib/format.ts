@@ -1,7 +1,7 @@
-// Formats for what the product shows. Content rules: a price is "25 EUR" in sentences and buttons (a whole
-// amount has no decimals) and "25.00 EUR" in tables, where digits must line up. A time is 24-hour, "14:25".
+// Formats for what the product shows. Content rules: a price is "25 PLN" in sentences and buttons (a whole
+// amount has no decimals) and "25.00 PLN" in tables, where digits must line up. A time is 24-hour, "14:25".
 
-/** `compact` drops ".00" from a whole amount ("25 EUR"). `exact` always shows two decimals ("25.00 EUR"). */
+/** `compact` drops ".00" from a whole amount ("25 PLN"). `exact` always shows two decimals ("25.00 PLN"). */
 export function formatPrice(amountMinor: number, currency: string, style: 'compact' | 'exact' = 'compact'): string {
   const whole = amountMinor % 100 === 0;
   const text = style === 'compact' && whole ? String(amountMinor / 100) : (amountMinor / 100).toFixed(2);

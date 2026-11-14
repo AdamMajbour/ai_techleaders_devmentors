@@ -13,7 +13,8 @@
     "migrate": "mikro-orm migration:up",
     "migrate:down": "mikro-orm migration:down",
     "migration:create": "mikro-orm migration:create",
-    "seed": "ts-node scripts/seed.ts"
+    "seed": "ts-node scripts/seed.ts",
+    "seed:lesson-14": "ts-node scripts/seed-lesson-14.ts"
   },
   "mikro-orm": {
     "configPaths": [

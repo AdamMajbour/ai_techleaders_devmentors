@@ -2,7 +2,7 @@ import type { MailEventRegistrar } from './mail-subscriber';
 
 export interface BookingMailDataLoader {
   paidQuestion(bookingId: string): Promise<{ to: string; question: string } | null>;
-  acceptedBooking(bookingId: string): Promise<{ to: string; mentorName: string; startsAt: string } | null>;
+  acceptedBooking(bookingId: string): Promise<{ to: string; mentorName: string; startsAt: string; durationMinutes: number } | null>;
 }
 
 export function registerBookingMailMappings(
@@ -19,7 +19,7 @@ export function registerBookingMailMappings(
       ? {
           to: data.to,
           template: 'booking-accepted',
-          data: { mentorName: data.mentorName, startsAt: data.startsAt },
+          data: { mentorName: data.mentorName, startsAt: data.startsAt, durationMinutes: data.durationMinutes },
         }
       : null;
   });
