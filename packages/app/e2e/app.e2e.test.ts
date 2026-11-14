@@ -667,11 +667,11 @@ describe('in a browser', () => {
     await page.close();
   });
 
-    it('shows the same generic confirmation for an uninvited address', async () => {
+  it('shows the same generic confirmation for an uninvited address', async () => {
     const { page, problems } = await open('/login');
 
     await page.fill('input[name=email]', 'nobody-here@example.com');
-    await page.click('button[type=submit]');
+    await page.getByRole('button', { name: 'Send e-mail sign-in link' }).click();
     await page.getByText('If an invitation exists for this address, a sign-in link has been sent. Check your e-mail.').waitFor();
     expect(problems).toEqual([]);
     await page.close();
@@ -700,7 +700,7 @@ describe('mock booking payment flow', () => {
     const seekerTerms = await currentTerms('seeker');
     let bookingAttempt = 0;
     const createBooking = async (question: string) => {
-      const slotStart = new Date(Math.ceil((Date.now() + (60 + bookingAttempt++ * 30) * 60_000) / (15 * 60_000)) * (15 * 60_000));
+      const slotStart = new Date(Math.ceil((Date.now() + (180 + bookingAttempt++ * 30) * 60_000) / (15 * 60_000)) * (15 * 60_000));
       const slotResponse = await api('/api/mentors/me/availability', {
         method: 'POST',
         cookie: mentor.cookie,
