@@ -71,7 +71,7 @@ describe('GET /api/auth/github/callback', () => {
     const response = await completeGithubSignIn(new Request(`https://app.devmentor.example/api/auth/github/callback?state=${state}&code=code`, { headers: { cookie } }));
 
     expect(response.status).toBe(303);
-    expect(response.headers.get('location')).toBe('https://app.devmentor.example/');
+    expect(response.headers.get('location')).toBe('https://app.devmentor.example/seeker');
     expect(response.headers.get('set-cookie')).toContain('devmentor_session=');
     expect(fetch).toHaveBeenCalledTimes(3);
     expect(mockWithScope).toHaveBeenCalledTimes(1);

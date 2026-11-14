@@ -33,7 +33,7 @@ describe('MentorAvailabilityView', () => {
     await user.type(screen.getByLabelText(/Session start/), '2026-11-12T13:00');
     await user.click(screen.getByRole('button', { name: 'Publish available time' }));
 
-    await screen.findByText('The session time is now available to seekers.');
+    await screen.findByText('The 25-minute session time is now available to seekers.');
     await waitFor(() => expect(apiCall).toHaveBeenCalledWith('/api/mentors/me/availability', {
       method: 'POST', json: { startsAt: new Date('2026-11-12T13:00').toISOString(), durationMinutes: 25 },
     }));

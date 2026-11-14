@@ -113,7 +113,7 @@ describe('MentorProfileView', () => {
 
       await user.type(question, 'How do I fix this issue in the service?');
       await user.click(screen.getByRole('checkbox', { name: /pilot terms/i }));
-      await user.click(screen.getByRole('button', { name: /Pay .* and send/ }));
+      await user.click(screen.getByRole('button', { name: 'Confirm booking and pay 25 PLN' }));
 
       await waitFor(() => expect(apiCall).toHaveBeenLastCalledWith('/api/bookings', {
         method: 'POST',

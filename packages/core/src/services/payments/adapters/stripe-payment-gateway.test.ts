@@ -156,7 +156,7 @@ describe('StripePaymentGateway', () => {
         quantity: 1,
         price_data: {
           unit_amount: input.amountMinor,
-          currency: 'eur',
+          currency: 'pln',
         },
       }],
     });
