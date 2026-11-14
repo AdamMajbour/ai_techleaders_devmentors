@@ -7,10 +7,10 @@ const version = {
   publishedAt: new Date('2026-11-01T00:00:00.000Z'), createdBy: '00000000-0000-4000-8000-000000000002',
 } as const;
 
-function setup() {
+function setup(options: { current?: typeof version | null; reviewed?: boolean } = {}) {
   const termsRepository = {
-    current: jest.fn(async () => version),
-    hasPassingReview: jest.fn(async () => true),
+    current: jest.fn(async () => options.current === undefined ? version : options.current),
+    hasPassingReview: jest.fn(async () => options.reviewed ?? true),
     accept: jest.fn(async () => undefined),
     acceptances: jest.fn(async () => []),
     byId: jest.fn(async () => version),
@@ -20,6 +20,20 @@ function setup() {
 }
 
 describe('TermsService consent version checks', () => {
+  it('blocks checkout when no published seeker terms exist', async () => {
+    const { service, termsRepository } = setup({ current: null });
+
+    await expect(service.assertReady('seeker')).rejects.toBeInstanceOf(ConflictError);
+    expect(termsRepository.accept).not.toHaveBeenCalled();
+  });
+
+  it('blocks checkout when the current terms do not have a passing review', async () => {
+    const { service, termsRepository } = setup({ reviewed: false });
+
+    await expect(service.assertReady('seeker')).rejects.toBeInstanceOf(ConflictError);
+    expect(termsRepository.accept).not.toHaveBeenCalled();
+  });
+
   it('stores checkout acceptance against the exact current version and subject', async () => {
     const { service, termsRepository } = setup();
     await service.acceptAtCheckout('00000000-0000-4000-8000-000000000003', 'seeker', 'booking', '00000000-0000-4000-8000-000000000004', { versionId: version.id, sha256: version.sha256 });
