@@ -64,7 +64,7 @@ async function main(): Promise<void> {
       currency: 'PLN',
       status: 'accepted',
       source: 'lesson-14-seed',
-      landedAt: null,
+      landedAt: startsAt,
       startsAt,
       endsAt,
       availabilitySlotId: null,
