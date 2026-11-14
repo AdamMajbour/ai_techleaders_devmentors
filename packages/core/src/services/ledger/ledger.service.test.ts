@@ -15,7 +15,7 @@ describe('LedgerService', () => {
       ledgerEntryRepository: { record, balanceOf: jest.fn(), findByAccount: jest.fn() },
     });
     const entries = [{
-      accountId: 'mentor-1', amountMinor: 267, currency: 'EUR', livemode: true,
+      accountId: 'mentor-1', amountMinor: 267, currency: 'PLN', livemode: true,
       sourceType: 'vault_answer', sourceId: 'answer-1',
     }];
     await expect(service.record(entries)).resolves.toBe(1);

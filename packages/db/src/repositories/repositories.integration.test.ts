@@ -281,7 +281,7 @@ describe('booking and payment constraints', () => {
         input.question ?? 'A booking question',
         input.durationMinutes ?? 25,
         input.priceMinor ?? 2500,
-        input.currency ?? 'EUR',
+        input.currency ?? 'PLN',
         input.status ?? 'pending_payment',
         input.source ?? 'link',
         now,
@@ -315,7 +315,7 @@ describe('booking and payment constraints', () => {
         providerSessionId,
         null,
         input.amountMinor ?? 2500,
-        'EUR',
+        'PLN',
         input.status ?? 'pending',
         now,
         now,
@@ -402,7 +402,7 @@ describe('booking and payment constraints', () => {
       insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, question: 'q'.repeat(4001) }),
     ).rejects.toThrow();
     await expect(
-      insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, durationMinutes: 50 }),
+      insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, durationMinutes: 75 }),
     ).rejects.toThrow();
     await expect(
       insertBooking({ seekerId: seeker.id, mentorId: mentorUser.id, source: 'unknown' }),
@@ -536,7 +536,7 @@ describe('PaymentRepository webhook settlement', () => {
         'Question',
         25,
         options.bookingPrice ?? 2500,
-        options.bookingCurrency ?? 'EUR',
+        options.bookingCurrency ?? 'PLN',
         'pending_payment',
         'link',
         now,
@@ -560,7 +560,7 @@ describe('PaymentRepository webhook settlement', () => {
         providerSessionId,
         null,
         options.paymentAmount ?? 2500,
-        options.paymentCurrency ?? 'EUR',
+        options.paymentCurrency ?? 'PLN',
         'pending',
         now,
         now,
@@ -577,7 +577,7 @@ describe('PaymentRepository webhook settlement', () => {
       ...pair,
       status: 'succeeded' as const,
       amountMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       providerPaymentId: 'provider-payment-1',
       livemode: true,
     };
@@ -615,7 +615,7 @@ describe('PaymentRepository webhook settlement', () => {
       ...pair,
       status: 'succeeded' as const,
       amountMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       providerPaymentId: 'provider-payment-2',
       livemode: false,
     };
@@ -638,7 +638,7 @@ describe('PaymentRepository webhook settlement', () => {
       ...persistedAmountMismatch,
       status: 'succeeded',
       amountMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       providerPaymentId: 'provider-payment-3',
       livemode: false,
     })).resolves.toMatchObject({ status: 'mismatch', fields: ['amountMinor'] });
@@ -646,7 +646,7 @@ describe('PaymentRepository webhook settlement', () => {
       ...persistedCurrencyMismatch,
       status: 'succeeded',
       amountMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       providerPaymentId: 'provider-payment-4',
       livemode: false,
     })).resolves.toMatchObject({ status: 'mismatch', fields: ['currency'] });
@@ -675,7 +675,7 @@ describe('PaymentRepository webhook settlement', () => {
         ...pair,
         status: 'succeeded',
         amountMinor: 2500,
-        currency: 'EUR',
+        currency: 'PLN',
         providerPaymentId: 'late-payment',
         livemode: false,
       }),
@@ -776,7 +776,7 @@ describe('AvailabilitySlotRepository', () => {
     });
     const mentorId = mentor.id;
     const now = new Date();
-    const startsAt = new Date(Math.ceil((now.getTime() + 60 * 60_000) / 900_000) * 900_000);
+    const startsAt = new Date(Math.ceil((now.getTime() + 3 * 60 * 60_000) / 900_000) * 900_000);
     const slots = new AvailabilitySlotRepository(orm.em.fork());
     const slot = await slots.create({
       mentorId,
@@ -789,7 +789,7 @@ describe('AvailabilitySlotRepository', () => {
       question: 'Question',
       durationMinutes: 25,
       priceMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       status: 'pending_payment',
       source: 'link' as const,
       landedAt: now,
@@ -805,7 +805,7 @@ describe('AvailabilitySlotRepository', () => {
       providerSessionId: null,
       providerPaymentId: null,
       amountMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       status: 'pending',
     };
     const reservations = await Promise.allSettled([
@@ -961,7 +961,7 @@ describe('MessageRepository', () => {
         "id", "seeker_id", "mentor_id", "question", "duration_minutes", "price_minor",
         "currency", "status", "source", "landed_at", "starts_at", "ends_at", "created_at", "updated_at"
       ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, seekerId, mentor.id, 'Question', 25, 2500, 'EUR', status, 'link', now, status === 'accepted' ? now : null, status === 'accepted' ? new Date(now.getTime() + 25 * 60_000) : null, now, now],
+      [id, seekerId, mentor.id, 'Question', 25, 2500, 'PLN', status, 'link', now, status === 'accepted' ? now : null, status === 'accepted' ? new Date(now.getTime() + 25 * 60_000) : null, now, now],
       'run',
     );
     await createBooking(bookingId, seeker.id, 'accepted');
@@ -1406,7 +1406,7 @@ describe('LedgerEntryRepository', () => {
     const entry = {
       accountId,
       amountMinor: 267,
-      currency: 'EUR',
+      currency: 'PLN',
       livemode: true,
       sourceType: 'vault_answer',
       sourceId,
@@ -1440,12 +1440,12 @@ describe('VaultAnswerRepository', () => {
     }));
     const repository = new VaultAnswerRepository(em);
     const { answer, payment } = await repository.createWithPayment({
-      seekerId, question: 'How does it work?', status: 'paid', priceMinor: 1000, currency: 'EUR',
+      seekerId, question: 'How does it work?', status: 'paid', priceMinor: 1000, currency: 'PLN',
       answerText: null, failureReason: null, modelId: null, inputTokens: null, outputTokens: null,
       generationAttempts: 0, generationStartedAt: null, previewRequired: true, reviewExpiresAt: null,
     }, {
       provider: 'mock', providerSessionId: 'vault-session', providerPaymentId: null, amountMinor: 1000,
-      currency: 'EUR', status: 'succeeded', livemode: false,
+      currency: 'PLN', status: 'succeeded', livemode: false,
     });
     expect(await repository.claimGeneration(answer.id, now, 180_000)).toBe(true);
     expect(await repository.claimGeneration(answer.id, now, 180_000)).toBe(false);
@@ -1458,7 +1458,7 @@ describe('VaultAnswerRepository', () => {
     await expect(repository.decideAndReleaseWithCredits({
       answerId: answer.id, reviewerId,
       decidedAt: new Date(now.getTime() + 30_000),
-      credits: [{ accountId: mentorId, amountMinor: 800, currency: 'EUR', livemode: payment.livemode, sourceType: 'vault_answer', sourceId: answer.id }],
+      credits: [{ accountId: mentorId, amountMinor: 800, currency: 'PLN', livemode: payment.livemode, sourceType: 'vault_answer', sourceId: answer.id }],
     })).resolves.toBe(true);
     expect((await repository.findById(answer.id))?.status).toBe('released');
     expect(await em.count(VaultAnswerReview, { answerId: answer.id, decision: 'approved' })).toBe(1);
@@ -1474,12 +1474,12 @@ describe('VaultAnswerRepository', () => {
     const now = new Date('2026-11-10T12:00:00.000Z');
     const repository = new VaultAnswerRepository(em);
     const { answer, payment } = await repository.createWithPayment({
-      seekerId, question: 'How?', status: 'pending_preview', priceMinor: 1000, currency: 'EUR',
+      seekerId, question: 'How?', status: 'pending_preview', priceMinor: 1000, currency: 'PLN',
       answerText: 'Answer', failureReason: null, modelId: 'mock-v1', inputTokens: 10, outputTokens: 5,
       generationAttempts: 1, generationStartedAt: now, previewRequired: true, reviewExpiresAt: new Date(now.getTime() + 60_000),
     }, {
       provider: 'mock', providerSessionId: 'vault-session-reject', providerPaymentId: null, amountMinor: 1000,
-      currency: 'EUR', status: 'succeeded', livemode: false,
+      currency: 'PLN', status: 'succeeded', livemode: false,
     });
     await em.persistAndFlush(em.create(Note, {
       id: noteId, mentorId, title: 'Taken down', body: 'Body', status: 'taken_down', aiNoticeVersion: 'v1',
@@ -1493,7 +1493,7 @@ describe('VaultAnswerRepository', () => {
     }));
     await expect(repository.decideAndReleaseWithCredits({
       answerId: answer.id, reviewerId, decidedAt: now,
-      credits: [{ accountId: mentorId, amountMinor: 800, currency: 'EUR', livemode: payment.livemode, sourceType: 'vault_answer', sourceId: answer.id }],
+      credits: [{ accountId: mentorId, amountMinor: 800, currency: 'PLN', livemode: payment.livemode, sourceType: 'vault_answer', sourceId: answer.id }],
     })).resolves.toBe(false);
     expect((await repository.findById(answer.id))?.status).toBe('rejected');
     expect(await em.count(LedgerEntry, { sourceId: answer.id })).toBe(0);

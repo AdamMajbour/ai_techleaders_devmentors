@@ -8,7 +8,7 @@ const paid: BookingRowData = {
   counterpartName: 'Sam',
   status: 'paid',
   priceMinor: 2500,
-  currency: 'EUR',
+  currency: 'PLN',
 };
 
 function renderRow(props: Partial<React.ComponentProps<typeof BookingRow>> = {}) {
@@ -85,7 +85,7 @@ describe('BookingRow', () => {
   it('shows the status in words and the price', () => {
     renderRow();
     expect(screen.getByText('Awaiting your decision')).toBeVisible();
-    expect(screen.getByText('25 EUR')).toHaveClass('tabular-nums');
+    expect(screen.getByText('25 PLN')).toHaveClass('tabular-nums');
   });
 
   it('says the question can no longer be seen when the server left it out', () => {

@@ -24,11 +24,17 @@ export interface QuestionFormProps {
   refundRule?: string;
   /** Hide the standard notice when the parent screen keeps price visible before a prior choice. */
   showPriceNotice?: boolean;
+  /** Custom text for the final action, for example when booking a specific session. */
+  submitLabel?: string;
+  /** Additional booking requirement controlled by the parent form. */
+  actionBlockedReason?: string;
   termsHref: string;
   termsVersionId: string;
   termsSha256: string;
   /** The owner's wording about data and retention. Not written by the component. */
   termsHint?: ReactNode;
+  /** Use only when the action is not consenting to published terms, such as a mock checkout. */
+  consentLabel?: ReactNode;
   /** Sends the question and starts the payment. Resolves to the `apiCall` result. */
   onSubmit: (input: { question: string; acceptedTerms: true; termsVersionId: string; termsSha256: string }) => Promise<ApiResult<unknown>>;
   /** Called only after the server confirmed. The caller sends the user to the payment. */
@@ -51,10 +57,13 @@ export function QuestionForm({
   fieldHint,
   refundRule = DEFAULT_REFUND_RULE,
   showPriceNotice = true,
+  submitLabel,
+  actionBlockedReason,
   termsHref,
   termsVersionId,
   termsSha256,
   termsHint,
+  consentLabel,
   onSubmit,
   onSuccess,
   minLength = 10,
@@ -77,7 +86,7 @@ export function QuestionForm({
   const trimmed = question.trim();
   const lengthProblem =
     trimmed.length === 0 ? 'Write your question to continue' : trimmed.length < minLength ? `Add a little more detail: at least ${minLength} characters` : undefined;
-  const blockedReason = lengthProblem ?? (accepted ? undefined : 'Accept the pilot terms to continue');
+  const blockedReason = actionBlockedReason ?? lengthProblem ?? (accepted ? undefined : 'Accept the pilot terms to continue');
 
   function checkQuestion(value: string): string | undefined {
     const text = value.trim();
@@ -163,6 +172,7 @@ export function QuestionForm({
         }}
         termsHref={termsHref}
         hint={termsHint}
+        label={consentLabel}
         error={termsError}
       />
       {formError ? (
@@ -177,7 +187,7 @@ export function QuestionForm({
           </Button>
         ) : (
           <Button type="submit" disabledReason={blockedReason}>
-            Pay {formatPrice(priceMinor, currency)} and send
+            {submitLabel ?? `Pay ${formatPrice(priceMinor, currency)} and send`}
           </Button>
         )}
       </div>

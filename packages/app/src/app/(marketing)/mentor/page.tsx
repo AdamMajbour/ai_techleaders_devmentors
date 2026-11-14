@@ -32,7 +32,7 @@ export default async function MentorWorkspacePage() {
 
       <section aria-labelledby="availability-heading" className="flex flex-col gap-group border-b border-border py-section">
         <h2 id="availability-heading" className="m-0 text-section-title font-strong text-headline">Session availability</h2>
-        <p className="m-0 text-body text-muted-foreground">Publish the 25-minute times seekers can reserve from your profile.</p>
+        <p className="m-0 text-body text-muted-foreground">Publish 25- or 50-minute times seekers can reserve from your profile.</p>
         <div><Button asChild><Link href="/mentor/availability">Manage available times</Link></Button></div>
       </section>
 

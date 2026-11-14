@@ -9,7 +9,7 @@ export default async function MentorNotesPage() {
   const credits = await withScope(async ({ vaultSettings, ledgerService }) => {
     if (!vaultSettings().enabled) return undefined;
     const [balances, entries] = await Promise.all([ledgerService.balances(session.userId), ledgerService.entriesFor(session.userId)]);
-    return { balanceMinor: balances.balanceMinor, testBalanceMinor: balances.testBalanceMinor, currency: 'EUR', entries: entries.map((entry) => ({ id: entry.id, date: entry.createdAt, amountMinor: entry.amountMinor, livemode: entry.livemode })) };
+    return { balanceMinor: balances.balanceMinor, testBalanceMinor: balances.testBalanceMinor, currency: 'PLN', entries: entries.map((entry) => ({ id: entry.id, date: entry.createdAt, amountMinor: entry.amountMinor, livemode: entry.livemode })) };
   });
   return <MentorNotesList credits={credits} />;
 }

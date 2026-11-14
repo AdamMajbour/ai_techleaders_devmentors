@@ -25,7 +25,7 @@ export default function VaultPage() {
   return <main className="mx-auto flex max-w-session flex-col gap-between-groups py-between-groups">
     <h1 className="m-0 text-page-title font-strong text-headline">Ask the vault</h1>
     <p className="m-0 text-body text-foreground">An AI writes an answer from notes mentors chose to publish. Mentors whose notes are used read it before you do.</p>
-    {terms ? <QuestionForm priceMinor={1000} currency="EUR" priceDescription="for one AI generated vault answer" refundRule="You pay now. If an answer cannot be written or the mentors do not approve it, you are refunded." fieldHint="Mentors whose notes are cited read your question. Do not paste secrets." termsHref="/terms" termsVersionId={terms.id} termsSha256={terms.sha256} maxLength={2000} onSubmit={submit} /> : <p role="status" className="m-0 text-body text-muted-foreground">Checkout is unavailable until current reviewed pilot terms are published.</p>}
+    {terms ? <QuestionForm priceMinor={1000} currency="PLN" priceDescription="for one AI generated vault answer" refundRule="You pay now. If an answer cannot be written or the mentors do not approve it, you are refunded." fieldHint="Mentors whose notes are cited read your question. Do not paste secrets." termsHref="/terms" termsVersionId={terms.id} termsSha256={terms.sha256} maxLength={2000} onSubmit={submit} /> : <p role="status" className="m-0 text-body text-muted-foreground">Checkout is unavailable until current reviewed pilot terms are published.</p>}
     <section className="flex flex-col gap-group" aria-label="Your previous answers">
       <h2 className="m-0 text-section-title font-strong text-headline">Your answers</h2>
       {list.status === 'pending' ? <p role="status">Loading answers…</p> : null}

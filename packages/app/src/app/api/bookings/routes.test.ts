@@ -97,7 +97,7 @@ describe('/api/bookings CRUD routes', () => {
           source: 'list',
           landedAt: '2026-11-05T12:00:00.000Z',
           priceMinor: 1,
-          durationMinutes: 90,
+          durationMinutes: 50,
         }),
       }),
       emptyContext,
@@ -109,6 +109,7 @@ describe('/api/bookings CRUD routes', () => {
       {
         mentorId: BOOKING_ID,
         availabilitySlotId: '1c0b2f5a-6f6e-4b53-9f0e-6b1f3b0a7a11',
+        durationMinutes: 50,
         question: 'How do I fix this?',
         acceptedTerms: true,
         termsVersionId: '00000000-0000-4000-8000-000000000001',

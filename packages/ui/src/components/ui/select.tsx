@@ -17,7 +17,7 @@ function Select({ className, density = 'default', children, ...props }: SelectPr
       <select
         data-slot="select"
         className={cn(
-          'w-full min-w-0 appearance-none rounded-md border border-input bg-transparent pr-8 font-sans text-body text-foreground transition-colors duration-(--duration-fast) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground aria-invalid:border-destructive',
+          'w-full min-w-0 appearance-none rounded-md border border-input bg-background pr-8 font-sans text-body text-foreground transition-colors duration-(--duration-fast) [&>option]:bg-background [&>option]:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground aria-invalid:border-destructive',
           density === 'compact' ? 'h-control-compact pl-control-x-compact' : 'h-control pl-control-x',
           className,
         )}

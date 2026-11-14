@@ -215,7 +215,7 @@ export function VaultAskView({
       ) : (
         <QuestionForm
           priceMinor={1000}
-          currency="EUR"
+          currency="PLN"
           priceDescription="for one answer written by AI from mentors' notes"
           refundRule="You pay now. If the mentors do not approve the answer or it cannot be written, you are refunded."
           fieldHint="Mentors whose notes are cited read your question before you get the answer. Do not paste secrets."

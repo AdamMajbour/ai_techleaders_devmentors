@@ -19,9 +19,11 @@ const mockSignInWithMagicLink = jest.fn(async () => ({
   avatar: null,
   createdAt: "2026-11-05T12:00:00.000Z",
 }));
+const mockIsAcceptedMentor = jest.fn(async () => false);
 const mockCradle = {
   magicLinkService: { request: mockMagicLinkRequest, consume: mockMagicLinkConsume },
   authService: { register: mockRegister, signInWithMagicLink: mockSignInWithMagicLink },
+  invitationService: { isAcceptedMentor: mockIsAcceptedMentor },
 } as unknown as Cradle;
 const mockWithScope = jest.fn(async (fn: (cradle: Cradle) => Promise<unknown>) => fn(mockCradle));
 
@@ -66,6 +68,7 @@ beforeEach(() => {
   mockMagicLinkConsume.mockReset().mockResolvedValue("ada@example.com");
   mockRegister.mockClear();
   mockSignInWithMagicLink.mockClear();
+  mockIsAcceptedMentor.mockReset().mockResolvedValue(false);
   mockWithScope.mockClear().mockImplementation(async (fn) => fn(mockCradle));
 });
 
@@ -157,10 +160,14 @@ describe("POST /api/auth/magic-link/consume", () => {
     expect(response.headers.get("set-cookie")).toContain("devmentor_session=");
     expect(await json(response)).toEqual({
       ok: true,
-      data: { user: expect.objectContaining({ id: "user-1", email: "ada@example.com" }) },
+      data: {
+        user: expect.objectContaining({ id: "user-1", email: "ada@example.com" }),
+        destination: "/seeker",
+      },
     });
     expect(mockMagicLinkConsume).toHaveBeenCalledWith("A".repeat(43));
     expect(mockSignInWithMagicLink).toHaveBeenCalledWith("ada@example.com");
+    expect(mockIsAcceptedMentor).toHaveBeenCalledWith("user-1");
 
     mockMagicLinkConsume.mockResolvedValueOnce(null);
     const invalid = await consumeMagicLink(post("magic-link/consume", { token: "not-a-token" }), undefined);

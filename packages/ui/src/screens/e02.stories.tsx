@@ -12,8 +12,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const ok: ApiResult<unknown> = { ok: true, status: 201, data: { checkoutUrl: '#checkout' } };
-const credits = { balanceMinor: 667, currency: 'EUR', entries: CREDIT_ENTRIES.filter((entry) => entry.livemode), timeZone: 'UTC' };
-const noCredits = { balanceMinor: 0, currency: 'EUR', entries: [], timeZone: 'UTC' };
+const credits = { balanceMinor: 667, currency: 'PLN', entries: CREDIT_ENTRIES.filter((entry) => entry.livemode), timeZone: 'UTC' };
+const noCredits = { balanceMinor: 0, currency: 'PLN', entries: [], timeZone: 'UTC' };
 
 // 1. Notes list with credits
 export const NotesLoading: Story = { render: () => <NotesListView state="loading" notes={[]} credits={{ ...noCredits, status: 'loading' }} /> };
@@ -70,7 +70,7 @@ export const AskForm: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByText('Test mode')).toBeVisible();
-    await expect(canvas.getByRole('region', { name: 'Price' })).toHaveTextContent('10 EUR for one answer written by AI from mentors\' notes');
+    await expect(canvas.getByRole('region', { name: 'Price' })).toHaveTextContent('10 PLN for one answer written by AI from mentors\' notes');
     await expect(canvas.getByLabelText(/Your question/)).toHaveAccessibleDescription(/read your question before you get the answer/);
   },
 };
@@ -86,7 +86,7 @@ export const AskConfigurationRefused: Story = {
     const canvas = within(canvasElement);
     await userEvent.type(canvas.getByLabelText(/Your question/), VAULT_QUESTION);
     await userEvent.click(canvas.getByRole('checkbox', { name: /pilot terms/ }));
-    await userEvent.click(canvas.getByRole('button', { name: 'Pay 10 EUR and send' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Pay 10 PLN and send' }));
     await expect(await canvas.findByRole('alert')).toHaveTextContent('Nothing was charged');
   },
 };

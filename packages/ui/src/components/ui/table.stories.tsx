@@ -13,9 +13,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const MENTORS = [
-  { role: 'Senior Python engineer', technologies: 'Python, PostgreSQL', work: 'Conference talks', price: '25.00 EUR' },
-  { role: 'Frontend engineer', technologies: 'React, TypeScript', work: 'Open-source repositories', price: '25.00 EUR' },
-  { role: 'Platform engineer', technologies: 'Kubernetes, Python', work: 'Technical articles', price: '25.00 EUR' },
+  { role: 'Senior Python engineer', technologies: 'Python, PostgreSQL', work: 'Conference talks', price: '25.00 PLN' },
+  { role: 'Frontend engineer', technologies: 'React, TypeScript', work: 'Open-source repositories', price: '25.00 PLN' },
+  { role: 'Platform engineer', technologies: 'Kubernetes, Python', work: 'Technical articles', price: '25.00 PLN' },
 ];
 
 function MentorTable() {
@@ -63,23 +63,23 @@ export const WithStatusAndFooter: Story = {
         <TableRow>
           <TableCell>Ingress upgrade fails on staging</TableCell>
           <TableCell><StatusBadge>Waiting for the mentor</StatusBadge></TableCell>
-          <TableCell className="text-right tabular-nums">25.00 EUR</TableCell>
+          <TableCell className="text-right tabular-nums">25.00 PLN</TableCell>
         </TableRow>
         <TableRow>
           <TableCell>Why is my React effect running twice?</TableCell>
           <TableCell><StatusBadge tone="active">Accepted</StatusBadge></TableCell>
-          <TableCell className="text-right tabular-nums">25.00 EUR</TableCell>
+          <TableCell className="text-right tabular-nums">25.00 PLN</TableCell>
         </TableRow>
         <TableRow>
           <TableCell>Index choice for a jsonb column</TableCell>
           <TableCell><StatusBadge tone="danger">Declined</StatusBadge></TableCell>
-          <TableCell className="text-right tabular-nums">25.00 EUR</TableCell>
+          <TableCell className="text-right tabular-nums">25.00 PLN</TableCell>
         </TableRow>
       </TableBody>
       <TableFooter>
         <TableRow>
           <TableCell colSpan={2}>Total paid</TableCell>
-          <TableCell className="text-right tabular-nums">75.00 EUR</TableCell>
+          <TableCell className="text-right tabular-nums">75.00 PLN</TableCell>
         </TableRow>
       </TableFooter>
     </Table>

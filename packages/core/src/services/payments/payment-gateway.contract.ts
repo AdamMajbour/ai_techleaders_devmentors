@@ -14,7 +14,7 @@ export interface PaymentGatewayContractHarness<Gateway extends PaymentGateway> {
 const checkoutInput = {
   bookingId: 'booking-contract',
   amountMinor: 2500,
-  currency: 'EUR',
+  currency: 'PLN',
   idempotencyKey: 'booking-contract-checkout',
 };
 

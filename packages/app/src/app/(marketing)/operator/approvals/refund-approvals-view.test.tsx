@@ -22,7 +22,7 @@ const retryApproval: RefundApprovalDto = {
   createdAt: '2026-11-05T12:00:00.000Z',
   paymentStatus: 'refund_pending',
   amountMinor: 2500,
-  currency: 'EUR',
+  currency: 'PLN',
   seekerName: 'Sam Seeker',
   mentorName: 'Ada Mentor',
   allowedActions: ['retry_refund'],
@@ -50,7 +50,7 @@ describe('RefundApprovalsView', () => {
     render(<RefundApprovalsView />);
 
     expect(await screen.findByText('Refund needs retry')).toBeInTheDocument();
-    expect(screen.getByText('25.00 EUR', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('25.00 PLN', { exact: false })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Retry refund' })).toBeInTheDocument();
     expect(screen.queryByText(/question/i)).not.toBeInTheDocument();
 

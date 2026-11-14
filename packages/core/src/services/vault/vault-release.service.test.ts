@@ -4,7 +4,7 @@ import { VaultReleaseService } from './vault-release.service';
 
 const answer = {
   id: '20000000-0000-4000-8000-000000000001', seekerId: '10000000-0000-4000-8000-000000000001',
-  question: 'Question?', status: 'generating', priceMinor: 1000, currency: 'EUR', answerText: 'Answer',
+  question: 'Question?', status: 'generating', priceMinor: 1000, currency: 'PLN', answerText: 'Answer',
   failureReason: null, modelId: 'mock-v1', inputTokens: 5, outputTokens: 6, generationAttempts: 1,
   generationStartedAt: new Date('2026-11-10T12:00:00.000Z'), previewRequired: false, reviewExpiresAt: null,
   createdAt: new Date('2026-11-10T12:00:00.000Z'), updatedAt: new Date('2026-11-10T12:00:00.000Z'),
@@ -28,7 +28,7 @@ function setup(options: { status?: string; release?: { released: boolean; refund
   const unitOfWork = { run: async <T>(work: () => Promise<T>): Promise<T> => { const result = await work(); committed = true; return result; } };
   const service = new VaultReleaseService({
     vaultAnswerRepository: { findById: jest.fn().mockResolvedValue(currentAnswer), findCitations: jest.fn().mockResolvedValue(citations), releaseOrRefund: jest.fn().mockResolvedValue(options.release ?? { released: true, refundRequested: false }) } as never,
-    paymentRepository: { findByVaultAnswerId: jest.fn().mockResolvedValue({ status: 'succeeded', amountMinor: 1000, currency: 'EUR', livemode: false }) } as never,
+    paymentRepository: { findByVaultAnswerId: jest.fn().mockResolvedValue({ status: 'succeeded', amountMinor: 1000, currency: 'PLN', livemode: false }) } as never,
     ledgerEntryRepository: { record },
     unitOfWork,
     eventBus: { emit } as unknown as EventBus,

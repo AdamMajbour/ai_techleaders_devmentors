@@ -76,6 +76,8 @@ function setup(options: {
   const createWithPayment = jest.fn(async (data: NewBooking, _paymentData?: unknown) => {
     void _paymentData;
     booking.landedAt = data.landedAt;
+    booking.durationMinutes = data.durationMinutes;
+    booking.priceMinor = data.priceMinor;
     return { booking, payment };
   });
   const failCheckout = jest.fn(async () => {
@@ -239,6 +241,7 @@ function setup(options: {
 const input = (overrides: Record<string, unknown> = {}) => ({
   mentorId: PROFILE_ID,
   availabilitySlotId: '3c0b2f5a-6f6e-4b53-9f0e-6b1f3b0a7a11',
+  durationMinutes: 25,
   question: 'How do I fix this?',
   acceptedTerms: true,
   termsVersionId: '00000000-0000-4000-8000-000000000001',
@@ -249,11 +252,11 @@ const input = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe('BookingService.create', () => {
-  it('uses the session seeker, ignores client price/duration, and sends fixed checkout values', async () => {
+  it('uses the session seeker and prices the selected duration on the server', async () => {
     const deps = setup();
     const result = await deps.service.create(
       { userId: SEEKER_ID },
-      input({ priceMinor: 1, durationMinutes: 90, seekerId: 'attacker' }),
+      input({ priceMinor: 1, durationMinutes: 50, seekerId: 'attacker' }),
     );
 
     expect(deps.createWithPayment).toHaveBeenCalledWith(
@@ -261,27 +264,27 @@ describe('BookingService.create', () => {
         seekerId: SEEKER_ID,
         mentorId: MENTOR_ID,
         availabilitySlotId: '3c0b2f5a-6f6e-4b53-9f0e-6b1f3b0a7a11',
-        durationMinutes: SESSION_DURATION_MINUTES,
-        priceMinor: SESSION_25_PRICE_MINOR,
+        durationMinutes: 50,
+        priceMinor: 5000,
         currency: CURRENCY,
         status: 'pending_payment',
       }),
       expect.objectContaining({
-        amountMinor: SESSION_25_PRICE_MINOR,
+        amountMinor: 5000,
         currency: CURRENCY,
         status: 'pending',
       }),
     );
     expect(deps.createCheckout).toHaveBeenCalledWith({
       bookingId: 'booking-1',
-      amountMinor: SESSION_25_PRICE_MINOR,
+      amountMinor: 5000,
       currency: CURRENCY,
       idempotencyKey: 'booking:booking-1:checkout',
     });
 
     expect(deps.setProviderSession).toHaveBeenCalledWith('booking-1', 'session-1');
     expect(result).toMatchObject({
-      booking: { status: 'pending_payment', priceMinor: 2500, currency: 'EUR', durationMinutes: 25 },
+      booking: { status: 'pending_payment', priceMinor: 5000, currency: 'PLN', durationMinutes: 50 },
       checkoutUrl: 'https://checkout.example/session-1',
     });
     expect(deps.emit).toHaveBeenCalledWith('bookings.booking.created', {

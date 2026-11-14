@@ -51,7 +51,7 @@ describe('buildContainer', () => {
       await expect(cradle.paymentGateway.createCheckout({
         bookingId: 'booking-1',
         amountMinor: 2500,
-        currency: 'EUR',
+        currency: 'PLN',
         idempotencyKey: 'checkout-1',
       })).rejects.toThrow(/STRIPE_SECRET_KEY/);
     } finally {

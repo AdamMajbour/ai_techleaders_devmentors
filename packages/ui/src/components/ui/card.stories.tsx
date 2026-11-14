@@ -15,7 +15,7 @@ const meta = {
       <Card {...args}>
         <CardHeader>
           <CardTitle>Your question</CardTitle>
-          <CardDescription>A mentor reads it before accepting. The price is 25 EUR.</CardDescription>
+          <CardDescription>A mentor reads it before accepting. The price is 25 PLN.</CardDescription>
         </CardHeader>
         <CardContent>
           <Field label="Question">
@@ -23,7 +23,7 @@ const meta = {
           </Field>
         </CardContent>
         <CardFooter>
-          <Button>Pay 25 EUR</Button>
+          <Button>Pay 25 PLN</Button>
           <Button variant="ghost">Cancel</Button>
         </CardFooter>
       </Card>

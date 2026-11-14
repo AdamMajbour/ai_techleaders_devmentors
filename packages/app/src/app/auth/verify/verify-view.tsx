@@ -17,11 +17,11 @@ export function VerifyView({ token, mode = "magic" }: { token: string | null; mo
 
     if (!token) return;
 
-    void apiCall(mode === "account" ? "/api/auth/account-link/verify" : "/api/auth/magic-link/consume", {
+    void apiCall<{ user: { id: string }; destination: string }>(mode === "account" ? "/api/auth/account-link/verify" : "/api/auth/magic-link/consume", {
       method: "POST",
       json: { token },
     }).then((result) => {
-      if (result.ok) window.location.assign(mode === "account" ? "/" : "/admin");
+      if (result.ok) window.location.assign(mode === "account" ? "/" : result.data.destination);
       else setState("error");
     });
   }, [token, mode]);

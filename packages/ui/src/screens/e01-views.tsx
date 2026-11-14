@@ -137,7 +137,7 @@ export function MentorsListView({ state, mentors }: { state: MentorsState; mento
       {state === 'ready' ? (
         <ul className="m-0 flex list-none flex-col p-0">
           {shown.map((mentor) => (
-            <MentorRow key={mentor.id} mentor={mentor} priceMinor={2500} currency="EUR" href={`#${mentor.id}`} headingLevel={2} />
+            <MentorRow key={mentor.id} mentor={mentor} priceMinor={2500} currency="PLN" href={`#${mentor.id}`} headingLevel={2} />
           ))}
         </ul>
       ) : null}
@@ -162,7 +162,7 @@ export function MentorProfileView({ mentor, onSubmit }: { mentor: MentorRowData;
       <QuestionForm
         mentorName={mentor.name}
         priceMinor={2500}
-        currency="EUR"
+        currency="PLN"
         termsHref="#terms"
         termsVersionId="00000000-0000-4000-8000-000000000001"
         termsSha256={'a'.repeat(64)}

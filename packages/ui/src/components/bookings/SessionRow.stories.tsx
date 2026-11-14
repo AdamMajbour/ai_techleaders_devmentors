@@ -12,7 +12,7 @@ const JAN = {
   headline: 'Moved a monolith from cron jobs to a queue without losing a single order',
   technologies: ['PostgreSQL', 'Node.js', 'Queues'],
 };
-const PRICE = { priceMinor: 2500, currency: 'EUR' };
+const PRICE = { priceMinor: 2500, currency: 'PLN' };
 
 const meta = {
   title: 'Product/Bookings/SessionRow',

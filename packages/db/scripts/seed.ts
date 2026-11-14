@@ -29,7 +29,7 @@ async function main(): Promise<void> {
 
   const invitations = new InvitationRepository(em);
   let mentorUserId: string = DEMO_PERSONAS.mentor.id;
-  for (const persona of [DEMO_PERSONAS.mentee, DEMO_PERSONAS.mentor, DEMO_PERSONAS.operator, DEMO_PERSONAS.ada]) {
+  for (const persona of [DEMO_PERSONAS.mentee, DEMO_PERSONAS.mentor, DEMO_PERSONAS.operator, DEMO_PERSONAS.ada, DEMO_PERSONAS.noBioMentor]) {
     let existingUser = await users.findByEmail(persona.email);
     if (!existingUser) {
       existingUser = await users.create({ id: persona.id, email: persona.email, name: persona.name, passwordHash: 'password' in persona ? await hashDemoPassword(persona.password) : null });
@@ -69,19 +69,39 @@ async function main(): Promise<void> {
     });
   }
 
+  const noBioMentor = DEMO_PERSONAS.noBioMentor;
+  const noBioMentorUser = await users.findByEmail(noBioMentor.email);
+  if (noBioMentorUser && !(await mentorProfiles.findByUserId(noBioMentorUser.id))) {
+    await mentorProfiles.create({
+      userId: noBioMentorUser.id,
+      slug: 'mentor-without-bio',
+      headline: 'TypeScript mentor',
+      bio: '',
+      technologies: 'typescript',
+      publicWorkUrl: 'https://devmentor.test',
+      isListed: true,
+      lastActiveAt: null,
+    });
+  }
+
   const availabilitySlots = new AvailabilitySlotRepository(em);
   const now = new Date();
   const bookableFrom = new Date(now.getTime() + 2 * 60 * 60 * 1000);
   const bookableUntil = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-  const existingSlots = await availabilitySlots.findOpenForMentor(mentorUserId, bookableFrom, bookableUntil);
-  if (!existingSlots.some((slot) => slot.endsAt.getTime() - slot.startsAt.getTime() === 25 * 60 * 1000)) {
+  const demoMentors = [mentorUserId, noBioMentorUser?.id].filter((id): id is string => Boolean(id));
+  for (const mentorId of demoMentors) {
+    const available = await availabilitySlots.findOpenForMentor(mentorId, bookableFrom, bookableUntil);
     const firstStartMs = Math.ceil((now.getTime() + 8 * 60 * 60 * 1000) / (15 * 60 * 1000)) * (15 * 60 * 1000);
-    const startsAt = new Date(firstStartMs);
-    await availabilitySlots.create({
-      mentorId: mentorUserId,
-      startsAt,
-      endsAt: new Date(startsAt.getTime() + 25 * 60 * 1000),
-    });
+    const has25MinuteWindow = available.some((slot) => slot.endsAt.getTime() - slot.startsAt.getTime() === 25 * 60 * 1000);
+    const has50MinuteWindow = available.some((slot) => slot.endsAt.getTime() - slot.startsAt.getTime() === 50 * 60 * 1000);
+    if (!has25MinuteWindow) {
+      const startsAt = new Date(firstStartMs);
+      await availabilitySlots.create({ mentorId, startsAt, endsAt: new Date(startsAt.getTime() + 25 * 60 * 1000) });
+    }
+    if (!has50MinuteWindow) {
+      const startsAt = new Date(firstStartMs + 2 * 60 * 60 * 1000);
+      await availabilitySlots.create({ mentorId, startsAt, endsAt: new Date(startsAt.getTime() + 50 * 60 * 1000) });
+    }
   }
 
   await ensureDemoSeekerTerms(new TermsRepository(em), operator.id, now);
@@ -95,7 +115,7 @@ async function main(): Promise<void> {
     });
   }
 
-  console.log('Seeded demo users, a mentor profile, a bookable 25-minute demo slot, seeker demo terms, and 1 article.');
+  console.log('Seeded demo users, 2 mentor profiles, 25- and 50-minute bookable windows, seeker demo terms, and 1 article.');
   console.log(`Demo operator ID: ${operator.id}${operatorIds.has(operator.id) ? ' (operator panel enabled).' : ' (add it to OPERATOR_USER_IDS to enable the operator panel).'}`);
 }
 

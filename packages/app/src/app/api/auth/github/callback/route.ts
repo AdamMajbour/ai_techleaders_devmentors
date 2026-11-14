@@ -116,7 +116,7 @@ export async function GET(request: Request): Promise<Response> {
       }
       if (!account.authorized) throw new UnauthorizedError();
       userId = account.user.id;
-      destination = persona === 'mentee' ? '/' : persona === 'mentor' ? '/mentor' : '/operator';
+      destination = persona === 'mentee' ? '/seeker' : persona === 'mentor' ? '/mentor' : '/operator';
     } else {
       if (!email) throw new UnauthorizedError();
       const normalizedEmail = email.trim().toLowerCase();
@@ -124,7 +124,7 @@ export async function GET(request: Request): Promise<Response> {
       let user;
       if (invitation) {
         user = await withScope(({ authService }) => authService.signInWithMagicLink(normalizedEmail));
-        destination = invitation.role === 'mentor' ? '/mentor' : '/';
+        destination = invitation.role === 'mentor' ? '/mentor' : '/seeker';
       } else {
         user = await withScope(async ({ userRepository, authService }) => {
           const existing = await userRepository.findByEmail(normalizedEmail);
@@ -134,7 +134,7 @@ export async function GET(request: Request): Promise<Response> {
           if (existing) return existing;
           throw new UnauthorizedError();
         });
-        destination = '/';
+        destination = '/seeker';
       }
       userId = user.id;
     }

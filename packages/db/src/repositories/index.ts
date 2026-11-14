@@ -1830,20 +1830,29 @@ export class AvailabilitySlotRepository {
         { lockMode: LockMode.PESSIMISTIC_WRITE },
       );
       if (!slot) throw new StatusTransitionConflictError('That time is no longer available.');
-      if (slot.startsAt.getTime() <= now.getTime()) {
-        throw new StatusTransitionConflictError('That time is no longer available.');
+      const minimumBookingStart = now.getTime() + 2 * 60 * 60 * 1000;
+      if (slot.startsAt.getTime() < minimumBookingStart) {
+        throw new StatusTransitionConflictError('Bookings close two hours before the session starts.');
       }
+      if (![25, 50].includes(bookingData.durationMinutes)) {
+        throw new StatusTransitionConflictError('The selected session length is not available.');
+      }
+      const availableMinutes = (slot.endsAt.getTime() - slot.startsAt.getTime()) / (60 * 1000);
+      if (availableMinutes < bookingData.durationMinutes) {
+        throw new StatusTransitionConflictError('The selected session length is not available at that time.');
+      }
+      const sessionEndsAt = new Date(slot.startsAt.getTime() + bookingData.durationMinutes * 60 * 1000);
       const acceptedOverlap = await transactionalEm.findOne(Booking, {
         mentorId,
         status: 'accepted',
-        startsAt: { $lt: slot.endsAt },
+        startsAt: { $lt: sessionEndsAt },
         endsAt: { $gt: slot.startsAt },
       });
       if (acceptedOverlap) throw new StatusTransitionConflictError('That time is no longer available.');
       const booking = transactionalEm.create(Booking, {
         ...bookingData,
         startsAt: slot.startsAt,
-        endsAt: slot.endsAt,
+        endsAt: sessionEndsAt,
         availabilitySlotId: slot.id,
       });
       transactionalEm.persist(booking);

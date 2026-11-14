@@ -6,7 +6,7 @@ const meta = {
   component: PriceNotice,
   args: {
     amountMinor: 2500,
-    currency: 'EUR',
+    currency: 'PLN',
     description: 'for a 25-minute text session with Ada Kowalska',
     refundRule: 'You pay now, before you write. If the mentor does not accept or does not show up, you are refunded.',
   },

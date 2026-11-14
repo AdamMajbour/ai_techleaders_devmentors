@@ -37,7 +37,7 @@ export class Migration20261112140000_stripe_connect_pilot_payouts extends Migrat
       constraint "payout_transfers_idempotency_unique" unique ("idempotency_key"),
       constraint "payout_transfers_status_check" check ("status" in ('pending', 'paid', 'failed')),
       constraint "payout_transfers_amount_check" check ("amount_minor" > 0),
-      constraint "payout_transfers_currency_check" check ("currency" = 'EUR'),
+      constraint "payout_transfers_currency_check" check ("currency" = 'PLN'),
       constraint "payout_transfers_attempts_check" check ("attempts" >= 0),
       constraint "payout_transfers_ledger_fk" foreign key ("ledger_entry_id") references "ledger_entries" ("id") on delete restrict,
       constraint "payout_transfers_mentor_fk" foreign key ("mentor_id") references "users" ("id") on delete restrict,

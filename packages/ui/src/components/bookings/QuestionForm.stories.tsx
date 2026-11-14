@@ -13,7 +13,7 @@ const meta = {
   args: {
     mentorName: 'Ada Kowalska',
     priceMinor: 2500,
-    currency: 'EUR',
+    currency: 'PLN',
     termsHref: '#terms',
     termsVersionId: '00000000-0000-4000-8000-000000000001',
     termsSha256: 'a'.repeat(64),
@@ -42,14 +42,14 @@ async function fill(canvasElement: HTMLElement, text = QUESTION) {
 export const Empty: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByRole('button', { name: 'Pay 25 EUR and send' })).toHaveAccessibleDescription('Write your question to continue');
+    await expect(canvas.getByRole('button', { name: 'Pay 25 PLN and send' })).toHaveAccessibleDescription('Write your question to continue');
   },
 };
 
 export const SubmitsAfterTheTermsAreAccepted: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = await fill(canvasElement);
-    await userEvent.click(canvas.getByRole('button', { name: 'Pay 25 EUR and send' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Pay 25 PLN and send' }));
     await waitFor(() => expect(args.onSuccess).toHaveBeenCalledWith({ checkoutUrl: '#checkout' }));
     await expect(args.onSubmit).toHaveBeenCalledWith({ question: QUESTION, acceptedTerms: true, termsVersionId: '00000000-0000-4000-8000-000000000001', termsSha256: 'a'.repeat(64) });
   },
@@ -59,7 +59,7 @@ export const Sending: Story = {
   args: { onSubmit: () => new Promise<ApiResult<unknown>>(() => {}) },
   play: async ({ canvasElement }) => {
     const canvas = await fill(canvasElement);
-    await userEvent.click(canvas.getByRole('button', { name: 'Pay 25 EUR and send' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Pay 25 PLN and send' }));
     await expect(canvas.getByRole('button', { name: 'Sending…' })).toBeDisabled();
   },
 };
@@ -71,7 +71,7 @@ export const ServerRejectsTheQuestion: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = await fill(canvasElement);
-    await userEvent.click(canvas.getByRole('button', { name: 'Pay 25 EUR and send' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Pay 25 PLN and send' }));
     await waitFor(() => expect(canvas.getByLabelText(/Your question/)).toHaveFocus());
     await expect(canvas.getByLabelText(/Your question/)).toHaveValue(QUESTION);
   },
@@ -81,7 +81,7 @@ export const ServerUnreachable: Story = {
   args: { onSubmit: async () => failure(0, { code: 'network_error', message: 'The server could not be reached. Check your connection and try again.' }) },
   play: async ({ canvasElement }) => {
     const canvas = await fill(canvasElement);
-    await userEvent.click(canvas.getByRole('button', { name: 'Pay 25 EUR and send' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Pay 25 PLN and send' }));
     await expect(await canvas.findByRole('alert')).toHaveTextContent('could not be reached');
     await expect(canvas.getByLabelText(/Your question/)).toHaveValue(QUESTION);
   },

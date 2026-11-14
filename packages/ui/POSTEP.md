@@ -257,7 +257,7 @@ Komponenty produktu w `src/components/<koncept>/` (standard projektu), strony do
 - 88 stories w grupie `Product/` (każdy komponent: stany ładowania, błędu, pusty, długi tekst, wąski ekran, wiele elementów tam, gdzie mają sens) i 9 stron komponentów w `.storybook/docs/product/` po 13 sekcji.
 - Wzorce: `Paid action flow` (11 stories, 12 sekcji) i `Session thread` (7 stories, 12 sekcji).
 - Ekrany E01: `src/screens/e01-views.tsx` (przykładowe kompozycje, nie eksportowane z pakietu) i `src/screens/e01.stories.tsx` (34 stories, każdy to jeden stan jednego ekranu: logowanie, weryfikacja linku, lista mentorów z filtrem technologii, strona mentora z formularzem, powrót z płatności, rezerwacje szukającego i mentora, sesja). Strona epiku `Product/Epics/E01 Booking flow` z mapą stanów, regułami i listą tego, czego brak.
-- Dane przykładowe: `.storybook/blocks/sampleData.ts` (bez ocen i liczb klientów; cena 25 EUR z specyfikacji E01).
+- Dane przykładowe: `.storybook/blocks/sampleData.ts` (bez ocen i liczb klientów; cena 25 PLN z specyfikacji E01).
 - `lib/utils.ts`: `tailwind-merge` zna `max-w-content`, `max-w-session` i `border-composer-border` (3 nowe testy).
 - `src/test/setup.ts`: atrapa `ResizeObserver` dla Jest (Radix mierzy checkbox w `<form>`), taka sama w `ui.stories.spec.tsx` dla runnera jsdom.
 
@@ -286,7 +286,7 @@ Komponenty produktu w `src/components/<koncept>/` (standard projektu), strony do
 1. Lista mentorów jest listą wierszy, nie tabelą. Przyjęta referencja R01.3 prosi o wyraźne nagłówki kolumn. Czy lista mentorów ma być `Table`?
 2. `BookingRow` wylicza akcje ze statusu (`paid` i mentor). Specyfikacja zwraca z serwera `allowedActions`. Proponuję, żeby komponent przyjmował `allowedActions` zamiast zgadywać.
 3. Tony statusów rezerwacji (neutralny, aktywny, zagrożenie; negatywny wynik dla szukającego jako zagrożenie, dla mentora neutralnie) to propozycja. Zależy od K3.
-4. Format kwot: „25 EUR” w zdaniach i na przyciskach, „25.00 EUR” w tabelach. Trafi na stronę Content w etapie 4.
+4. Format kwot: „25 PLN” w zdaniach i na przyciskach, „25.00 PLN” w tabelach. Trafi na stronę Content w etapie 4.
 5. Okno sesji jako zwykły tekst z ostatniego czasu serwera, bez odliczania na żywo (odliczanie byłoby odczytywane co sekundę).
 6. `Button` z `disabledReason` owija się w `<span>`, więc przy zniknięciu powodu element jest montowany od nowa. Jeśli fokus był na zablokowanym przycisku, a powód zniknął bez udziału użytkownika (np. po odpowiedzi serwera), fokus przepada. W tej partii to się nie zdarza (powód znika po akcji użytkownika w innym polu), ale to znane ograniczenie. Naprawa: stały wrapper dla wszystkich przycisków albo nowa implementacja. Czekam na decyzję.
 7. Stany „success” i „warning” nadal nie istnieją (K3), więc ekrany ich nie używają.
@@ -295,7 +295,7 @@ Komponenty produktu w `src/components/<koncept>/` (standard projektu), strony do
 ## Etap 3, partia 3C: co zbudowano
 
 - Komponenty E02: `notes/{NoteEditor, PublishNoticePanel}` i `vault/{VaultAnswerView, ReviewItem, CreditsPanel}`. `NoteEditor` to `CrudForm` ze wspólnym schematem (tytuł do 120, treść do 20000 znaków, limity z tabeli `notes`) i statusem notatki. `PublishNoticePanel` ma własny `Checkbox` (zgoda nigdy zaznaczona z góry, wysyła wersję powiadomienia), bo `CrudForm` nie ma pola `checkbox`, a dopisanie go to zmiana poza planem. Do `lib/format.ts` doszły `formatDate` i `formatDuration`.
-- `QuestionForm` rozszerzony (moja własna partia 3B): `mentorName` opcjonalne, nowe `fieldHint`, domyślny opis „for one answer”. Dzięki temu pytanie do vaultu (10 EUR, limit 2000) używa tego samego formularza.
+- `QuestionForm` rozszerzony (moja własna partia 3B): `mentorName` opcjonalne, nowe `fieldHint`, domyślny opis „for one answer”. Dzięki temu pytanie do vaultu (10 PLN, limit 2000) używa tego samego formularza.
 - 71 nowych stories w `Product/` (łącznie 159) i 5 stron komponentów po 13 sekcji. Wzorzec `Review queue` (9 stories, 12 sekcji). Ekrany E02: `src/screens/e02-views.tsx` i `e02.stories.tsx` (30 stories: notatki z kredytami, jedna notatka, odpowiedzi do przeglądu, zapytanie do vaultu, odpowiedź vaultu). Strona epiku `Product/Epics/E02 Notes and vault`.
 - Treść powiadomienia D09 w stories to ROBOCZY TEKST z oznaczeniem „waiting for legal review (E03-T02)”: sześć punktów ze specyfikacji, nie tekst prawny.
 

@@ -11,7 +11,7 @@ const completed: NormalizedPaymentEvent = {
   providerSessionId: 'session-1',
   providerPaymentId: 'provider-payment-1',
   amountMinor: 2500,
-  currency: 'EUR',
+  currency: 'PLN',
   livemode: true,
 };
 
@@ -43,7 +43,7 @@ describe('PaymentService.handleEvent', () => {
       providerSessionId: 'session-1',
       status: 'succeeded',
       amountMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       providerPaymentId: 'provider-payment-1',
       livemode: true,
     });
@@ -90,7 +90,7 @@ describe('PaymentService.handleEvent', () => {
       bookingId: 'booking-1',
       providerSessionId: 'session-1',
       amountMinor: 2500,
-      currency: 'EUR',
+      currency: 'PLN',
       livemode: false,
     });
 
@@ -105,7 +105,7 @@ describe('PaymentService.handleEvent', () => {
         bookingId: 'booking-1',
         providerSessionId: 'session-1',
         amountMinor: 2500,
-        currency: 'EUR',
+        currency: 'PLN',
         livemode: false,
       } satisfies NormalizedPaymentEvent,
     ],
@@ -117,7 +117,7 @@ describe('PaymentService.handleEvent', () => {
         providerSessionId: 'session-1',
         providerPaymentId: 'failed-payment-1',
         amountMinor: 2500,
-        currency: 'EUR',
+        currency: 'PLN',
         livemode: false,
       } satisfies NormalizedPaymentEvent,
     ],
@@ -150,7 +150,7 @@ describe('PaymentService payable-subject dispatch', () => {
     const unitOfWork = { run: async <T>(callback: () => Promise<T>): Promise<T> => { work(); return callback(); } };
     const handler = {
       type: 'vault_answer' as const,
-      expectedAmount: jest.fn().mockResolvedValue({ amountMinor: 1000, currency: 'EUR' }),
+      expectedAmount: jest.fn().mockResolvedValue({ amountMinor: 1000, currency: 'PLN' }),
       onPaid,
       onFailed,
     };
@@ -168,7 +168,7 @@ describe('PaymentService payable-subject dispatch', () => {
       providerSessionId: 'session-1',
       providerPaymentId: 'provider-1',
       amountMinor: 1000,
-      currency: 'EUR',
+      currency: 'PLN',
       livemode: false,
     });
 
@@ -176,7 +176,7 @@ describe('PaymentService payable-subject dispatch', () => {
       subjectType: 'vault_answer',
       subjectId: 'answer-1',
       expectedAmountMinor: 1000,
-      expectedCurrency: 'EUR',
+      expectedCurrency: 'PLN',
     }));
     expect(work).toHaveBeenCalledTimes(1);
     expect(onPaid).toHaveBeenCalledWith('answer-1', 'payment-vault-1');
@@ -193,13 +193,13 @@ describe('PaymentService payable-subject dispatch', () => {
       eventBus: { emit: jest.fn() } as unknown as EventBus,
       logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() },
       paymentSubjectHandlers: [{
-        type: 'vault_answer', expectedAmount: jest.fn().mockResolvedValue({ amountMinor: 1000, currency: 'EUR' }),
+        type: 'vault_answer', expectedAmount: jest.fn().mockResolvedValue({ amountMinor: 1000, currency: 'PLN' }),
         onPaid, onFailed: jest.fn(),
       }],
     });
     await service.handleEvent({
       type: 'checkout.completed', subjectType: 'vault_answer', subjectId: 'answer-1',
-      providerSessionId: 'session-1', providerPaymentId: 'provider-1', amountMinor: 1001, currency: 'EUR',
+      providerSessionId: 'session-1', providerPaymentId: 'provider-1', amountMinor: 1001, currency: 'PLN',
     });
     expect(onPaid).not.toHaveBeenCalled();
   });

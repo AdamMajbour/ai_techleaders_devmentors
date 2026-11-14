@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { apiCall, Alert, AlertDescription, Button, ErrorMessage, Field, Input, LoadingMessage, Page, useAsync } from '@devmentor/ui';
+import { apiCall, Alert, AlertDescription, Button, ErrorMessage, Field, Input, LoadingMessage, Page, Select, useAsync } from '@devmentor/ui';
 import type { ApiResult } from '@devmentor/ui';
 
 type Slot = { id: string; startsAt: string; endsAt: string };
@@ -24,6 +24,7 @@ function formatTime(value: string): string {
 
 export function MentorAvailabilityView() {
   const [startsAt, setStartsAt] = useState(defaultSlotStart);
+  const [durationMinutes, setDurationMinutes] = useState(25);
   const [reloads, setReloads] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,10 +40,10 @@ export function MentorAvailabilityView() {
     setNotice(null);
     try {
       const result = await apiCall<Slot>('/api/mentors/me/availability', {
-        method: 'POST', json: { startsAt: new Date(startsAt).toISOString() },
+        method: 'POST', json: { startsAt: new Date(startsAt).toISOString(), durationMinutes },
       });
       if (!result.ok) { setError(result.error.message); return; }
-      setNotice('The session time is now available to seekers.');
+      setNotice(`The ${durationMinutes}-minute session time is now available to seekers.`);
       setReloads((value) => value + 1);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'The time could not be published.');
@@ -67,9 +68,15 @@ export function MentorAvailabilityView() {
 
   return (
     <Page title="Session availability" narrow>
-      <p className="m-0 text-body text-muted-foreground">Publish 25-minute times up to 7 days ahead. Times are saved as UTC and shown to seekers in their local timezone.</p>
+      <p className="m-0 text-body text-muted-foreground">Publish 25- or 50-minute availability windows up to 7 days ahead. Times are saved as UTC and shown to seekers in their local timezone.</p>
       <form onSubmit={createSlot} className="flex flex-col gap-between-groups">
-        <Field label="Session start" hint="Choose a time at least 30 minutes from now, on a 15-minute boundary." requirement="required">
+        <Field label="Availability length" requirement="required">
+          <Select value={String(durationMinutes)} onChange={(event) => setDurationMinutes(Number(event.currentTarget.value))} aria-label="Availability length">
+            <option value="25">25 minutes</option>
+            <option value="50">50 minutes</option>
+          </Select>
+        </Field>
+        <Field label="Session start" hint="Choose a time at least 30 minutes from now, on a 15-minute boundary. Seekers must book at least 2 hours ahead." requirement="required">
           <Input type="datetime-local" required value={startsAt} onChange={(event) => setStartsAt(event.currentTarget.value)} />
         </Field>
         <div><Button type="submit" disabled={busy}>Publish available time</Button></div>
@@ -84,7 +91,7 @@ export function MentorAvailabilityView() {
           <ul className="m-0 list-none p-0">
             {slots.map((slot) => (
               <li key={slot.id} className="flex flex-wrap items-center justify-between gap-group border-b border-border py-panel-compact">
-                <span className="text-body text-foreground">{formatTime(slot.startsAt)}</span>
+                <span className="text-body text-foreground">{Math.round((Date.parse(slot.endsAt) - Date.parse(slot.startsAt)) / 60_000)} minutes · {formatTime(slot.startsAt)}</span>
                 <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void cancelSlot(slot.id)}>Remove</Button>
               </li>
             ))}

@@ -11,7 +11,7 @@ function answer(overrides: Partial<VaultAnswer> = {}): VaultAnswer {
   const now = new Date('2026-11-10T12:00:00.000Z');
   return {
     id: answerId, seekerId: '10000000-0000-4000-8000-000000000001', question: 'Question?', status: 'pending_preview',
-    priceMinor: 1000, currency: 'EUR', answerText: 'An answer.', failureReason: null, modelId: 'mock-v1',
+    priceMinor: 1000, currency: 'PLN', answerText: 'An answer.', failureReason: null, modelId: 'mock-v1',
     inputTokens: 10, outputTokens: 5, generationAttempts: 1, generationStartedAt: now, previewRequired: true,
     reviewExpiresAt: new Date('2026-11-10T14:00:00.000Z'), createdAt: now, updatedAt: now, ...overrides,
   } as VaultAnswer;
@@ -60,7 +60,7 @@ describe('VaultReviewService.decide', () => {
     await expect(deps.service.decide(actor(), answerId, 'approve')).resolves.toEqual({ id: answerId, status: 'released' });
     expect(deps.decideAndReleaseWithCredits).toHaveBeenCalledWith(expect.objectContaining({
       answerId, reviewerId: mentorId,
-      credits: [{ accountId: mentorId, amountMinor: 800, currency: 'EUR', livemode: false, sourceType: 'vault_answer', sourceId: answerId }],
+      credits: [{ accountId: mentorId, amountMinor: 800, currency: 'PLN', livemode: false, sourceType: 'vault_answer', sourceId: answerId }],
     }));
     expect(deps.emit).toHaveBeenCalledWith('vault.answer.released', { answerId });
   });

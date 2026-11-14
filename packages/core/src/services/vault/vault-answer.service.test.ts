@@ -20,7 +20,7 @@ function setup(options: {
     question: 'How do I improve this query?',
     status: 'pending_payment',
     priceMinor: 1000,
-    currency: 'EUR',
+    currency: 'PLN',
     answerText: null,
     failureReason: null,
     modelId: null,
@@ -71,13 +71,13 @@ describe('VaultAnswerService.create', () => {
     });
 
     expect(result.checkoutUrl).toBe('https://pay.example.test/session');
-    expect(result.answer).toMatchObject({ status: 'pending_payment', priceMinor: 1000, currency: 'EUR' });
+    expect(result.answer).toMatchObject({ status: 'pending_payment', priceMinor: 1000, currency: 'PLN' });
     expect(result.answer).not.toHaveProperty('answerText');
     expect(deps.createWithPayment).toHaveBeenCalledWith(expect.objectContaining({
       seekerId,
       question: 'How do I improve this query?',
       priceMinor: 1000,
-    }), expect.objectContaining({ amountMinor: 1000, currency: 'EUR' }));
+    }), expect.objectContaining({ amountMinor: 1000, currency: 'PLN' }));
     expect(deps.createCheckout).toHaveBeenCalledWith(expect.objectContaining({
       subjectType: 'vault_answer', subjectId: answerId, amountMinor: 1000,
     }));

@@ -248,6 +248,7 @@ Strony: `/login`, `/register`, `/articles` (lista z `DataTable`, formularz z `Cr
 npm run test              # Testy jednostkowe
 npm run test:integration  # Testy z bazą danych
 npm run test:e2e          # Build + serwer + testy HTTP i w przeglądarce
+npm run test:browser:install # Pobierz Chromium do testów przeglądarkowych
 npm run test:all          # Wszystkie trzy
 npm run test:watch        # Watch mode
 ```
@@ -256,7 +257,7 @@ npm run test:watch        # Watch mode
 
 - **PostgreSQL:** `docker compose up -d db` (`docker-compose.yml`, dane logowania = domyślne z `packages/db/src/config`).
   Testy integracyjne i E2E same tworzą bazy `devmentor_test` i `devmentor_e2e`.
-- **Chromium (testy przeglądarkowe w E2E):** `npx playwright install --with-deps chromium` (wymaga roota). Bez roota:
+- **Chromium (testy przeglądarkowe w E2E):** `npm run test:browser:install` (pobiera przeglądarkę Playwright; nie instaluje systemowych bibliotek). Na Debian/Ubuntu, jeśli brakuje bibliotek systemowych, użyj `npx playwright install --with-deps chromium` (wymaga roota). Bez roota:
   `npx playwright install chromium && python3 scripts/setup-chromium-libs.py` — skrypt pobiera brakujące biblioteki systemowe
   (Debian/Ubuntu, amd64) do `~/.cache/chromium-libs`, a test sam dodaje je do `LD_LIBRARY_PATH` (katalog: `CHROMIUM_LIBS_DIR`).
 - **CI:** `.github/workflows/ci.yml` (type-check, lint, testy jednostkowe, migracje up/down/up + seed, testy integracyjne,

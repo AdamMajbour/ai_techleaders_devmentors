@@ -110,7 +110,7 @@ export function MentorProfileView({ slug, source }: { slug: string; source: Book
             Pilot booking terms
           </h2>
           <p className="m-0 text-body text-foreground">
-            You pay 25 EUR for a 25-minute text session. Your question is shared only with this mentor.
+            You pay the listed price for the selected 25- or 50-minute text session. Your question is shared only with this mentor.
             If the mentor does not accept or does not show up, you are refunded.
           </p>
         </section>

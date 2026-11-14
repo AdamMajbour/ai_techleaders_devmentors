@@ -6,7 +6,7 @@ import { CreditsPanel } from './CreditsPanel';
 const meta = {
   title: 'Product/Vault/CreditsPanel',
   component: CreditsPanel,
-  args: { balanceMinor: 667, currency: 'EUR', entries: CREDIT_ENTRIES.filter((entry) => entry.livemode), timeZone: 'UTC' },
+  args: { balanceMinor: 667, currency: 'PLN', entries: CREDIT_ENTRIES.filter((entry) => entry.livemode), timeZone: 'UTC' },
   render: (args) => (
     <div className="max-w-session">
       <CreditsPanel {...args} />
