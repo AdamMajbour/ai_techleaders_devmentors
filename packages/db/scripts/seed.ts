@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import { ArticleRepository, AvailabilitySlotRepository, closeORM, initializeORM, InvitationRepository, MentorProfileRepository, TermsRepository, UserRepository } from '../src';
 import { DEMO_ARTICLE_TITLE, DEMO_AUTHOR, DEMO_LEARNER, DEMO_PERSONAS } from './seed-data';
 import { ensureDemoSeekerTerms } from './demo-seeker-terms';
+import { assertDemoSeedAllowed } from './seed-environment';
 
 const SEED_BCRYPT_COST = 12;
 
@@ -13,9 +14,7 @@ function hashDemoPassword(password: string): Promise<string> {
 }
 
 async function main(): Promise<void> {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('The local demo seed cannot run in production.');
-  }
+  assertDemoSeedAllowed(process.env);
 
   const orm = await initializeORM();
   const em = orm.em.fork();
