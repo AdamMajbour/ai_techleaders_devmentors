@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "devmentor",
   "version": "0.1.0",
   "description": "Platform for mentorship and programming skill development",
@@ -15,6 +15,7 @@
     "lint": "eslint packages",
     "type-check": "npm run type-check --workspaces --if-present",
     "test": "jest --selectProjects unit",
+    "test:agent-scripts": "node --test .agents/skills/om-auto-issue-triage/scripts/select-issues.test.mjs .agents/skills/om-auto-merge-buddy/scripts/dashboard.test.mjs",
     "test:watch": "jest --watch",
     "migrate": "npm --workspace=@devmentor/db run migrate",
     "migrate:down": "npm --workspace=@devmentor/db run migrate:down",
@@ -24,6 +25,7 @@
     "db:seed:text-sessions": "npm --workspace=@devmentor/db run seed:text-sessions",
     "db:seed:lesson-14": "npm --workspace=@devmentor/db run seed:lesson-14",
     "pilot:invite": "npm --workspace=@devmentor/core run pilot:invite --",
+    "invite": "npm --workspace=@devmentor/core run pilot:invite --",
     "bookings:settle": "npm --workspace=@devmentor/core run bookings:settle --",
     "vault:settle": "npm --workspace=@devmentor/core run vault:settle --",
     "retention:sweep": "npm --workspace=@devmentor/core run retention:sweep --",
