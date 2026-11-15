@@ -27,6 +27,12 @@ describe('redact', () => {
     });
   });
 
+  it('masks invitation URLs and links before logging', () => {
+    const result = redact({ invitationUrl: 'https://app.example/auth/verify?token=private', link: 'https://app.example/private' });
+    expect(result).toEqual({ invitationUrl: '[redacted]', link: '[redacted]' });
+    expect(JSON.stringify(result)).not.toContain('private');
+  });
+
   it('turns an Error into plain data', () => {
     expect(redact(new Error('boom'))).toMatchObject({ name: 'Error', message: 'boom' });
   });

@@ -10,7 +10,8 @@
     "./styles": "./src/styles/index.css",
     "./components/*": "./src/components/*.tsx",
     "./lib/*": "./src/lib/*.ts",
-    "./hooks/*": "./src/hooks/*.ts"
+    "./hooks/*": "./src/hooks/*.ts",
+    "./time": "./src/time/index.ts"
   },
   "scripts": {
     "type-check": "tsc --noEmit",

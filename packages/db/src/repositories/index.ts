@@ -1808,6 +1808,14 @@ export class AvailabilitySlotRepository {
     }, { orderBy: { startsAt: 'asc' } });
   }
 
+  findCreatedInRangeForMentors(mentorIds: readonly string[], from: Date, to: Date): Promise<AvailabilitySlot[]> {
+    if (mentorIds.length === 0) return Promise.resolve([]);
+    return this.em.find(AvailabilitySlot, {
+      mentorId: { $in: [...mentorIds] },
+      createdAt: { $gte: from, $lte: to },
+    });
+  }
+
   async cancelOpen(id: string, mentorId: string): Promise<boolean> {
     return (await this.em.nativeUpdate(
       AvailabilitySlot,
@@ -1867,3 +1875,5 @@ export class AvailabilitySlotRepository {
   }
 }
 export { SessionNoteRepository } from './session-note.repository';
+export { InvitationBatchRepository, type NewInvitationBatch } from './invitation-batch.repository';
+export { MentorInvitationRepository, type NewMentorInvitation } from './mentor-invitation.repository';

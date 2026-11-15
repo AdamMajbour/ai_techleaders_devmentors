@@ -22,6 +22,33 @@ async function fill(email: string, note: string) {
 }
 
 describe('CrudForm', () => {
+  it('supports accessible multiselect checkbox fields and validates their arrays', async () => {
+    const multiSchema = z.object({ tags: z.array(z.string()).min(1, 'Choose at least one tag.') });
+    const onSubmit = jest.fn(async () => ok);
+    render(
+      <CrudForm
+        schema={multiSchema}
+        fields={[{
+          name: 'tags',
+          label: 'Stack tags',
+          type: 'multiselect',
+          requirement: 'required',
+          options: [{ value: 'typescript', label: 'TypeScript' }, { value: 'python', label: 'Python' }],
+        }]}
+        onSubmit={onSubmit}
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('Choose at least one tag.')).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('checkbox', { name: 'TypeScript' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Python' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({ tags: ['typescript', 'python'] }));
+  });
+
   it('validates with the shared schema and does not submit invalid input', async () => {
     const onSubmit = jest.fn(async () => ok);
     render(<CrudForm schema={schema} fields={fields} onSubmit={onSubmit} />);

@@ -13,6 +13,23 @@ const createdInvitation = {
 };
 
 describe('InvitationService', () => {
+  it('includes accepted outreach invitations in mentor eligibility without changing other role checks', async () => {
+    const invitationRepository = {
+      hasAcceptedRole: jest.fn(async () => false),
+      isPilotMember: jest.fn(async () => true),
+    };
+    const mentorInvitationRepository = { hasAcceptedMentor: jest.fn(async () => true) };
+    const service = new InvitationService({
+      invitationRepository: invitationRepository as never,
+      mentorInvitationRepository,
+    });
+
+    await expect(service.isAcceptedMentor('mentor-id')).resolves.toBe(true);
+    expect(await service.isPilotMember('mentor-id')).toBe(true);
+    expect(invitationRepository.hasAcceptedRole).toHaveBeenCalledWith('mentor-id', 'mentor');
+    expect(mentorInvitationRepository.hasAcceptedMentor).toHaveBeenCalledWith('mentor-id');
+  });
+
   it('normalizes e-mail and trims the display name when creating an invitation', async () => {
     const invitationRepository = {
       create: jest.fn(async () => createdInvitation),

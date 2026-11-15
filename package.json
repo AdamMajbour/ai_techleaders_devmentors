@@ -24,6 +24,7 @@
     "db:seed": "npm --workspace=@devmentor/db run seed",
     "db:seed:lesson-14": "npm --workspace=@devmentor/db run seed:lesson-14",
     "pilot:invite": "npm --workspace=@devmentor/core run pilot:invite --",
+    "invite": "npm --workspace=@devmentor/core run pilot:invite --",
     "bookings:settle": "npm --workspace=@devmentor/core run bookings:settle --",
     "vault:settle": "npm --workspace=@devmentor/core run vault:settle --",
     "retention:sweep": "npm --workspace=@devmentor/core run retention:sweep --",

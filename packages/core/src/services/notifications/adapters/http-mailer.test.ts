@@ -10,6 +10,36 @@ const message: MailMessage = {
 };
 
 describe('HttpMailer', () => {
+  it('sends the mentor invitation link, expiry, and publication request as plain text', async () => {
+    const fetcher = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      void input;
+      void init;
+      return new Response(null, { status: 202 });
+    });
+    const mailer = new HttpMailer({ apiKey: 'secret-provider-key', from: 'hello@example.com', fetcher });
+
+    await mailer.send({
+      to: 'mentor@example.com',
+      template: 'mentor-invitation',
+      data: {
+        displayName: '<Ada>',
+        url: 'https://devmentor.example/auth/verify?token=private-token',
+        expiresAt: '2026-12-15T12:00:00.000Z',
+      },
+    });
+
+    const body = JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+    expect(body).toMatchObject({
+      to: ['mentor@example.com'],
+      subject: 'You are invited to DevMentor',
+      text: expect.stringContaining('within two weeks'),
+    });
+    expect(body.text).toContain('December 15, 2026');
+    expect(body.text).toContain('https://devmentor.example/auth/verify?token=private-token');
+    expect(body.html).toContain('&lt;Ada&gt;');
+    expect(body.html).not.toContain('<Ada>');
+  });
+
   it('sends a magic link through the provider API without exposing provider credentials in payloads', async () => {
     const fetcher = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       void input;

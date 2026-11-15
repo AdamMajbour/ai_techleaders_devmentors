@@ -10,12 +10,14 @@ import { toUserDto, type UserDto } from '../dto';
 import type { InvitationService } from './invitation.service';
 import type { MentorService } from '../mentors/mentor.service';
 import { INVALID_MAGIC_LINK_MESSAGE } from './magic-link.constants';
+import type { MentorInvitationService } from '../invitations/mentor-invitation.service';
 
 type Dependencies = {
   userRepository: UserRepository;
   eventBus: EventBus;
   invitationService: InvitationService;
   mentorService: Pick<MentorService, 'recordSignInActivity'>;
+  mentorInvitationService?: Pick<MentorInvitationService, 'recordAcceptance'>;
   clock: Clock;
   logger: Logger;
 };
@@ -28,14 +30,16 @@ export class AuthService {
   private readonly eventBus: EventBus;
   private readonly invitationService: InvitationService;
   private readonly mentorService: Pick<MentorService, 'recordSignInActivity'>;
+  private readonly mentorInvitationService?: Pick<MentorInvitationService, 'recordAcceptance'>;
   private readonly clock: Clock;
   private readonly logger: Logger;
 
-  constructor({ userRepository, eventBus, invitationService, mentorService, clock, logger }: Dependencies) {
+  constructor({ userRepository, eventBus, invitationService, mentorService, mentorInvitationService, clock, logger }: Dependencies) {
     this.userRepository = userRepository;
     this.eventBus = eventBus;
     this.invitationService = invitationService;
     this.mentorService = mentorService;
+    this.mentorInvitationService = mentorInvitationService;
     this.clock = clock;
     this.logger = logger;
   }
@@ -132,12 +136,15 @@ export class AuthService {
       }
     }
 
+    const acceptedAt = this.clock.now();
     const accepted = await this.invitationService.acceptForUser(
       invitation.email,
       user.id,
-      this.clock.now(),
+      acceptedAt,
     );
     if (!accepted) throw new UnauthorizedError(INVALID_MAGIC_LINK_MESSAGE);
+
+    await this.mentorInvitationService?.recordAcceptance(invitation.email, user.id, acceptedAt);
 
     if (created) await this.eventBus.emit('auth.user.registered', { userId: user.id });
     await this.recordMentorSignIn(user.id);

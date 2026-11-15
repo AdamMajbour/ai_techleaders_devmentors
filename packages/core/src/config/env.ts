@@ -19,6 +19,10 @@ const mentorResponseWindowMinutesSchema = z.preprocess(
   (value) => (value === undefined || value === '' ? 120 : value),
   z.coerce.number().int().min(1).max(MAX_MENTOR_RESPONSE_WINDOW_MINUTES),
 );
+const mentorPublishWindowDaysSchema = z.preprocess(
+  (value) => (value === undefined || value === '' ? 14 : value),
+  z.coerce.number().int().min(1).max(365),
+);
 
 const refundAutoApproveReasonsSchema = z.preprocess(
   (value) =>
@@ -68,6 +72,7 @@ const envSchema = z.object({
     (value) => parseOperatorUserIds(typeof value === 'string' ? value : undefined),
     z.array(z.string()),
   ),
+  MENTOR_PUBLISH_WINDOW_DAYS: mentorPublishWindowDaysSchema,
   // Default preserves existing deployments; the pilot deployment can disable sign-up later.
   PUBLIC_SIGNUP: publicSignupSchema,
   // Optional for compatibility; magic-link requests require it when creating verification links.

@@ -27,18 +27,21 @@ function setup(repository: Partial<Record<keyof UserRepository, jest.Mock>>) {
   };
   const clock: Clock = { now: () => new Date('2026-11-05T12:00:00.000Z') };
   const mentorService = { recordSignInActivity: jest.fn(async () => undefined) };
+  const mentorInvitationService = { recordAcceptance: jest.fn(async () => true) };
   return {
     service: new AuthService({
       userRepository: repository as unknown as UserRepository,
       eventBus,
       invitationService: invitationService as never,
       mentorService: mentorService as never,
+      mentorInvitationService: mentorInvitationService as never,
       clock,
       logger: silent,
     }),
     registered,
     invitationService,
     mentorService,
+    mentorInvitationService,
   };
 }
 
@@ -178,6 +181,25 @@ describe('AuthService.signInWithMagicLink', () => {
       expect.objectContaining({ userId: 'u1' }),
     );
   }, 20_000);
+
+  it('records outreach acceptance after the existing access invitation is accepted', async () => {
+    const { service, invitationService, mentorInvitationService } = setup({
+      findByEmail: jest.fn(async () => userWith(null)),
+    });
+    invitationService.findUnrevokedByEmail.mockResolvedValue({ ...invitation, role: 'mentor' });
+
+    await expect(service.signInWithMagicLink('ada@example.com')).resolves.toMatchObject({ id: 'u1' });
+    expect(invitationService.acceptForUser).toHaveBeenCalledWith(
+      'ada@example.com',
+      'u1',
+      new Date('2026-11-05T12:00:00.000Z'),
+    );
+    expect(mentorInvitationService.recordAcceptance).toHaveBeenCalledWith(
+      'ada@example.com',
+      'u1',
+      new Date('2026-11-05T12:00:00.000Z'),
+    );
+  });
 
   it('rejects a revoked invitation and an invitation that cannot be accepted', async () => {
     const { service, invitationService } = setup({
