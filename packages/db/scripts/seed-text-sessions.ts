@@ -74,7 +74,7 @@ async function main(): Promise<void> {
     await em.flush();
 
     for (const [index, id] of fixture.messageIds.entries()) {
-      let message = await em.findOne(Message, { id });
+      const message = await em.findOne(Message, { id });
       const data = {
         bookingId: booking.id,
         authorId: index === 0 ? seeker.id : mentor.id,
