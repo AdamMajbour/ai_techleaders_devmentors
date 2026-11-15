@@ -1,4 +1,4 @@
-﻿# Release workflow execution plan
+# Release workflow execution plan
 
 - Goal: Add a manually triggered GitHub Actions release workflow that selects the next semantic version, updates every workspace package version, tags the release, and publishes notes from CHANGELOG.md.
 - Scope: `.github/workflows/`, root and workspace `package.json` files, `CHANGELOG.md` integration, and this run record.
@@ -9,6 +9,8 @@
 
 ### Phase 1: Build release workflow
 
+- [x] Resume fix: use const for the seeded message — 62c3506e11a0e8f3607516d936f4592e1b0f543a
+
 1.1 Add workflow dispatch inputs, SemVer selection and validation, package version updates, changelog extraction, tag creation, and GitHub Release publication.
 1.2 Review the diff and run the configured validation gate.
 
@@ -17,6 +19,8 @@
 > Convention: `- [ ]` pending, `- [x]` done. Append `— <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Build release workflow
+
+- [x] Resume fix: use const for the seeded message — 62c3506e11a0e8f3607516d936f4592e1b0f543a
 
 - [x] 1.1 Add workflow dispatch inputs, SemVer selection and validation, package version updates, changelog extraction, tag creation, and GitHub Release publication. — d543032fb221f2b807acbabbc66b78d984447e57
 - [x] 1.2 Review the diff and run the configured validation gate. — 50ed6b3 plus final validation below
