@@ -21,7 +21,7 @@ jobs:
       - run: npm ci
 
       - name: Production rate-limit bypass regression
-        run: npx jest --selectProjects unit packages/core/src/security/rate-limit.production.test.ts --runInBand
+        run: npx jest --selectProjects unit --runTestsByPath packages/core/src/security/rate-limit.production.test.ts --runInBand
 
   verify:
     runs-on: ubuntu-latest
