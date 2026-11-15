@@ -76,7 +76,7 @@ jobs:
 
           const tag = `v${next}`;
           const tagExists = (ref) => {
-            try { execFileSync('git', ['rev-parse', '--verify', ref], { stdio: 'ignore' }); return true; }
+            try { execFileSync('git', ['show-ref', '--verify', '--quiet', ref], { stdio: 'ignore' }); return true; }
             catch (error) { if (error.status === 1) return false; throw error; }
           };
           if (tagExists(`refs/tags/${tag}`)) throw new Error(`Local tag ${tag} already exists.`);
