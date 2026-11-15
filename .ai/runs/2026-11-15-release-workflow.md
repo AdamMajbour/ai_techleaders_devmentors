@@ -3,7 +3,7 @@
 - Goal: Add a manually triggered GitHub Actions release workflow that selects the next semantic version, updates every workspace package version, tags the release, and publishes notes from CHANGELOG.md.
 - Scope: `.github/workflows/`, root and workspace `package.json` files, `CHANGELOG.md` integration, and this run record.
 - Non-goals: Automated releases on merge, dependency version changes, deployment, and changelog authoring.
-- Risks: Dispatch requires a dated, non-empty changelog entry for the selected version. GitHub Actions CI and the authoritative review must pass before the PR can be marked complete.
+- Risks: Dispatch requires a dated, non-empty changelog entry for the selected version. GitHub Actions CI must pass before merge. GitHub rejects self-review by the PR author, so an independent reviewer must approve before this draft can be marked complete.
 
 ## Implementation Plan
 
