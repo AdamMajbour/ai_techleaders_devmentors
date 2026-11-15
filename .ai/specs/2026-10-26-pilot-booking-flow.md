@@ -1,5 +1,7 @@
 # Pilot booking flow (E01): find a mentor, prepay, hold a 25-minute text session
 
+> Superseded by [operator-managed session price bounds](2026-11-15-platform-settings.md).
+
 Screen-map prototype (reference): [`prototypes/konta-i-role/`](../../prototypes/konta-i-role/); screen decisions: [`lekcja-07/mapa-ekranow.md`](../../lekcja-07/mapa-ekranow.md). Related mentor-onboarding prototype (reference only): [`.ai/prototypes/discovery/mentor-onboarding/revision-001/`](../prototypes/discovery/mentor-onboarding/revision-001/).
 
 Status: Ready for implementation, conditional (second pre-implement audit `.ai/analysis/pre-implement-2026-10-26-pilot-specs-2.md`, fixes applied; Phase 1 waits for D24, auto-refund waits for D25). Spec 2 of 2; **depends on** `2026-10-26-pilot-primitives.md` (its Phases 1–4 merge first). Source: issue #7 (E01) with #10–#14; design authority `.ai/specs/product-brief.md`.
