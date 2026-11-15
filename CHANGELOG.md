@@ -4,19 +4,35 @@
 
 ### Added
 
-- Expanded local demo data with additional mentor profiles and upcoming, active,
-  and completed sample sessions and messages.
-- Added an idempotent `npm run db:seed:text-sessions` command for preparing
-  participant session fixtures.
-- Added the platform pricing and settings proposal, tester analysis, and updated
-  GitHub pipeline tracker documentation.
+- Added measured mentor invitation batches with acceptance and availability
+  tracking, pause controls, expiring links, and migration of existing mentor
+  invitations ([#44](https://github.com/AdamMajbour/ai_techleaders_devmentors/pull/44)).
+- Added a participant-scoped text session API and local mock session fixtures
+  ([#40](https://github.com/AdamMajbour/ai_techleaders_devmentors/pull/40)).
+- Added 25- and 50-minute bookings with server-calculated pricing, availability
+  windows, and a local mock checkout ([#39](https://github.com/AdamMajbour/ai_techleaders_devmentors/pull/39)).
+- Added versioned pilot terms and consent history, Stripe test-mode onboarding
+  and payouts, legal holds, retention jobs, and pilot metrics
+  ([#34](https://github.com/AdamMajbour/ai_techleaders_devmentors/pull/34)).
+- Added session-note privacy and consent controls for booking participants
+  ([#33](https://github.com/AdamMajbour/ai_techleaders_devmentors/pull/33)).
+- Added local demo profiles and session fixtures, the platform settings proposal,
+  tester analysis, and updated GitHub pipeline documentation.
 
 ### Changed
 
-- Updated demo seeker credentials and invitation state safely when rerunning the
-  seed script; refreshed existing demo mentor profiles.
+- Restricted text-session message reads and writes to booking participants; a
+  nonparticipant receives `403 Forbidden` ([#40](https://github.com/AdamMajbour/ai_techleaders_devmentors/pull/40)).
+- Updated demo seed data idempotently, including existing mentor profiles and
+  invitation state.
 - Marked the earlier pilot booking flow specification as superseded by the
   platform settings proposal.
+
+### Fixed
+
+- Kept local demo checkout usable when seeker terms are not configured; the
+  production terms gate remains enforced ([#38](https://github.com/AdamMajbour/ai_techleaders_devmentors/pull/38)).
+- Kept rate limiting enabled in production and added regression coverage.
 
 ## [1.0.0] - 2026-11-15
 
