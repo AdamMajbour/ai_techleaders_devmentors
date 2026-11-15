@@ -22,3 +22,4 @@
 - [x] 1.2 Review the diff and run the configured validation gate. — ac72afe846d47827d107ab785841360e86fffd1f
 - [x] Resume fix: use const for the seeded message. — 62c3506e11a0e8f3607516d936f4592e1b0f543a
 - [x] Resume CI fix: remove redundant missing npm script invocation. — 8f1902c1b6eca128abdb4cac5f4a5b117adb213b
+- [x] Review fix: derive the release base from the latest tag, match the changelog convention, and add versioning tests. — b19efc7c4605b5408c938b8de2e464fddc7b74b2
