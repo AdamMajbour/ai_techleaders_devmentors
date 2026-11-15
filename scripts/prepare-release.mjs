@@ -38,11 +38,16 @@ function latestReleaseVersion(fallback) {
   return tags ? tags.slice(1) : fallback;
 }
 
-function releaseNotes(changelog, version) {
+function releaseNotes(changelog, version, baseVersion) {
   const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const header = new RegExp(`^## \\[${escaped}\\] - \\d{4}-\\d{2}-\\d{2}\\s*$`, 'm');
   const found = header.exec(changelog);
-  if (!found) throw new Error(`Add a dated ${version} entry to CHANGELOG.md first.`);
+  if (!found) {
+    const baseTag = `v${baseVersion}`;
+    const commits = execFileSync('git', ['log', '--pretty=format:- %s', `${baseTag}..HEAD`], { encoding: 'utf8' }).trim();
+    if (!commits) throw new Error(`No changelog entry for ${version}, and no commits found since ${baseTag}.`);
+    return `## Changes\n\n${commits}\n`;
+  }
   const remainder = changelog.slice(found.index + found[0].length);
   const next = /^## \[/m.exec(remainder);
   const notes = remainder.slice(0, next?.index ?? remainder.length).trim();
@@ -52,12 +57,13 @@ function releaseNotes(changelog, version) {
 
 function main() {
   const root = JSON.parse(readFileSync('package.json', 'utf8'));
-  const version = increment(latestReleaseVersion(root.version), process.env.VERSION_TYPE, process.env.CUSTOM_VERSION);
+  const baseVersion = latestReleaseVersion(root.version);
+  const version = increment(baseVersion, process.env.VERSION_TYPE, process.env.CUSTOM_VERSION);
   const tag = `v${version}`;
   const localTag = execFileSync('git', ['tag', '--list', tag], { encoding: 'utf8' }).trim();
   const remoteTag = execFileSync('git', ['ls-remote', '--tags', 'origin', `refs/tags/${tag}`, `refs/tags/${tag}^{}`], { encoding: 'utf8' }).trim();
   if (localTag || remoteTag) throw new Error(`Tag ${tag} already exists.`);
-  const notes = releaseNotes(readFileSync('CHANGELOG.md', 'utf8'), version);
+  const notes = releaseNotes(readFileSync('CHANGELOG.md', 'utf8'), version, baseVersion);
 
   const files = ['package.json', ...readdirSync('packages', { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
