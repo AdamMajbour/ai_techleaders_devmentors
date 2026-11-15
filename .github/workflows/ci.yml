@@ -71,7 +71,7 @@ jobs:
 
       - name: Agent script tests
         run: |
-          node --test .agents/skills/om-auto-merge-buddy/scripts/dashboard.test.mjs .agents/skills/om-auto-issue-triage/scripts/select-issues.test.mjs
+          npm run test:agent-scripts
           python3 -m unittest discover -s .agents/skills/om-ai-context-maintenance/scripts -p 'test_*.py'
 
       - name: Install PostgreSQL client

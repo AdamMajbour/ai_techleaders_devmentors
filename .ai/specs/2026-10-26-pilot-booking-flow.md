@@ -1,5 +1,6 @@
 # Pilot booking flow (E01): find a mentor, prepay, hold a 25-minute text session
-> ⚠️ Superseded by `.ai/specs/2026-11-15-platform-settings.md` (2026-11-15) — sections: Data Model (booking price policy), API Contracts (POST /api/bookings price calculation), Risks & Impact Review (fixed price constant). Current state: see the new spec.
+
+> Superseded by [operator-managed session price bounds](2026-11-15-platform-settings.md).
 
 Screen-map prototype (reference): [`prototypes/konta-i-role/`](../../prototypes/konta-i-role/); screen decisions: [`lekcja-07/mapa-ekranow.md`](../../lekcja-07/mapa-ekranow.md). Related mentor-onboarding prototype (reference only): [`.ai/prototypes/discovery/mentor-onboarding/revision-001/`](../prototypes/discovery/mentor-onboarding/revision-001/).
 
