@@ -1,0 +1,122 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as StatusBadgeStories from '../../../src/components/ui/status-badge.stories';
+import { StatusBadge } from '../../../src/components/ui/status-badge';
+import { Button } from '../../../src/components/ui/button';
+import { DoDont } from '../../blocks/DoDont';
+
+<Meta of={StatusBadgeStories} />
+
+# StatusBadge
+
+## 1. What it is for
+
+A status badge says in a word where something stands: a booking is paid, an answer waits for review, a payment failed.
+
+<Canvas of={StatusBadgeStories.Tones} />
+
+## 2. When to use it
+
+- The state of a booking or a question in a list row and on its detail view.
+- The state of a vault answer, a note (draft, published, taken down) and a refund.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| An action the user can take | `Button` | A badge is not clickable |
+| A message that needs reading | `Alert` | A badge holds one or two words |
+| A count or a category tag | Plain text | A status describes one object's state |
+| A rating or a score | Nothing: ratings are not part of the product | N02 |
+
+## 4. Anatomy
+
+1. **Text** (required): the state in words.
+2. **Icon** (optional): a lucide icon, `size-4`, `aria-hidden`. It supports the text and never replaces it.
+
+## 5. Variants
+
+Three tones, chosen by what the state means for the reader. **A success tone and a warning tone do not exist yet:** the accent and the colour of success collide (conflict K3), so they wait for that decision.
+
+| Tone | Choose it when | Example statuses |
+|---|---|---|
+| `neutral` | A plain state, nothing to do | Paid, Waiting for the mentor, Draft, Closed |
+| `active` | The current state, or one that needs the reader to act | Awaiting your review, Accepted |
+| `danger` | A negative outcome | Declined, Expired, Payment failed |
+
+The tone assignment is a proposal for the product's statuses.
+
+## 6. States
+
+A badge is not interactive. It has one appearance per tone.
+
+| State | What the user sees | Source |
+|---|---|---|
+| Neutral | `--muted` fill, text colour | WCAG 1.4.3 (13.5:1 dark) |
+| Active | `--primary` fill with dark text | R01.5 |
+| Danger | `--destructive` outline and text | WCAG 1.4.3 |
+| Hover, focus, pressed, disabled, loading | Not applicable | |
+
+<Canvas of={StatusBadgeStories.WithIcon} />
+
+## 7. Behavior and accessibility
+
+- **Text first:** the status is always read from the text, so colour is never the only cue (WCAG 1.4.1).
+- **Role:** a badge is plain text in a `span`. It has no role. A change of status that matters is announced by an `Alert` or the page, not by the badge.
+- **Contrast:** all three tones pass 4.5:1 in both themes (see Foundations, Color).
+
+<Canvas of={StatusBadgeStories.TextIsAlwaysPresent} />
+
+## 8. Content
+
+- **Text:** one to three words, sentence case: "Awaiting your review", not "AWAITING REVIEW".
+- **Say the state, not the process:** "Declined", not "Mentor action completed".
+- **Long text:** avoid it. If it does not fit in three words, show an `Alert` instead.
+
+<Canvas of={StatusBadgeStories.LongTextNarrow} />
+
+## 9. Responsiveness
+
+The badge keeps its size and wraps its text if the container is very narrow. In a list row it sits beside the title on wide screens and under it at 320 px.
+
+## 10. API
+
+<ArgTypes of={StatusBadgeStories} />
+
+## 11. Code
+
+```tsx
+import { StatusBadge } from '@devmentor/ui';
+
+<StatusBadge>Paid</StatusBadge>
+```
+
+```tsx
+// Typical: a status map for one concept lives next to its components, not in this one.
+const BOOKING_STATUS = {
+  paid: { tone: 'neutral', text: 'Waiting for the mentor' },
+  accepted: { tone: 'active', text: 'Accepted' },
+  declined: { tone: 'danger', text: 'Declined' },
+} as const;
+
+<StatusBadge tone={BOOKING_STATUS[booking.status].tone}>{BOOKING_STATUS[booking.status].text}</StatusBadge>
+```
+
+## 12. Do and don't
+
+<DoDont
+  doExample={<StatusBadge tone="danger">Declined</StatusBadge>}
+  doWhy="The word says the outcome, and the outline backs it up."
+  dontExample={<span className="size-3 rounded-full bg-destructive" role="img" aria-label="Declined" />}
+  dontWhy="A coloured dot alone fails people who cannot tell the colours apart."
+/>
+<DoDont
+  doExample={<StatusBadge tone="active">Awaiting your review</StatusBadge>}
+  doWhy="A badge reports a state."
+  dontExample={<Button size="sm">Awaiting your review</Button>}
+  dontWhy="A state that looks like a button invites clicks that do nothing."
+/>
+
+## 13. Related
+
+- **Confused with:** `Button` (an action), `Alert` (a message).
+- **Used in patterns:** List with filters (row status), Detail view (header status), Review queue.

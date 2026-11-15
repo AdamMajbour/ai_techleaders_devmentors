@@ -1,0 +1,18 @@
+<title>DevMentor design system</title>
+<script>
+  // Storybook's manager rewrites the tab title to "<page> ⋅ Storybook" and has no option to change it.
+  // Only the product name may be visible (rule 10), so the word is replaced whenever the title changes.
+  (function () {
+    var BRAND = 'DevMentor';
+    function rename() {
+      var t = document.title;
+      if (t === 'storybook - Storybook') { document.title = 'DevMentor design system'; return; }
+      if (t.indexOf('Storybook') !== -1 || t.toLowerCase().indexOf('storybook') !== -1) {
+        document.title = t.replace(/storybook/gi, BRAND);
+      }
+    }
+    rename();
+    var node = document.querySelector('title');
+    if (node) new MutationObserver(rename).observe(node, { childList: true, characterData: true, subtree: true });
+  })();
+</script>

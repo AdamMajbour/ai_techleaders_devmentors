@@ -1,0 +1,66 @@
+import { Meta, Unstyled } from '@storybook/addon-docs/blocks';
+import { Swatch } from '../../blocks/Swatch';
+import { ThemePair } from '../../blocks/ThemePair';
+import { ContrastTable } from '../../blocks/ContrastTable';
+
+<Meta title="Foundations/Color" />
+
+# Color
+
+Colour in DevMentor has roles. You pick a role (`--primary`, `--muted-foreground`), never a colour.
+The values live in `src/styles/tokens.css`, in three layers: raw palette, meaning, component.
+Use the meaning layer. Never use a raw `--palette-*` value in a component.
+
+## Roles
+
+| Token | Role | Use it for | Do not use it for | Source |
+|---|---|---|---|---|
+| `--background` | Page surface | The page behind everything | Panels and rows | P1 warm greys |
+| `--card` | Panel surface | A panel that must stand out, such as the message box | Every block of content: rows are separated by a line, not by a card | R01.1, A01 |
+| `--foreground`, `--headline` | Text | Body text, headings, table column headers | Secondary text | R01.3 |
+| `--muted-foreground` | Secondary text | Author and time on a message, helper text | Main content | R02.3 |
+| `--muted` | Code surface | Code, file names, commands | Ordinary panels | R01.2 |
+| `--primary` | The one accent | One main action per screen, the accent fill | Decoration, large surfaces, success indicators (use `--status-success`) | R01.5 |
+| `--primary-foreground` | Text on the accent | Label of a button filled with `--primary` | Any other background | WCAG 1.4.3 |
+| `--link` | Link text | Links. Links are always underlined as well | Buttons | WCAG 1.4.1 |
+| `--border` | Hairline | A thin line between rows and under column headers | The outline of a control | R01.1 |
+| `--input` | Control outline | The outline of fields and buttons | A separator between rows | WCAG 1.4.11 |
+| `--ring` | Keyboard focus | The focus indicator | Decoration | WCAG 2.4.7 |
+| `--destructive`, `--destructive-foreground` | Destructive action | Delete, cancel a paid answer, error text | Warnings that are not errors | WCAG 1.4.3 |
+| `--status-success` | Success indicator | A running or healthy state, such as the dot next to "Running". Always with words beside it | The accent, a main action, a badge (there is no success tone of `StatusBadge` yet) | Decision 2026-10-28, settles K3 |
+| `--accent` | Hover surface | A subtle hover or selected-row background. It is **not** the brand accent | The brand accent (use `--primary`) | Existing token |
+
+## Rules
+
+1. **One accent.** `--primary` is the only accent colour. One main action per screen uses it (R01.5; one highlighted element per screen is proposal P2, approved 2026-10-27).
+2. **Colour is never the only carrier of meaning.** A status always has text. A selected row, an error and a saved state also differ by a label, an icon or a shape (WCAG 1.4.1).
+3. **No gradients, glass, glow or purple.** They are the signature of generic AI sites (A01, see What to avoid).
+4. **In the light theme the accent is a fill only.** Lime has 1.11:1 contrast on the light page, so it cannot be text or a focus ring there. Links and focus use the text colour. This is decision (a) of 2026-10-27.
+5. **Success has its own colour, `--status-success`.** The lime accent is not a success colour (conflict K3, settled 2026-10-28: the owner approved a separate green for each theme, at 9.65:1 and 5.04:1 on the page; the values are in the table of tokens below). A status still has words and never relies on a colour alone. A warning colour is not defined.
+
+## Both themes
+
+Dark is the default. Light is a proposal approved on 2026-10-27, because no reference gives light values.
+
+<Unstyled>
+  <ThemePair>
+    <Swatch token="background" note="page" />
+    <Swatch token="card" note="panel" />
+    <Swatch token="muted" note="code surface" />
+    <Swatch token="foreground" note="text" />
+    <Swatch token="muted-foreground" note="secondary text" />
+    <Swatch token="primary" note="the one accent (fill)" />
+    <Swatch token="destructive" note="destructive" />
+    <Swatch token="input" note="control outline" />
+    <Swatch token="border" note="hairline" />
+  </ThemePair>
+</Unstyled>
+
+## Contrast of every pair in use
+
+<Unstyled>
+  <ContrastTable />
+</Unstyled>
+
+No enforced pair is below its threshold. The closest are `--muted-foreground` on `--muted` (4.67:1 dark) and `--destructive` on `--card` (4.57:1 dark). Do not lower either token without re-running `npm run tokens:contrast`.
+The hairline `--border` is 1.3:1 on purpose: it separates rows and is not the outline of a control. If a line is the only edge of a field or a button, use `--input`.

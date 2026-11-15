@@ -1,0 +1,118 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as SelectStories from '../../../src/components/ui/select.stories';
+import { Select } from '../../../src/components/ui/select';
+import { Input } from '../../../src/components/ui/input';
+import { DoDont } from '../../blocks/DoDont';
+
+<Meta of={SelectStories} />
+
+# Select
+
+## 1. What it is for
+
+A control for choosing one value from a short fixed list, such as a technology.
+
+<Canvas of={SelectStories.Playground} />
+
+## 2. When to use it
+
+- The technology filter on the mentor list.
+- Any single choice among roughly 3 to 15 options.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| Two options, or a yes or no | `Checkbox` | Fewer steps |
+| A long list that needs searching | A field with search (not built yet, see What is missing) | A native list is slow beyond about 15 items |
+| Free text | `Input` | The user types |
+
+This is a **styled native `<select>`**: the browser supplies the keyboard behaviour, the list and the mobile picker. That is the most accessible and cheapest choice for the short lists in this product.
+
+## 4. Anatomy
+
+1. **Field box** with a `--input` outline.
+2. **Selected value** (or the first "all" option).
+3. **Arrow**: decorative, hidden from assistive technology.
+
+## 5. Variants
+
+| Density | Height | Use it for |
+|---|---|---|
+| `default` | 40 px | Forms |
+| `compact` | 32 px | Filters above a list (K1) |
+
+<Canvas of={SelectStories.Densities} />
+
+## 6. States
+
+<Canvas of={SelectStories.States} />
+
+| State | What the user sees | Source |
+|---|---|---|
+| Default | `--input` outline | WCAG 1.4.11 |
+| Hover | No separate style | Proposal |
+| Focus | A solid 2 px ring in `--ring`, 2 px gap | WCAG 2.4.7 |
+| Disabled | `--muted` fill, muted text. Explain why in the hint | Decision 2026-10-27 |
+| Invalid | `--destructive` outline plus an error text and icon from `Field` | WCAG 1.4.1, 3.3.1 |
+| Open | The browser's own list | |
+| Loading, selected, pressed | Not applicable. A filter that loads its options shows a skeleton instead | |
+
+## 7. Behavior and accessibility
+
+- **Keyboard:** `Tab` focuses it. Arrow keys change the value, `Space` or `Alt` plus `Down` opens the list, typing jumps to an option (native).
+- **Label:** a visible label, as for `Input`.
+- **Arrow icon:** `aria-hidden`, and it does not take clicks.
+
+<Canvas of={SelectStories.Choosing} />
+
+## 8. Content
+
+- **First option:** for a filter, "All technologies". For a form, a neutral prompt such as "Choose a technology" with an empty value.
+- **Options:** short nouns, sorted in a way users expect (alphabetical unless there is a natural order).
+- **Long option text:** the field shows one line and the browser's list shows the full text.
+
+<Canvas of={SelectStories.LongOptionNarrow} />
+
+## 9. Responsiveness
+
+Fills its container. On phones the browser opens its own picker. At 320 px put it on its own row.
+
+## 10. API
+
+<ArgTypes of={SelectStories} />
+
+## 11. Code
+
+```tsx
+import { Select } from '@devmentor/ui';
+
+<Select aria-label="Technology" defaultValue="">
+  <option value="">All technologies</option>
+  <option value="python">Python</option>
+</Select>
+```
+
+```tsx
+// Typical: the technology filter on the mentor list.
+<Select density="compact" aria-label="Technology" value={technology} onChange={(e) => setTechnology(e.target.value)}>
+  <option value="">All technologies</option>
+  {technologies.map((name) => (
+    <option key={name} value={name}>{name}</option>
+  ))}
+</Select>
+```
+
+## 12. Do and don't
+
+<DoDont
+  doExample={<div className="w-56"><Select aria-label="Technology" defaultValue=""><option value="">All technologies</option><option>Python</option></Select></div>}
+  doWhy="A short fixed list is a choice, so the user picks."
+  dontExample={<div className="w-56"><Input aria-label="Technology" placeholder="Type a technology" /></div>}
+  dontWhy="Typing invites misspellings and empty filter results."
+/>
+
+## 13. Related
+
+- **Confused with:** `Input` (typing) and `Checkbox` (two options).
+- **Used in patterns:** List with filters.

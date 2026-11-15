@@ -1,0 +1,6 @@
+# D01 — MVP scope: paid text sessions plus a vault answer drawn from the mentor's notes
+- Date, owner: 2026-10-25, founder A (Oliwia), confirmed in the discovery session
+- Context and the options weighed: the workshop of 2026-08-26 asked for the smallest product that earns for a mentor without a call. Options put to the owner: (a) paid text sessions 25/50 min, vault later; (b) sessions plus a vault answer from the mentor's notes; (c) a test before any build. The agent recommended (a), treating the vault as a mentor-side hypothesis, because no seeker interviewed asked for saved or reusable answers and two declined them. Nobody outside the interviews has committed time or money so far (owner, 2026-10-25).
+- Decision and why: (b), chosen by the owner against the agent's recommendation. The owner's stated reason in the session was only the choice itself; the beliefs behind it stay assumptions (A01).
+- Consequences, and what would make us revisit it: implementation readiness stays withheld until stop criteria exist (Q01), the citation question is answered by founder B (Q02) and discovery is decided (Q03). Revisit if A01 is refuted by seekers or by the mentors' notes not answering real questions.
+- Status: active

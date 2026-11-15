@@ -1,0 +1,119 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as ReviewItemStories from '../../../src/components/vault/ReviewItem.stories';
+
+<Meta of={ReviewItemStories} />
+
+# ReviewItem
+
+## 1. What it is for
+
+One AI-generated answer that waits for the mentor whose note it cites. The mentor reads the question and the whole answer, then approves or rejects it. Until 14 December 2026 no answer reaches a seeker without this step (D09).
+
+<Canvas of={ReviewItemStories.WaitingForTheMentor} />
+
+## 2. When to use it
+
+- The list "Answers to review" (E02-S02), inside a `ul`. See Patterns: Review queue.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| The seeker's view of the answer | `VaultAnswerView` | No decision, with the notes used |
+| A booking to accept | `BookingRow` | A different record |
+
+## 4. Anatomy
+
+1. **The question**, in full, without the seeker's name.
+2. **The generated answer**, in full, in a bordered block (no links).
+3. **Which note is theirs** and which other mentors are cited.
+4. **The deadline**: a time and the time left.
+5. **Reason** (optional) and its hint.
+6. **Approve** and **Reject**.
+
+## 5. Variants
+
+| Variant | Choose it when | Source |
+|---|---|---|
+| `pendingAction` | An action is running | Form rules |
+| `actionError` | The server refused | Vault spec |
+| `decision` | The mentor already decided: the buttons become a sentence | |
+| `headingLevel` | The outline needs it: 2 under a page `h1` | WCAG 1.3.1 |
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Waiting | The deadline and both buttons | D09 |
+| Approving, rejecting | "Approving…" or "Rejecting…", both buttons disabled | Form rules |
+| Refused | An alert with what to do, the buttons usable | WCAG 3.3.3 |
+| Approved | "You approved this answer. It goes to the seeker when every mentor whose note was used has approved." | Vault spec (all cited mentors approve) |
+| Rejected | "You rejected this answer. The seeker is refunded." | Vault spec |
+| Time ran out | "The time to decide has passed. This answer expired and the seeker is refunded." No buttons | Vault spec |
+
+<Canvas of={ReviewItemStories.Approving} />
+<Canvas of={ReviewItemStories.ActionRefused} />
+<Canvas of={ReviewItemStories.Approved} />
+<Canvas of={ReviewItemStories.TimeRanOut} />
+
+## 7. Behavior and accessibility
+
+- **The consequence of Reject is written next to it:** "If you reject, the whole answer is rejected and the seeker is refunded." One rejection rejects the answer (vault spec, Q4). No confirmation dialog: nothing is lost, and the sentence is read with the field. Whether to add one is a question for the owner (POSTEP.md).
+- **Who reads the reason:** only the operator. The seeker is told only that the answer was not approved.
+- **Button names:** "Approve the answer that cites Ingress upgrades on bare metal", so several rows are told apart.
+- **The window is decided on the server:** the component compares with `now`, the server's time.
+- **No links in the answer:** a link in generated text is shown as plain text.
+
+<Canvas of={ReviewItemStories.RejectWithAReason} />
+
+## 8. Content
+
+- **Question from a seeker:** the seeker's name is not shown (assumption A-2 of the vault spec).
+- **Deadline:** "Decide by 15:00 (1 h 20 min left)."
+- **Reason hint:** says who reads it and what a rejection does.
+
+## 9. Responsiveness
+
+One column at every width. At 320 px long note titles and many mentors' names wrap.
+
+<Canvas of={ReviewItemStories.LongAnswerAndNamesNarrow} />
+
+## 10. API
+
+<ArgTypes of={ReviewItemStories} />
+
+## 11. Code
+
+```tsx
+import { ReviewItem } from '@devmentor/ui';
+
+<ul>
+  {items.map((item) => (
+    <ReviewItem
+      key={item.answerId}
+      item={item}
+      now={serverTime}
+      headingLevel={2}
+      onApprove={approve}
+      onReject={reject}
+      pendingAction={running[item.answerId]}
+      actionError={errors[item.answerId]}
+    />
+  ))}
+</ul>
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | The whole answer next to the buttons | The mentor decides on what they read |
+| Don't | A preview cut at three lines | The mentor approves what they have not read |
+| Do | Say what a rejection does, next to it | One rejection stops the answer |
+| Don't | Keep the buttons after the time ran out | The server would refuse them |
+
+## 13. Related
+
+- **Components inside:** `MarkdownView`, `Field`, `Textarea`, `Button`, `Alert`.
+- **Confused with:** `BookingRow`, `VaultAnswerView`.
+- **Patterns:** Review queue. **Screens:** "E02 Notes and vault" > Answers to review.

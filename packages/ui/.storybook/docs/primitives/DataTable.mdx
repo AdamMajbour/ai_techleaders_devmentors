@@ -1,0 +1,124 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as ListStories from '../../../src/patterns/list-with-filters.stories';
+
+<Meta title="Primitives/DataTable" />
+
+# DataTable
+
+## 1. What it is for
+
+A list of records in columns, with loading, error and empty states built in, plus pagination and row actions. Every list screen uses it instead of a hand-written table.
+
+<Canvas of={ListStories.WithResults} />
+
+## 2. When to use it
+
+- A list that grows: notes, bookings of an operator, anything with pages or row actions.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A handful of fixed rows | `Table` | No states or pagination needed |
+| A list whose rows are not cells (a mentor with a button and a link) | A `ul` of rows (`MentorRow`, `BookingRow`) | Rows are not columns. The accepted reference R01.3 asks for column headers, so see the open point in `MentorRow` |
+| A list with filters whose rows have a link or an action (the seeker's sessions) | A `ul` of rows with the filter bar of the **List with filters** pattern. The pattern shows a `DataTable`, but its filters, count and states apply to a `ul` as well | The kind of list follows the row, not the filters |
+| A queue of decisions | Patterns: Review queue | Each item is read whole |
+
+## 4. Anatomy
+
+1. **Caption** (names the table for assistive technology).
+2. **Column headers**, in the headline colour (R01.3).
+3. **Rows** with a hairline between them (R01.1) and optional row actions.
+4. **Pagination** when there is more than one page.
+5. The **loading**, **error** and **empty** states instead of the table.
+
+## 5. Variants
+
+| Prop | Choose it when | Source |
+|---|---|---|
+| `columns` | Always: `key`, `header`, `cell` | R01.3 |
+| `rowActions` | An action per row | |
+| `pagination` | More rows than one page | |
+| `emptyTitle`, `emptyDescription`, `emptyAction` | The empty state needs words and a next step | Content rules |
+| `caption` | Always give it, or label the table another way | WCAG 1.3.1 |
+
+## 6. States, one story each
+
+| State | Story | Source |
+|---|---|---|
+| Results | WithResults | |
+| A filter is active and results are counted | FilteringShowsTheActiveFilterAndCountsResults | List pattern |
+| No results for the filters | NoResultsForTheFilters | EmptyState |
+| Nothing here yet | NothingHereYet | EmptyState |
+| Loading | Loading | `aria-busy`, no table element |
+| Load failed, with retry | LoadFailed | WCAG 3.3.3 |
+| Many rows, pagination | ManyRowsWithPagination | |
+| Long text, narrow screen | LongTextNarrow | |
+
+<Canvas of={ListStories.NoResultsForTheFilters} />
+<Canvas of={ListStories.Loading} />
+<Canvas of={ListStories.LoadFailed} />
+<Canvas of={ListStories.ManyRowsWithPagination} />
+
+## 7. Behavior and accessibility
+
+- **A real table** with a caption and column headers.
+- **Loading is not a table:** nothing is announced as data that is not there yet.
+- **The error has a retry**, because trying again can work.
+- **The empty state says why it is empty and what to do next.**
+
+## 8. Content
+
+- **Headers:** one or two words: "Title", "Status".
+- **Empty:** "No notes yet. Write down what you explain again and again."
+- **Amounts:** "25.00 EUR" in tables so the digits line up (Content page).
+
+## 9. Responsiveness
+
+At 320 px the table scrolls horizontally inside its container. The rows are not rearranged.
+
+<Canvas of={ListStories.LongTextNarrow} />
+
+## 10. API
+
+| Prop | Type | Meaning |
+|---|---|---|
+| `columns` | `DataTableColumn[]` | `key`, `header`, `cell(row)`, `className` |
+| `rows` | `TRow[] \| undefined` | `undefined` while there is nothing yet |
+| `getRowId` | `(row) => string` | A stable key |
+| `isLoading`, `error`, `onRetry` | | The loading and error states |
+| `emptyTitle`, `emptyDescription`, `emptyAction` | | The empty state |
+| `caption` | `string` | Names the table |
+| `rowActions` | `(row) => ReactNode` | An action cell |
+| `pagination` | `{ page, pageCount, onPageChange }` | |
+
+## 11. Code
+
+```tsx
+import { DataTable } from '@devmentor/ui';
+
+<DataTable
+  caption="Your notes"
+  getRowId={(note) => note.id}
+  columns={[{ key: 'title', header: 'Title', cell: (note) => note.title }]}
+  rows={notes}
+  isLoading={loading}
+  error={error}
+  onRetry={reload}
+/>
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | A caption and a header for every column | A screen reader names the table and its columns |
+| Don't | A hand-written `<table>` for a list | It loses the states and the pagination |
+| Do | A next step in the empty state | The user is not left with a blank page |
+| Don't | An empty table with only the headers | It reads as a bug |
+
+## 13. Related
+
+- **Components inside:** `Table`, `EmptyState`, `ErrorMessage`, `LoadingMessage`, `Skeleton`.
+- **Patterns:** List with filters.
+- **Confused with:** `Table` (fixed rows), a `ul` of rows.

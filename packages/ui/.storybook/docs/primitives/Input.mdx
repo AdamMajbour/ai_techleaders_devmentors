@@ -1,0 +1,110 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as InputStories from '../../../src/components/ui/input.stories';
+import { Input } from '../../../src/components/ui/input';
+import { DoDont } from '../../blocks/DoDont';
+
+<Meta of={InputStories} />
+
+# Input
+
+## 1. What it is for
+
+A single-line text field for a short value, such as an e-mail address, a title or a search term.
+
+<Canvas of={InputStories.Playground} />
+
+## 2. When to use it
+
+- E-mail on the sign-in form.
+- The title of a note; a mentor's headline.
+- A short search or filter term.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A question, a note body, anything that can run to several lines | `Textarea` | A single line hides long text |
+| Choosing from a short fixed list | `Select` | The user picks instead of typing |
+| A yes or no | `Checkbox` | State, not text |
+
+An input never stands alone: it is paired with a visible label (`Field`, next batch). The `aria-label` in these examples stands in for the label.
+
+## 4. Anatomy
+
+1. **Field box** with a `--input` outline (3:1 contrast).
+2. **Value**, or **placeholder** (an example, never the name of the field).
+
+## 5. Variants
+
+| Density | Height | Use it for | Source |
+|---|---|---|---|
+| `default` | 40 px | Forms and the session view | K1, R02.1 |
+| `compact` | 32 px | Filters and inline editing in dense lists | K1, R01.3 |
+
+<Canvas of={InputStories.Densities} />
+
+## 6. States
+
+<Canvas of={InputStories.States} />
+
+| State | What the user sees | Source |
+|---|---|---|
+| Default | `--input` outline, transparent fill | WCAG 1.4.11 |
+| Hover | No separate style. The text cursor is the cue | Proposal |
+| Focus | A solid 2 px ring in `--ring`, 2 px gap | WCAG 2.4.7 |
+| Disabled | `--muted` fill, muted text, not in keyboard order. Always explain why in the field's hint | Decision 2026-10-27 |
+| Invalid | `--destructive` outline. The error text and icon come from `Field`: colour is never the only cue | WCAG 1.4.1, 3.3.1 |
+| Loading | Not an input state. A loading form shows a skeleton | |
+| Selected / pressed | Not applicable to a text field | |
+
+## 7. Behavior and accessibility
+
+- **Keyboard:** `Tab` focuses it. Typing, selection and clipboard are native.
+- **Label:** every input has a visible label. Set `aria-invalid="true"` on an invalid field and link the error with `aria-describedby`.
+- **Target size:** 32 px or 40 px high (WCAG 2.5.8).
+- **Autocomplete:** set `autoComplete` and the right `type` (`email`) so browsers and password managers help.
+
+<Canvas of={InputStories.Typing} />
+
+## 8. Content
+
+- **Label:** a noun: "Email", not "Enter your email".
+- **Placeholder:** an example value, never the field's name.
+- **Long values:** stay on one line and scroll inside the field. Do not truncate what the user typed.
+
+<Canvas of={InputStories.LongValueNarrow} />
+
+## 9. Responsiveness
+
+The field fills its container. At 320 px, put the field on its own row. At 768 px and above a compact filter can sit beside a button.
+
+## 10. API
+
+<ArgTypes of={InputStories} />
+
+## 11. Code
+
+```tsx
+import { Input } from '@devmentor/ui';
+
+<Input aria-label="Email" type="email" autoComplete="email" />
+```
+
+```tsx
+// Typical: a filter above the mentor list.
+<Input density="compact" aria-label="Search mentors" placeholder="Technology or name" />
+```
+
+## 12. Do and don't
+
+<DoDont
+  doExample={<Input aria-label="Email" placeholder="ada@devmentor.local" />}
+  doWhy="The placeholder is an example; the field is named by its label."
+  dontExample={<Input aria-label="Enter your email address" placeholder="Enter your email address" />}
+  dontWhy="A placeholder that names the field disappears when the user types."
+/>
+
+## 13. Related
+
+- **Confused with:** `Textarea` (several lines) and `Select` (a choice).
+- **Used in patterns:** Form, List with filters.

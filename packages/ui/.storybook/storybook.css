@@ -1,0 +1,52 @@
+/* Mirrors the app's global stylesheet: Tailwind theme and utilities only, no preflight. */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import '../src/styles/index.css';
+@import 'tailwindcss/utilities.css' layer(utilities);
+@source '../src';
+@source './';
+
+/* Frozen states for documentation only: the same declarations as :hover, :focus-visible and :active,
+   also attached to data-preview-state, so a static page can show them. The product never sets it. */
+@custom-variant hover (&:is(:hover, [data-preview-state='hover']));
+@custom-variant focus-visible (&:is(:focus-visible, [data-preview-state='focus']));
+@custom-variant active (&:is(:active, [data-preview-state='pressed']));
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--family-sans);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+  }
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
+  code,
+  kbd,
+  pre {
+    font-family: var(--family-code);
+  }
+}
+
+/* Docs pages sit in Storybook's own wrapper; make it follow the product theme in both themes. */
+.sbdocs-wrapper,
+.sbdocs-wrapper .sbdocs-content {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+}
+.sbdocs-wrapper .sbdocs-content h1,
+.sbdocs-wrapper .sbdocs-content h2,
+.sbdocs-wrapper .sbdocs-content h3,
+.sbdocs-wrapper .sbdocs-content h4,
+.sbdocs-wrapper .sbdocs-content p,
+.sbdocs-wrapper .sbdocs-content li,
+.sbdocs-wrapper .sbdocs-content td,
+.sbdocs-wrapper .sbdocs-content th {
+  color: var(--foreground) !important;
+}

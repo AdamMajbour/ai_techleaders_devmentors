@@ -1,0 +1,6 @@
+# D07 — R03, R04 and R05 become active rules, accepted untested
+- Date, owner: 2026-10-25, founder A (Oliwia), confirmed in the discovery session
+- Context and the options weighed: R03 (a published note carries the mentor's name and the mentor can take it down), R04 (prepayment, visible price before writing anything, same-day refund of a mentor no-show), R05 (the mentor sees the question before accepting) were proposals. Sources: staff engineer, freelancer, Python speaker. The owner could confirm any subset; all three were confirmed. R04 and R05 were not tested against the fintech developer, who rolls back if booking takes over five minutes, or the platform developer, who needs someone found in five minutes (see the brief).
+- Decision and why: all three are active as written. This is a decision about risk, not evidence that seekers accept prepayment or that mentors accept a mentor-side wait.
+- Consequences, and what would make us revisit it: R04 and R05 add steps before a session; the commitment test (A03) is the first place that shows whether they cost bookings. Revisit if prepaid bookings fall short of the threshold set under D05, or if mentors decline because of R05.
+- Status: active

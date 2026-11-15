@@ -39,3 +39,22 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# monorepo packages
+node_modules
+.next/
+dist/
+
+# keep the committed template
+!.env.example
+.swc
+
+# agent pipeline QA artifacts (generated per run)
+.ai/qa/artifacts_*/
+.ai/qa/test-env.json
+.ai/qa/test-env.env
+.aider*
+/packages/ui/.storybook/public/prototypes/
+
+# stryker temp files
+.stryker-tmp

@@ -1,0 +1,100 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as BookingStatusStories from '../../../src/components/bookings/BookingStatus.stories';
+
+<Meta of={BookingStatusStories} />
+
+# BookingStatus
+
+## 1. What it is for
+
+Says where a booking stands, in words, from the point of view of the person reading. It also says where the money stands after a decline, an expiry or a no-show (`RefundStatusLine`).
+
+<Canvas of={BookingStatusStories.ReadByTheSeeker} />
+
+## 2. When to use it
+
+- In `BookingRow`, next to the other person's name.
+- In the heading of a booking's detail view.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A status that is not a booking's | `StatusBadge` directly | This component knows the booking statuses |
+| A long explanation of what happens next | Text under the badge, or an `Alert` | A badge is one to three words |
+
+## 4. Anatomy
+
+1. **Badge**: a `StatusBadge` with the status text.
+2. **Refund line** (optional): plain text next to the badge.
+
+## 5. Variants
+
+The wording depends on who reads it.
+
+| Status | The seeker reads | The mentor reads |
+|---|---|---|
+| `pending_payment` | Awaiting payment | Awaiting payment |
+| `payment_failed` | Payment failed (danger) | Payment failed |
+| `paid` | Waiting for the mentor | Awaiting your decision (active) |
+| `accepted` | Accepted (active) | Accepted (active) |
+| `declined` | Declined (danger) | Declined |
+| `expired` | Not answered in time (danger) | Not answered in time |
+
+A negative outcome is shown to the seeker as a problem and to the mentor, who caused it, as a plain fact. The tone assignment is a **proposal**: the success and warning tones are not defined yet (conflict K3, see POSTEP.md).
+
+<Canvas of={BookingStatusStories.ReadByTheMentor} />
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Each status | A badge with words and a tone | WCAG 1.4.1 (words, not colour alone) |
+| Refund `pending_approval` | "Refund pending approval" | Booking spec: refunds that wait for the operator |
+| Refund `processing` | "Refund processing" | Booking spec: the gateway call is running |
+| Refund `refunded` | "Refunded" | Booking spec |
+| Refund `none` | Nothing is rendered | |
+
+<Canvas of={BookingStatusStories.WhereTheMoneyStands} />
+
+## 7. Behavior and accessibility
+
+- The meaning is in the words. The tone only supports it.
+- It is plain text, not a live region: a status that changes is announced by the screen that changes it.
+
+## 8. Content
+
+- **From the reader's side:** "Waiting for the mentor", "Awaiting your decision". Never the internal name (`paid`).
+- **Refund:** says where the money stands. It never says "soon".
+
+## 9. Responsiveness
+
+The badge and the refund line wrap onto two lines when the space is narrow.
+
+<Canvas of={BookingStatusStories.NarrowWraps} />
+
+## 10. API
+
+<ArgTypes of={BookingStatusStories} />
+
+## 11. Code
+
+```tsx
+import { BookingStatus } from '@devmentor/ui';
+
+<BookingStatus status="declined" viewer="seeker" refund="processing" />
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | "Awaiting your decision" for the mentor | It says what the reader must do |
+| Don't | "paid" for the mentor | It names the payment, not the decision the mentor has to make |
+| Do | "Refund processing" | Tells where the money is |
+| Don't | A green dot for "refunded" | Colour alone |
+
+## 13. Related
+
+- **Confused with:** `StatusBadge` (one word, any status).
+- **Used in:** `BookingRow`, Patterns: Paid action flow, Detail view.

@@ -1,0 +1,111 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as DialogStories from '../../../src/components/ui/dialog.stories';
+
+<Meta of={DialogStories} />
+
+# Dialog
+
+## 1. What it is for
+
+A dialog interrupts the page to collect something short or show something the user must deal with before going on.
+
+<Canvas of={DialogStories.OpensFromItsTrigger} />
+
+## 2. When to use it
+
+- A short edit that does not deserve its own page: a headline, a price note.
+- Reading terms or a notice that must be seen before an action (the mentor's publish notice).
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A question with a destructive or final answer | `ConfirmDialog` | It has the right role and default focus |
+| A long form or several steps | A separate page | A dialog is for quick tasks and hides the page it came from |
+| A message that does not need a decision | `Alert` | It should not block the page |
+| Content the user wants to keep reading while working | The page itself | A dialog hides the page behind a scrim |
+
+## 4. Anatomy
+
+1. **Scrim**: dims the page. A click on it closes the dialog.
+2. **Panel** (`--card`, `--input` outline): the dialog itself. No shadow (proposal, R01.1).
+3. **Title** (required) and **description** (recommended): they name and describe the dialog for assistive technology.
+4. **Content**.
+5. **Footer**: the actions, with the main one last.
+6. **Close button**: an icon button named "Close". It can be hidden (`showClose={false}`) when the footer already has a way out.
+
+## 5. Variants
+
+One variant. The panel is at most about 32 rem wide (`max-w-lg`) and scrolls inside the scrim on a short screen.
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Closed | Nothing. Only the trigger | |
+| Open | The scrim, the panel, focus inside it | WAI-ARIA APG dialog |
+| Loading | A skeleton or a blocked main action inside the panel. The dialog stays | Proposal |
+| Error | An `Alert` inside the panel. The dialog stays open | WCAG 3.3.1 |
+| Hover, focus, pressed | Belong to the controls inside | |
+
+<Canvas of={DialogStories.Open} />
+
+## 7. Behavior and accessibility
+
+- **Opening:** focus moves into the dialog (to the first focusable element).
+- **Focus is kept inside:** `Tab` cycles through the dialog's controls and does not reach the page behind it.
+- **Closing:** `Escape`, the close button or a click on the scrim. Focus returns to the control that opened it.
+- **Role and name:** `role="dialog"`, named by the title, described by the description. A dialog without a title is an error.
+- **The page behind** is hidden from assistive technology while the dialog is open.
+
+## 8. Content
+
+- **Title:** the task: "Edit headline", "Publish note".
+- **Description:** one sentence of what will happen.
+- **Buttons:** verb and object, the way out as "Cancel". See the Button page.
+- **Long content:** the panel scrolls inside the scrim; keep the title and actions visible where possible.
+
+<Canvas of={DialogStories.LongContentNarrow} />
+
+## 9. Responsiveness
+
+At 320 px the dialog takes the full width minus the page margin, and the footer stacks with the main action on top. At 768 px and above the footer is a single row with the main action on the right.
+
+## 10. API
+
+<ArgTypes of={DialogStories} />
+
+## 11. Code
+
+```tsx
+import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@devmentor/ui';
+
+<Dialog>
+  <DialogTrigger asChild>
+    <Button variant="outline">Edit headline</Button>
+  </DialogTrigger>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Edit headline</DialogTitle>
+      <DialogDescription>Seekers see the headline on your card.</DialogDescription>
+    </DialogHeader>
+    …
+  </DialogContent>
+</Dialog>
+```
+
+## 12. Do and don't
+
+A dialog cannot be shown side by side without covering its neighbour, so these pairs are written out.
+
+| | Example | Why |
+|---|---|---|
+| Do | A dialog titled "Edit headline" with a field and "Save headline" | The title names the task and the button names the action |
+| Don't | A dialog titled "Confirm" with an "OK" button | Neither says what is being confirmed |
+| Do | A `ConfirmDialog` for "Take down note?" | A final, destructive question has its own component |
+| Don't | A `Dialog` for the same question | It lacks the alert role and the default focus on the way out |
+
+## 13. Related
+
+- **Confused with:** `ConfirmDialog` (a final question) and `Alert` (a message).
+- **Used in patterns:** Form in a dialog (short edits), Publish notice panel (terms and consent).

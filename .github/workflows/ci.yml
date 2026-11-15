@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop, 'feat/**']
+
+jobs:
+  production-rate-limit-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Production rate-limit bypass regression
+        run: npx jest --selectProjects unit --runTestsByPath packages/core/src/security/rate-limit.production.test.ts --runInBand
+
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # The same defaults as docker-compose.yml and packages/db/src/config.
+    # The integration tests use devmentor_test, E2E tests use devmentor_e2e.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: devmentor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d devmentor"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Dependency audit (production dependencies, critical only)
+        run: npm run audit:prod
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Agent task router validation
+        run: npm run check:agents
+
+      - name: Unit and component tests
+        run: npm test
+
+      - name: Agent script tests
+        run: |
+          node --test .agents/skills/om-auto-merge-buddy/scripts/dashboard.test.mjs .agents/skills/om-auto-issue-triage/scripts/select-issues.test.mjs
+          python3 -m unittest discover -s .agents/skills/om-ai-context-maintenance/scripts -p 'test_*.py'
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Create test databases
+        run: |
+          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 -c "CREATE DATABASE devmentor_test;"
+          PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 -c "CREATE DATABASE devmentor_e2e;"
+
+      - name: Database migrations (up, down, up) and seed
+        run: |
+          npm run migrate
+          npm run migrate:down
+          npm run migrate
+          npm run db:seed
+
+      - name: Integration tests
+        run: npm run test:integration
+
+      - name: Install Chromium for the browser checks
+        run: npx playwright install --with-deps chromium
+
+      - name: Build and end-to-end tests
+        run: npm run test:e2e
+
+      - name: Production build
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+  storybook-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Fails on any colour literal, Tailwind palette class or arbitrary Tailwind value outside tokens.css.
+      - name: Values outside the tokens
+        run: npm run check:tokens --workspace=@devmentor/ui
+
+      - name: Install Chromium for the story tests
+        run: npx playwright install --with-deps chromium
+
+      # Measures every colour pair in both themes from tokens.css and writes the file the Color page reads.
+      - name: Contrast of the tokens
+        run: npm run tokens:contrast --workspace=@devmentor/ui
+
+      # Plays every story in Chromium with the accessibility check, once in the dark and once in the light theme.
+      - name: Story tests (dark and light theme)
+        run: npm run test:stories --workspace=@devmentor/ui

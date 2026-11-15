@@ -1,0 +1,47 @@
+import { Meta, Unstyled } from '@storybook/addon-docs/blocks';
+
+<Meta title="Foundations/Shape and depth" />
+
+# Shape and depth
+
+Shape and depth are quiet. Content is separated by thin lines, not by cards, shadows or glass.
+
+## Radius
+
+One base radius, `--radius` (8 px), and three steps derived from it. The value is the existing one and no decision changes it.
+
+The mapping of steps to uses is the author's proposal, applied in the component work of stage 2.
+
+| Utility | Value | Use it for |
+|---|---|---|
+| `rounded-sm` | `--radius` minus 4 px | Small inner elements, such as a status mark |
+| `rounded-md` | `--radius` minus 2 px | Fields and buttons |
+| `rounded-lg` | `--radius` | Panels and dialogs |
+| `rounded-xl` | `--radius` plus 4 px | Rare, large containers |
+
+<Unstyled>
+  <div className="flex flex-wrap items-end gap-between-groups">
+    {['rounded-sm', 'rounded-md', 'rounded-lg', 'rounded-xl'].map((name) => (
+      <div key={name} className="flex flex-col items-start gap-group text-meta">
+        <span aria-hidden="true" className={`size-16 border border-input bg-card ${name}`} />
+        <code className="text-code">{name}</code>
+      </div>
+    ))}
+  </div>
+</Unstyled>
+
+## Lines
+
+| Token | Value | Use it for | Source |
+|---|---|---|---|
+| `--border-width-hairline` | 1 px | Every separator | R01.1 |
+| `--border` | hairline colour | A thin line between rows and under column headers | R01.1 |
+| `--input` | control outline colour | The outline of a field or a button (needs 3:1) | WCAG 1.4.11 |
+
+## Rules
+
+1. **Separate with a line, not with a card.** A list is rows divided by a hairline (R01.1). A panel (`--card`) is for content that has to stand out, such as the message box.
+2. **No shadow as the only separator.** A shadow does not mark an edge for everyone (A01, WCAG 1.4.11). Default surfaces have no shadow at all.
+3. **An overlay is separated by an outline and a scrim.** A dialog uses `--input` for its outline and dims the page. This is a proposal, because no reference decides overlays.
+4. **No pills for everything.** Large radii on every element are a mark of generic design. Use the steps above. Proposal: A01 in `referencje.md` names gradients, glass and sparkles, not radii.
+5. **No card inside a card.** If a panel needs inner structure, use a hairline and spacing.

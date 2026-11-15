@@ -1,0 +1,80 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Design system/How to choose" />
+
+# How to choose
+
+"If… then use…" tables for the choices people get wrong most often. Each row has an example from the product and a source. Where **no component exists yet**, the row says so and names what to use meanwhile: such a component is not added on the side (see **Contributing**).
+
+## Button, link, icon button, action menu
+
+| If the user… | Use | Example from the product | Source |
+|---|---|---|---|
+| does something: sends, pays, accepts | `Button`. One main action per screen is the filled one | "Pay 25 EUR and send" | R01.5, Button page |
+| goes to another page or reads a document | `TextLink` (always underlined) | "pilot terms" in the consent sentence | WCAG 1.4.1 |
+| goes to another page and it is **the one main action of a region** (an empty state, a row of mentors) | `Button asChild` around an `a`. Every other way to another page is a `TextLink` | "Find a mentor" in an empty state, "Ask a question" in `MentorRow`; "Open" in `BookingRow` is a `TextLink` | Approved 2026-10-28 (agent test): it describes what the components already do |
+| needs a command with no room for text, repeated in rows | `Button size="icon"` with an accessible name | No case in the product yet | Button page |
+| chooses among three or more actions for one row | **No action menu yet.** Keep to two actions per row | Accept and Decline in `BookingRow` | What is missing |
+
+## Radio, select, field with search
+
+| If… | Use | Example from the product | Source |
+|---|---|---|---|
+| there is a short list and one choice | `Select` | Technology filter of the mentors list | D04, Select page |
+| two or three options should all be visible | **No radio group yet.** Use `Select` until a second place needs it | No case in the product yet | Contributing rule (two places) |
+| the list is long enough to need search | **No combobox yet** | The list is a handful of mentors, so a filter is enough | Booking spec |
+
+## Switch and checkbox
+
+| If… | Use | Example from the product | Source |
+|---|---|---|---|
+| the user sets a yes or no that is saved with the form | `Checkbox` inside a `Field` | "I accept the pilot terms" | E03-S01 |
+| a setting applies at once, with no save | **No switch yet** | No case in the backlog | What is missing |
+
+## Dialog, confirm dialog, side panel, page, popover, tooltip
+
+| If… | Use | Example from the product | Source |
+|---|---|---|---|
+| the user must say yes or no to something that cannot be undone | `ConfirmDialog`, naming the object | `Take down "Ingress upgrades on bare metal"?` | Confirm destructive action |
+| a short task keeps the user in context | `Dialog` | No case in the product yet | Dialog page |
+| the user has to **read** before acting | A section or page, not a layer | The notice before publishing a note | D09, `PublishNoticePanel` |
+| a task has several steps or a long form | A separate page | The session, one note | Booking and vault specs |
+| detail sits beside a list | **No side panel yet** | | What is missing |
+| a small extra explanation for a mouse user | **No popover or tooltip yet.** Information needed to act is never put in one | | WCAG 1.4.13, 3.3.2 |
+
+## Error at a field, alert, toast
+
+| If the message… | Use | Example from the product | Source |
+|---|---|---|---|
+| is about one field | The `error` of `Field` | "Write at least 10 characters so a mentor can answer." | WCAG 3.3.1 |
+| is about the whole form or page and stays until fixed | `Alert` | "The payment failed. Your card was not charged." | WCAG 4.1.3 |
+| confirms what just happened | Plain text with `role="status"` on the page | "The note was taken down." | Proposal |
+| asks the user to do something | `Alert` or `ErrorMessage` with a button. **Never a toast**: it disappears | "Try again" on a failed load | WCAG 2.2.1 |
+| would be a toast | **There is no toast component** | | What is missing |
+
+## Skeleton and loading text
+
+| If… | Use | Example from the product | Source |
+|---|---|---|---|
+| the layout is known and a region loads | `LoadingMessage` and `Skeleton` blocks, in a region with `aria-busy`. The blocks repeat the lines of one row (name, description, details), three rows | "Loading mentors…", "Loading your sessions…" | Proposal |
+| the wait is for one action | The label of the button ("Sending…") and a blocked button | The question form | Form pattern |
+| you want a spinner | Not allowed: an endless animation | | A01, WCAG 2.2.2 |
+
+## Table, list, cards
+
+| If… | Use | Example from the product | Source |
+|---|---|---|---|
+| rows are compared by several attributes | `Table` or `DataTable`, with column headers | Pilot counts, credits | R01.3 |
+| each row is prose with an action | A `ul` of rows divided by a hairline | `MentorRow`, `BookingRow` | R01.1 |
+| a list with filters has rows with a link or an action | The same `ul` of rows with the filter bar of the **List with filters** pattern | The seeker's sessions | Approved 2026-10-28 (agent test) |
+| one panel must stand out from the page | `Card` | The sign-in form | R01.1 |
+| you want a card per row | No: it is the generic look | | A01 |
+
+Open point: the accepted reference R01.3 asks for clear column headers on lists with several attributes. Whether the mentors list should be a `Table` is a question for the owner.
+
+## Tabs and separate pages
+
+| If… | Use | Example from the product | Source |
+|---|---|---|---|
+| the user does one task at a time | A separate page, with its own address | Notes, answers to review, the session | Vault and booking specs (routes per task) |
+| you want to switch views of the same record | **No tabs yet** | No case in the backlog | What is missing |

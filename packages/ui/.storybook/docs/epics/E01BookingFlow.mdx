@@ -1,0 +1,69 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Product/Epics/E01 Booking flow" />
+
+# E01 Booking flow
+
+Seekers find a mentor and book a paid 25-minute text session (backlog: E01, issue #7). This page maps every screen of the epic to its states and to the components that build them. Each state is one story in **Product > Screens > E01 Booking flow**.
+
+Sources: the booking spec (`.ai/specs/2026-10-26-pilot-booking-flow.md`), the backlog, and the product brief (R04, R05, N02). The screens are examples built from the design system. They have no routing and use example data.
+
+## Steps of the flow
+
+1. An invited person asks for a sign-in link and gets the same answer whether or not they are invited (E01-T01).
+2. They open the link, which is checked once.
+3. They find a mentor in the list, filtered by technology, or open a mentor's own link (E01-S01).
+4. On the mentor's page they see the price and the refund rule, write a question, accept the pilot terms and pay (E01-S02).
+5. The payment provider returns them to a page that confirms the payment and keeps checking.
+6. The mentor sees the whole question and accepts or declines it (E01-S03). A decline or an expiry refunds the seeker.
+7. At the agreed time the two hold a 25-minute text session (E01-S04). Afterwards the conversation stays readable.
+
+## Screens and their states
+
+| Screen | Story | States shown | Main components |
+|---|---|---|---|
+| **1. Login** (E01-T01: magic link) | Login form, Login sending, Login sent, Login rate limited, Login server error | form, sending, sent (same words for an uninvited address), rate limited, server error | `Field`, `Input`, `Button`, `Alert` |
+| **2. Verify the link** | Verify checking, Verify invalid link, Verify server error | checking, expired or used link, server error | `LoadingMessage`, `ErrorMessage`, `TextLink` |
+| **3. Mentors** (E01-S01) | Mentors loading, ready, filtered by technology, empty, error | loading, ready, filtered, empty, error | `MentorRow`, `Select`, `EmptyState`, `ErrorMessage`, `Skeleton` |
+| **4. Mentor page and question** (E01-S02) | Mentor profile | price first, blocked button with a reason, test-mode banner | `PriceNotice`, `QuestionForm`, `TermsConsent`, `Alert` |
+| **5. Payment return** (E01-S02) | Payment confirming, slow, paid, failed, cancelled, could not be confirmed | six states | `LoadingMessage`, `Alert`, `ErrorMessage`, `Button` |
+| **6. The seeker's bookings** (E01-S03) | Seeker bookings loading, ready, empty, error | loading, ready (all statuses and refunds), empty, error | `BookingRow`, `BookingStatus`, `EmptyState` |
+| **7. The mentor's bookings** (E01-S03) | Mentor bookings ready, accept running, overlap, empty | decision pending, accepting, refused because of an overlap, empty, question hidden after a decline | `BookingRow`, `Button`, `Alert` |
+| **8. Session** (E01-S04) | Session active, before start, ended, loading, load failed, refresh failed | in the window, before, after, loading, error, polling failed | `SessionThread`, `MessageItem`, `Composer` |
+
+## Rules this epic relies on
+
+| Rule | Where it shows | Source |
+|---|---|---|
+| The price comes before the question | Mentor page | R04 |
+| The mentor sees the question before accepting | Mentor bookings | R05 |
+| The mentor loses the question after a decline or an expiry | Mentor bookings | Booking spec, Grill 8 |
+| No ratings: a link to public work instead | Mentors | N02 |
+| Test payments are marked and do not count | Mentor page, Payment return | Booking spec, Grill 9 |
+| The return page reconciles with the provider | Payment return | Booking spec, Grill 7 |
+| An uninvited address gets the same answer as an invited one | Login (sent) | Booking spec (identical responses) |
+
+## Source files
+
+| What | Where (`packages/ui/src`) |
+|---|---|
+| Components | `components/mentors/MentorRow.tsx`, `components/bookings/{PriceNotice,BookingStatus,BookingRow,QuestionForm}.tsx`, `components/consents/TermsConsent.tsx`, `components/messages/{MessageItem,SessionWindow,Composer,SessionThread,parseMessageText}.tsx` |
+| Screen compositions | `screens/e01-views.tsx` |
+| Screen stories | `screens/e01.stories.tsx` |
+| Patterns | `patterns/paid-action-flow.stories.tsx`, `patterns/session-thread.stories.tsx` |
+| Formats | `lib/format.ts` |
+| Example data | `.storybook/blocks/sampleData.ts` |
+
+## Work still to do in the product
+
+- **Routes of the booking spec:** `POST /api/bookings`, `GET /api/bookings`, `GET /api/bookings/[id]`, `accept`, `decline`, `messages`, `reconcile-payment`, `GET /api/mentors`.
+- **Pages:** `(auth)/login`, `(auth)/auth/verify`, `(marketing)/mentors`, `(marketing)/m/[slug]`, `(student)/bookings`, `(mentor)/mentor/bookings`, `(mentor)/mentor/profile`, `(operator)/operator/approvals`. The pages compose the components of this epic. The mentor profile page and the operator approvals have no screen story.
+- **Wiring:** polling of the session and of the payment, the server time passed to `SessionThread`, `allowedActions` read from the server.
+
+## What is not covered yet
+
+- **Real routing, data and API:** the screens are examples. The routes of the booking spec (`/api/bookings`, `/api/bookings/[id]/messages` and others) are not built.
+- **The mentors list is a list, not a table:** the accepted reference R01.3 asks for clear column headers. Whether to use `Table` is an open question (POSTEP.md).
+- **`BookingRow` decides the actions from the status.** The booking spec returns `allowedActions` from the server. The component should read them. Open item (POSTEP.md).
+- **Success and warning colours** are not defined (conflict K3), so statuses use the neutral, active and danger tones only.
+- **The wording of the terms** is owed by the legal review (E03-T01, E03-T02).

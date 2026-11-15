@@ -1,0 +1,114 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as SessionThreadStories from '../../../src/components/messages/SessionThread.stories';
+
+<Meta of={SessionThreadStories} />
+
+# SessionThread
+
+## 1. What it is for
+
+The session view: the time window in words, the conversation in the centre of one column (R02.1) and the message box under it. `SessionWindow` is the line that states the window.
+
+<Canvas of={SessionThreadStories.Active} />
+
+## 2. When to use it
+
+- The page of an accepted session (E01-S04).
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A sidebar with channels | Nothing: one column, no sidebar | Proposal P5 (R02.6), not approved |
+| A finished answer in the vault | `MarkdownView` | Not a conversation |
+
+## 4. Anatomy
+
+1. **Window line** (`SessionWindow`): where the session stands, in words.
+2. **Refresh warning** (optional): an alert when polling failed.
+3. **Messages**: an ordered list of `MessageItem`, or an empty state.
+4. **Composer**, blocked outside the window.
+
+## 5. Variants
+
+The thread depends on the phase, which the component derives from the **server's** time (`now`), never the browser's.
+
+| Phase | The line says | The box |
+|---|---|---|
+| Before | "The session starts at 13:00." | Blocked: "has not started yet" |
+| Active | "12 minutes left. The session ends at 13:25." | Enabled |
+| Ended | "The session ended at 13:25. The conversation is read-only." | Blocked: "has ended" |
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Ready | The messages and the box | |
+| Empty, in the window | "No messages yet. The mentor will answer here." | |
+| Empty, after the end | "No messages yet. Nothing was written in this session." | |
+| Loading | A loading text and skeletons, `aria-busy`, no box yet | Proposal |
+| Load failed | An error message with "Try again" | WCAG 3.3.3 |
+| Refresh failed | The messages stay, an alert says new ones could not be loaded | The page is still correct |
+| Many messages | The list grows. The box stays under it | |
+
+<Canvas of={SessionThreadStories.BeforeTheStart} />
+<Canvas of={SessionThreadStories.AfterTheEnd} />
+<Canvas of={SessionThreadStories.NothingWrittenYet} />
+<Canvas of={SessionThreadStories.Loading} />
+<Canvas of={SessionThreadStories.LoadFailed} />
+<Canvas of={SessionThreadStories.RefreshFailedKeepsTheMessages} />
+
+## 7. Behavior and accessibility
+
+- **Polite announcements:** the list is `aria-live="polite"` with `aria-relevant="additions"`, so a new message is read when the user is idle and nothing is re-read.
+- **No countdown:** the window line is plain text from the last server time. A ticking timer would be announced every second.
+- **Server time:** the caller passes `now` from the server's last answer. The window is decided on the server (clock skew).
+- **Region:** a `section` named "Session".
+- **Readable after the end:** only the box is blocked.
+
+## 8. Content
+
+- **Window line:** the minutes left and the end time. It says "1 minute", not "1 minutes".
+- **Refresh warning:** "New messages could not be loaded. We keep trying. What you see so far is still correct."
+
+## 9. Responsiveness
+
+One column, at most the width of `max-w-session`. On a wider screen the column stays centred in the page, not stretched.
+
+<Canvas of={SessionThreadStories.ManyMessages} />
+
+## 10. API
+
+<ArgTypes of={SessionThreadStories} />
+
+## 11. Code
+
+```tsx
+import { SessionThread } from '@devmentor/ui';
+
+<SessionThread
+  messages={messages}
+  viewerId={me.id}
+  startsAt={booking.startsAt}
+  endsAt={booking.endsAt}
+  now={serverTime}
+  status={status}
+  refreshFailed={refreshFailed}
+  onRetry={reload}
+  onSend={send}
+/>
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | Say the window in words | A countdown is announced every second |
+| Don't | Compare with `new Date()` in the browser | The browser's clock may be wrong |
+| Do | Keep the conversation after the end | It is the result of the product |
+| Don't | Replace the messages by an error when polling fails | The user loses what was correct |
+
+## 13. Related
+
+- **Components inside:** `SessionWindow`, `MessageItem`, `Composer`, `EmptyState`, `ErrorMessage`, `Alert`.
+- **Patterns:** Session thread. **Screens:** "E01 Booking flow" > Session.

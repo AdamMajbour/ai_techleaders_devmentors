@@ -1,0 +1,106 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as TextareaStories from '../../../src/components/ui/textarea.stories';
+import { Textarea } from '../../../src/components/ui/textarea';
+import { Input } from '../../../src/components/ui/input';
+import { DoDont } from '../../blocks/DoDont';
+
+<Meta of={TextareaStories} />
+
+# Textarea
+
+## 1. What it is for
+
+A multi-line text field for longer writing, such as the question to a mentor or the body of a note.
+
+<Canvas of={TextareaStories.Playground} />
+
+## 2. When to use it
+
+- The question a seeker writes before paying (can contain code or yaml).
+- The body of a mentor's note (markdown).
+- A reason typed when rejecting a vault answer preview.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A short value such as a title or e-mail | `Input` | One line is enough and easier to scan |
+| A choice from a list | `Select` | The user picks instead of typing |
+
+## 4. Anatomy
+
+1. **Field box** with a `--input` outline.
+2. **Value** or **placeholder**. The box grows with its content (`field-sizing: content`), at least about 96 px high.
+
+## 5. Variants
+
+One variant. Width fills the container.
+
+## 6. States
+
+<Canvas of={TextareaStories.States} />
+
+| State | What the user sees | Source |
+|---|---|---|
+| Default | `--input` outline, transparent fill | WCAG 1.4.11 |
+| Hover | No separate style | Proposal |
+| Focus | A solid 2 px ring in `--ring`, 2 px gap | WCAG 2.4.7 |
+| Disabled | `--muted` fill, muted text. Explain why in the field's hint | Decision 2026-10-27 |
+| Invalid | `--destructive` outline plus an error text and icon from `Field` | WCAG 1.4.1, 3.3.1 |
+| Loading, selected, pressed | Not applicable | |
+
+## 7. Behavior and accessibility
+
+- **Keyboard:** `Tab` focuses it. `Enter` adds a new line (it does not submit). Submit with a button or `Ctrl` or `Cmd` plus `Enter` where the form supports it.
+- **Label and errors:** a visible label, `aria-invalid` and `aria-describedby`, as for `Input`.
+- **Code:** do not strip whitespace or reformat what the user pastes (R01.2: code must stay code).
+
+<Canvas of={TextareaStories.TypingSeveralLines} />
+
+## 8. Content
+
+- **Label:** "Your question". The hint says what helps ("Paste the error and what you already tried") and not to paste secrets.
+- **Limits:** if there is a length limit, show the remaining count as text, not only a colour change.
+- **Long text:** wraps and grows. Do not cut it.
+
+<Canvas of={TextareaStories.LongContentNarrow} />
+
+## 9. Responsiveness
+
+Fills the width at every size. At 320 px keep the field above its buttons, never beside them.
+
+## 10. API
+
+<ArgTypes of={TextareaStories} />
+
+## 11. Code
+
+```tsx
+import { Textarea } from '@devmentor/ui';
+
+<Textarea aria-label="Your question" />
+```
+
+```tsx
+// Typical: the question before paying.
+<Textarea
+  aria-label="Your question"
+  placeholder="Paste the error and what you already tried"
+  value={question}
+  onChange={(event) => setQuestion(event.target.value)}
+/>
+```
+
+## 12. Do and don't
+
+<DoDont
+  doExample={<div className="w-56"><Textarea aria-label="Your question" placeholder="Paste the error and what you tried" /></div>}
+  doWhy="A question can run to many lines, so the field grows."
+  dontExample={<div className="w-56"><Input aria-label="Your question" placeholder="Paste the error and what you tried" /></div>}
+  dontWhy="One line hides most of a pasted error."
+/>
+
+## 13. Related
+
+- **Confused with:** `Input`.
+- **Used in patterns:** Form (question), Session thread (message box), Review queue (rejection reason).

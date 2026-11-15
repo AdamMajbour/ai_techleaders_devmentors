@@ -1,0 +1,6 @@
+# D04 — Seekers find a mentor through a list filtered by technology and through the mentor's own link
+- Date, owner: 2026-10-25, founder A (Oliwia), confirmed in the discovery session; answers Q03
+- Context and the options weighed: options put to the owner: (a) mentor links only, (b) a list with a technology filter plus links, (c) leave it open. The material: the staff engineer refuses a list; the freelancer and the fintech developer pick by public work; 16 of 50 listed mentors have an audience, 11 do not, 23 unknown; no mentor has been invited yet (A05). The agent gave no recommendation.
+- Decision and why: (b). The owner's stated reason in the session was the choice itself.
+- Consequences, and what would make us revisit it: the staff engineer's refusal of a list is not resolved; the list must be optional for a mentor, or the staff engineer's condition must be asked, before the list ships. Whether a list is needed at all is tested by A05; if mentors' own links bring too few bookings in the pilot, founder A decides after the result whether to add search or change scope (stated 2026-10-25). The ordering of the list, any filter beyond technology, and search are not decided here. N02 still forbids ratings.
+- Status: active

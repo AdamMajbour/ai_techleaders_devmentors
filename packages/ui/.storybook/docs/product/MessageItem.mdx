@@ -1,0 +1,95 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as MessageItemStories from '../../../src/components/messages/MessageItem.stories';
+
+<Meta of={MessageItemStories} />
+
+# MessageItem
+
+## 1. What it is for
+
+One message in a session: who wrote it, when, and the text, with code kept as code.
+
+<Canvas of={MessageItemStories.ManyInARow} />
+
+## 2. When to use it
+
+- Inside `SessionThread`.
+- Anywhere a short written exchange is shown in order.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| A long answer written as a document | `MarkdownView` | A message shows plain text and code only |
+| A comment on a record | A section of the detail view | A message belongs to a conversation |
+
+## 4. Anatomy
+
+1. **Author**, with "(you)" for the reader's own messages.
+2. **Time**, as a `time` element with the full timestamp.
+3. **Text**: plain text with line breaks.
+4. **Code block**: a fenced block in the code font, scrollable.
+
+## 5. Variants
+
+| Variant | Choose it when | Source |
+|---|---|---|
+| `own` | The reader wrote it. Marked with the words "(you)", not by position or colour | R02.3, WCAG 1.4.1 |
+| Fenced code | The text contains a block between triple backticks | R01.2 (code in its own font) |
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Default | Author and time in secondary text, the message in body text | R02.3 |
+| Own | The same, with "(you)" after the name | |
+| Interactive states | Not applicable | |
+
+<Canvas of={MessageItemStories.OwnMessage} />
+<Canvas of={MessageItemStories.WithCode} />
+
+## 7. Behavior and accessibility
+
+- **A list item:** render inside an `ol`, in time order.
+- **Time:** `<time datetime>` with the full timestamp. The visible text is the clock time in the session's time zone.
+- **Only fenced code is formatted.** Bold markers, inline backticks and HTML stay literal text and are never rendered as markup. An unclosed fence stays text.
+- **Code scrolls sideways** and never breaks the layout.
+
+## 8. Content
+
+- **Time zone:** pass `timeZone` so the clock matches the session window.
+- **Long text:** wraps, even a line with no spaces.
+
+<Canvas of={MessageItemStories.LongUnbrokenLineNarrow} />
+
+## 9. Responsiveness
+
+At 320 px a long line wraps and a code block scrolls inside the message.
+
+## 10. API
+
+<ArgTypes of={MessageItemStories} />
+
+## 11. Code
+
+```tsx
+import { MessageItem } from '@devmentor/ui';
+
+<ol>
+  <MessageItem authorName="Ada Kowalska" sentAt="2026-11-03T13:04:00Z" text={text} own={false} timeZone="Europe/Warsaw" />
+</ol>
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | Mark own messages with "(you)" | Not only position or colour |
+| Don't | Render the text as HTML or Markdown | A message is user input |
+| Do | Code in its own font and scrollable | R01.2 |
+| Don't | Wrap code at the screen edge | Configuration loses its shape |
+
+## 13. Related
+
+- **Confused with:** `MarkdownView` (a document).
+- **Used in:** `SessionThread`. Patterns: Session thread.

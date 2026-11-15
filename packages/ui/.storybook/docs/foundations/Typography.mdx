@@ -1,0 +1,49 @@
+import { Meta, Unstyled } from '@storybook/addon-docs/blocks';
+
+<Meta title="Foundations/Typography" />
+
+# Typography
+
+**Proposal.** No reference gives sizes. The decisions are: a system font stack (2026-10-27), a separate font for code and file names (R01.2), and dense but clear screens (R01.3). The sizes and weights below are the author's proposal, listed for decision in `POSTEP.md`.
+
+## Roles
+
+Pick a role, not a size. Each role is a Tailwind utility backed by a token.
+
+| Role | Utility | Size | Use it for | Do not use it for |
+|---|---|---|---|---|
+| Page title | `text-page-title font-strong` | 24 px | One per page | Section headings |
+| Section title | `text-section-title font-strong` | 18 px | A group of content on a page | Emphasis inside a paragraph |
+| Body | `text-body` | 14 px | Running text, table cells, message text | Helper text |
+| Label | `text-label font-strong` | 13 px | Field labels, table column headers (R01.3) | Body text |
+| Meta | `text-meta text-muted-foreground` | 12 px | Author and time (R02.3), helper text | Anything the user must read to act |
+| Numbers | `text-body tabular-nums` | 14 px | Prices, counts, durations: digits must line up | Prose |
+| Code | `font-code text-code` | 13 px | Code, file names, commands, yaml (R01.2) | Prose and headings |
+
+<Unstyled>
+  <div className="flex flex-col gap-between-groups rounded-lg border border-input bg-card p-panel-roomy text-card-foreground">
+    <p className="text-page-title font-strong text-headline">Page title: Find a mentor</p>
+    <p className="text-section-title font-strong text-headline">Section title: Open questions</p>
+    <p className="text-body">Body: A mentor reads your question before accepting it.</p>
+    <p className="text-label font-strong text-headline">Label: Technology</p>
+    <p className="text-meta text-muted-foreground">Meta: Mentor, 14:05</p>
+    <p className="text-body tabular-nums">Numbers: 25.00 EUR · 10.00 EUR · 25 min</p>
+    <p className="font-code text-code">Code: kubectl rollout status deploy/ingress-nginx</p>
+  </div>
+</Unstyled>
+
+## Rules
+
+1. **Code looks different from prose.** Code, file names and commands use `font-code` on `--muted` (R01.2). Developers paste yaml into questions, so it has to be readable as code.
+2. **Column headers are clear.** A column header is a Label in `--table-header-foreground` with a hairline under it (R01.3).
+3. **Running text is at most about 65 characters per line.** Cap long text at the token `--measure-text` (65 characters), for example with `max-width: var(--measure-text)` (proposal; WCAG 1.4.8 guidance).
+4. **Numbers use tabular figures** so prices and times line up in a column.
+5. **Respect the user's zoom.** Sizes are in `rem` (WCAG 1.4.4).
+6. **One font family for text.** The system stack, no web font (decision 2026-10-27). Nothing is loaded from a CDN.
+
+## Font stacks
+
+| Token | Value | Source |
+|---|---|---|
+| `--family-sans` | system stack | Decision 2026-10-27 |
+| `--family-code` | monospace system stack | R01.2 |

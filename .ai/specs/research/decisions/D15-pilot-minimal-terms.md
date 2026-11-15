@@ -1,0 +1,14 @@
+# D15 — Minimal terms for the pilot, set by founder A without legal review
+- Date, owner: 2026-10-25, founder A (Oliwia), confirmed in the discovery session; answers Q07 for the pilot (D12); founder A is the default accountable person under D03
+- Context and the options weighed: D12 made the pilot take real money and personal data, so terms and data processing block it. The agent proposed example terms and the owner accepted them as proposed. No lawyer or other person with legal responsibility is named (RACI 2026-09-05). The name of the controlling entity, whether EU data rules apply, and whether Stripe needs further terms for payouts were not decided in the session.
+- Decision and why: 
+  - Controller: the entity running DevMentor, with founder A accountable (D03); the entity's name is to be given by founder A.
+  - Collected: account data (the login method is not decided in the material), session text, mentors' notes, data for mentor payouts; card data is handled by Stripe and does not reach DevMentor (the brief's stakeholder note that Stripe handles payments).
+  - Retention: session text and notes are kept until the review of 2026-12-14 plus 30 days, then deleted unless the seeker approved publication (R02); the 30 days is the agent's proposal accepted by the owner.
+  - The seeker accepts at payment: the pilot terms; that the session is text and stored in the product (N01); that the mentor sees the question before accepting (R05); a same-day refund if the mentor does not show (R04); that nothing from the session is published without the seeker's approval (R02).
+  - The mentor accepts: that their notes feed AI answers and they see each answer before release (D06, D09); that their name and note titles are shown (R03, D10, D14); that they can take a note down (R03); that they receive 80% of the price of a vault answer (D11); no bank details are required before a first booking (condition of one mentor).
+  - Participants: invited Discord members and mentors with a warm contact; no public sign-up.
+  - Contact for data requests: founder A.
+- Consequences, and what would make us revisit it: the pilot still lacks a named legal entity, a decision on who handles mentor payouts and refunds, and a position on whether EU data rules apply (see Q12 in the brief); these terms are provisional and unreviewed by a qualified person; they do not replace terms of service, which someone must still write. Revisit before the first real payment if a qualified person objects, if participants outside the planned group sign up, or at the review of 2026-12-14. A public release needs more (Q07 for release stays open beyond the pilot).
+- Status: active
+- Supplement (2026-10-25): D21 names the entity "Instytucja Prawna" (the name may be a placeholder) and the reviewer; D17 adds payouts and refunds. The condition of no bank details before a first booking is untested against Stripe payouts.

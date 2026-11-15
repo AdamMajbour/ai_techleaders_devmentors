@@ -1,0 +1,100 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as NoteEditorStories from '../../../src/components/notes/NoteEditor.stories';
+
+<Meta of={NoteEditorStories} />
+
+# NoteEditor
+
+## 1. What it is for
+
+Writing and editing one note: a title and the text, with the status of the note shown above. Saving a note never publishes it.
+
+<Canvas of={NoteEditorStories.Draft} />
+
+## 2. When to use it
+
+- Creating a note and editing a draft, a published or a taken-down note (E02-S01).
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| Publishing a note | `PublishNoticePanel` | Publishing needs the mentor to read the notice and agree |
+| Taking a note down | `ConfirmDialog` (Patterns: Confirm destructive action) | It changes what the AI may use |
+| Any other form | Patterns: Form (`CrudForm`) | This one is specific to notes |
+
+## 4. Anatomy
+
+1. **Status** (optional): a `StatusBadge` with the status in words. A new note has none.
+2. **The form** (`CrudForm` with the shared schema): **Title** and **Note**.
+3. **Save button**: "Save draft" for a new note or a draft, "Save changes" otherwise.
+
+## 5. Variants
+
+| Variant | Choose it when | Source |
+|---|---|---|
+| No `status` | A new note | |
+| `draft`, `published`, `taken_down` | The note exists | Vault spec, `notes.status` |
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Empty, new note | Two empty fields marked required | Form pattern |
+| Filled | The values, the status, "Save changes" | |
+| Missing field | The error under the field: "Give the note a title." Nothing is saved | WCAG 3.3.1 |
+| Saving | The form is blocked, a second submit is ignored | Form pattern |
+| Server refuses | The error under the right field, focus on it, **everything typed is kept** | Form pattern |
+| Hover, focus | As in the form controls | WCAG 2.4.7 |
+
+<Canvas of={NoteEditorStories.MissingFieldsAreNamed} />
+<Canvas of={NoteEditorStories.ServerRefuses} />
+
+## 7. Behavior and accessibility
+
+- **The limits are those of the notes table:** a title up to 120 characters, the text up to 20000. They are written in `NOTE_TITLE_MAX` and `NOTE_BODY_MAX` and must stay equal to the server schema.
+- **The status is words**, not only a colour.
+- **Ctrl or Cmd plus Enter** saves, **Escape** cancels (from `CrudForm`).
+- **Saving does not change the status.** The status is never sent.
+
+## 8. Content
+
+- **Hint under the note:** "Markdown. Put code between triple backticks. Seekers see your name and this title next to an answer that uses the note, not the note itself." It tells the mentor what is shown. It follows the vault spec: an answer lists the mentor's name and the note's title, and the pilot has no link to the note.
+- **Errors:** say what to do: "Give the note a title."
+
+## 9. Responsiveness
+
+One column at every width. A long title wraps in the field's error and label, the text area grows with its box.
+
+<Canvas of={NoteEditorStories.LongTitleNarrow} />
+
+## 10. API
+
+<ArgTypes of={NoteEditorStories} />
+
+## 11. Code
+
+```tsx
+import { NoteEditor, apiCall } from '@devmentor/ui';
+
+<NoteEditor
+  status="draft"
+  initialValues={{ title: note.title, body: note.body }}
+  onSave={(values) => apiCall(`/api/notes/${note.id}`, { method: 'PUT', json: values })}
+/>
+```
+
+## 12. Do and don't
+
+| | Example | Why |
+|---|---|---|
+| Do | Keep the text when the server refuses | Notes can be long |
+| Don't | Publish on save | The mentor has not read the notice (D09) |
+| Do | Show the status in words | Colour alone is not enough |
+| Don't | Say nobody reads the note | The AI reads it for every answer. The mentor's notice says so |
+
+## 13. Related
+
+- **Open point:** the text area is in the body font. Notes contain code, and R01.2 asks for code in its own font. A monospace text area is a proposal (POSTEP.md).
+- **Components inside:** `CrudForm`, `StatusBadge`.
+- **Used in:** "E02 Notes and vault" > One note. Patterns: Form.

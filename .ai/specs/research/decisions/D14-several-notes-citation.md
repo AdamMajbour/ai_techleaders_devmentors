@@ -1,0 +1,6 @@
+# D14 — When several notes feed one vault answer, it shows each note's mentor name and title, and each of those mentors sees it before release
+- Date, owner: 2026-10-25, founder B, confirmation reported by founder A in the discovery session ("Founder B potwierdza D14"); founder B's own words were not captured; answers Q11 (D03: founder B decides citation); extends D10
+- Context and the options weighed: the agent proposed an example and founder A asked to settle the question; the alternatives of citing only the main note or only the mentor were not put. D10 settled the one-note case and left several notes open. Sources: the Python speaker wants a note with their name and wants to know if notes go to an AI; the staff engineer wants to see an AI answer before it ships.
+- Decision and why: as proposed. The reason stated in the session was the confirmation itself.
+- Consequences, and what would make us revisit it: D11's equal split among the mentors of cited notes now applies. Every mentor whose note is cited previews the answer (D09), which adds mentor time per answer and interacts with A02 and with the speed promise. Revisit if mentors refuse AI use of their notes, if previews by several mentors make the answer too slow, or if A01 is refuted.
+- Status: active

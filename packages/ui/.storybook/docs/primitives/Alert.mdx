@@ -1,0 +1,114 @@
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as AlertStories from '../../../src/components/ui/alert.stories';
+import { Alert, AlertDescription, AlertTitle } from '../../../src/components/ui/alert';
+import { DoDont } from '../../blocks/DoDont';
+
+<Meta of={AlertStories} />
+
+# Alert
+
+## 1. What it is for
+
+An alert is a message that stays on the page until its cause is gone: a notice about the environment, or an error the user has to act on.
+
+<Canvas of={AlertStories.Variants} />
+
+## 2. When to use it
+
+- A test-mode banner at the top of the checkout while payments are not live.
+- A payment that failed, with the next step.
+- A form-level error that is not about one field.
+- An answer that was cancelled and refunded.
+
+## 3. When not to use it, and what to use instead
+
+| Situation | Use instead | Why |
+|---|---|---|
+| An error about one field | The `error` of `Field` | It belongs next to the control |
+| A short-lived confirmation | Plain text on the page. There is no toast in the product | An error or anything needing action must never disappear on its own |
+| One word of status | `StatusBadge` | An alert holds sentences |
+| A question that needs an answer | `ConfirmDialog` | An alert does not block |
+
+**An error that requires action is never a toast** (toasts vanish, and focus and reading order are lost).
+
+## 4. Anatomy
+
+1. **Icon**: information or error, decorative (`aria-hidden`).
+2. **Title** (optional): one short line.
+3. **Description**: what happened and what to do.
+
+## 5. Variants
+
+| Variant | Choose it when | Announced as |
+|---|---|---|
+| `default` | Information that needs to stay visible | A polite `status` |
+| `destructive` | Something failed or needs correcting | An assertive `alert` |
+
+## 6. States
+
+| State | What the user sees | Source |
+|---|---|---|
+| Default | `--card` surface, `--input` outline, an information icon | WCAG 1.4.11 |
+| Destructive | `--destructive` outline, an error icon, a destructive title colour | WCAG 1.4.1 (icon and words) |
+| Hover, focus, pressed, disabled | Not applicable: an alert is not interactive. Put a link or a button inside it if there is an action | |
+| Loading | Not an alert state | |
+| Dismissed | An alert has no close button. It goes away when the cause is fixed | Proposal |
+
+## 7. Behavior and accessibility
+
+- **Roles:** `default` is `role="status"` (read politely). `destructive` is `role="alert"` (read at once). Override with `role` if needed.
+- **Insert it where the user is looking:** an alert that appears is announced only if it is added to the page after load, so render it when the error occurs.
+- **Icon:** decorative, hidden from assistive technology. The meaning is in the words.
+- **Colour:** the outline colour supports the icon and the words, it is never the only cue (WCAG 1.4.1).
+
+<Canvas of={AlertStories.RolesFollowSeverity} />
+
+## 8. Content
+
+- **Title:** what happened, in a few words: "The payment failed".
+- **Description:** what it means and what to do next: "Your card was not charged. Check the card details and try again."
+- **Tone:** calm and specific, no blame, no exclamation marks.
+- **Long text:** wraps. Keep it to two sentences.
+
+<Canvas of={AlertStories.LongContentNarrow} />
+
+## 9. Responsiveness
+
+Full width of its container, text wraps at every size. At 320 px the icon stays on the first line.
+
+## 10. API
+
+<ArgTypes of={AlertStories} />
+
+## 11. Code
+
+```tsx
+import { Alert, AlertDescription, AlertTitle } from '@devmentor/ui';
+
+<Alert>
+  <AlertTitle>Test mode</AlertTitle>
+  <AlertDescription>Payments in this environment are not real.</AlertDescription>
+</Alert>
+```
+
+```tsx
+// Typical: a failed payment with the next step.
+<Alert variant="destructive">
+  <AlertTitle>The payment failed</AlertTitle>
+  <AlertDescription>Your card was not charged. Check the card details and try again.</AlertDescription>
+</Alert>
+```
+
+## 12. Do and don't
+
+<DoDont
+  doExample={<div className="w-full"><Alert variant="destructive"><AlertTitle>The payment failed</AlertTitle><AlertDescription>Check the card details and try again.</AlertDescription></Alert></div>}
+  doWhy="It says what happened and what to do, and stays until it is fixed."
+  dontExample={<div className="w-full"><Alert variant="destructive"><AlertTitle>Error</AlertTitle></Alert></div>}
+  dontWhy="'Error' says nothing about the cause or the next step."
+/>
+
+## 13. Related
+
+- **Confused with:** `Field` error (one field), `StatusBadge` (one word), `ConfirmDialog` (a question).
+- **Used in patterns:** Form (form-level error), Paid action flow (payment failure, test-mode banner), Confirm destructive action (failure inside the dialog).

@@ -1,0 +1,59 @@
+import { Meta, Unstyled } from '@storybook/addon-docs/blocks';
+
+<Meta title="Foundations/Spacing and layout" />
+
+# Spacing and layout
+
+Space has meaning: you choose it by the relation between two things, not by a number.
+The raw scale is 4, 8, 12, 16, 24, 32, 48 px. The values below were approved on 2026-10-27.
+
+## Space by relation
+
+| Token | Utility | Value | Relation | Use it for | Source |
+|---|---|---|---|---|---|
+| `--space-group` | `gap-group`, `p-group` | 8 px | Inside a group | Label and field, author and time | K1, R02.1 |
+| `--space-between-groups` | `gap-between-groups` | 16 px | Between groups in a panel | Two fields, two blocks of a form | K1 |
+| `--space-panel-compact` | `p-panel-compact` | 12 px | Inside a dense row | A row of the mentor list or a table | K1, R01.3 |
+| `--space-panel-roomy` | `p-panel-roomy` | 24 px | Inside a roomy panel | The session view and its message box | K1, R02.1 |
+| `--space-section` | `py-section` | 48 px | Between page sections | Between a list and the next block | K1 |
+
+<Unstyled>
+  <div className="flex flex-col gap-between-groups rounded-lg border border-input bg-card p-panel-roomy">
+    {[
+      ['--space-group', 'var(--space-group)'],
+      ['--space-between-groups', 'var(--space-between-groups)'],
+      ['--space-panel-compact', 'var(--space-panel-compact)'],
+      ['--space-panel-roomy', 'var(--space-panel-roomy)'],
+      ['--space-section', 'var(--space-section)'],
+    ].map(([name, value]) => (
+      <div key={name} className="flex items-center gap-between-groups text-label">
+        <code className="w-56 shrink-0 text-code">{name}</code>
+        <span aria-hidden="true" className="h-4 bg-primary" style={{ width: value }} />
+      </div>
+    ))}
+  </div>
+</Unstyled>
+
+## Rules
+
+1. **Density depends on the screen.** Lists and tables are dense (`--space-panel-compact`). The session view is roomy (`--space-panel-roomy`). This is conflict K1, decided on 2026-10-27.
+2. **Group first, then separate.** Things in one group sit closer than things in different groups: `--space-group` is always smaller than `--space-between-groups`.
+3. **Rows are separated by a hairline, not by a card or a shadow** (R01.1).
+4. **No values outside the scale.** A pixel size written in square brackets inside a class, and any other arbitrary value, is rejected by `npm run check:tokens`.
+
+## Layout
+
+Design for three widths: 320 px (small phone), 768 px (tablet) and 1440 px (desktop). 768 px is the Tailwind `md` breakpoint.
+
+| Width | What changes |
+|---|---|
+| 320 px | One column. A data table scrolls sideways inside its own container, the page itself never does (WCAG 1.4.10). A tap target is at least 24 by 24 px (WCAG 2.5.8) |
+| 768 px | Filters sit above the list, in a row. A form stays one column |
+| 1440 px | Content is centred and capped at `--layout-content-max` (72 rem). The session view is capped at `--layout-session-max` (44 rem) |
+
+| Token | Value | Source |
+|---|---|---|
+| `--layout-content-max` | 72 rem | Proposal, dense lists (K1) |
+| `--layout-session-max` | 44 rem | Proposal, one column in the centre (R02.1) |
+
+The two maximum widths are the author's proposal, listed for decision in `POSTEP.md`.

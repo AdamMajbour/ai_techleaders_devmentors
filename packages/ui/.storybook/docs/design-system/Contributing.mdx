@@ -1,0 +1,63 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Design system/Contributing" />
+
+# Contributing
+
+How to add to the design system without breaking it.
+
+## Add a component, add a variant, or add nothing
+
+| Situation | Do | Why |
+|---|---|---|
+| The same need appears in **two places** and no component covers it | Add a component | One place is a page, two is a pattern (proposal) |
+| A component almost fits and the difference is one visible property | Add a **variant** to that component | Two looks for one thing is how products drift |
+| It appears once | **Add nothing.** Build it next to its page. Move it when a second place needs it | It may never be needed again |
+| It is a value (a colour, a size) | Add or change a **token**, not a class in a component | One change reaches everything |
+
+Where it goes: a shadcn primitive in `components/ui/` (through `npx shadcn@latest add`, then check `package.json` for dependencies you did not plan); a general panel pattern in `backend/<category>/`; the shape of one domain concept in `components/<concept>/`; one page only, next to its `page.tsx`.
+
+## Where an example screen lives
+
+An example screen (one story per state) lives in `packages/ui/src/screens/<epic>-views.tsx` with `<epic>.stories.tsx`. It is not exported from the package: the real page is built in `packages/app` from the same components. Add its stories to `ui.stories.spec.tsx` and list them on the epic page.
+
+A screen written outside `packages/ui` (an exercise folder such as `lekcja-06/nowy_ekran`) is **not picked up** by Storybook (the `stories` glob is `../src/**`), by Tailwind (`@source` covers `../src` and `.storybook`) or by `npm run check:tokens` (it scans `src` and `.storybook`). Move it to `src/screens` before it counts as part of the design system. Source: agent test 2026-10-28.
+
+Stories of a screen: the title is `Product/Screens/<epic or screen name>` (an exercise screen adds "(exercise)"); the data comes from `.storybook/blocks/sampleData.ts` (add an example there only when a second story needs it); a `play` function is optional and wanted where the story shows behaviour that can break (filter, retry). A `play` function is part of the story file, not of a test file; `ui.stories.spec.tsx` runs it. Approved 2026-10-28 (agent test, round 3).
+
+## What the page of a new component has
+
+1. A stories file with a story for **every state**: default, each variant, loading, empty, error, many items, long text, a narrow screen. Stories use the real component.
+2. A page with the **13 sections**: what it is for, when to use it, when not to, anatomy, variants, states, behaviour and accessibility, content, responsiveness, API, code, do and don't, related.
+3. A **source** for every rule: a reference (R, A), a decision, a spec, WCAG or WAI-ARIA. A rule without one is marked **proposal**.
+4. A **test** of the behaviour (Jest, next to the file). Its stories are added to `ui.stories.spec.tsx`, so they are checked for accessibility.
+5. A row in the catalogue (`.storybook/blocks/catalogue.tsx`) and a line in `docs/design-system.md`.
+
+## Changing a token
+
+1. Change it only in `src/styles/tokens.css`.
+2. Run `npm run tokens:contrast`: every pair must pass in **both** themes.
+3. Run `npm run check:tokens`: no value outside the tokens.
+4. Look at the pages **Color** and **Themes** in both themes, and at one dialog.
+5. Say it in POSTEP.md. A change of a value that the owner approved needs the owner's approval.
+
+## Who approves
+
+The owner approves anything that changes the look or a rule of the product: a token value, a new component or variant, a rule without a source. Never remove or rewrite an existing component, token, theme or page without asking.
+
+## Commands
+
+Run from `packages/ui` unless noted.
+
+| Command | What it does |
+|---|---|
+| `npm run storybook` | Measures contrast, then starts Storybook on port 6006 |
+| `npm run build-storybook` | Measures contrast and builds the static Storybook |
+| `npm run check:tokens` | Lists every value outside the tokens, with file and line |
+| `npm run tokens:contrast` | Measures every colour pair in both themes and fails below the threshold |
+| `npm run check:catalogue` | Fails when a component is missing from the catalogue or a link points nowhere (after `build-storybook`) |
+| `npm run test:stories:jsdom` | Plays every story and checks accessibility, with no browser |
+| `npm run test:stories` | The same in a browser (Chromium). Not run in the sandbox |
+| `npm run type-check` | TypeScript |
+| `npm test` (repository root) | Unit tests |
+| `npm run lint` (repository root) | ESLint |
