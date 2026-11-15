@@ -1,4 +1,4 @@
-﻿name: Release
+name: Release
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.repository }}
   cancel-in-progress: false
 
 jobs:
@@ -40,7 +40,7 @@ jobs:
         with:
           node-version: 22
 
-      - name: Resolve version and release notes
+      - name: Resolve version, changelog entry, and package manifests
         id: version
         env:
           VERSION_TYPE: ${{ inputs.version_type }}
@@ -50,9 +50,9 @@ jobs:
           import { execFileSync } from 'node:child_process';
           import { readFileSync, writeFileSync } from 'node:fs';
 
+          const semver = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
           const root = JSON.parse(readFileSync('package.json', 'utf8'));
           const current = root.version;
-          const semver = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
           const parts = semver.exec(current);
           if (!parts) throw new Error(`Root package version is not stable SemVer: ${current}`);
           const [, majorText, minorText, patchText] = parts;
@@ -75,40 +75,50 @@ jobs:
           if (compare(next, current) <= 0) throw new Error(`Version ${next} must be greater than current version ${current}.`);
 
           const tag = `v${next}`;
-          try {
-            execFileSync('git', ['rev-parse', '--verify', `refs/tags/${tag}`], { stdio: 'ignore' });
-            throw new Error(`Tag ${tag} already exists.`);
-          } catch (error) {
-            if (error.message === `Tag ${tag} already exists.`) throw error;
-          }
-          const existingRemoteTags = execFileSync('git', ['ls-remote', '--tags', 'origin', `refs/tags/${tag}`, `refs/tags/${tag}^{{}}`], { encoding: 'utf8' }).trim();
-          if (existingRemoteTags) throw new Error(`Remote tag ${tag} already exists.`);
+          const tagExists = (ref) => {
+            try { execFileSync('git', ['rev-parse', '--verify', ref], { stdio: 'ignore' }); return true; }
+            catch (error) { if (error.status === 1) return false; throw error; }
+          };
+          if (tagExists(`refs/tags/${tag}`)) throw new Error(`Local tag ${tag} already exists.`);
+          const remoteTags = execFileSync('git', ['ls-remote', '--tags', 'origin', `refs/tags/${tag}`, `refs/tags/${tag}^{{}}`], { encoding: 'utf8' }).trim();
+          if (remoteTags) throw new Error(`Remote tag ${tag} already exists.`);
 
           const changelog = readFileSync('CHANGELOG.md', 'utf8');
+          if (!process.env.RUNNER_TEMP || !process.env.GITHUB_OUTPUT) throw new Error('GitHub runner output paths are unavailable.');
           const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           const header = new RegExp(`^## \\[${escaped}\\] - \\d{4}-\\d{2}-\\d{2}\\s*$`, 'm');
           const match = header.exec(changelog);
           if (!match) throw new Error(`Add a dated ${tag} entry to CHANGELOG.md before starting the release.`);
-          const afterHeader = changelog.slice(match.index + match[0].length);
-          const nextHeader = /^## \[/m.exec(afterHeader);
-          const notes = afterHeader.slice(0, nextHeader?.index ?? afterHeader.length).trim();
+          const bodyStart = match.index + match[0].length;
+          const rest = changelog.slice(bodyStart);
+          const nextHeader = /^## \[/m.exec(rest);
+          const notes = rest.slice(0, nextHeader?.index ?? rest.length).trim();
           if (!notes) throw new Error(`The ${tag} changelog entry is empty.`);
           writeFileSync(`${process.env.RUNNER_TEMP}/release-notes.md`, `${notes}\n`);
 
           const workspaceFiles = execFileSync('find', ['packages', '-type', 'f', '-name', 'package.json'], { encoding: 'utf8' })
             .trim().split('\n').filter(Boolean).sort();
-          for (const file of ['package.json', ...workspaceFiles]) {
+          const files = ['package.json', ...workspaceFiles];
+          for (const file of files) {
             const pkg = JSON.parse(readFileSync(file, 'utf8'));
+            if (pkg.version !== current) throw new Error(`${file} is at ${pkg.version}; expected ${current}.`);
             pkg.version = next;
             writeFileSync(file, `${JSON.stringify(pkg, null, 2)}\n`);
           }
+          const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'));
+          lock.version = next;
+          if (lock.packages?.['']) lock.packages[''].version = next;
+          for (const file of workspaceFiles) {
+            const relative = file.replaceAll('\\', '/');
+            const locked = lock.packages?.[relative];
+            if (!locked) throw new Error(`${file} is missing from package-lock.json.`);
+            locked.version = next;
+          }
+          writeFileSync('package-lock.json', `${JSON.stringify(lock, null, 2)}\n`);
           writeFileSync(process.env.GITHUB_OUTPUT, `version=${next}\ntag=${tag}\n`, { flag: 'a' });
           NODE
 
-      - name: Refresh lockfile
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-
-      - name: Create version commit and rollback tag
+      - name: Commit versions and create rollback tag
         env:
           VERSION: ${{ steps.version.outputs.version }}
           TAG: ${{ steps.version.outputs.tag }}
