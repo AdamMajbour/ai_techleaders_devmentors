@@ -109,7 +109,7 @@ jobs:
           lock.version = next;
           if (lock.packages?.['']) lock.packages[''].version = next;
           for (const file of workspaceFiles) {
-            const relative = file.replaceAll('\\', '/');
+            const relative = file.replaceAll('\\', '/').replace(/\/package\.json$/, '');
             const locked = lock.packages?.[relative];
             if (!locked) throw new Error(`${file} is missing from package-lock.json.`);
             locked.version = next;
