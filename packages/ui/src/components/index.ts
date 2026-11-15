@@ -7,3 +7,4 @@ export * from './messages';
 export * from './notes';
 export * from './vault';
 export * from './pilot';
+export * from './invitations';

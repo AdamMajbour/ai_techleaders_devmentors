@@ -1,5 +1,6 @@
 import { isUniqueConstraintViolation, type InvitationRepository } from '@devmentor/db';
 import { ConflictError } from '../../http/errors';
+import type { MentorInvitationRepository } from '@devmentor/db';
 
 export type InvitationRole = 'seeker' | 'mentor';
 
@@ -41,9 +42,14 @@ function toInvitationDto(invitation: Awaited<ReturnType<InvitationRepository['fi
 
 export class InvitationService {
   private readonly invitationRepository: InvitationRepository;
+  private readonly mentorInvitationRepository?: Pick<MentorInvitationRepository, 'hasAcceptedMentor'>;
 
-  constructor({ invitationRepository }: { invitationRepository: InvitationRepository }) {
+  constructor({ invitationRepository, mentorInvitationRepository }: {
+    invitationRepository: InvitationRepository;
+    mentorInvitationRepository?: Pick<MentorInvitationRepository, 'hasAcceptedMentor'>;
+  }) {
     this.invitationRepository = invitationRepository;
+    this.mentorInvitationRepository = mentorInvitationRepository;
   }
 
   async invite(input: InviteInput): Promise<InvitationDto> {
@@ -91,7 +97,9 @@ export class InvitationService {
   }
 
   isAcceptedMentor(userId: string): Promise<boolean> {
-    return this.invitationRepository.hasAcceptedRole(userId, 'mentor');
+    return this.invitationRepository.hasAcceptedRole(userId, 'mentor').then(async (accepted) =>
+      accepted || Boolean(await this.mentorInvitationRepository?.hasAcceptedMentor(userId)),
+    );
   }
 
   isAcceptedSeeker(userId: string): Promise<boolean> {

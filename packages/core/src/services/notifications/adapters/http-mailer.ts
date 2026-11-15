@@ -81,6 +81,40 @@ function bookingAcceptedContent(message: MailMessage): { subject: string; text: 
   };
 }
 
+function mentorInvitationContent(message: MailMessage): { subject: string; text: string; html: string } {
+  if (
+    message.template !== 'mentor-invitation' ||
+    typeof message.data.url !== 'string' ||
+    typeof message.data.expiresAt !== 'string' ||
+    typeof message.data.displayName !== 'string'
+  ) {
+    throw new Error('Unsupported e-mail template.');
+  }
+
+  let url: URL;
+  try {
+    url = new URL(message.data.url);
+  } catch {
+    throw new Error('Invalid invitation link.');
+  }
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') throw new Error('Invalid invitation link.');
+  const expiresAt = new Date(message.data.expiresAt);
+  if (!Number.isFinite(expiresAt.getTime())) throw new Error('Invalid invitation expiry.');
+  const expiryLabel = new Intl.DateTimeFormat('en', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(expiresAt);
+  const safeUrl = escapeHtml(url.toString());
+  const displayName = escapeHtml(message.data.displayName);
+  return {
+    subject: 'You are invited to DevMentor',
+    text: `Hello ${message.data.displayName},\n\nYou are invited to join DevMentor as a mentor. Accept your invitation here:\n\n${url.toString()}\n\nThis invitation expires on ${expiryLabel}. After accepting, please publish at least one availability slot within two weeks.`,
+    html: `<p>Hello ${displayName},</p><p>You are invited to join DevMentor as a mentor.</p><p><a href="${safeUrl}">Accept your invitation</a></p><p>This invitation expires on ${escapeHtml(expiryLabel)}. After accepting, please publish at least one availability slot within two weeks.</p>`,
+  };
+}
+
 export class HttpMailer implements Mailer {
   private readonly fetcher: typeof fetch;
 
@@ -93,7 +127,9 @@ export class HttpMailer implements Mailer {
       ? magicLinkContent(message)
       : message.template === 'booking-question'
         ? bookingQuestionContent(message)
-        : bookingAcceptedContent(message);
+        : message.template === 'booking-accepted'
+          ? bookingAcceptedContent(message)
+          : mentorInvitationContent(message);
     const response = await this.fetcher(RESEND_EMAILS_ENDPOINT, {
       method: 'POST',
       redirect: 'error',

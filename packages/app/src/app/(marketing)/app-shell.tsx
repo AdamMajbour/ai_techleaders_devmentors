@@ -26,6 +26,7 @@ function navigationFor(roles: AppRoles, signedIn: boolean): NavGroup[] {
     ...(roles.operator ? [{ label: 'Operations', links: [
       { href: '/operator', label: 'Operator dashboard' },
       { href: '/operator/users', label: 'Users' },
+      { href: '/admin/invitations', label: 'Invitations' },
       { href: '/operator/approvals', label: 'Refund approvals' },
     ] }] : []),
   ];

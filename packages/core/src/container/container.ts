@@ -25,13 +25,15 @@ import {
   PilotMetricsRepository,
   ConnectPayoutRepository,
   SessionNoteRepository,
+  InvitationBatchRepository,
+  MentorInvitationRepository,
 } from '@devmentor/db';
 import { createEventBus } from '../events/event-bus';
 import { registerLoggingSubscriber } from '../events/logging-subscriber';
 import { registerMailSubscriber } from '../events/mail-subscriber';
 import { registerBookingMailMappings } from '../events/booking-mail';
 import { createLogger, type Logger } from '../logger';
-import { getBookingSettings, getPaymentSettings, getVaultSettings } from '../config/env';
+import { getAppBaseUrl, getBookingSettings, getEnv, getPaymentSettings, getVaultSettings } from '../config/env';
 import { ArticleService } from '../services/articles/article.service';
 import { AuthService } from '../services/auth/auth.service';
 import { UserService } from '../services/auth/user.service';
@@ -65,6 +67,7 @@ import { StripeConnectGateway } from '../services/payouts/stripe-connect-gateway
 import { ConnectPayoutService } from '../services/payouts/connect-payout.service';
 import { SessionNoteService } from '../services/notes/session-note.service';
 import { PilotMetricsService } from '../services/terms/pilot-metrics.service';
+import { MentorInvitationService } from '../services/invitations/mentor-invitation.service';
 import type { Cradle, OrmLike } from './cradle';
 
 export type AppContainer = AwilixContainer<Cradle>;
@@ -126,6 +129,8 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     pilotMetricsRepository: asFunction(({ em }: Cradle) => new PilotMetricsRepository(em)).scoped(),
     connectPayoutRepository: asFunction(({ em }: Cradle) => new ConnectPayoutRepository(em)).scoped(),
     sessionNoteRepository: asFunction(({ em }: Cradle) => new SessionNoteRepository(em)).scoped(),
+    invitationBatchRepository: asFunction(({ em }: Cradle) => new InvitationBatchRepository(em)).scoped(),
+    mentorInvitationRepository: asFunction(({ em }: Cradle) => new MentorInvitationRepository(em)).scoped(),
     userService: asClass(UserService).scoped(),
     authService: asClass(AuthService).scoped(),
     articleService: asClass(ArticleService).scoped(),
@@ -186,6 +191,20 @@ export function buildContainer(orm: OrmLike, logger: Logger = createLogger()): A
     noteService: asFunction(({ noteRepository, invitationService, eventBus, clock, vaultSettings, termsService }: Cradle) => new NoteService({ noteRepository, invitationService, eventBus, clock, vaultSettings, termsService })).scoped(),
     paymentService: asClass(PaymentService).scoped(),
     invitationService: asClass(InvitationService).scoped(),
+    mentorInvitationService: asFunction((cradle: Cradle) => new MentorInvitationService({
+      invitationBatchRepository: cradle.invitationBatchRepository,
+      mentorInvitationRepository: cradle.mentorInvitationRepository,
+      invitationRepository: cradle.invitationRepository,
+      userRepository: cradle.userRepository,
+      availabilitySlotRepository: cradle.availabilitySlotRepository,
+      invitationService: cradle.invitationService,
+      magicLinkService: cradle.magicLinkService,
+      unitOfWork: cradle.unitOfWork,
+      mailer,
+      clock: cradle.clock,
+      publishWindowDays: () => getEnv().MENTOR_PUBLISH_WINDOW_DAYS,
+      appBaseUrl: getAppBaseUrl,
+    })).scoped(),
     magicLinkService: asClass(MagicLinkService).scoped(),
     approverResolvers: asValue(defaultApproverResolvers),
     paymentGateway: asFunction(createConfiguredPaymentGateway).singleton(),

@@ -7,7 +7,7 @@ export interface Logger {
 }
 
 const REDACTED = '[redacted]';
-const SENSITIVE_KEY = /pass(word)?|secret|token|jwt|authorization|cookie|question|body/i;
+const SENSITIVE_KEY = /pass(word)?|secret|token|jwt|authorization|cookie|question|body|url|link/i;
 
 /** Copies the context with sensitive values masked before it is logged. */
 export function redact(value: unknown): unknown {

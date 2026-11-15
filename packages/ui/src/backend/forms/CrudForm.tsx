@@ -10,10 +10,16 @@ import { Field } from '../../components/ui/field';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
 
+export interface CrudFormOption {
+  value: string;
+  label: string;
+}
+
 export type CrudFormField = {
   name: string;
   label: string;
-  type?: 'text' | 'email' | 'password' | 'textarea' | 'checkbox';
+  type?: 'text' | 'email' | 'password' | 'textarea' | 'checkbox' | 'multiselect';
+  options?: CrudFormOption[];
   autoComplete?: string;
   placeholder?: string;
   /** Help shown under the label, before the control. */
@@ -28,7 +34,7 @@ export interface CrudFormProps<TSchema extends z.ZodType> {
   /** The same Zod schema the API route validates with: one schema, two call sites. */
   schema: TSchema;
   fields: CrudFormField[];
-  initialValues?: Record<string, string | boolean>;
+  initialValues?: Record<string, string | boolean | string[]>;
   /** Receives the parsed (trimmed, normalized) values; resolves to the `apiCall` result. */
   onSubmit: (values: z.output<TSchema>) => Promise<ApiResult<unknown>>;
   onSuccess?: (data: unknown) => void;
@@ -62,7 +68,10 @@ export function CrudForm<TSchema extends z.ZodType>({
 }: CrudFormProps<TSchema>) {
   const formId = useId();
   const [values, setValues] = useState<Record<string, unknown>>(() =>
-    Object.fromEntries(fields.map((field) => [field.name, initialValues[field.name] ?? (field.type === 'checkbox' ? false : '')])),
+    Object.fromEntries(fields.map((field) => [
+      field.name,
+      initialValues[field.name] ?? (field.type === 'checkbox' ? false : field.type === 'multiselect' ? [] : ''),
+    ])),
   );
   const [fieldErrors, setFieldErrors] = useState<ApiFieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -167,6 +176,40 @@ export function CrudForm<TSchema extends z.ZodType>({
                 onCheckedChange={(checked) => setValue(checked === true)}
                 onBlur={onBlur}
               />
+            ) : field.type === 'multiselect' ? (
+              <fieldset
+                id={inputId}
+                tabIndex={-1}
+                aria-describedby={errors ? `${inputId}-error` : undefined}
+                aria-invalid={errors ? true : undefined}
+                aria-required={field.requirement === 'required' ? true : undefined}
+                className="m-0 flex min-w-0 flex-col gap-group border-0 p-0"
+              >
+                <legend className="sr-only">{field.label}</legend>
+                {(field.options ?? []).map((option) => {
+                  const optionId = `${inputId}-${option.value}`;
+                  const selected = Array.isArray(values[field.name]) && (values[field.name] as string[]).includes(option.value);
+                  return (
+                    <label key={option.value} htmlFor={optionId} className="flex min-w-0 items-center gap-group text-body text-foreground">
+                      <Checkbox
+                        id={optionId}
+                        name={field.name}
+                        value={option.value}
+                        checked={selected}
+                        disabled={isSubmitting}
+                        onCheckedChange={(checked) => {
+                          const current = Array.isArray(values[field.name]) ? values[field.name] as string[] : [];
+                          setValue(checked === true
+                            ? [...current, option.value]
+                            : current.filter((value) => value !== option.value));
+                        }}
+                        onBlur={onBlur}
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  );
+                })}
+              </fieldset>
             ) : field.type === 'textarea' ? (
               <Textarea
                 name={field.name}

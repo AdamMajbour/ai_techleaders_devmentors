@@ -98,10 +98,12 @@ describe('migrations', () => {
       'approval_requests',
       'articles',
       'bookings',
+      'invitation_batches',
       'invitations',
       'ledger_entries',
       'login_tokens',
       'mentor_availability_slots',
+      'mentor_invitations',
       'mentor_profiles',
       'messages',
       'mikro_orm_migrations',
@@ -209,6 +211,16 @@ describe('migrations', () => {
     await orm.migrator.up();
     expect(await publicTables()).toContain('invitations');
     expect(await publicTables()).toContain('login_tokens');
+  });
+
+  it('reverses and reapplies mentor invitation batches and outreach invitations', async () => {
+    await orm.migrator.down('Migration20261115100000_mentor_invitation_batches');
+    expect(await publicTables()).not.toContain('invitation_batches');
+    expect(await publicTables()).not.toContain('mentor_invitations');
+
+    await orm.migrator.up();
+    expect(await publicTables()).toContain('invitation_batches');
+    expect(await publicTables()).toContain('mentor_invitations');
   });
 
   it('reverses and reapplies the mentor-profile migration', async () => {
@@ -1515,8 +1527,8 @@ describe('migrations (down)', () => {
 
     await orm.migrator.up();
     expect(await publicTables()).toEqual([
-      'approval_requests', 'articles', 'bookings', 'invitations', 'ledger_entries', 'login_tokens',
-      'mentor_availability_slots', 'mentor_profiles', 'messages', 'mikro_orm_migrations',
+      'approval_requests', 'articles', 'bookings', 'invitation_batches', 'invitations', 'ledger_entries', 'login_tokens',
+      'mentor_availability_slots', 'mentor_invitations', 'mentor_profiles', 'messages', 'mikro_orm_migrations',
       'notes', 'payments', 'payout_transfer_attempts', 'payout_transfers', 'retention_legal_hold_releases',
       'retention_legal_holds', 'retention_sweep_runs', 'session_notes', 'status_transitions', 'stripe_connect_accounts',
       'terms_acceptances', 'terms_reviews', 'terms_versions', 'users',

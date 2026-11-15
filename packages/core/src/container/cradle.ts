@@ -18,6 +18,8 @@ import type {
   PilotMetricsRepository,
   ConnectPayoutRepository,
   SessionNoteRepository,
+  InvitationBatchRepository,
+  MentorInvitationRepository,
 } from '@devmentor/db';
 import type { EventBus } from '../events/event-bus';
 import type { Logger } from '../logger';
@@ -56,6 +58,7 @@ import type { PilotMetricsService } from '../services/terms/pilot-metrics.servic
 import type { StripeConnectPort } from '../services/payouts/stripe-connect.port';
 import type { ConnectPayoutService } from '../services/payouts/connect-payout.service';
 import type { SessionNoteService } from '../services/notes/session-note.service';
+import type { MentorInvitationService } from '../services/invitations/mentor-invitation.service';
 
 /** Every dependency the container can provide. A new service is one line here and one in container.ts. */
 export interface Cradle {
@@ -85,11 +88,14 @@ export interface Cradle {
   pilotMetricsRepository: PilotMetricsRepository;
   connectPayoutRepository: ConnectPayoutRepository;
   sessionNoteRepository: SessionNoteRepository;
+  invitationBatchRepository: InvitationBatchRepository;
+  mentorInvitationRepository: MentorInvitationRepository;
   userService: UserService;
   authService: AuthService;
   articleService: ArticleService;
   approvalService: ApprovalService;
   invitationService: InvitationService;
+  mentorInvitationService: MentorInvitationService;
   magicLinkService: MagicLinkService;
   mentorService: MentorService;
   bookingService: BookingService;

@@ -9,6 +9,8 @@ export { ApprovalRequest } from './approvals/approval-request.entity';
 export { MentorProfile } from './mentors/mentor-profile.entity';
 export { Booking } from './bookings/booking.entity';
 export { AvailabilitySlot } from './bookings/availability-slot.entity';
+export { InvitationBatch } from './invitations/invitation-batch.entity';
+export { MentorInvitation } from './invitations/mentor-invitation.entity';
 export { Payment } from './payments/payment.entity';
 export { StatusTransition } from './workflow/status-transition.entity';
 export { Message } from './messages/message.entity';

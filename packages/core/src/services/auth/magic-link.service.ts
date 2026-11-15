@@ -64,13 +64,13 @@ export class MagicLinkService {
     }
   }
 
-  async issue(email: string): Promise<{ token: string; expiresAt: Date } | null> {
+  async issue(email: string, ttlMs = MAGIC_LINK_TTL_MS): Promise<{ token: string; expiresAt: Date } | null> {
     const invitation = await this.invitationService.findUnrevokedByEmail(email);
     if (!invitation) return null;
 
     const bytes = randomBytes(32);
     const now = this.clock.now();
-    const expiresAt = new Date(now.getTime() + MAGIC_LINK_TTL_MS);
+    const expiresAt = new Date(now.getTime() + ttlMs);
     await this.loginTokenRepository.create({
       email: invitation.email,
       tokenHash: tokenHash(bytes),

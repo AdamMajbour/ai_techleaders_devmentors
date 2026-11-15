@@ -128,8 +128,26 @@ export {
 export {
   INVALID_MAGIC_LINK_MESSAGE,
   MAGIC_LINK_TTL_MS,
+  ACCOUNT_LOGIN_LINK_TTL_MS,
   MagicLinkService,
 } from './services/auth/magic-link.service';
+export {
+  MentorInvitationService,
+  INVITATION_BATCH_SIZE,
+  INVITATION_STOP_MESSAGE,
+  NO_BATCH_OPEN_MESSAGE,
+  BATCH_FULL_MESSAGE,
+  BATCH_ALREADY_OPEN_MESSAGE,
+  INVITATION_MAIL_FAILURE_MESSAGE,
+  UNRESOLVED_INVITATION_MESSAGE,
+  EXISTING_MENTOR_MESSAGE,
+  resolveMentorInvitationStatus,
+  type MentorInvitationStatus,
+  type MentorInvitationRowDto,
+  type InvitationBatchDto,
+  type InvitationBatchesDto,
+  type CreatedMentorInvitationDto,
+} from './services/invitations/mentor-invitation.service';
 export {
   ApprovalService,
   defaultApproverResolvers,
