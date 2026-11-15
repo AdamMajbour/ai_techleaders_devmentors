@@ -1,6 +1,6 @@
 {
   "name": "@devmentor/db",
-  "version": "0.1.0",
+  "version": "1.0.2",
   "description": "Database layer with MikroORM entities, migrations, and repositories",
   "private": true,
   "main": "./src/index.ts",
