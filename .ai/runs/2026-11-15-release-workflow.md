@@ -18,5 +18,6 @@
 
 ### Phase 1: Build release workflow
 
-- [ ] 1.1 Add workflow dispatch inputs, SemVer selection and validation, package version updates, changelog extraction, tag creation, and GitHub Release publication.
-- [ ] 1.2 Review the diff and run the configured validation gate.
+- [x] 1.1 Add workflow dispatch inputs, SemVer selection and validation, package version updates, changelog extraction, tag creation, and GitHub Release publication. — c5bfde1ef0b94c6fb5d5280318e3398cfebfbf1a
+- [x] 1.2 Review the diff and run the configured validation gate. — 50ed6b3 plus final validation below
+
