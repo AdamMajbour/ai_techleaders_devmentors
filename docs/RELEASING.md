@@ -6,4 +6,4 @@
 4. Wybierz `main`, rodzaj wersji (`patch`, `minor`, `major` albo `custom`), a dla `custom` podaj pełny stabilny numer SemVer większy od obecnego.
 5. Uruchom workflow i sprawdź wynik w **Releases**.
 
-Workflow przyjmuje uruchomienie wyłącznie z `main`. Weryfikuje wersje pakietów i lockfile oraz brak duplikatu taga. Następnie aktualizuje wersje, tworzy commit wydania i tag `vX.Y.Z`, po czym publikuje GitHub Release z notatkami z changeloga albo commitów od poprzedniego taga. Kolejny numer bazuje na najnowszym stabilnym tagu; jeśli tagów nie ma, używa wersji z głównego `package.json`.
+Workflow przyjmuje uruchomienie wyłącznie z `main`. Tworzy tag `vX.Y.Z` na bieżącym `main` i publikuje GitHub Release z notatkami z changeloga albo commitów od poprzedniego taga. Kolejny numer bazuje na najnowszym stabilnym tagu; jeśli tagów nie ma, używa wersji z głównego `package.json`. Jeśli tag istnieje, ale poprzedni przebieg nie zdążył opublikować Release, akcja wznowi publikację tego taga. Workflow nie wypycha commitów do chronionej gałęzi `main`.

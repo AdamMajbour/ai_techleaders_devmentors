@@ -11,9 +11,9 @@ describe('prepare-release helper', () => {
   const writeJson = (path: string, value: unknown) => writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
   const readJson = (path: string): Record<string, unknown> => JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
 
-  const runHelper = (versionType: string, customVersion = '') => execFileSync('node', [helperPath], {
+  const runHelper = (versionType: string, customVersion = '', pendingTag = '') => execFileSync('node', [helperPath], {
     cwd: directory,
-    env: { ...process.env, VERSION_TYPE: versionType, CUSTOM_VERSION: customVersion, RUNNER_TEMP: runnerTemp, GITHUB_OUTPUT: outputPath },
+    env: { ...process.env, VERSION_TYPE: versionType, CUSTOM_VERSION: customVersion, PENDING_TAG: pendingTag, RUNNER_TEMP: runnerTemp, GITHUB_OUTPUT: outputPath },
     stdio: 'pipe',
   });
 
@@ -47,14 +47,15 @@ describe('prepare-release helper', () => {
   afterEach(() => rmSync(directory, { recursive: true, force: true }));
 
   it.each([['patch', '', '1.2.4'], ['minor', '', '1.3.0'], ['major', '', '2.0.0'], ['custom', '3.4.5', '3.4.5']])(
-    'prepares %s versions and updates manifests and lockfile', (type, custom, expected) => {
+    'prepares %s versions and outputs tag and release notes', (type, custom, expected) => {
       writeFileSync(join(directory, 'CHANGELOG.md'), readFileSync(join(directory, 'CHANGELOG.md'), 'utf8').replace('1.2.4', expected));
       runHelper(type, custom);
-      expect(readJson(join(directory, 'package.json')).version).toBe(expected);
-      expect(readJson(join(directory, 'packages', 'core', 'package.json')).version).toBe(expected);
-      expect(readJson(join(directory, 'package-lock.json')).version).toBe(expected);
+      expect(readJson(join(directory, 'package.json')).version).toBe('1.2.3');
+      expect(readJson(join(directory, 'packages', 'core', 'package.json')).version).toBe('1.2.3');
+      expect(readJson(join(directory, 'package-lock.json')).version).toBe('1.2.3');
       expect(readFileSync(join(runnerTemp, 'release-notes.md'), 'utf8')).toContain('- Release fixture.');
       expect(readFileSync(outputPath, 'utf8')).toContain(`tag=v${expected}`);
+      expect(readFileSync(outputPath, 'utf8')).toContain('tag_exists=false');
     },
   );
 
@@ -63,10 +64,19 @@ describe('prepare-release helper', () => {
     expect(readJson(join(directory, 'package.json')).version).toBe('1.2.3');
   });
 
-  it('rejects a missing changelog entry before changing manifests', () => {
+  it('uses commit messages when the changelog entry is missing', () => {
     writeFileSync(join(directory, 'CHANGELOG.md'), '## [1.2.3] - 2026-11-14\n');
     runHelper('patch');
-    expect(readJson(join(directory, 'package.json')).version).toBe('1.2.4');
+    expect(readJson(join(directory, 'package.json')).version).toBe('1.2.3');
+    expect(readFileSync(join(runnerTemp, 'release-notes.md'), 'utf8')).toContain('Add release changes');
+  });
+
+  it('resumes a release when an unpublished tag already exists', () => {
+    writeFileSync(join(directory, 'CHANGELOG.md'), '## [1.2.3] - 2026-11-14\n');
+    execFileSync('git', ['-C', directory, 'tag', 'v1.2.4']);
+    runHelper('patch', '', 'v1.2.4');
+    expect(readFileSync(outputPath, 'utf8')).toContain('tag=v1.2.4');
+    expect(readFileSync(outputPath, 'utf8')).toContain('tag_exists=true');
     expect(readFileSync(join(runnerTemp, 'release-notes.md'), 'utf8')).toContain('Add release changes');
   });
 });

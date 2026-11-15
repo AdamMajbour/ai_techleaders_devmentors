@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const versionPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
@@ -30,21 +30,25 @@ function increment(current, type, custom) {
   return next;
 }
 
-function latestReleaseVersion(fallback) {
+function releaseTags() {
   const tags = execFileSync('git', ['tag', '--list', 'v*', '--sort=-version:refname'], { encoding: 'utf8' })
     .split(/\r?\n/)
     .map((tag) => tag.trim())
-    .find((tag) => tag.startsWith('v') && versionPattern.test(tag.slice(1)));
-  return tags ? tags.slice(1) : fallback;
+    .filter((tag) => tag.startsWith('v') && versionPattern.test(tag.slice(1)));
+  return tags;
 }
 
-function releaseNotes(changelog, version, baseVersion) {
+function releaseNotes(changelog, version, baseVersion, targetRef) {
   const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const header = new RegExp(`^## \\[${escaped}\\] - \\d{4}-\\d{2}-\\d{2}\\s*$`, 'm');
   const found = header.exec(changelog);
   if (!found) {
     const baseTag = `v${baseVersion}`;
-    const commits = execFileSync('git', ['log', '--pretty=format:- %s', `${baseTag}..HEAD`], { encoding: 'utf8' }).trim();
+    const commits = execFileSync('git', ['log', '--pretty=format:- %s', `${baseTag}..${targetRef}`], { encoding: 'utf8' })
+      .split(/\r?\n/)
+      .filter((line) => !line.includes('chore(release): prepare '))
+      .join('\n')
+      .trim();
     if (!commits) throw new Error(`No changelog entry for ${version}, and no commits found since ${baseTag}.`);
     return `## Changes\n\n${commits}\n`;
   }
@@ -57,45 +61,31 @@ function releaseNotes(changelog, version, baseVersion) {
 
 function main() {
   const root = JSON.parse(readFileSync('package.json', 'utf8'));
-  const baseVersion = latestReleaseVersion(root.version);
-  const version = increment(baseVersion, process.env.VERSION_TYPE, process.env.CUSTOM_VERSION);
+  const tags = releaseTags();
+  const pendingTag = process.env.PENDING_TAG ?? '';
+  const baseTag = tags.find((tag) => tag !== pendingTag);
+  const baseVersion = baseTag ? baseTag.slice(1) : root.version;
+  const version = pendingTag ? pendingTag.slice(1)
+    : increment(baseVersion, process.env.VERSION_TYPE, process.env.CUSTOM_VERSION);
   const tag = `v${version}`;
   const localTag = execFileSync('git', ['tag', '--list', tag], { encoding: 'utf8' }).trim();
   const remoteTag = execFileSync('git', ['ls-remote', '--tags', 'origin', `refs/tags/${tag}`, `refs/tags/${tag}^{}`], { encoding: 'utf8' }).trim();
-  if (localTag || remoteTag) throw new Error(`Tag ${tag} already exists.`);
-  const notes = releaseNotes(readFileSync('CHANGELOG.md', 'utf8'), version, baseVersion);
-
-  const files = ['package.json', ...readdirSync('packages', { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => join('packages', entry.name, 'package.json'))
-    .filter(existsSync)
-    .sort()];
-  const manifests = files.map((file) => {
-    const manifest = JSON.parse(readFileSync(file, 'utf8'));
-    if (manifest.version !== root.version) throw new Error(`${file} version does not match root package.json.`);
-    manifest.version = version;
-    return { file, manifest };
-  });
-
-  const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'));
-  if (lock.version !== root.version || lock.packages?.['']?.version !== root.version) {
-    throw new Error('package-lock.json root version does not match package.json.');
+  if (pendingTag && !localTag && !remoteTag) throw new Error(`Pending tag ${tag} was not found.`);
+  if (localTag || remoteTag) {
+    if (localTag && remoteTag) {
+      const localRef = execFileSync('git', ['rev-parse', `refs/tags/${tag}^{}`], { encoding: 'utf8' }).trim();
+      const remoteRef = execFileSync('git', ['ls-remote', 'origin', `refs/tags/${tag}^{}`], { encoding: 'utf8' }).trim().split(/\s+/)[0];
+      if (localRef !== remoteRef) throw new Error(`Local and remote ${tag} point to different commits.`);
+    }
+    if (!localTag) execFileSync('git', ['fetch', '--no-tags', 'origin', `refs/tags/${tag}:refs/tags/${tag}`]);
   }
-  for (const file of files.slice(1)) {
-    const key = file.replaceAll('\\', '/').replace(/\/package\.json$/, '');
-    if (lock.packages?.[key]?.version !== root.version) throw new Error(`Missing or mismatched lockfile entry: ${key}`);
-    lock.packages[key].version = version;
-  }
-  lock.version = version;
-  lock.packages[''].version = version;
-  for (const { file, manifest } of manifests) writeFileSync(file, `${JSON.stringify(manifest, null, 2)}\n`);
-  writeFileSync('package-lock.json', `${JSON.stringify(lock, null, 2)}\n`);
+  const notes = releaseNotes(readFileSync('CHANGELOG.md', 'utf8'), version, baseVersion, localTag || remoteTag ? tag : 'HEAD');
 
   const runnerTemp = process.env.RUNNER_TEMP;
   const githubOutput = process.env.GITHUB_OUTPUT;
   if (!runnerTemp || !githubOutput) throw new Error('GitHub runner output paths are unavailable.');
   writeFileSync(join(runnerTemp, 'release-notes.md'), notes);
-  writeFileSync(githubOutput, `version=${version}\ntag=${tag}\n`, { flag: 'a' });
+  writeFileSync(githubOutput, `version=${version}\ntag=${tag}\ntag_exists=${localTag || remoteTag ? 'true' : 'false'}\n`, { flag: 'a' });
 }
 
 main();
