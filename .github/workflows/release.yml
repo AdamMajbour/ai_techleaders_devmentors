@@ -1,0 +1,128 @@
+﻿name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: Version bump or custom version
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - custom
+      custom_version:
+        description: Exact version to release (for custom selection)
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out selected branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Resolve version and release notes
+        id: version
+        env:
+          VERSION_TYPE: ${{ inputs.version_type }}
+          CUSTOM_VERSION: ${{ inputs.custom_version }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { execFileSync } from 'node:child_process';
+          import { readFileSync, writeFileSync } from 'node:fs';
+
+          const root = JSON.parse(readFileSync('package.json', 'utf8'));
+          const current = root.version;
+          const semver = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+          const parts = semver.exec(current);
+          if (!parts) throw new Error(`Root package version is not stable SemVer: ${current}`);
+          const [, majorText, minorText, patchText] = parts;
+          const [major, minor, patch] = [majorText, minorText, patchText].map(Number);
+          let next;
+          switch (process.env.VERSION_TYPE) {
+            case 'patch': next = `${major}.${minor}.${patch + 1}`; break;
+            case 'minor': next = `${major}.${minor + 1}.0`; break;
+            case 'major': next = `${major + 1}.0.0`; break;
+            case 'custom': next = process.env.CUSTOM_VERSION?.trim() ?? ''; break;
+            default: throw new Error(`Unsupported version type: ${process.env.VERSION_TYPE}`);
+          }
+          if (!semver.test(next)) throw new Error('Custom version must be stable SemVer in MAJOR.MINOR.PATCH form.');
+          const compare = (left, right) => {
+            const a = left.split('.').map(Number);
+            const b = right.split('.').map(Number);
+            for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] - b[i];
+            return 0;
+          };
+          if (compare(next, current) <= 0) throw new Error(`Version ${next} must be greater than current version ${current}.`);
+
+          const tag = `v${next}`;
+          try {
+            execFileSync('git', ['rev-parse', '--verify', `refs/tags/${tag}`], { stdio: 'ignore' });
+            throw new Error(`Tag ${tag} already exists.`);
+          } catch (error) {
+            if (error.message === `Tag ${tag} already exists.`) throw error;
+          }
+          const existingRemoteTags = execFileSync('git', ['ls-remote', '--tags', 'origin', `refs/tags/${tag}`, `refs/tags/${tag}^{{}}`], { encoding: 'utf8' }).trim();
+          if (existingRemoteTags) throw new Error(`Remote tag ${tag} already exists.`);
+
+          const changelog = readFileSync('CHANGELOG.md', 'utf8');
+          const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const header = new RegExp(`^## \\[${escaped}\\] - \\d{4}-\\d{2}-\\d{2}\\s*$`, 'm');
+          const match = header.exec(changelog);
+          if (!match) throw new Error(`Add a dated ${tag} entry to CHANGELOG.md before starting the release.`);
+          const afterHeader = changelog.slice(match.index + match[0].length);
+          const nextHeader = /^## \[/m.exec(afterHeader);
+          const notes = afterHeader.slice(0, nextHeader?.index ?? afterHeader.length).trim();
+          if (!notes) throw new Error(`The ${tag} changelog entry is empty.`);
+          writeFileSync(`${process.env.RUNNER_TEMP}/release-notes.md`, `${notes}\n`);
+
+          const workspaceFiles = execFileSync('find', ['packages', '-type', 'f', '-name', 'package.json'], { encoding: 'utf8' })
+            .trim().split('\n').filter(Boolean).sort();
+          for (const file of ['package.json', ...workspaceFiles]) {
+            const pkg = JSON.parse(readFileSync(file, 'utf8'));
+            pkg.version = next;
+            writeFileSync(file, `${JSON.stringify(pkg, null, 2)}\n`);
+          }
+          writeFileSync(process.env.GITHUB_OUTPUT, `version=${next}\ntag=${tag}\n`, { flag: 'a' });
+          NODE
+
+      - name: Refresh lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Create version commit and rollback tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add package.json package-lock.json packages/**/package.json
+          git commit -m "chore(release): prepare ${TAG}"
+          git tag -a "${TAG}" -m "DevMentor ${TAG}"
+          git push origin "HEAD:${GITHUB_REF_NAME}" "refs/tags/${TAG}"
+
+      - name: Publish GitHub Release from changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release create "${TAG}" --title "DevMentor ${TAG}" --notes-file "$RUNNER_TEMP/release-notes.md"
