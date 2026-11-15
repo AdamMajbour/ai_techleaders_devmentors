@@ -6,6 +6,23 @@ on:
     branches: [main, develop, 'feat/**']
 
 jobs:
+  production-rate-limit-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Production rate-limit bypass regression
+        run: npx jest --selectProjects unit packages/core/src/security/rate-limit.production.test.ts --runInBand
+
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
