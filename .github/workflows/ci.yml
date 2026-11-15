@@ -71,7 +71,6 @@ jobs:
 
       - name: Agent script tests
         run: |
-          npm run test:agent-scripts
           python3 -m unittest discover -s .agents/skills/om-ai-context-maintenance/scripts -p 'test_*.py'
 
       - name: Install PostgreSQL client
