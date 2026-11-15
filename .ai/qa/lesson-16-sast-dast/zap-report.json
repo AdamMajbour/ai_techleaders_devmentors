@@ -1,0 +1,1331 @@
+{
+	"@programName": "ZAP",
+	"@version": "2.17.0",
+	"@generated": "Sun, 15 Nov 2026 10:26:06",
+	"created": "2026-11-15T10:26:06.910005143Z",
+	"insights":[
+		{
+			"level": "Low",
+			"reason": "Warning",
+			"site": "",
+			"key": "insight.log.warn",
+			"description": "ZAP warnings logged - see the zap.log file for details",
+			"statistic": "7"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3001",
+			"key": "insight.code.2xx",
+			"description": "Percentage of responses with status code 2xx",
+			"statistic": "93"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3001",
+			"key": "insight.code.4xx",
+			"description": "Percentage of responses with status code 4xx",
+			"statistic": "6"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3001",
+			"key": "insight.endpoint.ctype.application/javascript",
+			"description": "Percentage of endpoints with content type application/javascript",
+			"statistic": "82"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3001",
+			"key": "insight.endpoint.ctype.image/x-icon",
+			"description": "Percentage of endpoints with content type image/x-icon",
+			"statistic": "3"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3001",
+			"key": "insight.endpoint.ctype.text/css",
+			"description": "Percentage of endpoints with content type text/css",
+			"statistic": "3"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3001",
+			"key": "insight.endpoint.ctype.text/html",
+			"description": "Percentage of endpoints with content type text/html",
+			"statistic": "10"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3001",
+			"key": "insight.endpoint.method.GET",
+			"description": "Percentage of endpoints with method GET",
+			"statistic": "100"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3001",
+			"key": "insight.endpoint.total",
+			"description": "Count of total endpoints",
+			"statistic": "29"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3001",
+			"key": "insight.response.slow",
+			"description": "Percentage of slow responses",
+			"statistic": "90"
+		}
+	],
+	"site":[ 
+		{
+			"@name": "http://host.docker.internal:3001",
+			"@host": "host.docker.internal",
+			"@port": "3001",
+			"@ssl": "false",
+			"alerts": [ 
+				{
+					"pluginid": "10038",
+					"alertRef": "10038-1",
+					"alert": "Content Security Policy (CSP) Header Not Set",
+					"name": "Content Security Policy (CSP) Header Not Set",
+					"riskcode": "2",
+					"confidence": "3",
+					"riskdesc": "Medium (High)",
+					"desc": "<p>Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page \u2014 covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.</p>",
+					"instances":[ 
+						{
+							"id": "17",
+							"uri": "http://host.docker.internal:3001",
+							"nodeName": "http:\/\/host.docker.internal:3001",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "30",
+							"uri": "http://host.docker.internal:3001/",
+							"nodeName": "http:\/\/host.docker.internal:3001\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "0",
+							"uri": "http://host.docker.internal:3001/robots.txt",
+							"nodeName": "http:\/\/host.docker.internal:3001\/robots.txt",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "5",
+							"uri": "http://host.docker.internal:3001/sitemap.xml",
+							"nodeName": "http:\/\/host.docker.internal:3001\/sitemap.xml",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						}
+					],
+					"count": "4",
+					"systemic": false,
+					"solution": "<p>Ensure that your web server, application server, load balancer, etc. is configured to set the Content-Security-Policy header.</p>",
+					"otherinfo": "",
+					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP</p><p>https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html</p><p>https://www.w3.org/TR/CSP/</p><p>https://w3c.github.io/webappsec-csp/</p><p>https://web.dev/articles/csp</p><p>https://caniuse.com/#feat=contentsecuritypolicy</p><p>https://content-security-policy.com/</p>",
+					"cweid": "693",
+					"wascid": "15",
+					"sourceid": "1"
+				},
+				{
+					"pluginid": "10020",
+					"alertRef": "10020-1",
+					"alert": "Missing Anti-clickjacking Header",
+					"name": "Missing Anti-clickjacking Header",
+					"riskcode": "2",
+					"confidence": "2",
+					"riskdesc": "Medium (Medium)",
+					"desc": "<p>The response does not protect against 'ClickJacking' attacks. It should include either Content-Security-Policy with 'frame-ancestors' directive or X-Frame-Options.</p>",
+					"instances":[ 
+						{
+							"id": "15",
+							"uri": "http://host.docker.internal:3001",
+							"nodeName": "http:\/\/host.docker.internal:3001",
+							"method": "GET",
+							"param": "x-frame-options",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "29",
+							"uri": "http://host.docker.internal:3001/",
+							"nodeName": "http:\/\/host.docker.internal:3001\/",
+							"method": "GET",
+							"param": "x-frame-options",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						}
+					],
+					"count": "2",
+					"systemic": false,
+					"solution": "<p>Modern Web browsers support the Content-Security-Policy and X-Frame-Options HTTP headers. Ensure one of them is set on all web pages returned by your site/app.</p><p>If you expect the page to be framed only by pages on your server (e.g. it's part of a FRAMESET) then you'll want to use SAMEORIGIN, otherwise if you never expect the page to be framed, you should use DENY. Alternatively consider implementing Content Security Policy's \"frame-ancestors\" directive.</p>",
+					"otherinfo": "",
+					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Frame-Options</p>",
+					"cweid": "1021",
+					"wascid": "15",
+					"sourceid": "7"
+				},
+				{
+					"pluginid": "90004",
+					"alertRef": "90004-2",
+					"alert": "Cross-Origin-Embedder-Policy Header Missing or Invalid",
+					"name": "Cross-Origin-Embedder-Policy Header Missing or Invalid",
+					"riskcode": "1",
+					"confidence": "2",
+					"riskdesc": "Low (Medium)",
+					"desc": "<p>Cross-Origin-Embedder-Policy header is a response header that prevents a document from loading any cross-origin resources that don't explicitly grant the document permission (using CORP or CORS).</p>",
+					"instances":[ 
+						{
+							"id": "61",
+							"uri": "http://host.docker.internal:3001",
+							"nodeName": "http:\/\/host.docker.internal:3001",
+							"method": "GET",
+							"param": "Cross-Origin-Embedder-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "36",
+							"uri": "http://host.docker.internal:3001/",
+							"nodeName": "http:\/\/host.docker.internal:3001\/",
+							"method": "GET",
+							"param": "Cross-Origin-Embedder-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						}
+					],
+					"count": "2",
+					"systemic": false,
+					"solution": "<p>Ensure that the application/web server sets the Cross-Origin-Embedder-Policy header appropriately, and that it sets the Cross-Origin-Embedder-Policy header to 'require-corp' for documents.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Embedder-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-embedder-policy).</p>",
+					"otherinfo": "",
+					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy</p>",
+					"cweid": "693",
+					"wascid": "14",
+					"sourceid": "7"
+				},
+				{
+					"pluginid": "90004",
+					"alertRef": "90004-3",
+					"alert": "Cross-Origin-Opener-Policy Header Missing or Invalid",
+					"name": "Cross-Origin-Opener-Policy Header Missing or Invalid",
+					"riskcode": "1",
+					"confidence": "2",
+					"riskdesc": "Low (Medium)",
+					"desc": "<p>Cross-Origin-Opener-Policy header is a response header that allows a site to control if others included documents share the same browsing context. Sharing the same browsing context with untrusted documents might lead to data leak.</p>",
+					"instances":[ 
+						{
+							"id": "62",
+							"uri": "http://host.docker.internal:3001",
+							"nodeName": "http:\/\/host.docker.internal:3001",
+							"method": "GET",
+							"param": "Cross-Origin-Opener-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "37",
+							"uri": "http://host.docker.internal:3001/",
+							"nodeName": "http:\/\/host.docker.internal:3001\/",
+							"method": "GET",
+							"param": "Cross-Origin-Opener-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						}
+					],
+					"count": "2",
+					"systemic": false,
+					"solution": "<p>Ensure that the application/web server sets the Cross-Origin-Opener-Policy header appropriately, and that it sets the Cross-Origin-Opener-Policy header to 'same-origin' for documents.</p><p>'same-origin-allow-popups' is considered as less secured and should be avoided.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Opener-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-opener-policy).</p>",
+					"otherinfo": "",
+					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy</p>",
+					"cweid": "693",
+					"wascid": "14",
+					"sourceid": "7"
+				},
+				{
+					"pluginid": "90004",
+					"alertRef": "90004-1",
+					"alert": "Cross-Origin-Resource-Policy Header Missing or Invalid",
+					"name": "Cross-Origin-Resource-Policy Header Missing or Invalid",
+					"riskcode": "1",
+					"confidence": "2",
+					"riskdesc": "Low (Medium)",
+					"desc": "<p>Cross-Origin-Resource-Policy header is an opt-in header designed to counter side-channels attacks like Spectre. Resource should be specifically set as shareable amongst different origins.</p>",
+					"instances":[ 
+						{
+							"id": "35",
+							"uri": "http://host.docker.internal:3001/",
+							"nodeName": "http:\/\/host.docker.internal:3001\/",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "28",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/1q96_modules_next_dist_compiled_react-dom_cjs_react-dom_development_1sqry0_53krp4.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/1q96_modules_next_dist_compiled_react-dom_cjs_react-dom_development_1sqry0_53krp4.js",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "11",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_18x7jxupx5rou._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_18x7jxupx5rou._.js",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "46",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_1anvha4rlo79g._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_1anvha4rlo79g._.js",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "47",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_1mcqv2hnf81am._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_1mcqv2hnf81am._.js",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						}
+					],
+					"count": "5",
+					"systemic": true,
+					"solution": "<p>Ensure that the application/web server sets the Cross-Origin-Resource-Policy header appropriately, and that it sets the Cross-Origin-Resource-Policy header to 'same-origin' for all web pages.</p><p>'same-site' is considered as less secured and should be avoided.</p><p>If resources must be shared, set the header to 'cross-origin'.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Resource-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-resource-policy).</p>",
+					"otherinfo": "",
+					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy</p>",
+					"cweid": "693",
+					"wascid": "14",
+					"sourceid": "48"
+				},
+				{
+					"pluginid": "10110",
+					"alertRef": "10110",
+					"alert": "Dangerous JS Functions",
+					"name": "Dangerous JS Functions",
+					"riskcode": "1",
+					"confidence": "1",
+					"riskdesc": "Low (Low)",
+					"desc": "<p>A dangerous JS function seems to be in use that would leave the site vulnerable.</p>",
+					"instances":[ 
+						{
+							"id": "100",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_164kp-67asdr9._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_compiled_react-server-dom-turbopack_164kp-67asdr9._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "eval(",
+							"otherinfo": ""
+						},
+						{
+							"id": "79",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "eval(",
+							"otherinfo": ""
+						}
+					],
+					"count": "2",
+					"systemic": false,
+					"solution": "<p>See the references for security advice on the use of these functions.</p>",
+					"otherinfo": "",
+					"reference": "<p>https://v17.angular.io/guide/security</p>",
+					"cweid": "749",
+					"wascid": "-1",
+					"sourceid": "51"
+				},
+				{
+					"pluginid": "10063",
+					"alertRef": "10063-1",
+					"alert": "Permissions Policy Header Not Set",
+					"name": "Permissions Policy Header Not Set",
+					"riskcode": "1",
+					"confidence": "2",
+					"riskdesc": "Low (Medium)",
+					"desc": "<p>Permissions Policy Header is an added layer of security that helps to restrict from unauthorized access or usage of browser/client features by web resources. This policy ensures the user privacy by limiting or specifying the features of the browsers can be used by the web resources. Permissions Policy provides a set of standard HTTP headers that allow website owners to limit which features of browsers can be used by the page such as camera, microphone, location, full screen etc.</p>",
+					"instances":[ 
+						{
+							"id": "34",
+							"uri": "http://host.docker.internal:3001/",
+							"nodeName": "http:\/\/host.docker.internal:3001\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "27",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/1q96_modules_next_dist_compiled_react-dom_cjs_react-dom_development_1sqry0_53krp4.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/1q96_modules_next_dist_compiled_react-dom_cjs_react-dom_development_1sqry0_53krp4.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "9",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_18x7jxupx5rou._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_18x7jxupx5rou._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "44",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_1anvha4rlo79g._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_1anvha4rlo79g._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "43",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_1mcqv2hnf81am._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_1mcqv2hnf81am._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						}
+					],
+					"count": "5",
+					"systemic": true,
+					"solution": "<p>Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header.</p>",
+					"otherinfo": "",
+					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy</p><p>https://developer.chrome.com/blog/feature-policy/</p><p>https://scotthelme.co.uk/a-new-security-header-feature-policy/</p><p>https://w3c.github.io/webappsec-feature-policy/</p><p>https://www.smashingmagazine.com/2018/12/feature-policy/</p>",
+					"cweid": "693",
+					"wascid": "15",
+					"sourceid": "48"
+				},
+				{
+					"pluginid": "10037",
+					"alertRef": "10037",
+					"alert": "Server Leaks Information via \"X-Powered-By\" HTTP Response Header Field(s)",
+					"name": "Server Leaks Information via \"X-Powered-By\" HTTP Response Header Field(s)",
+					"riskcode": "1",
+					"confidence": "2",
+					"riskdesc": "Low (Medium)",
+					"desc": "<p>The web/application server is leaking information via one or more \"X-Powered-By\" HTTP response headers. Access to such information may facilitate attackers identifying other frameworks/components your web application is reliant upon and the vulnerabilities such components may be subject to.</p>",
+					"instances":[ 
+						{
+							"id": "21",
+							"uri": "http://host.docker.internal:3001",
+							"nodeName": "http:\/\/host.docker.internal:3001",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "X-Powered-By: Next.js",
+							"otherinfo": ""
+						},
+						{
+							"id": "32",
+							"uri": "http://host.docker.internal:3001/",
+							"nodeName": "http:\/\/host.docker.internal:3001\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "X-Powered-By: Next.js",
+							"otherinfo": ""
+						},
+						{
+							"id": "13",
+							"uri": "http://host.docker.internal:3001/robots.txt",
+							"nodeName": "http:\/\/host.docker.internal:3001\/robots.txt",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "X-Powered-By: Next.js",
+							"otherinfo": ""
+						},
+						{
+							"id": "14",
+							"uri": "http://host.docker.internal:3001/sitemap.xml",
+							"nodeName": "http:\/\/host.docker.internal:3001\/sitemap.xml",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "X-Powered-By: Next.js",
+							"otherinfo": ""
+						}
+					],
+					"count": "4",
+					"systemic": false,
+					"solution": "<p>Ensure that your web server, application server, load balancer, etc. is configured to suppress \"X-Powered-By\" headers.</p>",
+					"otherinfo": "",
+					"reference": "<p>https://owasp.org/www-project-web-security-testing-guide/v42/4-Web_Application_Security_Testing/01-Information_Gathering/08-Fingerprint_Web_Application_Framework</p><p>https://www.troyhunt.com/shhh-dont-let-your-response-headers/</p>",
+					"cweid": "497",
+					"wascid": "13",
+					"sourceid": "1"
+				},
+				{
+					"pluginid": "10096",
+					"alertRef": "10096",
+					"alert": "Timestamp Disclosure - Unix",
+					"name": "Timestamp Disclosure - Unix",
+					"riskcode": "1",
+					"confidence": "1",
+					"riskdesc": "Low (Low)",
+					"desc": "<p>A timestamp was disclosed by the application/web server. - Unix</p>",
+					"instances":[ 
+						{
+							"id": "101",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/1daa_next_dist_compiled_react-dom_cjs_react-dom-client_development_0mp0cp_t-ezj9.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/1daa_next_dist_compiled_react-dom_cjs_react-dom-client_development_0mp0cp_t-ezj9.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "2080374784",
+							"otherinfo": "2080374784, which evaluates to: 2035-12-04 09:53:04."
+						}
+					],
+					"count": "1",
+					"systemic": false,
+					"solution": "<p>Manually confirm that the timestamp data is not sensitive, and that the data cannot be aggregated to disclose exploitable patterns.</p>",
+					"otherinfo": "<p>2080374784, which evaluates to: 2035-12-04 09:53:04.</p>",
+					"reference": "<p>https://cwe.mitre.org/data/definitions/200.html</p>",
+					"cweid": "497",
+					"wascid": "13",
+					"sourceid": "63"
+				},
+				{
+					"pluginid": "10021",
+					"alertRef": "10021",
+					"alert": "X-Content-Type-Options Header Missing",
+					"name": "X-Content-Type-Options Header Missing",
+					"riskcode": "1",
+					"confidence": "2",
+					"riskdesc": "Low (Medium)",
+					"desc": "<p>The Anti-MIME-Sniffing header X-Content-Type-Options was not set to 'nosniff'. This allows older versions of Internet Explorer and Chrome to perform MIME-sniffing on the response body, potentially causing the response body to be interpreted and displayed as a content type other than the declared content type. Current (early 2014) and legacy versions of Firefox will use the declared content type (if one is set), rather than performing MIME-sniffing.</p>",
+					"instances":[ 
+						{
+							"id": "2",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_0qva5cupmdgep._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/[turbopack]_browser_dev_hmr-client_hmr-client_ts_0qva5cupmdgep._.js",
+							"method": "GET",
+							"param": "x-content-type-options",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.\nAt \"High\" threshold this scan rule will not alert on client or server error responses."
+						},
+						{
+							"id": "4",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_18x7jxupx5rou._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_18x7jxupx5rou._.js",
+							"method": "GET",
+							"param": "x-content-type-options",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.\nAt \"High\" threshold this scan rule will not alert on client or server error responses."
+						},
+						{
+							"id": "6",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_1anvha4rlo79g._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_1anvha4rlo79g._.js",
+							"method": "GET",
+							"param": "x-content-type-options",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.\nAt \"High\" threshold this scan rule will not alert on client or server error responses."
+						},
+						{
+							"id": "3",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_1mcqv2hnf81am._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_1mcqv2hnf81am._.js",
+							"method": "GET",
+							"param": "x-content-type-options",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.\nAt \"High\" threshold this scan rule will not alert on client or server error responses."
+						},
+						{
+							"id": "7",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_src_app_globals_1eh60dey0-wwk.css",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_src_app_globals_1eh60dey0-wwk.css",
+							"method": "GET",
+							"param": "x-content-type-options",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.\nAt \"High\" threshold this scan rule will not alert on client or server error responses."
+						}
+					],
+					"count": "5",
+					"systemic": true,
+					"solution": "<p>Ensure that the application/web server sets the Content-Type header appropriately, and that it sets the X-Content-Type-Options header to 'nosniff' for all web pages.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that does not perform MIME-sniffing at all, or that can be directed by the web application/web server to not perform MIME-sniffing.</p>",
+					"otherinfo": "<p>This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.</p><p>At \"High\" threshold this scan rule will not alert on client or server error responses.</p>",
+					"reference": "<p>https://learn.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/compatibility/gg622941(v=vs.85)</p><p>https://owasp.org/www-community/Security_Headers</p>",
+					"cweid": "693",
+					"wascid": "15",
+					"sourceid": "17"
+				},
+				{
+					"pluginid": "10027",
+					"alertRef": "10027",
+					"alert": "Information Disclosure - Suspicious Comments",
+					"name": "Information Disclosure - Suspicious Comments",
+					"riskcode": "0",
+					"confidence": "2",
+					"riskdesc": "Informational (Medium)",
+					"desc": "<p>The response appears to contain suspicious comments which may help an attacker.</p>",
+					"instances":[ 
+						{
+							"id": "86",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_micromark-core-commonmark_dev_lib_1n4ekt8ev5buz._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_micromark-core-commonmark_dev_lib_1n4ekt8ev5buz._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "     ^\n   * > | <!--xxx-->\n   *      ^\n   *",
+							"otherinfo": "The following pattern was used: \\bXXX\\b and was detected 5 times, the first in likely comment: \"/**\n   * After `<`, at tag name or other stuff.\n   *\n   * ```markdown\n   * > | <x />\n   *      ^\n   * > | <!doctype>\n   *      ^\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "88",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_micromark-core-commonmark_dev_lib_1n4ekt8ev5buz._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_micromark-core-commonmark_dev_lib_1n4ekt8ev5buz._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "*      ^\n   * > | a<user@example.com>b\n   * ",
+							"otherinfo": "The following pattern was used: \\bUSER\\b and was detected 8 times, the first in likely comment: \"/**\n   * Start of an autolink.\n   *\n   * ```markdown\n   * > | a<https://example.com>b\n   *      ^\n   * > | a<user@example.com>b\n\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "87",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_micromark-core-commonmark_dev_lib_1n4ekt8ev5buz._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_micromark-core-commonmark_dev_lib_1n4ekt8ev5buz._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "dd the `text` token later.",
+							"otherinfo": "The following pattern was used: \\bLATER\\b and was detected 3 times, the first in likely comment: \"// To do: generate `data` tokens, add the `text` token later.\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "90",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_micromark-core-commonmark_dev_lib_1n4ekt8ev5buz._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_micromark-core-commonmark_dev_lib_1n4ekt8ev5buz._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "er whitespace,\n   * where it expects optional",
+							"otherinfo": "The following pattern was used: \\bWHERE\\b and was detected 3 times, the first in likely comment: \"/**\n   * At an attribute name.\n   *\n   * At first, this state is used after a complete tag name, after whitespace,\n   * where it\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "89",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_micromark-core-commonmark_dev_lib_1n4ekt8ev5buz._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_micromark-core-commonmark_dev_lib_1n4ekt8ev5buz._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "er,\n *   Token\n * } from 'micromark-util-typ",
+							"otherinfo": "The following pattern was used: \\bFROM\\b and was detected 26 times, the first in likely comment: \"/**\n * @import {\n *   Code,\n *   Construct,\n *   Event,\n *   Point,\n *   Resolver,\n *   State,\n *   TokenizeContext,\n *   Tokeni\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "92",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_05y3oi5z9mc_3._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": " find the pathname, query and hash and return",
+							"otherinfo": "The following pattern was used: \\bQUERY\\b and was detected in likely comment: \"/**\n * Given a path this function will find the pathname, query and hash and return\n * them. This is useful to parse full paths \", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "91",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_05y3oi5z9mc_3._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": " with null captured later.",
+							"otherinfo": "The following pattern was used: \\bLATER\\b and was detected 2 times, the first in likely comment: \"// (e.g., in onRecoverableError) with null captured later.\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "95",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_05y3oi5z9mc_3._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "// TODO(veil): Include orig",
+							"otherinfo": "The following pattern was used: \\bTODO\\b and was detected 11 times, the first in likely comment: \"// TODO(veil): Include original Owner Stack (NDX-905)\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "93",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_05y3oi5z9mc_3._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "ed to\n * either the user's instrumentation m",
+							"otherinfo": "The following pattern was used: \\bUSER\\b and was detected 3 times, the first in likely comment: \"/**\n * This module imports the configured client instrumentation modules.\n *\n * The `private-next-instrumentation-client` module\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "94",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_05y3oi5z9mc_3._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "s the name inferred from the namespace objec",
+							"otherinfo": "The following pattern was used: \\bFROM\\b and was detected 20 times, the first in likely comment: \"// so it retains the name inferred from the namespace object\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "96",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_05y3oi5z9mc_3._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "tter error for case where `throw undefined`",
+							"otherinfo": "The following pattern was used: \\bWHERE\\b and was detected 3 times, the first in likely comment: \"// provide better error for case where `throw undefined`\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "71",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_20wefz_f1k6jn._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_20wefz_f1k6jn._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "/**\n * Check where the top corner of t",
+							"otherinfo": "The following pattern was used: \\bWHERE\\b and was detected 2 times, the first in likely comment: \"/**\n * Check where the top corner of the HTMLElement is relative to the usable\n * viewport.\n *\n * Scroll padding is resolved laz\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "70",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_20wefz_f1k6jn._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_20wefz_f1k6jn._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "// TODO: Once we start trac",
+							"otherinfo": "The following pattern was used: \\bTODO\\b and was detected 6 times, the first in likely comment: \"// TODO: Once we start tracking back/forward history at each route level,\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "67",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_20wefz_f1k6jn._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_20wefz_f1k6jn._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "// should select the child slots of ",
+							"otherinfo": "The following pattern was used: \\bSELECT\\b and was detected in likely comment: \"// should select the child slots of that layout.\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "69",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_20wefz_f1k6jn._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_20wefz_f1k6jn._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "e rewritten ones in from a Server Component.",
+							"otherinfo": "The following pattern was used: \\bFROM\\b and was detected 4 times, the first in likely comment: \"// the rewritten ones in from a Server Component.\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "68",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_20wefz_f1k6jn._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_20wefz_f1k6jn._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "ion component if no user-defined boundary is",
+							"otherinfo": "The following pattern was used: \\bUSER\\b and was detected 3 times, the first in likely comment: \"// wrap in an extra function component if no user-defined boundary is\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "118",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": " would be a Next.js bug since the full buff",
+							"otherinfo": "The following pattern was used: \\bBUG\\b and was detected 3 times, the first in likely comment: \"// unfulfilled `a`, which would be a Next.js bug since the full buffer is\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "124",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "// TODO-APP: Remove this lo",
+							"otherinfo": "The following pattern was used: \\bTODO\\b and was detected 95 times, the first in likely comment: \"// TODO-APP: Remove this logic when Float has GC built-in in development.\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "122",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "// The user explicitly opted ou",
+							"otherinfo": "The following pattern was used: \\bUSER\\b and was detected 10 times, the first in likely comment: \"// The user explicitly opted out of scrolling (e.g. scroll={false}\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "121",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "// `__nextppronly` query is present. This is",
+							"otherinfo": "The following pattern was used: \\bQUERY\\b and was detected 8 times, the first in likely comment: \"// `__nextppronly` query is present. This is only enabled when the\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "125",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "// navigation, where we don't know the s",
+							"otherinfo": "The following pattern was used: \\bWHERE\\b and was detected 51 times, the first in likely comment: \"// navigation, where we don't know the structure of the target route, we use\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "120",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "atchAll] alongside [username]) \u2014 the caller dete",
+							"otherinfo": "The following pattern was used: \\bUSERNAME\\b and was detected in likely comment: \"/**\n * Gets or creates the dynamic child node for a KnownRoutePart. A node can\n * have at most one dynamic child. Sibling filesy\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "123",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "mantically separate from the router state qu",
+							"otherinfo": "The following pattern was used: \\bFROM\\b and was detected 236 times, the first in likely comment: \"// the action queue is semantically separate from the router state queue \u2014\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "117",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "nsure it's executed later than hydration",
+							"otherinfo": "The following pattern was used: \\bLATER\\b and was detected 17 times, the first in likely comment: \"// Delayed in marco task to ensure it's executed later than hydration\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "119",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_client_1wygxxh5rwq0t._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "transfer the Flight debug info",
+							"otherinfo": "The following pattern was used: \\bDEBUG\\b and was detected 16 times, the first in likely comment: \"// promise created by the router, we need to transfer the Flight debug info\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "84",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_compiled_1amofcmz--cdp._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_compiled_1amofcmz--cdp._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": " OTHERWISE, ARISING FROM,\n * OUT OF OR IN CO",
+							"otherinfo": "The following pattern was used: \\bFROM\\b and was detected 4 times, the first in likely comment: \"/**\n * MIT License\n *\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * Permission is hereby granted, free of charge, to\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "85",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_next_dist_compiled_1amofcmz--cdp._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_next_dist_compiled_1amofcmz--cdp._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "// TODO: remove this key fr",
+							"otherinfo": "The following pattern was used: \\bTODO\\b and was detected 3 times, the first in likely comment: \"// TODO: remove this key from page config instead of allow listing it\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "80",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23r57r2s._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23r57r2s._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "/**\n       * User Select\n       * @se",
+							"otherinfo": "The following pattern was used: \\bUSER\\b and was detected in likely comment: \"/**\n       * User Select\n       * @see https://tailwindcss.com/docs/user-select\n       */\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "81",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23r57r2s._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23r57r2s._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "iciently by joining from startIndex onwards",
+							"otherinfo": "The following pattern was used: \\bFROM\\b and was detected 4 times, the first in likely comment: \"// Build classRest string efficiently by joining from startIndex onwards\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "83",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23r57r2s._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23r57r2s._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "m baseConfig Config where other config will b",
+							"otherinfo": "The following pattern was used: \\bWHERE\\b and was detected in likely comment: \"/**\n * @param baseConfig Config where other config will be merged into. This object will be mutated.\n * @param configExtension P\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "82",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23r57r2s._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23r57r2s._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "ttom-left\n       * @todo class group will be",
+							"otherinfo": "The following pattern was used: \\bTODO\\b and was detected 2 times, the first in likely comment: \"/**\n       * Inset Inline Start\n       * @see https://tailwindcss.com/docs/top-right-bottom-left\n       * @todo class group will\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "98",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_zod_v4_classic_1yz7ss7h0-f5-._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_zod_v4_classic_1yz7ss7h0-f5-._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "_` and can add keys from\n * a property `defa",
+							"otherinfo": "The following pattern was used: \\bFROM\\b and was detected in likely comment: \"/**\n * Enforces the keywords that constrain an object's own keys \u2014 `propertyNames`,\n * `minProperties`, `maxProperties` \u2014 before\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "97",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_zod_v4_classic_1yz7ss7h0-f5-._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_zod_v4_classic_1yz7ss7h0-f5-._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "n metadata into the user-supplied registry. ",
+							"otherinfo": "The following pattern was used: \\bUSER\\b and was detected in likely comment: \"// Collect non-description annotation metadata into the user-supplied registry. Description is handled separately below via `.de\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "99",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_zod_v4_classic_1yz7ss7h0-f5-._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_zod_v4_classic_1yz7ss7h0-f5-._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "trip lossless. Only where it was actually app",
+							"otherinfo": "The following pattern was used: \\bWHERE\\b and was detected in likely comment: \"// `propertyNames` and `contains` are enforced by a guard, which `toJSONSchema` cannot infer, so the original keyword is carried\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "114",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_zod_v4_core_14qn2mg1f8pkp._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_zod_v4_core_14qn2mg1f8pkp._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": " fast path, running user callbacks a third t",
+							"otherinfo": "The following pattern was used: \\bUSER\\b and was detected 13 times, the first in likely comment: \"// Mark this parse as runtime-driven: under global mode every nested schema carries its own compiled wrapper, and without the fl\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "113",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_zod_v4_core_14qn2mg1f8pkp._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_zod_v4_core_14qn2mg1f8pkp._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": " the mask keys that select something, checked ",
+							"otherinfo": "The following pattern was used: \\bSELECT\\b and was detected 2 times, the first in likely comment: \"// the mask keys that select something, checked against the source's shape without resolving it\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "112",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_zod_v4_core_14qn2mg1f8pkp._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_zod_v4_core_14qn2mg1f8pkp._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "// OR LATER, so the pattern mus",
+							"otherinfo": "The following pattern was used: \\bLATER\\b and was detected 11 times, the first in likely comment: \"// OR LATER, so the pattern must allow at least `position` leading chars\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "116",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_zod_v4_core_14qn2mg1f8pkp._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_zod_v4_core_14qn2mg1f8pkp._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "` stays string-only where the emitted code us",
+							"otherinfo": "The following pattern was used: \\bWHERE\\b and was detected 8 times, the first in likely comment: \"// a symbol has no source literal, so it is hoisted as a constant; `keys` stays string-only where the emitted code uses `for...i\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "115",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/node_modules_zod_v4_core_14qn2mg1f8pkp._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/node_modules_zod_v4_core_14qn2mg1f8pkp._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "import { $ZodType } from \"./schemas.js\";",
+							"otherinfo": "The following pattern was used: \\bFROM\\b and was detected 27 times, the first in likely comment: \"// import { $ZodType } from \"./schemas.js\";\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "108",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_0faiipw939qax._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_0faiipw939qax._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "// A styled native <select>: the browser provi",
+							"otherinfo": "The following pattern was used: \\bSELECT\\b and was detected in likely comment: \"// A styled native <select>: the browser provides the keyboard behaviour, the list and the mobile\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "109",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_0faiipw939qax._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_0faiipw939qax._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "// Fields the user has edited: only th",
+							"otherinfo": "The following pattern was used: \\bUSER\\b and was detected 6 times, the first in likely comment: \"// Fields the user has edited: only these are validated when focus leaves them, so tabbing past an\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "110",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_0faiipw939qax._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_0faiipw939qax._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "// Markdown from users is data, not ",
+							"otherinfo": "The following pattern was used: \\bFROM\\b and was detected 7 times, the first in likely comment: \"// Markdown from users is data, not code. No raw HTML (skipHtml), no images, links limited to http(s) and\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "111",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_0faiipw939qax._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_0faiipw939qax._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "A placeholder block where content is loading.",
+							"otherinfo": "The following pattern was used: \\bWHERE\\b and was detected 2 times, the first in likely comment: \"// A placeholder block where content is loading. It does NOT pulse: an endless animation is decorative\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "65",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_src_app_(marketing)_backdrop_tsx_1y86xf3gtad-c._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_src_app_(marketing)_backdrop_tsx_1y86xf3gtad-c._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "// The dune field from the sign-in panel a",
+							"otherinfo": "The following pattern was used: \\bFROM\\b and was detected 2 times, the first in likely comment: \"// The dune field from the sign-in panel and the Custom workspace page, held\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "66",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_src_app_(marketing)_backdrop_tsx_1y86xf3gtad-c._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_src_app_(marketing)_backdrop_tsx_1y86xf3gtad-c._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "copy, bottom right, where there is",
+							"otherinfo": "The following pattern was used: \\bWHERE\\b and was detected 2 times, the first in likely comment: \"// surfaces in the same grains beside the copy, bottom right, where there is\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "72",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": " a Refresh Boundary later.",
+							"otherinfo": "The following pattern was used: \\bLATER\\b and was detected in likely comment: \"// still a Refresh Boundary later.\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "73",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "/ same URL: https://bugs.webkit.org/show_bug",
+							"otherinfo": "The following pattern was used: \\bBUGS\\b and was detected in likely comment: \"// same URL: https://bugs.webkit.org/show_bug.cgi?id=187726\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "77",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "// TODO(alexkirsz) This is ",
+							"otherinfo": "The following pattern was used: \\bTODO\\b and was detected 4 times, the first in likely comment: \"// TODO(alexkirsz) This is not defined in the HMR API. It was used to\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "76",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "ead of accessing it from the module object t",
+							"otherinfo": "The following pattern was used: \\bFROM\\b and was detected 40 times, the first in likely comment: \"// We need to store this here instead of accessing it from the module object to:\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "74",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "emove fragments and query parameters since th",
+							"otherinfo": "The following pattern was used: \\bQUERY\\b and was detected 7 times, the first in likely comment: \"/**\n * Remove fragments and query parameters since they are never part of the context map keys\n *\n * This matches how we parse p\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "75",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "es the HMR API that user code calls (module.",
+							"otherinfo": "The following pattern was used: \\bUSER\\b and was detected 2 times, the first in likely comment: \"/**\n * Creates the module.hot API object and its internal state.\n * This provides the HMR API that user code calls (module.hot.a\", see evidence field for the suspicious comment/snippet."
+						},
+						{
+							"id": "78",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/turbopack-packages_app_06rkbud3pyrlm._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "order, at the point where the call\n * appears",
+							"otherinfo": "The following pattern was used: \\bWHERE\\b and was detected 4 times, the first in likely comment: \"/**\n * Registers re-exports that all forward to properties of other modules.\n *\n * This is a compact spelling of the pattern\n *\n\", see evidence field for the suspicious comment/snippet."
+						}
+					],
+					"count": "52",
+					"systemic": false,
+					"solution": "<p>Remove all comments that return information that may help an attacker and fix any underlying problems they refer to.</p>",
+					"otherinfo": "<p>The following pattern was used: \\bXXX\\b and was detected 5 times, the first in likely comment: \"/**</p><p>   * After `<`, at tag name or other stuff.</p><p>   *</p><p>   * ```markdown</p><p>   * > | <x /></p><p>   *      ^</p><p>   * > | <!doctype></p><p>   *      ^\", see evidence field for the suspicious comment/snippet.</p>",
+					"reference": "",
+					"cweid": "615",
+					"wascid": "13",
+					"sourceid": "60"
+				},
+				{
+					"pluginid": "10109",
+					"alertRef": "10109",
+					"alert": "Modern Web Application",
+					"name": "Modern Web Application",
+					"riskcode": "0",
+					"confidence": "2",
+					"riskdesc": "Informational (Medium)",
+					"desc": "<p>The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.</p>",
+					"instances":[ 
+						{
+							"id": "1",
+							"uri": "http://host.docker.internal:3001/robots.txt",
+							"nodeName": "http:\/\/host.docker.internal:3001\/robots.txt",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "<script src=\"/_next/static/chunks/1daa_next_dist_compiled_react-dom_cjs_react-dom-client_development_0mp0cp_t-ezj9.js\" async=\"\"></script>",
+							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
+						},
+						{
+							"id": "12",
+							"uri": "http://host.docker.internal:3001/sitemap.xml",
+							"nodeName": "http:\/\/host.docker.internal:3001\/sitemap.xml",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "<script src=\"/_next/static/chunks/1daa_next_dist_compiled_react-dom_cjs_react-dom-client_development_0mp0cp_t-ezj9.js\" async=\"\"></script>",
+							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
+						}
+					],
+					"count": "2",
+					"systemic": false,
+					"solution": "<p>This is an informational alert and so no changes are required.</p>",
+					"otherinfo": "<p>No links have been found while there are scripts, which is an indication that this is a modern web application.</p>",
+					"reference": "",
+					"cweid": "-1",
+					"wascid": "-1",
+					"sourceid": "6"
+				},
+				{
+					"pluginid": "10049",
+					"alertRef": "10049-1",
+					"alert": "Non-Storable Content",
+					"name": "Non-Storable Content",
+					"riskcode": "0",
+					"confidence": "2",
+					"riskdesc": "Informational (Medium)",
+					"desc": "<p>The response contents are not storable by caching components such as proxy servers. If the response does not contain sensitive, personal or user-specific information, it may benefit from being stored and cached, to improve performance.</p>",
+					"instances":[ 
+						{
+							"id": "55",
+							"uri": "http://host.docker.internal:3001",
+							"nodeName": "http:\/\/host.docker.internal:3001",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-store",
+							"otherinfo": ""
+						},
+						{
+							"id": "33",
+							"uri": "http://host.docker.internal:3001/",
+							"nodeName": "http:\/\/host.docker.internal:3001\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-store",
+							"otherinfo": ""
+						},
+						{
+							"id": "50",
+							"uri": "http://host.docker.internal:3001/robots.txt",
+							"nodeName": "http:\/\/host.docker.internal:3001\/robots.txt",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-store",
+							"otherinfo": ""
+						},
+						{
+							"id": "52",
+							"uri": "http://host.docker.internal:3001/sitemap.xml",
+							"nodeName": "http:\/\/host.docker.internal:3001\/sitemap.xml",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-store",
+							"otherinfo": ""
+						}
+					],
+					"count": "4",
+					"systemic": false,
+					"solution": "<p>The content may be marked as storable by ensuring that the following conditions are satisfied:</p><p>The request method must be understood by the cache and defined as being cacheable (\"GET\", \"HEAD\", and \"POST\" are currently defined as cacheable)</p><p>The response status code must be understood by the cache (one of the 1XX, 2XX, 3XX, 4XX, or 5XX response classes are generally understood)</p><p>The \"no-store\" cache directive must not appear in the request or response header fields</p><p>For caching by \"shared\" caches such as \"proxy\" caches, the \"private\" response directive must not appear in the response</p><p>For caching by \"shared\" caches such as \"proxy\" caches, the \"Authorization\" header field must not appear in the request, unless the response explicitly allows it (using one of the \"must-revalidate\", \"public\", or \"s-maxage\" Cache-Control response directives)</p><p>In addition to the conditions above, at least one of the following conditions must also be satisfied by the response:</p><p>It must contain an \"Expires\" header field</p><p>It must contain a \"max-age\" response directive</p><p>For \"shared\" caches such as \"proxy\" caches, it must contain a \"s-maxage\" response directive</p><p>It must contain a \"Cache Control Extension\" that allows it to be cached</p><p>It must have a status code that is defined as cacheable by default (200, 203, 204, 206, 300, 301, 404, 405, 410, 414, 501).</p>",
+					"otherinfo": "",
+					"reference": "<p>https://datatracker.ietf.org/doc/html/rfc7234</p><p>https://datatracker.ietf.org/doc/html/rfc7231</p><p>https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html</p>",
+					"cweid": "524",
+					"wascid": "13",
+					"sourceid": "1"
+				},
+				{
+					"pluginid": "10049",
+					"alertRef": "10049-2",
+					"alert": "Storable but Non-Cacheable Content",
+					"name": "Storable but Non-Cacheable Content",
+					"riskcode": "0",
+					"confidence": "2",
+					"riskdesc": "Informational (Medium)",
+					"desc": "<p>The response contents are storable by caching components such as proxy servers, but will not be retrieved directly from the cache, without validating the request upstream, in response to similar requests from other users.</p>",
+					"instances":[ 
+						{
+							"id": "26",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/1q96_modules_next_dist_compiled_react-dom_cjs_react-dom_development_1sqry0_53krp4.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/1q96_modules_next_dist_compiled_react-dom_cjs_react-dom_development_1sqry0_53krp4.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-cache",
+							"otherinfo": ""
+						},
+						{
+							"id": "38",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_0qva5cupmdgep._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/[turbopack]_browser_dev_hmr-client_hmr-client_ts_0qva5cupmdgep._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-cache",
+							"otherinfo": ""
+						},
+						{
+							"id": "8",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_18x7jxupx5rou._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_18x7jxupx5rou._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-cache",
+							"otherinfo": ""
+						},
+						{
+							"id": "41",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_1anvha4rlo79g._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_1anvha4rlo79g._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-cache",
+							"otherinfo": ""
+						},
+						{
+							"id": "39",
+							"uri": "http://host.docker.internal:3001/_next/static/chunks/packages_app_1mcqv2hnf81am._.js",
+							"nodeName": "http:\/\/host.docker.internal:3001\/_next\/static\/chunks\/packages_app_1mcqv2hnf81am._.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-cache",
+							"otherinfo": ""
+						}
+					],
+					"count": "5",
+					"systemic": true,
+					"solution": "",
+					"otherinfo": "",
+					"reference": "<p>https://datatracker.ietf.org/doc/html/rfc7234</p><p>https://datatracker.ietf.org/doc/html/rfc7231</p><p>https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html</p>",
+					"cweid": "524",
+					"wascid": "13",
+					"sourceid": "42"
+				}
+			]
+		}
+	],
+	"sequences":[
+	]
+
+}

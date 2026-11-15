@@ -1,0 +1,47 @@
+{
+  "verifiedAt": "2026-11-15T10:07:58.089Z",
+  "baseUrl": "http://127.0.0.1:3001",
+  "bookingId": "0e7c8b4a-ef14-4e71-a618-161600000003",
+  "pageUrl": "http://127.0.0.1:3001/sessions/0e7c8b4a-ef14-4e71-a618-161600000003",
+  "menteeLoginUrl": "http://127.0.0.1:3001/api/auth/github/mock?persona=mentee&returnTo=%2Fsessions%2F0e7c8b4a-ef14-4e71-a618-161600000003",
+  "endsAt": "2026-11-15T10:31:57.009Z",
+  "checks": {
+    "menteeRead": 200,
+    "operatorUsersAccess": 200,
+    "operatorRead": 403,
+    "operatorPost": 403,
+    "messagesBefore": [
+      {
+        "id": "0e7c8b4a-ef14-4e71-a618-161600000004",
+        "authorId": "196785e3-35bc-4d8d-b20f-913e71bd3510",
+        "authorName": "Mock Mentee",
+        "sentAt": "2026-11-15T00:42:53.203Z",
+        "text": "Cześć, sprawdźmy prywatny wątek."
+      },
+      {
+        "id": "0e7c8b4a-ef14-4e71-a618-161600000005",
+        "authorId": "fc4bd617-489b-46db-ad60-ddfb194fa1af",
+        "authorName": "Mock Mentor",
+        "sentAt": "2026-11-15T00:42:53.215Z",
+        "text": "Jasne, widzę wiadomość w sesji."
+      }
+    ],
+    "messagesAfter": [
+      {
+        "id": "0e7c8b4a-ef14-4e71-a618-161600000004",
+        "authorId": "196785e3-35bc-4d8d-b20f-913e71bd3510",
+        "authorName": "Mock Mentee",
+        "sentAt": "2026-11-15T00:42:53.203Z",
+        "text": "Cześć, sprawdźmy prywatny wątek."
+      },
+      {
+        "id": "0e7c8b4a-ef14-4e71-a618-161600000005",
+        "authorId": "fc4bd617-489b-46db-ad60-ddfb194fa1af",
+        "authorName": "Mock Mentor",
+        "sentAt": "2026-11-15T00:42:53.215Z",
+        "text": "Jasne, widzę wiadomość w sesji."
+      }
+    ],
+    "messagesUnchanged": true
+  }
+}

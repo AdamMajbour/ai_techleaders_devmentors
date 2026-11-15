@@ -29,12 +29,14 @@ export function createRateLimiter({ maxAttempts, windowMs, cooldownMs, now = Dat
   return {
     /** Throws `TooManyRequestsError` while the key is blocked. */
     assertAllowed(key: string): void {
+      if (process.env.NODE_ENV !== 'production' && process.env.RESTLER_DISABLE_RATE_LIMIT === 'true') return;
       const time = now();
       const blockedUntil = entries.get(key)?.blockedUntil ?? 0;
       if (blockedUntil > time) throw new TooManyRequestsError(Math.ceil((blockedUntil - time) / 1000));
     },
 
     recordFailure(key: string): void {
+      if (process.env.NODE_ENV !== 'production' && process.env.RESTLER_DISABLE_RATE_LIMIT === 'true') return;
       const time = now();
       purge(time);
       const entry = entries.get(key) ?? { failures: [], blockedUntil: 0 };

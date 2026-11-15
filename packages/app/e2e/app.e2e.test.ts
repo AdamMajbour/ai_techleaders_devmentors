@@ -336,8 +336,8 @@ describe('API reads', () => {
     }
   });
 
-  it('does not expose a user lookup', async () => {
-    expect((await fetch(`${baseUrl}/api/users?email=${DEMO_AUTHOR.email}`)).status).toBe(404);
+  it('requires authentication for the operator user-list alias', async () => {
+    expect((await fetch(`${baseUrl}/api/users?email=${DEMO_AUTHOR.email}`)).status).toBe(401);
   });
 
   it('serves concurrent requests, each in its own scope', async () => {

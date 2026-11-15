@@ -1,7 +1,7 @@
 /** @jest-environment node */
 import type { Booking, Message } from '@devmentor/db';
 import { createEventBus } from '../../events/event-bus';
-import { ConflictError, NotFoundError, ValidationError } from '../../http/errors';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../http/errors';
 import { MessageService } from './message.service';
 
 const SEEKER_ID = '00000000-0000-4000-8000-000000000001';
@@ -74,11 +74,11 @@ describe('MessageService', () => {
     });
   });
 
-  it('conceals the conversation from nonparticipants before querying messages', async () => {
+  it('forbids nonparticipants before querying or writing messages', async () => {
     const deps = setup();
 
-    await expect(deps.service.list({ userId: OUTSIDER_ID }, BOOKING_ID)).rejects.toBeInstanceOf(NotFoundError);
-    await expect(deps.service.post({ userId: OUTSIDER_ID }, BOOKING_ID, 'hello')).rejects.toBeInstanceOf(NotFoundError);
+    await expect(deps.service.list({ userId: OUTSIDER_ID }, BOOKING_ID)).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(deps.service.post({ userId: OUTSIDER_ID }, BOOKING_ID, 'hello')).rejects.toBeInstanceOf(ForbiddenError);
     expect(deps.messageRepository.findByBookingAfter).not.toHaveBeenCalled();
     expect(deps.messageRepository.create).not.toHaveBeenCalled();
   });

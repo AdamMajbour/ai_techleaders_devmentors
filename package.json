@@ -15,6 +15,7 @@
     "lint": "eslint packages",
     "type-check": "npm run type-check --workspaces --if-present",
     "test": "jest --selectProjects unit",
+    "test:agent-scripts": "node --test .agents/skills/om-auto-issue-triage/scripts/select-issues.test.mjs .agents/skills/om-auto-merge-buddy/scripts/dashboard.test.mjs",
     "test:watch": "jest --watch",
     "migrate": "npm --workspace=@devmentor/db run migrate",
     "migrate:down": "npm --workspace=@devmentor/db run migrate:down",
@@ -34,6 +35,9 @@
     "check:agents": "node .ai/scripts/validate-task-router.js"
   },
   "devDependencies": {
+    "@size-limit/file": "^14.3.0",
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/jest-runner": "^10.1.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
@@ -47,6 +51,7 @@
     "jest": "^29",
     "jest-environment-jsdom": "^29",
     "playwright": "^1.64.1",
+    "size-limit": "^14.3.0",
     "ts-jest": "^29.4.15",
     "typescript": "^5"
   }
