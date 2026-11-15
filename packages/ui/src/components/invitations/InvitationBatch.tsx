@@ -63,10 +63,10 @@ export function InvitationBatch({ section }: { section: InvitationBatchSection }
             <table aria-label={`${section.title} invitations`} className="w-full table-fixed border-collapse text-left text-body">
               <thead>
                 <tr className="border-b border-border text-label font-strong text-headline">
-                  <th scope="col" className="w-[30%] px-panel-compact py-group">Mentor</th>
-                  <th scope="col" className="w-[22%] px-panel-compact py-group">Stack tags</th>
-                  <th scope="col" className="w-[27%] px-panel-compact py-group">Status</th>
-                  <th scope="col" className="w-[21%] px-panel-compact py-group">Publish by</th>
+                  <th scope="col" className="w-1/4 px-panel-compact py-group">Mentor</th>
+                  <th scope="col" className="w-1/4 px-panel-compact py-group">Stack tags</th>
+                  <th scope="col" className="w-1/4 px-panel-compact py-group">Status</th>
+                  <th scope="col" className="w-1/4 px-panel-compact py-group">Publish by</th>
                 </tr>
               </thead>
               <tbody>
@@ -88,7 +88,7 @@ export function InvitationBatch({ section }: { section: InvitationBatchSection }
               <article key={row.id} className="min-w-0 border-t border-border py-panel-compact">
                 <h3 className="m-0 break-all text-label font-strong text-headline">{mentorName(row)}</h3>
                 {row.acceptedAt ? <p className="m-0 break-all text-meta text-muted-foreground">{row.email}</p> : null}
-                <dl className="m-0 grid min-w-0 grid-cols-[minmax(6rem,auto)_minmax(0,1fr)] gap-x-group gap-y-control py-group text-body">
+                <dl className="m-0 grid min-w-0 grid-cols-2 gap-x-group gap-y-control py-group text-body">
                   <dt className="text-muted-foreground">Stack tags</dt><dd className="m-0 break-words text-foreground">{stackTags(row)}</dd>
                   <dt className="text-muted-foreground">Status</dt><dd className="m-0 break-words text-foreground">{row.status}</dd>
                   <dt className="text-muted-foreground">Publish by</dt><dd className="m-0 break-words text-foreground">{publishBy(row)}</dd>
