@@ -55,3 +55,6 @@ dist/
 .ai/qa/test-env.env
 .aider*
 /packages/ui/.storybook/public/prototypes/
+
+# stryker temp files
+.stryker-tmp
