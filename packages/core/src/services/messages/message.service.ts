@@ -7,7 +7,7 @@ import type {
 } from '@devmentor/db';
 import { z } from 'zod';
 import { assertParticipant } from '../../http/auth';
-import { ConflictError, NotFoundError, ValidationError } from '../../http/errors';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../http/errors';
 import type { EventBus } from '../../events/event-bus';
 import type { Session } from '../../security/session';
 import type { Clock } from '../../utils/clock';
@@ -121,7 +121,7 @@ export class MessageService {
   private async requireAcceptedParticipant(session: Session, bookingId: string) {
     const booking = await this.bookingRepository.findById(bookingId);
     if (!booking) throw new NotFoundError();
-    assertParticipant(session, [booking.seekerId, booking.mentorId]);
+    if (![booking.seekerId, booking.mentorId].includes(session.userId)) throw new ForbiddenError();
     if (booking.status !== 'accepted' || !booking.startsAt || !booking.endsAt) throw new NotFoundError();
     return booking;
   }

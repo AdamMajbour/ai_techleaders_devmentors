@@ -1,0 +1,305 @@
+{
+  "runAt": "2026-11-15T11:32:04.142Z",
+  "baseUrl": "http://127.0.0.1:3002",
+  "database": "devmentor_qa@127.0.0.1:5434",
+  "accounts": {
+    "mentee": "196785e3-35bc-4d8d-b20f-913e71bd3510",
+    "mentor": "fc4bd617-489b-46db-ad60-ddfb194fa1af",
+    "operator": "7bb1d923-bf91-4fd2-868b-d03526fe829e",
+    "seekerB": "a6a31a41-f425-40c9-84f3-b89265e3d148"
+  },
+  "ids": {
+    "bookingA": "4896d049-641b-4db5-b128-9dad248165c3",
+    "bookingB": "184d37ba-53aa-4c07-83ab-fbc802ab4cb0",
+    "noteId": "ffe4ccd1-971a-4db5-8646-c77fdd3f164d",
+    "answerA": "f1e22682-b4cc-4fd6-a69a-17ea7612aec2",
+    "answerB": "d35e2068-20b7-492c-9f5a-12ea3f4e9fe9"
+  },
+  "checks": {
+    "t03": {
+      "positiveA": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "items": [
+              {
+                "id": "044d5f93-1f8e-4b2c-a30f-d174bc81cbe8",
+                "authorId": "196785e3-35bc-4d8d-b20f-913e71bd3510",
+                "authorName": "Mock Mentee",
+                "sentAt": "2026-11-15T11:32:01.227Z",
+                "text": "private-4896d049-641b-4db5-b128-9dad248165c3"
+              }
+            ],
+            "nextCursor": null,
+            "pollCursor": "eyJjcmVhdGVkQXQiOiIyMDI2LTExLTE1VDExOjMyOjAxLjIyN1oiLCJpZCI6IjA0NGQ1ZjkzLTFmOGUtNGIyYy1hMzBmLWQxNzRiYzgxY2JlOCJ9",
+            "serverTime": "2026-11-15T11:32:09.296Z",
+            "session": {
+              "startsAt": "2026-11-15T11:31:31.637Z",
+              "endsAt": "2026-11-15T11:42:01.637Z"
+            },
+            "viewerId": "196785e3-35bc-4d8d-b20f-913e71bd3510"
+          }
+        }
+      },
+      "positiveB": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "items": [
+              {
+                "id": "328aa3b3-e616-4575-b846-59d2ff75a38d",
+                "authorId": "a6a31a41-f425-40c9-84f3-b89265e3d148",
+                "authorName": "Audit Seeker B",
+                "sentAt": "2026-11-15T11:32:01.227Z",
+                "text": "private-184d37ba-53aa-4c07-83ab-fbc802ab4cb0"
+              }
+            ],
+            "nextCursor": null,
+            "pollCursor": "eyJjcmVhdGVkQXQiOiIyMDI2LTExLTE1VDExOjMyOjAxLjIyN1oiLCJpZCI6IjMyOGFhM2IzLWU2MTYtNDU3NS1iODQ2LTU5ZDJmZjc1YTM4ZCJ9",
+            "serverTime": "2026-11-15T11:32:09.376Z",
+            "session": {
+              "startsAt": "2026-11-15T11:31:31.637Z",
+              "endsAt": "2026-11-15T11:42:01.637Z"
+            },
+            "viewerId": "a6a31a41-f425-40c9-84f3-b89265e3d148"
+          }
+        }
+      },
+      "crossRead": {
+        "status": 403,
+        "body": {
+          "ok": false,
+          "error": {
+            "code": "forbidden",
+            "message": "You are not allowed to do this."
+          }
+        }
+      },
+      "crossWrite": {
+        "status": 403,
+        "body": {
+          "ok": false,
+          "error": {
+            "code": "forbidden",
+            "message": "You are not allowed to do this."
+          }
+        }
+      },
+      "dbBefore": [
+        {
+          "id": "328aa3b3-e616-4575-b846-59d2ff75a38d",
+          "booking_id": "184d37ba-53aa-4c07-83ab-fbc802ab4cb0",
+          "author_id": "a6a31a41-f425-40c9-84f3-b89265e3d148",
+          "body": "private-184d37ba-53aa-4c07-83ab-fbc802ab4cb0"
+        }
+      ],
+      "dbAfter": [
+        {
+          "id": "328aa3b3-e616-4575-b846-59d2ff75a38d",
+          "booking_id": "184d37ba-53aa-4c07-83ab-fbc802ab4cb0",
+          "author_id": "a6a31a41-f425-40c9-84f3-b89265e3d148",
+          "body": "private-184d37ba-53aa-4c07-83ab-fbc802ab4cb0"
+        }
+      ],
+      "unchanged": true
+    },
+    "t04": {
+      "positiveOperator": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "items": [
+              {
+                "id": "a6a31a41-f425-40c9-84f3-b89265e3d148",
+                "email": "audit-seeker-1794742321228@devmentor.test",
+                "name": "Audit Seeker B",
+                "avatar": null,
+                "createdAt": "2026-11-15T11:32:01.227Z"
+              },
+              {
+                "id": "d27a86ee-19ac-40a3-9b13-195759b686b0",
+                "email": "mentor-without-bio@devmentor.test",
+                "name": "Sam Example",
+                "avatar": null,
+                "createdAt": "2026-11-15T10:55:23.647Z"
+              },
+              {
+                "id": "b7e31ad2-7e2d-4fb0-9154-13f006cdd477",
+                "email": "ada@devmentor.dev",
+                "name": "Ada Test Mentor",
+                "avatar": null,
+                "createdAt": "2026-11-15T10:55:23.621Z"
+              },
+              {
+                "id": "7bb1d923-bf91-4fd2-868b-d03526fe829e",
+                "email": "mock-operator@devmentor.test",
+                "name": "Mock Operator",
+                "avatar": null,
+                "createdAt": "2026-11-15T10:55:23.594Z"
+              },
+              {
+                "id": "fc4bd617-489b-46db-ad60-ddfb194fa1af",
+                "email": "mock-mentor@devmentor.test",
+                "name": "Mock Mentor",
+                "avatar": null,
+                "createdAt": "2026-11-15T10:55:23.348Z"
+              },
+              {
+                "id": "196785e3-35bc-4d8d-b20f-913e71bd3510",
+                "email": "mock-mentee@devmentor.test",
+                "name": "Mock Mentee",
+                "avatar": null,
+                "createdAt": "2026-11-15T10:55:23.317Z"
+              },
+              {
+                "id": "5d9c7e52-3a1b-4c8f-8d57-2f4e6a9b1c22",
+                "email": "linus@devmentor.local",
+                "name": "Linus Learner",
+                "avatar": null,
+                "createdAt": "2026-11-15T10:55:23.067Z"
+              },
+              {
+                "id": "0c0b2f5a-6f6e-4b53-9f0e-6b1f3b0a7a11",
+                "email": "ada@devmentor.local",
+                "name": "Ada Mentor",
+                "avatar": null,
+                "createdAt": "2026-11-15T10:55:23.049Z"
+              },
+              {
+                "id": "17a04503-7c94-4e4e-92bc-9201ea8378c7",
+                "email": "qa-mentor@devmentor.local",
+                "name": "QA Mentor",
+                "avatar": null,
+                "createdAt": "2026-11-13T18:23:58.879Z"
+              }
+            ],
+            "page": 1,
+            "pageSize": 25,
+            "total": 9,
+            "pageCount": 1
+          }
+        }
+      },
+      "positiveSeeker": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "id": "196785e3-35bc-4d8d-b20f-913e71bd3510",
+            "email": "mock-mentee@devmentor.test",
+            "name": "Mock Mentee",
+            "avatar": null,
+            "createdAt": "2026-11-15T10:55:23.317Z"
+          }
+        }
+      },
+      "crossRead": {
+        "status": 403,
+        "body": {
+          "ok": false,
+          "error": {
+            "code": "forbidden",
+            "message": "You are not allowed to do this."
+          }
+        }
+      },
+      "crossWrite": {
+        "status": 403,
+        "body": {
+          "ok": false,
+          "error": {
+            "code": "forbidden",
+            "message": "You are not allowed to do this."
+          }
+        }
+      },
+      "dbBefore": {
+        "count": 0
+      },
+      "dbAfter": {
+        "count": 0
+      },
+      "unchanged": true
+    },
+    "t08": {
+      "positiveA": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "id": "f1e22682-b4cc-4fd6-a69a-17ea7612aec2",
+            "status": "released",
+            "question": "Synthetic audit question",
+            "priceMinor": 100,
+            "currency": "PLN",
+            "answerText": "Synthetic released answer",
+            "citations": [],
+            "allowedActions": [],
+            "refundStatus": "none",
+            "createdAt": "2026-11-15T11:32:01.227Z",
+            "updatedAt": "2026-11-15T11:32:01.227Z"
+          }
+        }
+      },
+      "positiveB": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "id": "d35e2068-20b7-492c-9f5a-12ea3f4e9fe9",
+            "status": "released",
+            "question": "Synthetic audit question",
+            "priceMinor": 100,
+            "currency": "PLN",
+            "answerText": "Synthetic released answer",
+            "citations": [],
+            "allowedActions": [],
+            "refundStatus": "none",
+            "createdAt": "2026-11-15T11:32:01.227Z",
+            "updatedAt": "2026-11-15T11:32:01.227Z"
+          }
+        }
+      },
+      "crossRead": {
+        "status": 404,
+        "body": {
+          "ok": false,
+          "error": {
+            "code": "not_found",
+            "message": "Resource not found."
+          }
+        }
+      },
+      "crossWrite": {
+        "status": 403,
+        "body": {
+          "ok": false,
+          "error": {
+            "code": "forbidden",
+            "message": "You are not allowed to do this."
+          }
+        }
+      },
+      "dbBefore": [
+        {
+          "id": "d35e2068-20b7-492c-9f5a-12ea3f4e9fe9",
+          "seeker_id": "a6a31a41-f425-40c9-84f3-b89265e3d148",
+          "status": "released",
+          "answer_text": "Synthetic released answer"
+        }
+      ],
+      "dbAfter": [
+        {
+          "id": "d35e2068-20b7-492c-9f5a-12ea3f4e9fe9",
+          "seeker_id": "a6a31a41-f425-40c9-84f3-b89265e3d148",
+          "status": "released",
+          "answer_text": "Synthetic released answer"
+        }
+      ],
+      "unchanged": true
+    }
+  }
+}
