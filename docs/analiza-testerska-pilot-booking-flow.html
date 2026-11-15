@@ -1,0 +1,151 @@
+﻿<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analiza testerska — Pilot booking flow (E01)</title>
+<style>
+:root{color-scheme:light;--ink:#172033;--muted:#526078;--line:#d7deea;--bg:#f4f7fb;--card:#fff;--blue:#155eef;--red:#b42318;--amber:#9a6700;--green:#067647}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.62 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1040px;margin:36px auto;padding:0 22px 64px}header,.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 30px;margin:18px 0;box-shadow:0 3px 14px #13294b0a}
+h1{font-size:2rem;line-height:1.2;margin:0 0 10px}h2{font-size:1.45rem;margin:0 0 14px}h3{font-size:1.08rem;margin:22px 0 8px}p{margin:8px 0 12px}ul,ol{padding-left:24px}li{margin:5px 0}.muted{color:var(--muted)}.lead{font-size:1.08rem}.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-weight:700;font-size:.8rem;background:#e8efff;color:#1849a9}.p0{color:var(--red)}.p1{color:var(--amber)}.p2{color:var(--green)}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}nav a{padding:5px 10px;border:1px solid var(--line);border-radius:7px;color:#1849a9;text-decoration:none;background:#fff}
+table{width:100%;border-collapse:collapse;margin:12px 0 18px;font-size:.94rem}th,td{text-align:left;vertical-align:top;padding:10px 11px;border:1px solid var(--line)}th{background:#eef3fa}
+.scenario{padding:14px 16px;border:1px solid var(--line);border-left:4px solid #8ca6d8;border-radius:9px;margin:12px 0;background:#fff}.scenario h3{margin:0 0 5px}.scenario p{margin:4px 0}.risk{border-left-color:#e09b28}.open{border-left-color:#c44}.small{font-size:.9rem}code{background:#eef2f7;padding:1px 4px;border-radius:4px;overflow-wrap:anywhere}
+@media(max-width:700px){main{margin:12px auto;padding:0 12px 32px}.panel,header{padding:19px 17px}table{display:block;overflow:auto;white-space:normal}}
+@media print{body{background:#fff}main{max-width:none;margin:0;padding:0}.panel,header{box-shadow:none;break-inside:avoid}nav{display:none}}
+</style>
+</head>
+<body><main>
+<header>
+<h1>Analiza testerska: Pilot booking flow (E01)</h1>
+<p class="lead">Przegląd specyfikacji z perspektywy testera: zachowania, reguły biznesowe, ryzyka, niejasności oraz priorytetyzowane scenariusze.</p>
+<p class="muted">Analizowany dokument: <code>.ai/specs/2026-10-26-pilot-booking-flow.md</code>. To analiza wymagań, nie raport z uruchomienia aplikacji ani potwierdzenie aktualnej implementacji.</p>
+<nav><a href="#summary">Zakres</a><a href="#rules">Reguły</a><a href="#risks">Ryzyka</a><a href="#scenarios">Scenariusze</a><a href="#ambiguities">Braki</a><a href="#charter">Charter</a></nav>
+</header>
+
+<section class="panel" id="summary"><h2>1. Jakie zachowania opisuje specyfikacja</h2>
+<p>Moduł prowadzi zaproszonego użytkownika od logowania linkiem e-mailowym do wyboru mentora i terminu, płatności z góry, decyzji mentora oraz 25- lub 50-minutowej sesji tekstowej. Rozliczenia, odmowy i brak odpowiedzi tworzą osobne ścieżki refundacji. Operator obsługuje zwroty wymagające zatwierdzenia.</p>
+<ol>
+<li><b>Dostęp:</b> operator zaprasza adres e-mail z rolą seeker lub mentor. Użytkownik prosi o magic link, otwiera go i uzyskuje sesję. Zaproszenie mentora daje również możliwość korzystania z funkcji seekera.</li>
+<li><b>Odkrywanie:</b> członek pilota widzi opublikowanych mentorów, może filtrować po technologiach i wejść na profil przez slug. Mentor publikuje profil i dostępne, pojedyncze sloty UTC.</li>
+<li><b>Rezerwacja:</b> seeker wybiera slot, długość 25/50 min, widzi cenę 25/50 PLN przed wpisaniem pytania, podaje pytanie do 4000 znaków i rozpoczyna Stripe Checkout. Serwer wylicza cenę, rezerwuje slot atomowo i zapisuje źródło oraz czas wejścia.</li>
+<li><b>Płatność:</b> webhook lub uzgodnienie statusu z providerem zmienia booking na paid. Nieopłacone/nieudane zamówienie nie jest widoczne mentorowi; retry tworzy nowy booking.</li>
+<li><b>Decyzja mentora:</b> mentor widzi pytanie przy paid, może zaakceptować wybrany termin albo odmówić. Akceptacja wymaga braku nakładającej się zaakceptowanej sesji. Odmowa lub timeout uruchamia refund path.</li>
+<li><b>Sesja i zwrot:</b> zaakceptowana sesja ma wąskie okno wysyłania tekstu, polling co 3 s i odczyt po końcu. Operator może zlecić zwrot, np. za no-show. Panel operatora zatwierdza/odrzuca wnioski.</li>
+</ol>
+<p>Okres pilota w dokumencie to 2 listopada–14 grudnia 2026. Płatności realne są blokowane do spełnienia wskazanych bramek i próby generalnej; przedtem wymagany jest tryb testowy.</p></section>
+
+<section class="panel" id="rules"><h2>2. Najważniejsze reguły biznesowe</h2>
+<ul>
+<li><b>Zaproszenia i role:</b> tylko zaakceptowane, nieodwołane zaproszenie daje dostęp pilota. Każdy członek ma capability seekera; rola mentor dodaje capability mentora. Operator jest osobną allowlistą.</li>
+<li><b>Brak enumeracji kont:</b> prośba o link zwraca identyczne <code>200 {sent:true}</code> dla adresu zaproszonego i niezaproszonego; e-mail wysyła się tylko uprawnionemu adresowi.</li>
+<li><b>Token logowania:</b> losowy, przechowywany jako hash, ważny 15 minut, jednorazowy; samo GET/prefetch nie może go zużyć.</li>
+<li><b>Widoczność mentorów:</b> lista pokazuje wyłącznie listed profile; profil nieopublikowany może być osiągalny przez slug dla członka. Brak ocen. Aktywność to jeden z czterech zgrubnych bucketów, bez dokładnego czasu.</li>
+<li><b>Sloty:</b> mentor publikuje sloty 25/50 min; start na granicy 15 minut, co najmniej 30 min naprzód, koniec w ciągu 7 dni. Slot w UTC; w interfejsie lokalna strefa seekera. Slot rezerwowany atomowo; klient z nieaktualną dostępnością dostaje 409.</li>
+<li><b>Cena i płatność:</b> 25 min = 2500 groszy, 50 min = 5000 groszy. Cena pochodzi z serwera. 50-minutowa sesja wymaga slotu 50-minutowego. Booking pending_payment jest niewidoczny dla mentora i nie liczy się do metryk.</li>
+<li><b>Lifecycle:</b> pending_payment → paid → accepted; ścieżki wyjścia payment_failed z pending_payment oraz declined/expired z paid. Accepted jest terminalny w pilocie. Stan zwrotu jest osobny od statusu bookingu.</li>
+<li><b>Okno odpowiedzi:</b> domyślnie 120 minut od płatności, ale liczba jest tymczasowa. Po upływie lazy settlement zmienia paid na expired i tworzy refund request.</li>
+<li><b>Zwroty:</b> automatyczna akceptacja po odmowie/timeout dopiero po decyzji D25; domyślnie każdy zwrot wymaga operatora. Operator-initiated refund (np. no-show) zawsze wymaga zatwierdzenia.</li>
+<li><b>Sesja tekstowa:</b> wysyłanie tylko dla accepted w zakresie [startsAt, endsAt], sprawdzane zegarem serwera. Po końcu widok jest tylko do odczytu. Wiadomość do 2000 znaków; dane pytania i wiadomości są wrażliwe.</li>
+<li><b>Prywatność:</b> mentor przed akceptacją widzi nazwę seekera, nie e-mail; po akceptacji obie strony widzą e-mail drugiej osoby. Pytanie mentora jest widoczne w paid/accepted, znika po declined/expired; seeker zawsze widzi własne.</li>
+<li><b>Bezpieczeństwo API:</b> mutacje wymagają sesji, CSRF header i kontroli same-origin; webhook wymaga podpisu providera. Dostęp do cudzych bookingów ma dawać 404.</li>
+<li><b>Idempotencja:</b> webhooki, reconcile, expiry, zwalnianie slotu i refund retry mają być bezpieczne przy powtórzeniu; refund używa approval id jako klucza idempotencji.</li>
+</ul></section>
+
+<section class="panel" id="risks"><h2>3. Ryzyka i punkty problemowe dla użytkownika</h2>
+<div class="scenario risk"><h3>Utrata terminu/niejasna płatność</h3><p>Slot jest blokowany już podczas tworzenia Checkout. Awaria providera, porzucony checkout lub opóźniony event może zostawić seekerowi niejasny stan; krytyczne są atomowość, zwolnienie slotu i komunikat o tym, czy płatność doszła.</p></div>
+<div class="scenario risk"><h3>Brak szybkiego dostępu do operatora</h3><p>Jeżeli nie skonfigurowano <code>OPERATOR_USER_IDS</code> po pierwszym logowaniu foundera, wnioski wymagające akceptacji czekają. Użytkownik może długo nie dostać zwrotu, a odrzucona/expired rezerwacja może wyglądać na nierozliczoną.</p></div>
+<div class="scenario risk"><h3>Sprzeczne oczekiwania co do zwrotu</h3><p>D17 i proponowane D25 są sprzeczne. Zachowanie zależy od decyzji i deployment config; UI musi rozróżniać refund pending approval, processing i refunded, bez fałszywej obietnicy.</p></div>
+<div class="scenario risk"><h3>Wybór czasu i strefy</h3><p>UTC sloty, strefa lokalna seekera i brak określenia źródła IANA timeZone stwarzają ryzyko złego terminu, zwłaszcza przy zmianie czasu, niepoprawnej strefie lub na granicy 7 dni.</p></div>
+<div class="scenario risk"><h3>Wyścigi w rezerwacjach</h3><p>Dwie osoby mogą równocześnie wybrać ten sam slot. Również zaakceptowane sesje mogą nachodzić. Błędy transakcji mogą skutkować podwójną opłatą, zablokowanym slotem lub bookingiem bez prawidłowego payment row.</p></div>
+<div class="scenario risk"><h3>Opóźnienia i brak niezawodnych zadań</h3><p>Expiry jest lazy (uruchamiane przy odczytach) lub cron-ready. Przy braku ruchu wygaśnięcie i zwrot mogą się opóźnić; spec stwierdza, że opóźnia się transition, ale nie określa SLA.</p></div>
+<div class="scenario risk"><h3>Ograniczenia magic linka</h3><p>Limiter jest lokalny w pamięci, resetuje się przy restarcie i nie jest współdzielony. Skaner poczty, ponowienie żądania, opóźniona dostawa i równoległe użycie tokena wymagają jasnych, bezpiecznych stanów UI.</p></div>
+<div class="scenario risk"><h3>Wrażliwa treść</h3><p>Pytanie może zawierać dane produkcyjne/osobowe. Błędne DTO, logowanie, e-mail, cache, analytics lub pamięć przeglądarki mogą ujawnić treść. Po decline/expiry mentor nie może zachować dostępu.</p></div>
+<div class="scenario risk"><h3>Odcięcie kanału sesji</h3><p>Jeśli faza wątku zostanie odłożona, stopgap ujawnia e-maile i przenosi rozmowę poza produkt, co łamie oczekiwanie „nie przenosić do innego kanału”.</p></div>
+<div class="scenario risk"><h3>Skala pełnej listy i polling</h3><p>Seeker dostaje wszystkie swoje bookingi bez paginacji; listy i wiadomości są odpytywane. Przy większej historii lub wielu otwartych kartach może ucierpieć wydajność i aktualność UI.</p></div>
+</section>
+
+<section class="panel" id="scenarios"><h2>4. Proponowane scenariusze testowe według priorytetu</h2>
+<p class="muted">Priorytet oznacza ryzyko dla pieniędzy, dostępu, terminu i głównej wartości pilota. Oczekiwany wynik należy doprecyzować tam, gdzie oznaczono niejasność w sekcji 5.</p>
+<h3 class="p0">P0 — blokujące bezpieczeństwo i pieniądze</h3>
+<div class="scenario"><h3>P0.1 Pełna ścieżka seekera</h3><p><b>Warunki:</b> aktywne zaproszenie seekera, mentor listed i slot open, Stripe test.</p><p><b>Kroki:</b> poproś o link → zaloguj się → otwórz profil → wybierz slot i 25 min → wpisz pytanie → zapłać.</p><p><b>Oczekiwane:</b> cena 25 PLN przed polem; slot znika dla innych; booking paid dokładnie raz, payment ma właściwą kwotę; mentor widzi paid booking i pytanie, nie widzi e-maila seekera.</p></div>
+<div class="scenario"><h3>P0.2 Manipulacja ceną i parametrami</h3><p>Wyślij klientem zmienioną cenę/walutę, duration spoza 25/50, 50 min z 25-min slotem lub cudze/nieistniejące slot id. Serwer ignoruje cenę klienta, odrzuca pozostałe niezgodne dane, nie tworzy płatnego bookingu i nie pobiera innej kwoty.</p></div>
+<div class="scenario"><h3>P0.3 Współbieżna rezerwacja slotu</h3><p>Dwa seekery równocześnie zatwierdzają ten sam slot. Dokładnie jeden dostaje Checkout i rezerwację; drugi 409, bez drugiego paymentu/obciążenia. Po nieudanym utworzeniu Checkout slot wraca do open.</p></div>
+<div class="scenario"><h3>P0.4 Webhook/reconcile i powtórzenia</h3><p>Przetestuj webhook przed reconcile, reconcile przed webhook, powtórzony/out-of-order webhook, webhook opóźniony lub brakujący, oraz reconcile gdy provider nadal unpaid. Status paid i przejście historii występują raz; unpaid pozostaje pending, późny event nie dubluje efektów.</p></div>
+<div class="scenario"><h3>P0.5 Zgodność kwoty i podpis webhooka</h3><p>Podpis nieprawidłowy/brakujący: odmowa bez zmiany stanu. Kwota lub waluta niezgodna: booking nie przechodzi do paid, event jest obsłużony diagnostycznie bez ujawnienia treści.</p></div>
+<div class="scenario"><h3>P0.6 Autoryzacja i izolacja danych</h3><p>Unauthenticated, seeker, inny mentor i nie-operator próbują czytać/zmieniać cudzy booking, wiadomości, profil, slot i approval. Cudzy ukryty zasób zwraca 404; żadne dane/powiadomienie/stan nie wycieka. Mutacje bez CSRF lub z obcym Origin są odrzucane.</p></div>
+<div class="scenario"><h3>P0.7 Accept/decline/expiry race</h3><p>Równoległe accept i decline, accept po expiry oraz dwa accept nakładających się slotów (także na granicy końca/początku). Jedno legalne przejście wygrywa; konflikt dostaje 409; baza pozostaje spójna, a slot zwalnia się tylko na dozwolonej ścieżce.</p></div>
+<div class="scenario"><h3>P0.8 Refund exactly once</h3><p>Dla decline, timeout i operator refund sprawdź konfigurację D25 pustą/aktywną, approve/reject, awarię providera i retry/settlement. Kwota zwracana raz; statusy booking/payment/approval i UI są zgodne; po awarii payment refund_pending, po retry refunded.</p></div>
+<div class="scenario"><h3>P0.9 Magic link i enumeracja</h3><p>Adres zaproszony, niezaproszony, istniejące konto bez zaproszenia, zaproszenie revoked i błędny format: odpowiedź nie ujawnia członkostwa. Link działa raz i 15 min; GET/prefetch nie zużywa; dwa równoległe POST dają jedną sesję; token nie pozostaje w URL po sukcesie.</p></div>
+<div class="scenario"><h3>P0.10 Prywatność pytań i e-maili</h3><p>Sprawdź DTO/listy/API, eventy, logi, maile i odpowiedzi błędów dla pending_payment, paid, accepted, declined, expired. Mentor widzi pytanie tylko w paid/accepted i e-mail seekera tylko po accepted; seeker zawsze widzi własne pytanie. Brak treści w logach/eventach.</p></div>
+
+<h3 class="p1">P1 — podstawowa użyteczność, kompletność przepływu</h3>
+<div class="scenario"><h3>P1.1 Rola i domyślna strona</h3><p>Seeker-only, mentor (z capability seekera), operator oraz mentor+operator logują się. Zweryfikuj priorytet return path i fallback destination; po sign-in rewaliduj uprawnienie, operator idzie do approvals, mentor do bookings, seeker do mentors.</p></div>
+<div class="scenario"><h3>P1.2 Lista i profil mentora</h3><p>Listed/unlisted, filtr technologii z wieloma tagami, slug bez dopasowania, nieczłonek i mentor bez profilu. Lista pokazuje tylko listed; dozwolony slug zwraca max jeden profil; DTO nie ma ratingów ani dokładnego last_active_at.</p></div>
+<div class="scenario"><h3>P1.3 Walidacja slotów</h3><p>Testuj start <30 min, dokładnie 30 min, start nie na granicy 15 min, koniec ponad 7 dni, nakładanie 25/50-min slotów, duplikat startu, slot w przeszłości, strefy/DST, anulowanie open vs reserved. Oczekiwane granice i zasada overlap wymagają doprecyzowania.</p></div>
+<div class="scenario"><h3>P1.4 Checkout porzucony / odmowa karty</h3><p>Checkout expiry, failed event, timeout tworzenia sesji, powrót po dniach. Booking nie pojawia się mentorowi; status i slot są poprawnie zwolnione; retry tworzy nowy booking z prefill pytania bez duplikacji obciążenia.</p></div>
+<div class="scenario"><h3>P1.5 Okno odpowiedzi i settlement</h3><p>Przed, dokładnie na i po 120 min; list/read/operator list i cron settlement; wiele wywołań. Sprawdź wspólny zegar, idempotencję, brak timeoutu przed progiem i eventual expiry/refund.</p></div>
+<div class="scenario"><h3>P1.6 Komunikacja podczas sesji</h3><p>Wysyłka przed startem, na startsAt, przed endsAt, dokładnie na endsAt i po; wartości graniczne 0/1/2000/2001 znaków; polling, cursor i dwie karty. Wysyłka tylko w dopuszczonym oknie i accepted; po końcu read-only.</p></div>
+<div class="scenario"><h3>P1.7 Interfejs błędów</h3><p>Loading/empty/error dla loginu, listy mentorów, slotów, bookingów, approvals i wiadomości; offline, timeout, retry. Neutralne komunikaty, zachowanie niesensytywnych pól i jasny status płatności.</p></div>
+<div class="scenario"><h3>P1.8 Tryb płatności</h3><p>Mock, Stripe test, live key bez flagi, test key z flagą, provider rozbieżny co do livemode. Aplikacja ma fail-closed dla konfiguracji live; testowe płatności nie wliczają się do metryk pilota.</p></div>
+<div class="scenario"><h3>P1.9 CSRF i role dla akcji</h3><p>Brak/niepoprawny header, obcy Origin, wygasła sesja dla każdej mutacji, próba cudzej akcji accept/decline/cancel/refund. Brak efektów ubocznych, bez ujawniania ukrytego zasobu.</p></div>
+
+<h3 class="p2">P2 — odporność i doświadczenie</h3>
+<div class="scenario"><h3>P2.1 Metryki źródła</h3><p>source=list/link i landedAt: wartości przeszłe, przyszłe, starsze niż 24 h, brakujące i błędne. Zapis jest ograniczony do [now−24h, now], a wartości spoza zakresu nie fałszują time-to-booking.</p></div>
+<div class="scenario"><h3>P2.2 Limiter magic-link</h3><p>Przekroczenie limitu per IP/klient i e-mail, restart aplikacji, wiele instancji. Odpowiedź nie ujawnia istnienia konta; sprawdź czy limity i retry nie blokują poprawnego użytkownika nadmiernie.</p></div>
+<div class="scenario"><h3>P2.3 Historia i polling</h3><p>Dużo bookingów seekera, wiele otwartych kart, brak zmian, cursor nieprawidłowy lub stary. Brak duplikatów wiadomości, rosnącego obciążenia nieproporcjonalnego do sesji oraz utraty nowych wpisów.</p></div>
+<div class="scenario"><h3>P2.4 Treść i format wiadomości</h3><p>Pytanie 4000/4001 znaków; wiadomość whitespace, unicode, emoji, backticki i kod w fence. Kod wyświetla się jako tekst monospace, bez HTML/script execution; spec mówi tylko plain text i fenced code.</p></div>
+<div class="scenario"><h3>P2.5 Powiadomienia i degradacja</h3><p>Mailer niedostępny dla linka, maila paid-question i accepted; stan w aplikacji pozostaje prawidłowy, błędy nie wyciekają, UI oferuje sensowne ponowienie/alternatywę.</p></div>
+<div class="scenario"><h3>P2.6 Dostępność i strefy</h3><p>Pełna obsługa klawiaturą, focus po błędzie, czytnik ekranu dla aktualizacji polling/aria-live, etykiety strefy, kontrast i responsywność. W specyfikacji to częściowo pytania badawcze, więc ustalić minimalne kryteria z zespołem.</p></div>
+</section>
+
+<section class="panel" id="ambiguities"><h2>5. Niejednoznaczności i brakujące decyzje</h2>
+<ol>
+<li><b>D24/D25 i aktualność:</b> dokument jest warunkowy; D24 blokuje merge fazy 1, D25 blokuje konfigurację auto-refund. Brak potwierdzenia, czy rekordy są już zatwierdzone i jaka konfiguracja działa. Testy akceptacyjne muszą mieć jawne warianty.</li>
+<li><b>Zmiana Q6 → Q9:</b> w tabeli Q6 nadal opisuje dawny model, a Q9 go zastępuje. Należy uznać slot seekera jako obowiązujący model, ale oczyścić opis; szczególnie sprawdzić starsze/legacy rekordy bez slotu.</li>
+<li><b>Sloty i wygaśnięcie rezerwacji:</b> nie określono TTL blokady slotu dla pending_payment poza settlement po 15 min od wieku bookingu/provider expiry. Nie wiadomo, co dzieje się po błędzie przed utworzeniem Checkout oraz jak obsłużyć opóźnione potwierdzenie płatności po zwolnieniu slotu i ponownej rezerwacji.</li>
+<li><b>Nakładanie slotów:</b> opis mówi „duplicate/overlapping windows → 409”, lecz constraint tabeli wymienia unique(mentor_id, starts_at), bez jawnego constraintu overlap dla slotów; brak reguły czy sloty 25/50 mogą się nakładać.</li>
+<li><b>Rezerwacja a accept:</b> slot już blokuje kolizję, więc akceptacja z overlapem powinna wskazywać konflikt legacy/corrupt data. Brak określonej kompensacji i obsługi klienta po takim konflikcie.</li>
+<li><b>Czas/terminy:</b> źródło profilu seekera dla IANA timezone nie istnieje w modelu. Brak zasad dla nieprawidłowej strefy, DST, konwersji slotu podczas zmiany strefy użytkownika, granic dokładnie 30 min/7 dni oraz tego, czy okno [start,end] dopuszcza post dokładnie na końcu (tak, formalnie).</li>
+<li><b>Wybór durations:</b> API ma duration 25/50, ale tekst UI mówi, że cena i „25-minute duration” pozostają widoczne — nie jest jasne, czy 25 jest domyślne czy jedyne widoczne przed wyborem, ani jak użytkownik wybiera 50.</li>
+<li><b>Długości tekstu:</b> limit 4000/2000 nie określa jednostki (UTF-16, code points, bajty), normalizacji, czy whitespace-only jest dozwolone ani czy długość liczona przed/po trim.</li>
+<li><b>Znaczenie startu sesji:</b> start wybrany przez seekera, lecz mentor może akceptować aż do 120 min po opłaceniu. Jeśli start minie przed akceptacją, nie określono czy accept jest niedozwolony, termin przesuwa się czy booking automatycznie wygasa.</li>
+<li><b>Zakres lazy settlement:</b> GET bookings ma settle expiry, ale osobno wspomniano o reconcile pending_payment starszych niż 15 min. Nie jest jasne, który endpoint/worker robi to dokładnie, co uznaje za provider expiry ani SLA.</li>
+<li><b>Refundy:</b> zachowanie przy odrzuceniu refund request, częściowym zwrocie, wielokrotnym kliknięciu, zwrocie po no-show i rozbieżności statusu providera. „Odrzucenie wniosku” może pozostawić płatność succeeded, ale UI i dalsza droga seekera są nieopisane.</li>
+<li><b>Checkout failure i retry:</b> trzeba określić, czy błąd inicjacji checkout zwraca error, tworzy payment_failed i zwalnia slot synchronicznie, oraz co użytkownik widzi. Ryzyko pozostawienia osieroconego slotu.</li>
+<li><b>Reconcile rate limit:</b> brak limitu liczbowego/okna i opisu odpowiedzi throttled; limit w pamięci jest resetowalny?</li>
+<li><b>Webhooks:</b> brak pełnego mapowania zdarzeń providera do stanów, obsługi eventów nieznanych, niepoprawnego JSON, powtórzenia o różnych ID i trwałości deduplikacji.</li>
+<li><b>Źródło attribution:</b> nie określono walidacji <code>source</code>, czy seeker może je nadpisać, kiedy dokładnie rejestruje się landed_at ani czy link share zachowuje parametr przez logowanie.</li>
+<li><b>Aktywność mentora:</b> „opening a booking” aktualizuje last_active_at — czy każde GET/polling bookingów liczy się? Jest to napięcie wobec reguły „list polling nie dotyka”. Brak precyzyjnych granic bucketów i strefy.</li>
+<li><b>Rola i onboarding mentora:</b> nieokreślone wymagane pola profilu, walidacja public_work_url, możliwość profilu niekompletnego, kiedy można publikować sloty/listować oraz co seeker widzi przy niekompletnym profilu. Są to też jawne research questions.</li>
+<li><b>Brak odpowiedzi operatora:</b> nie ma SLA operatora dla approval-gated refundów ani no-show. Brak formalnego sposobu raportowania problemu poza e-mailem do operatora.</li>
+<li><b>Brak kanału wątku:</b> spec rozstrzyga tylko wariant wdrożenia thread vs stopgap off-platform. Nie ma kompletnego kontraktu zachowania gdy Phase 5 jest wycięta, a wątek pozostaje kluczowym oczekiwaniem N01.</li>
+<li><b>Brak kryteriów jakości:</b> brak minimalnych wymagań dostępności, kompatybilnych przeglądarek, wydajności, retencji po sweep, retry UX oraz komunikatów dla 409/5xx.</li>
+</ol>
+</section>
+
+<section class="panel" id="charter"><h2>6. Test charter — eksploracyjne testowanie modułu</h2>
+<p><b>Misja:</b> W ciągu jednej sesji testowej sprawdzić, czy zaproszony seeker może bezpiecznie i bez niejasności zarezerwować konkretny termin u właściwego mentora, zapłacić dokładną kwotę, otrzymać wiarygodny status, a obie strony zachowują dostęp do właściwych informacji i refundacji w przypadku awarii.</p>
+<table><tr><th>Element</th><th>Plan</th></tr>
+<tr><td>Zakres</td><td>Magic link, role, lista/profil mentora, availability slots, booking, Stripe Checkout test, webhook/reconcile, decyzja mentora, expiry/refund, wątek tekstowy, operator approvals.</td></tr>
+<tr><td>Poza zakresem</td><td>Weryfikacja produkcyjnego pobrania środków, payouty, synchronizacja kalendarza, recurring slots, funkcje poza pilotem. Live payment tylko po bramkach specyfikacji i w osobnym, autoryzowanym rehearsal.</td></tr>
+<tr><td>Role i konta</td><td>Seeker A, seeker B, mentor M, mentor M2, konto mentor+seeker, operator O, niezaproszony adres, istniejący użytkownik bez zaproszenia.</td></tr>
+<tr><td>Dane</td><td>Profile listed/unlisted; sloty 25/50, graniczne i nakładające się; pytania przy limitach z unikalnym markerem wrażliwym; płatności success/fail/pending; D25/config auto-refund on/off.</td></tr>
+<tr><td>Warunki</td><td>Stripe test keys, provider event replay/hold controls lub mock gateway, kontrolowany Clock, Mailer testowy, dostęp do logów z redakcją treści, operator skonfigurowany. Zapisuj request id, statusy i czasy; nie kopiuj realnych sekretów ani danych osobowych do raportu.</td></tr>
+<tr><td>Techniki</td><td>Przeplataj dwa konta i dwie karty przeglądarki; odświeżaj dane po równoległych akcjach; wymuszaj retry, timeout i odwróconą kolejność zdarzeń; testuj granice czasu i długości; sprawdzaj UI i API/DTO zgodnie z rolą.</td></tr>
+<tr><td>Oracles</td><td>UI + HTTP status/envelope, rekordy booking/payment/slot/approval, status_transitions, zdarzenia bez treści, e-mail, Stripe test dashboard, zachowanie po ponownym odczycie. Nie polegaj wyłącznie na komunikacie UI.</td></tr>
+<tr><td>Stop conditions</td><td>Natychmiast przerwij i zgłoś P0 przy: podwójnym obciążeniu, błędnej cenie, dostępie do cudzej treści, utracie slotu bez stanu naprawczego, podwójnym refundzie, live payment bez bramek lub ekspozycji tokena.</td></tr>
+<tr><td>Raportuj</td><td>Ścieżkę i rolę, preconditions, krok reprodukcji, oczekiwane/obserwowane, request/event ids, timestamps, stan w UI i bazie, wpływ na pieniądze/dostęp/termin, workaround i otwarte pytanie ze specyfikacji.</td></tr></table>
+<h3>Proponowana sesja 90-minutowa</h3><ol>
+<li><b>0–10 min:</b> sprawdź przygotowanie kont, flag, Clock, slotów i trybu testowego; potwierdź, że brak operatora nie blokuje eksperymentów.</li>
+<li><b>10–25 min:</b> magic link: zaproszony/n niezaproszony, skaner GET, reuse, return path, seeker/mentor/operator routing.</li>
+<li><b>25–40 min:</b> odkrywanie i terminy: listed/unlisted, filtr, lokalna strefa, slot 25/50, stale choice, równoległe claim.</li>
+<li><b>40–60 min:</b> booking i płatność: prawidłowa cena, manipulacja payloadem, checkout przerwany, brak/opóźnienie/duplikat webhooka, reconcile.</li>
+<li><b>60–75 min:</b> mentor: paid question, accept/decline race, przekroczenie response window, nakładanie accepted bookings.</li>
+<li><b>75–85 min:</b> refundy: auto on/off, operator approve/reject, awaria gateway i retry; sprawdź kwotę oraz brak podwójnego zwrotu.</li>
+<li><b>85–90 min:</b> okno wątku i prywatność po stanach terminalnych; podsumuj P0 i niejasności wymagające decyzji właściciela.</li></ol>
+<p><b>Główne pytania eksploracji:</b> Czy UI zawsze jasno komunikuje, czy termin i płatność są faktycznie potwierdzone? Czy retry może spowodować drugą rezerwację lub płatność? Czy po każdym przejściu stanów slot, zwrot, widoczność pytania i e-mail są spójne? Czy użytkownik może zostać bez jasnej ścieżki odzyskania po awarii?</p>
+</section>
+<footer class="panel"><p><b>Wniosek testerski:</b> specyfikacja dobrze opisuje idempotencję płatności, role, prywatność, race conditions i bramki go-live. Największe obszary wymagające decyzji przed wiarygodną akceptacją to cykl życia zarezerwowanego slotu przy opóźnionym checkout/webhooku, czas startu wybranego slotu względem akceptacji, źródło strefy seekera, overlap slotów oraz dokładne zachowanie refundu i expiry.</p><p class="muted small">Przygotowano na podstawie wskazanej specyfikacji. Scenariusze są propozycją planu QA, nie deklaracją wykonania testów.</p></footer>
+</main></body></html>

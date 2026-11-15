@@ -28,6 +28,20 @@ export const DEMO_PERSONAS = {
     name: 'Mock Mentor',
     invitationRole: 'mentor',
   },
+  mentorFrontend: {
+    id: '9d19c92c-83a4-41a2-a5fb-8f7d8ca2d901',
+    email: 'frontend-mentor@devmentor.test',
+    name: 'Maja Nowak',
+    password: 'demo-mentor-password',
+    invitationRole: 'mentor',
+  },
+  mentorBackend: {
+    id: '0f915db2-c3be-4a3c-95fb-48be19c0f44a',
+    email: 'backend-mentor@devmentor.test',
+    name: 'Tomasz Zieliński',
+    password: 'demo-mentor-password',
+    invitationRole: 'mentor',
+  },
   operator: {
     id: '7bb1d923-bf91-4fd2-868b-d03526fe829e',
     email: 'mock-operator@devmentor.test',

@@ -1,5 +1,23 @@
 # DevMentor Changelog
 
+## [1.0.1] - 2026-11-15
+
+### Added
+
+- Expanded local demo data with additional mentor profiles and upcoming, active,
+  and completed sample sessions and messages.
+- Added an idempotent `npm run db:seed:text-sessions` command for preparing
+  participant session fixtures.
+- Added the platform pricing and settings proposal, tester analysis, and updated
+  GitHub pipeline tracker documentation.
+
+### Changed
+
+- Updated demo seeker credentials and invitation state safely when rerunning the
+  seed script; refreshed existing demo mentor profiles.
+- Marked the earlier pilot booking flow specification as superseded by the
+  platform settings proposal.
+
 ## [1.0.0] - 2026-11-15
 
 First versioned release of the DevMentor pilot platform.
