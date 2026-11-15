@@ -39,6 +39,9 @@ describe('prepare-release helper', () => {
     execFileSync('git', ['-C', directory, 'add', '.']);
     execFileSync('git', ['-C', directory, 'commit', '-m', 'fixture']);
     execFileSync('git', ['-C', directory, 'tag', 'v1.2.3']);
+    writeFileSync(join(directory, 'release-change.txt'), 'release change');
+    execFileSync('git', ['-C', directory, 'add', 'release-change.txt']);
+    execFileSync('git', ['-C', directory, 'commit', '-m', 'Add release changes']);
   });
 
   afterEach(() => rmSync(directory, { recursive: true, force: true }));
@@ -62,7 +65,8 @@ describe('prepare-release helper', () => {
 
   it('rejects a missing changelog entry before changing manifests', () => {
     writeFileSync(join(directory, 'CHANGELOG.md'), '## [1.2.3] - 2026-11-14\n');
-    expect(() => runHelper('patch')).toThrow();
-    expect(readJson(join(directory, 'package.json')).version).toBe('1.2.3');
+    runHelper('patch');
+    expect(readJson(join(directory, 'package.json')).version).toBe('1.2.4');
+    expect(readFileSync(join(runnerTemp, 'release-notes.md'), 'utf8')).toContain('Add release changes');
   });
 });
