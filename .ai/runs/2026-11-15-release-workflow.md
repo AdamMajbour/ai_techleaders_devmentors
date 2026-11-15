@@ -7,7 +7,7 @@
 
 ## Implementation Plan
 
-### Phase 1: Build release workflow
+### Phase 1: Build release workflow`n`n- [x] Resume CI fix: remove redundant missing npm script invocation — 8f1902c1b6eca128abdb4cac5f4a5b117adb213b
 
 - [x] Resume fix: use const for the seeded message — 62c3506e11a0e8f3607516d936f4592e1b0f543a
 
@@ -18,7 +18,7 @@
 
 > Convention: `- [ ]` pending, `- [x]` done. Append `— <commit sha>` when a step lands. Do not rename step titles.
 
-### Phase 1: Build release workflow
+### Phase 1: Build release workflow`n`n- [x] Resume CI fix: remove redundant missing npm script invocation — 8f1902c1b6eca128abdb4cac5f4a5b117adb213b
 
 - [x] Resume fix: use const for the seeded message — 62c3506e11a0e8f3607516d936f4592e1b0f543a
 
