@@ -1,0 +1,31 @@
+flowchart LR
+  subgraph internet["Untrusted: browser and internet"]
+    U["Seeker, mentor, operator"]
+    G["GitHub OAuth"]
+    S["Stripe"]
+  end
+  subgraph app["Trust boundary: Next.js app and API"]
+    WEB("Pages and API routes")
+    AUTH("Session, CSRF and authorization")
+    JOB("Vault generation and payment workflows")
+  end
+  subgraph data["Trust boundary: application data"]
+    DB[("PostgreSQL: accounts, bookings, messages, notes, payments")]
+    ENV[("Runtime secrets and configuration")]
+  end
+  subgraph providers["Trust boundary: external providers"]
+    AI["Anthropic API (optional)"]
+    MAIL["Resend email API (optional)"]
+  end
+  U -->|"cookies, API requests, user content [T-01,T-02,T-03,T-04,T-07,T-08]"| WEB
+  WEB --> AUTH
+  AUTH -->|"identity and permissions [T-01,T-02,T-03,T-04]"| DB
+  WEB -->|"read and write domain data [T-03,T-05,T-06,T-07,T-10]"| DB
+  WEB --> JOB
+  JOB -->|"paid questions and selected mentor notes [T-07,T-08,T-09]"| AI
+  JOB -->|"generated answer, citations, review state [T-07,T-08]"| DB
+  WEB -->|"sign-in and booking messages [T-08]"| MAIL
+  S -->|"signed payment events [T-05,T-06]"| WEB
+  WEB -->|"checkout and payout requests [T-05,T-06]"| S
+  WEB -->|"OAuth code and profile [T-01]"| G
+  AUTH -->|"JWT and provider secrets [T-01,T-09]"| ENV

@@ -14,7 +14,7 @@ $processPath = Join-Path $qaDir 'test-env-process.json'
 $credentialsPath = Join-Path $qaDir 'test-env.env'
 $envPath = Join-Path $repoRoot '.env.local'
 $port = 3001
-$baseUrl = "http://localhost:$port"
+$baseUrl = "http://127.0.0.1:$port"
 
 New-Item -ItemType Directory -Force -Path $qaDir | Out-Null
 if (-not (Test-Path $envPath)) { throw 'Missing worktree .env.local; configure an isolated local PostgreSQL target first.' }
@@ -101,7 +101,8 @@ $descriptor = [pscustomobject]@{
   startedAt = (Get-Date).ToUniversalTime().ToString('o')
   notes = 'Local mock-only QA environment. Uses existing PostgreSQL container on port 5433; the up script never starts or stops the database. E2E provisions a dedicated devmentor_e2e schema, drops it before/after each run, and has passed 33/33 cases. Cold start ~12s; warm reuse <1s. Configured agent-browser unavailable on Windows; Playwright/Chromium 1248 fallback used.'
 }
-$descriptor | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 $descriptorPath
+$descriptorJson = $descriptor | ConvertTo-Json -Depth 8
+[System.IO.File]::WriteAllText($descriptorPath, $descriptorJson + [Environment]::NewLine, [System.Text.UTF8Encoding]::new($false))
 "TEST_ENV_STATUS=running"
 "TEST_ENV_BASE_URL=$baseUrl"
 "TEST_ENV_DESCRIPTOR=.ai/qa/test-env.json"
