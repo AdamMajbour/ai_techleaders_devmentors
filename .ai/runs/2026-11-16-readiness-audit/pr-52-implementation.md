@@ -18,8 +18,8 @@ Collected the current product/specification, UI, security, testing, and deployme
 - Local checks passed before PR creation: type-check, lint, `check:agents`, unit tests (134 suites / 844 tests), production build, and staged whitespace check.
 - Syntax checks for `scripts/setup.mjs` and `scripts/db-up.mjs`, focused `scripts/setup-lib.test.ts` (16 tests), `check:agents`, and whitespace check passed after the local Compose fix.
 - CI run `43876527511` passed on PR head `8833c013a757556f9453e4dd6dc45330587e9b44` on 2026-11-16, including secret scan, production rate-limit regression, Storybook tests, migrations/seeds, integration tests, build, and E2E.
-- The PR is open and unmerged. The current PR has no GitHub review or review request; an authorized reviewer must submit an approval before merge. The independent static review by GPT-6.1 Terra is recorded above but is not a GitHub review.
+- At PR creation, the PR was open and unmerged with no GitHub review. The repo-local same-author override added later accepts a documented self-review comment when no second GitHub account is available; this does not create a GitHub approval. Manual QA remains a separate merge gate.
 
 ## Security follow-up
 
-A GitHub OAuth secret previously present in repository history was removed from the current `.env.example` and excluded from the Docker build context. The owner must rotate/revoke it in the GitHub OAuth app settings; the historical commits remain unchanged by this PR.
+A GitHub OAuth secret previously present in repository history was removed from the current `.env.example` and excluded from the Docker build context. At PR creation, rotation was still pending. On 2026-11-16, the owner later confirmed that a replacement was generated, active runtime secret stores were updated, and the old secret was deleted from the OAuth app. This confirmation was not independently verifiable through repository access. Historical commits remain unchanged by this PR.
