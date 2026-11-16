@@ -6,7 +6,8 @@ import { spawnSync } from "node:child_process";
 import { parseEnv, resolveDbTarget } from "./setup-lib.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const envFile = path.join(ROOT, ".env.local");
+const localEnvFile = path.join(ROOT, ".env.local");
+const envFile = existsSync(localEnvFile) ? localEnvFile : path.join(ROOT, ".env.compose.dev.example");
 const fileEnv = existsSync(envFile) ? parseEnv(readFileSync(envFile, "utf8")) : {};
 const target = resolveDbTarget(fileEnv, process.env);
 
@@ -16,7 +17,8 @@ if (!["localhost", "127.0.0.1", "::1"].includes(target.host)) {
 }
 
 console.log(`Starting PostgreSQL on ${target.host}:${target.port}`);
-const result = spawnSync("docker", ["compose", "up", "-d", "db"], {
+const composeFile = path.join(ROOT, "docker-compose.db.yml");
+const result = spawnSync("docker", ["compose", "-f", composeFile, "--env-file", envFile, "up", "-d", "db"], {
   cwd: ROOT,
   stdio: "inherit",
   shell: process.platform === "win32",

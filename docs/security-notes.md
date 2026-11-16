@@ -17,7 +17,7 @@ Scope: repository and local development workflow for DevMentor. This is an evide
 - `JWT_SECRET` is validated by the core environment schema. GitHub OAuth credentials, database credentials, Stripe credentials and optional AI provider keys must be set in the deployment environment or a developer's ignored local environment file.
 - Never paste secret values into this document, logs, prompts, issues or test fixtures. E2E tests generate a fresh ephemeral JWT secret per run.
 - CI uses short-lived GitHub-provided credentials for checkout and should receive deployment/provider secrets only in jobs that require them. The pull-request CI workflow currently runs validation and does not publish a deployment.
-- CI now runs Gitleaks over repository history on pull requests and configured pushes. This scan is configured but has not yet produced a CI run result in this change. Dependency audit remains limited to production dependencies at the `critical` threshold (`npm audit --omit=dev --audit-level=critical`); development dependencies and lower severities are not covered by that command.
+- CI runs Gitleaks against the commit range supplied by GitHub for pull requests and configured pushes; this is not a guarantee that every historical commit was scanned. The initial PR run passed, and the latest commit will be rescanned after update. Dependency audit remains limited to production dependencies at the `critical` threshold (`npm audit --omit=dev --audit-level=critical`); development dependencies and lower severities are not covered by that command.
 
 ## Prompt-injection exercise
 
