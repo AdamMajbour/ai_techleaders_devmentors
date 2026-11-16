@@ -1,0 +1,131 @@
+version: 2
+name: weekly-maintenance
+description: Audyt zmian z tygodnia, drift dokumentacji, przeglądy, zależności i
+martwy kod. Kończy się na PR albo issue.
+nodes:
+- id: start
+  type: start
+- id: audit
+  name: Audyt zmian z tygodnia
+  type: agent
+  prompt: >
+    Zrób inwentaryzację wiedzy zawężoną do pull requestów zmergowanych do main
+    w ostatnich 7 dniach.
+
+    Sprawdź artefakty, które te PR-y zmieniły, i artefakty, które opisują
+    zmieniony kod: AGENTS.md, .ai/specs/, .ai/skills/, docs/adr/.
+
+    Dla specyfikacji ustal status: wdrożona w całości, wdrożona częściowo,
+    niewdrożona albo porzucona. Znajdź sprzeczności między dokumentami i
+    między dokumentem a kodem.
+
+    Każde ustalenie oprzyj na dowodzie: plik i linia w dokumencie oraz plik,
+    linia i commit w kodzie. Bez dowodu napisz "nie ustalono".
+
+    Porównaj wynik z najnowszym raportem w .ai/maintenance/: które
+    sprzeczności są nowe, a które zniknęły.
+
+    Zapisz całość w .ai/maintenance/YYYY-MM-DD-audit.md. Niczego innego nie
+    zmieniaj.
+- id: drift
+  name: Drift dokumentacji
+  type: agent
+  prompt: >
+    Weź z dzisiejszego raportu w .ai/maintenance/ sprzeczności, dla których
+    ustalono, która wersja jest prawdziwa.
+
+    Popraw dokumenty, które jej przeczą, w jednym osobnym PR. Nie zmieniaj
+    kodu ani treści specyfikacji w .ai/specs/implemented/ i
+    .ai/specs/archive/.
+
+    Specyfikacje, które raport uznał za wdrożone w całości, przenieś przez git
+    mv do .ai/specs/implemented/ i popraw odwołania do nich.
+
+    Sprzeczności bez rozstrzygnięcia wypisz w opisie PR jako decyzje dla
+    zespołu.
+- id: reviews
+  name: Check kontekstu
+  type: agent
+  prompt: >
+    Uruchom npm run check:agents i weź wszystkie błędy i ostrzeżenia.
+
+    Otwórz albo zaktualizuj jedno issue z listą plików do poprawy i powodem
+    przy każdym. Niczego nie poprawiaj sam.
+- id: dependencies
+  name: Zależności
+  type: agent
+  prompt: >
+    Dla otwartych PR-ów Dependabota, które nie przechodzą CI, przeczytaj
+    changelog i notatki migracyjne.
+
+    Popraw kod bez wyłączania testów i bez obniżania progów.
+
+    Jeśli nie dojdziesz do zielonych testów, niczego nie commituj. Zostaw w PR
+    komentarz: co próbowałeś i co trzeba zdecydować.
+- id: dead-code
+  name: Martwy kod
+  type: agent
+  prompt: >
+    Uruchom npx knip i npx jscpd src.
+
+    Usuń tylko pozycje, które na pewno nie są używane dynamicznie ani z
+    zewnątrz repozytorium. Wątpliwe wpisz na listę do decyzji.
+
+    Trzy największe duplikaty opisz w PR, nie refaktoryzuj ich.
+- id: verify
+  name: Testy i check kontekstu
+  type: check
+  command: npm test && npm run check:agents
+- id: verify-retry
+  type: loop
+  max: 2
+- id: end
+  type: end
+  status: success
+edges:
+- from: start.next
+  to: audit
+- from: audit.done
+  to: drift
+- from: drift.done
+  to: reviews
+- from: reviews.done
+  to: dependencies
+- from: dependencies.done
+  to: dead-code
+- from: dead-code.done
+  to: verify
+- from: verify.fail
+  to: verify-retry
+- from: verify-retry.repeat
+  to: dead-code
+- from: verify.pass
+  to: end
+layout:
+start:
+  x: 32
+  y: 40
+audit:
+  x: 188
+  y: 40
+drift:
+  x: 518
+  y: 40
+reviews:
+  x: 848
+  y: 40
+dependencies:
+  x: 1179
+  y: 40
+dead-code:
+  x: 0
+  y: 252
+verify:
+  x: 362
+  y: 321
+verify-retry:
+  x: 560
+  y: 462
+end:
+  x: 580
+  y: 310

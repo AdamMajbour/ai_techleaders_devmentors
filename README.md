@@ -33,6 +33,10 @@ Poniższe zrzuty pochodzą z przebiegu prototypu onboardingu mentora. Pokazują 
 
 Wymagania i konfiguracja zależą od aplikacji w monorepo. Zacznij od [krótkiej instrukcji uruchomienia](docs/README.md#getting-started); pełny opis środowiska, pakietów i zmiennych znajdziesz w [dokumentacji technicznej](docs/README.md).
 
+### Wdrożenie na Dokploy
+
+Aplikację wdrożysz na Dokploy jako projekt **Docker Compose** z pliku `docker-compose.yml`. Wszystkie kroki — od konfiguracji sekretów i domeny po aktualizacje i kopie zapasowe — opisuje [instrukcja wdrożenia](docs/DEPLOYMENT.md).
+
 ## 📚 Dokumentacja
 
 - [Dokumentacja projektu i przewodnik deweloperski](docs/README.md)

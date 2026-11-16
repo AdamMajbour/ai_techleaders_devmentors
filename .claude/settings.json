@@ -1,5 +1,27 @@
 {
   "permissions": {
     "defaultMode": "auto"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.agents/skills/om-harness/hooks/guard.mjs\" block"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.agents/skills/om-harness/hooks/guard.mjs\" freeze"
+          }
+        ]
+      }
+    ]
   }
 }

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "name": "DevMentor",
+  "services": [
+    {
+      "name": "app",
+      "source": {
+        "repo": "YOUR_GITHUB_OWNER/ai_techleaders_devmentors",
+        "branch": "main"
+      },
+      "variables": {
+        "NODE_ENV": "production",
+        "HOSTNAME": "0.0.0.0",
+        "DATABASE_HOST": "${{Postgres.PGHOST}}",
+        "DATABASE_PORT": "${{Postgres.PGPORT}}",
+        "DATABASE_NAME": "${{Postgres.PGDATABASE}}",
+        "DATABASE_USER": "${{Postgres.PGUSER}}",
+        "DATABASE_PASSWORD": "${{Postgres.PGPASSWORD}}",
+        "JWT_SECRET": "${{secret(64)}}",
+        "PUBLIC_SIGNUP": "false",
+        "MENTOR_PUBLISH_WINDOW_DAYS": "14",
+        "MENTOR_RESPONSE_WINDOW_MINUTES": "120",
+        "MAILER_MODE": "console",
+        "PAYMENTS_MODE": "mock",
+        "PAYMENTS_LIVE_ENABLED": "false",
+        "STRIPE_CONNECT_ENABLED": "false",
+        "VAULT_ENABLED": "false",
+        "VAULT_PUBLISH_ENABLED": "false",
+        "AI_MODE": "mock",
+        "AI_LIVE_ENABLED": "false",
+        "AI_ALLOW_MOCK_IN_PRODUCTION": "false"
+      },
+      "deploy": {
+        "healthcheckPath": "/api/health",
+        "healthcheckTimeout": 300,
+        "restartPolicyType": "ON_FAILURE",
+        "restartPolicyMaxRetries": 10
+      }
+    },
+    {
+      "name": "Postgres",
+      "source": {
+        "image": "ghcr.io/railwayapp-templates/postgres-ssl:17"
+      },
+      "variables": {
+        "POSTGRES_DB": "devmentor",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "${{secret(32)}}"
+      },
+      "volume": {
+        "mountPath": "/var/lib/postgresql/data"
+      }
+    }
+  ]
+}

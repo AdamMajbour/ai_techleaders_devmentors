@@ -1,0 +1,12 @@
+# Railway deploy configuration for the app service. The Postgres service is
+# provisioned separately from the Railway dashboard/template.
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "sh -c 'npm run migrate && exec npm start'"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

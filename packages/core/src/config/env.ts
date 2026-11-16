@@ -64,6 +64,10 @@ const optionalEmailValue = z.preprocess(
   (value) => (typeof value === 'string' && !value.trim() ? undefined : value),
   z.string().trim().email().optional(),
 );
+const optionalNonEmptyString = z.preprocess(
+  (value) => (typeof value === 'string' && !value.trim() ? undefined : value),
+  z.string().trim().min(1).optional(),
+);
 
 const envSchema = z.object({
   // Generate with: openssl rand -base64 48
@@ -77,8 +81,8 @@ const envSchema = z.object({
   PUBLIC_SIGNUP: publicSignupSchema,
   // Optional for compatibility; magic-link requests require it when creating verification links.
   APP_BASE_URL: appBaseUrlSchema,
-  GITHUB_CLIENT_ID: z.string().trim().min(1).optional(),
-  GITHUB_CLIENT_SECRET: z.string().trim().min(1).optional(),
+  GITHUB_CLIENT_ID: optionalNonEmptyString,
+  GITHUB_CLIENT_SECRET: optionalNonEmptyString,
   DEMO_MENTEE_GITHUB_EMAIL: optionalEmailValue,
   DEMO_MENTOR_GITHUB_EMAIL: optionalEmailValue,
   DEMO_OPERATOR_GITHUB_EMAIL: optionalEmailValue,

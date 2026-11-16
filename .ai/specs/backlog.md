@@ -25,3 +25,44 @@ Last filed: 2026-10-25
 | E03-S03 | #23 | A founder reads the pilot counts at the two reviews | #9 | #12, #17 | no |
 
 Reserved, not filed: E04 (Later: mentor async answer within 24 hours, subscription for seekers, team plans, mentor pro, featured placement, session packs, AI note drafting and transcription; MCP undecided, Q04). Not doing: N01, N02.
+
+## Acceptance criteria for E01 — paid text sessions
+
+These criteria make the existing backlog testable. The linked specifications remain the source of detailed contracts and edge cases. `#10` is a technical enabler; its observable acceptance criterion is that the chosen sign-in flow creates a session usable by the later stories.
+
+### E01-T01 / #10 — account and sign-in
+
+- Given a valid invited account, when the user completes the configured sign-in flow, then the user receives an authenticated session with the invitation's seeker or mentor capability.
+- Given an invalid, expired, revoked, or already consumed sign-in link, when it is submitted, then access is denied and no authenticated session is issued.
+- Given an unauthenticated user, when they request a protected page or API resource, then the request is denied or redirected to sign-in without disclosing private data.
+
+### E01-S01 / #11 — find a mentor
+
+- Given an invited seeker, when they search the mentor list, then only published, eligible mentors are returned and technology filters narrow the results.
+- Given a valid mentor link, when a seeker opens it, then the correct published mentor profile is shown; an unknown or unpublished mentor is not exposed as bookable.
+- Given another user's private profile or booking data, when a seeker changes an identifier in a request, then the API does not return that data.
+
+### E01-S02 / #12 — ask and prepay
+
+- Given an eligible mentor and an allowed session duration, when a seeker starts booking, then the current server-calculated price is shown before payment and the question is validated.
+- Given a valid booking and accepted required terms, when payment succeeds, then exactly one booking and payment record are created with the server-calculated amount and seeker ownership.
+- Given a displayed mentor price, when the price revision changes before booking submission, then a stale quote returns `409`, persists no question/booking/payment/checkout, and asks the seeker to refresh and explicitly confirm; a legacy request with no quote revision returns `422`.
+- Given payment confirms after the checkout cutoff or after the booking has become terminal, when a valid provider event arrives late or is retried, then the payment is compensated/refunded once, the booking is not reactivated, and a slot already claimed by another booking remains reserved.
+- Given a client-supplied price, invalid duration, unavailable mentor, or failed payment, when booking is submitted, then the client amount is not trusted and no paid/confirmed booking is created.
+- Given a duplicate payment notification or retry, when it is processed again, then the booking is not charged or created twice.
+
+### E01-S03 / #13 — mentor decision and refund
+
+- Given a paid pending booking, when its assigned mentor views it, then the mentor can see the seeker's question and accept or decline according to the booking state machine.
+- Given a booking assigned to another mentor or owned by another seeker, when the user attempts a read or action, then access is denied and the record remains unchanged.
+- Given a decline, no-show, or expired response window, when the refund rule applies, then the refund request follows the configured approval policy and is recorded idempotently.
+
+### E01-S04 / #14 — text session
+
+- Given an accepted booking, when either participant opens the session, then only the seeker and assigned mentor can read and send messages while the session is open.
+- Given a closed, expired, or unrelated booking, when a participant attempts to send a message, then the API rejects it and preserves the conversation.
+- Given a session note or content proposed for publication, when seeker approval is absent, then it remains private and unpublished.
+
+### Backlog scope guard
+
+The E01 stories cover invitation-based access, mentor discovery, prepayment, mentor decision/refund and private text sessions. Video calls and profile ratings/reviews remain excluded by N01/N02. The E01 acceptance criteria do not authorize live payments: E03-T02's independent verifier review remains a prerequisite for the first real payment.

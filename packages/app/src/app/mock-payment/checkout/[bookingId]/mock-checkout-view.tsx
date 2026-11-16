@@ -1,10 +1,12 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { apiCall, Alert, AlertDescription, Button, ErrorMessage, LoadingMessage, PriceNotice, TextLink, useAsync } from '@devmentor/ui';
 import type { BookingReadDto } from '@devmentor/core';
 
 export function MockCheckoutView({ bookingId }: { bookingId: string }) {
+  const router = useRouter();
   const [requestNumber, setRequestNumber] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | undefined>();
@@ -42,7 +44,7 @@ export function MockCheckoutView({ bookingId }: { bookingId: string }) {
       setActionError(result.error.message);
       return;
     }
-    window.location.assign(`/bookings/${encodeURIComponent(bookingId)}/return`);
+    router.push(`/bookings/${encodeURIComponent(bookingId)}/return`);
   };
 
   return (

@@ -111,7 +111,7 @@ function setup(options: {
     name: id === MENTOR_ID ? 'Ada Mentor' : 'Sam Seeker',
     email: id === MENTOR_ID ? 'mentor@example.com' : 'seeker@example.com',
   }));
-  const expirePaid = jest.fn(async (_id: string) => {
+  const expirePaid = jest.fn(async () => {
     if (booking.status !== 'paid') return false;
     booking.status = 'expired';
     return true;
@@ -564,7 +564,7 @@ describe('BookingService.create', () => {
       deps.payment.status = 'succeeded';
       deps.findForSettlement.mockResolvedValue([deps.booking]);
 
-      const results = await Promise.all([
+      await Promise.all([
         deps.service.list({ userId: SEEKER_ID }, { role: 'seeker', page: 1 }),
         deps.service.list({ userId: SEEKER_ID }, { role: 'seeker', page: 1 }),
       ]);

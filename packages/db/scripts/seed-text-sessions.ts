@@ -2,6 +2,7 @@
 // Usage: npm run db:seed:text-sessions (demo seed and migrations must be applied first)
 import '../src/load-env';
 import { Booking, Message, User, closeORM, initializeORM } from '../src';
+import { assertDemoSeedAllowed } from './seed-environment';
 
 const FIXTURES = [
   {
@@ -28,6 +29,7 @@ const FIXTURES = [
 ] as const;
 
 async function main(): Promise<void> {
+  assertDemoSeedAllowed(process.env);
   const orm = await initializeORM();
   const em = orm.em.fork();
   const seeker = await em.findOne(User, { email: 'mock-mentee@devmentor.test' });

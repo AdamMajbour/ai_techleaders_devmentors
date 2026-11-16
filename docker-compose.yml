@@ -1,21 +1,72 @@
-# Local PostgreSQL for development, integration tests and E2E (see .env.example).
-#   docker compose up -d db
-# If localhost:5432 is occupied, set POSTGRES_HOST_PORT=5433 in the root .env
-# and DATABASE_PORT=5433 in .env.local.
-# Credentials match the defaults in packages/db/src/config, so no .env.local is needed.
+# Dokploy production stack. In Dokploy, set the environment variables documented
+# in docs/DEVELOPMENT.md before deploying this Compose file.
 services:
-  db:
-    image: postgres:17
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: devmentor
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-devmentor}
+      DATABASE_USER: ${DATABASE_USER:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in the deployment environment}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in the deployment environment}
+      OPERATOR_USER_IDS: ${OPERATOR_USER_IDS:?Set OPERATOR_USER_IDS in the deployment environment}
+      APP_BASE_URL: ${APP_BASE_URL:?Set APP_BASE_URL in the deployment environment}
+      PUBLIC_SIGNUP: ${PUBLIC_SIGNUP:-false}
+      MENTOR_PUBLISH_WINDOW_DAYS: ${MENTOR_PUBLISH_WINDOW_DAYS:-14}
+      MENTOR_RESPONSE_WINDOW_MINUTES: ${MENTOR_RESPONSE_WINDOW_MINUTES:-120}
+      MAILER_MODE: ${MAILER_MODE:-console}
+      MAILER_API_KEY: ${MAILER_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET-}
+      DEMO_MENTEE_GITHUB_EMAIL: ${DEMO_MENTEE_GITHUB_EMAIL:-}
+      DEMO_MENTOR_GITHUB_EMAIL: ${DEMO_MENTOR_GITHUB_EMAIL:-}
+      DEMO_OPERATOR_GITHUB_EMAIL: ${DEMO_OPERATOR_GITHUB_EMAIL:-}
+      PAYMENTS_MODE: ${PAYMENTS_MODE:-mock}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_CONNECT_ENABLED: ${STRIPE_CONNECT_ENABLED:-false}
+      PAYMENTS_LIVE_ENABLED: ${PAYMENTS_LIVE_ENABLED:-false}
+      VAULT_ENABLED: ${VAULT_ENABLED:-false}
+      VAULT_PUBLISH_ENABLED: ${VAULT_PUBLISH_ENABLED:-false}
+      AI_MODE: ${AI_MODE:-mock}
+      AI_LIVE_ENABLED: ${AI_LIVE_ENABLED:-false}
+      AI_ALLOW_MOCK_IN_PRODUCTION: ${AI_ALLOW_MOCK_IN_PRODUCTION:-false}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-opus-5-5}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-c", "npm run migrate && npm start"]
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-devmentor}
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in the deployment environment}
     ports:
-      - "${POSTGRES_HOST_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - devmentor-db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d devmentor"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 10

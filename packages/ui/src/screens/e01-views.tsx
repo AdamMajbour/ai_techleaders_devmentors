@@ -3,7 +3,7 @@
 // Example compositions of the E01 screens (the booking flow), built only from the design system. They exist to
 // document the state map of each screen in Storybook and to be copied into pages. They are not exported from the
 // package: a page in `app` composes the same components with real data and routing.
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type FormEvent } from 'react';
 
 import { Page } from '../backend/layout/Page';
 import { EmptyState } from '../backend/feedback/EmptyState';

@@ -43,7 +43,6 @@ const env: NodeJS.ProcessEnv = {
   JWT_SECRET,
   PUBLIC_SIGNUP: 'true',
   PAYMENTS_MODE: 'mock',
-  NODE_ENV: 'production',
   MOCK_PAYMENT_E2E_ENABLED: 'true',
   VAULT_ENABLED: 'true',
   VAULT_PUBLISH_ENABLED: 'true',
@@ -794,6 +793,75 @@ describe('mock booking payment flow', () => {
     expect(mentorFailed).toBeUndefined();
     expect(mentorList.body.data.items.some((item: { id: string }) => item.id === abandonedAttempt.booking.id)).toBe(false);
     expect(unpaid.body.data.status).not.toBe('paid');
+  }, 120_000);
+
+  it('keeps bookings private and rejects seeker or other-mentor actions on another mentor\'s booking', async () => {
+    const suffix = randomBytes(4).toString('hex');
+    const seeker = await registerPilotUser('seeker', 'Authorization Seeker');
+    const otherSeeker = await registerPilotUser('seeker', 'Other Authorization Seeker');
+    const mentor = await registerPilotUser('mentor', 'Authorization Mentor');
+    const otherMentor = await registerPilotUser('mentor', 'Other Authorization Mentor');
+    const profile = await api('/api/mentors', {
+      method: 'POST', cookie: mentor.cookie,
+      json: {
+        slug: `authorization-mentor-${suffix}`,
+        headline: 'Authorization test mentor',
+        bio: 'Private booking authorization E2E.',
+        technologies: 'typescript',
+        publicWorkUrl: 'https://example.com/work',
+        isListed: true,
+      },
+    });
+    expect(profile.response.status).toBe(201);
+    const slotStart = new Date(Math.ceil((Date.now() + 180 * 60_000) / (15 * 60_000)) * (15 * 60_000));
+    const slot = await api('/api/mentors/me/availability', {
+      method: 'POST', cookie: mentor.cookie,
+      json: { startsAt: slotStart.toISOString() },
+    });
+    expect(slot.response.status).toBe(200);
+    const seekerTerms = await currentTerms('seeker');
+    const booking = await api('/api/bookings', {
+      method: 'POST', cookie: seeker.cookie,
+      json: {
+        mentorId: profile.body.data.id,
+        availabilitySlotId: slot.body.data.id,
+        durationMinutes: 25,
+        question: 'A private authorization test booking.',
+        source: 'list',
+        landedAt: new Date().toISOString(),
+        acceptedTerms: true,
+        termsVersionId: seekerTerms.id,
+        termsSha256: seekerTerms.sha256,
+      },
+    });
+    expect(booking.response.status).toBe(201);
+    const bookingId = booking.body.data.booking.id as string;
+    const checkout = await fetch(`${baseUrl}${booking.body.data.checkoutUrl as string}`);
+    expect(checkout.status).toBe(200);
+    const payment = await api(`/api/bookings/${bookingId}/mock-payment`, {
+      method: 'POST', cookie: seeker.cookie, json: { outcome: 'complete' },
+    });
+    expect(payment.response.status).toBe(200);
+    expect(payment.body.data.status).toBe('paid');
+
+    const otherSeekerRead = await api(`/api/bookings/${bookingId}`, { cookie: otherSeeker.cookie });
+    expect(otherSeekerRead.response.status).toBe(404);
+    const operatorRead = await api(`/api/operator/users`, { cookie: seeker.cookie });
+    expect(operatorRead.response.status).toBe(403);
+    for (const action of ['accept', 'decline']) {
+      const seekerAction = await api(`/api/bookings/${bookingId}/${action}`, {
+        method: 'POST', cookie: seeker.cookie, json: {},
+      });
+      expect(seekerAction.response.status).toBe(404);
+      const otherMentorAction = await api(`/api/bookings/${bookingId}/${action}`, {
+        method: 'POST', cookie: otherMentor.cookie, json: {},
+      });
+      expect(otherMentorAction.response.status).toBe(404);
+    }
+
+    const ownerRead = await api(`/api/bookings/${bookingId}`, { cookie: mentor.cookie });
+    expect(ownerRead.response.status).toBe(200);
+    expect(ownerRead.body.data.status).toBe('paid');
   }, 120_000);
 });
 
