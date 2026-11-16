@@ -17,8 +17,8 @@ Collected the current product/specification, UI, security, testing, and deployme
 - Independent static review by GPT-6.1 Terra first requested changes for local Compose startup. After changing the development scripts to use a database-only Compose file, the same reviewer returned PASS on 2026-11-16.
 - Local checks passed before PR creation: type-check, lint, `check:agents`, unit tests (134 suites / 844 tests), production build, and staged whitespace check.
 - Syntax checks for `scripts/setup.mjs` and `scripts/db-up.mjs`, focused `scripts/setup-lib.test.ts` (16 tests), `check:agents`, and whitespace check passed after the local Compose fix.
-- CI run `43875616986` passed for PR head `0034a4a`, including secret scan, production rate-limit regression, Storybook tests, migrations/seeds, integration tests, build, and E2E. The evidence-only commit updating this run log triggers a fresh PR check; verify the live GitHub status before merge.
-- The PR is open and unmerged. Do not mark this run complete until checks on the final head pass and the required merge review is recorded.
+- CI run `43876527511` passed on PR head `8833c013a757556f9453e4dd6dc45330587e9b44` on 2026-11-16, including secret scan, production rate-limit regression, Storybook tests, migrations/seeds, integration tests, build, and E2E.
+- The PR is open and unmerged. The current PR has no GitHub review or review request; an authorized reviewer must submit an approval before merge. The independent static review by GPT-6.1 Terra is recorded above but is not a GitHub review.
 
 ## Security follow-up
 

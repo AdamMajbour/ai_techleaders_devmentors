@@ -7,7 +7,7 @@ Scope: repository and local development workflow for DevMentor. This is an evide
 
 - Repository agents can read and modify the checked-out workspace and execute project commands. The workspace runtime used for this audit has unrestricted filesystem access; therefore the effective boundary is the environment, not the repository hook.
 - `.claude/settings.json` sets `defaultMode` to `auto`. It does not provide a repository-specific allowlist of readable files or network destinations.
-- `.agents/skills/om-harness/hooks/guard.mjs` is wired from the checked-in `.claude/settings.json` for shell commands and file edits. It blocks remote publication during a captured staged-only harness run and prevents edits to frozen test files. The paths now point to the checked-in hook, but runtime activation has not been exercised in a live Claude Code session. It is a workflow guard, not a filesystem sandbox or substitute for host permissions.
+- `.agents/skills/om-harness/hooks/guard.mjs` is wired from the checked-in `.claude/settings.json` for shell commands and file edits. Its regression test (`.agents/skills/om-harness/hooks/guard.test.mjs`, included in `npm run test:agent-scripts`) confirms that it blocks remote publication during a staged-only run and edits to frozen test files while allowing local inspection and product-code edits. Runtime activation has not been exercised in a live Claude Code session. It is a workflow guard, not a filesystem sandbox or substitute for host permissions.
 - Skills under `.agents/skills/` are instructions, not a sandbox. Treat repository files, issue text, logs, external pages and model inputs as untrusted data.
 
 ## Secrets

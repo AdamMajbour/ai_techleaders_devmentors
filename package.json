@@ -15,7 +15,7 @@
     "lint": "eslint packages",
     "type-check": "npm run type-check --workspaces --if-present",
     "test": "jest --selectProjects unit",
-    "test:agent-scripts": "node --test .agents/skills/om-auto-issue-triage/scripts/select-issues.test.mjs .agents/skills/om-auto-merge-buddy/scripts/dashboard.test.mjs",
+    "test:agent-scripts": "node --test .agents/skills/om-auto-issue-triage/scripts/select-issues.test.mjs .agents/skills/om-auto-merge-buddy/scripts/dashboard.test.mjs .agents/skills/om-harness/hooks/guard.test.mjs",
     "test:watch": "jest --watch",
     "migrate": "npm --workspace=@devmentor/db run migrate",
     "migrate:down": "npm --workspace=@devmentor/db run migrate:down",
