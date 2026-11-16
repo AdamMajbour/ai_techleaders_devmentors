@@ -18,6 +18,7 @@ import {
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ENV_FILE = path.join(ROOT, ".env.local");
 const ENV_EXAMPLE = path.join(ROOT, ".env.example");
+const DB_COMPOSE_FILE = path.join(ROOT, "docker-compose.db.yml");
 const IS_WINDOWS = process.platform === "win32";
 const DB_WAIT_MS = 60_000;
 const PROBE_TIMEOUT_MS = 2_000;
@@ -68,7 +69,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function waitForHealthy() {
   const deadline = Date.now() + DB_WAIT_MS;
   while (Date.now() < deadline) {
-    const id = capture("docker", ["compose", "ps", "-q", "db"]);
+    const id = capture("docker", ["compose", "-f", DB_COMPOSE_FILE, "--env-file", ENV_FILE, "ps", "-q", "db"]);
     const status = id && capture("docker", ["inspect", "--format", "{{.State.Health.Status}}", id]);
     if (status === "healthy") return true;
     await sleep(2_000);
@@ -115,7 +116,9 @@ async function main() {
         "Start PostgreSQL 14+ matching DATABASE_* in .env.local, or (for localhost:5432) install Docker, then re-run: npm run setup",
     );
   } else {
-    if (run("docker", ["compose", "up", "-d", "db"]).status !== 0) fail("postgres", "docker compose up -d db failed.");
+    if (run("docker", ["compose", "-f", DB_COMPOSE_FILE, "--env-file", ENV_FILE, "up", "-d", "db"]).status !== 0) {
+      fail("postgres", "docker compose up -d db failed.");
+    }
     if (!(await waitForHealthy())) fail("postgres", `The db container did not become healthy within ${DB_WAIT_MS / 1000}s.`);
     record("postgres", "done", "started via docker compose");
   }

@@ -1,5 +1,9 @@
 # Development
 
+## Wdrożenie
+
+Pełna, samodzielna procedura pierwszego wdrożenia i aktualizacji na Dokploy znajduje się w [instrukcji wdrożenia](DEPLOYMENT.md).
+
 ## Invitation batches
 
 Operators open a batch in the Invitations page before creating outreach invitations. A batch accepts at most 20 invitations.

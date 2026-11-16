@@ -2,8 +2,6 @@ import '../src/load-env';
 import { Booking, Message, User, closeORM, initializeORM } from '../src';
 
 const BOOKING_ID = '0e7c8b4a-ef14-4e71-a618-161600000003';
-const MENTEE_ID = '0e7c8b4a-ef14-4e71-a618-161600000001';
-const MENTOR_ID = '0e7c8b4a-ef14-4e71-a618-161600000002';
 const MESSAGE_IDS = [
   '0e7c8b4a-ef14-4e71-a618-161600000004',
   '0e7c8b4a-ef14-4e71-a618-161600000005',

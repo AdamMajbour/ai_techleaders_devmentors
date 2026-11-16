@@ -6,7 +6,6 @@ import type {
   UserRepository,
 } from '@devmentor/db';
 import { z } from 'zod';
-import { assertParticipant } from '../../http/auth';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../http/errors';
 import type { EventBus } from '../../events/event-bus';
 import type { Session } from '../../security/session';

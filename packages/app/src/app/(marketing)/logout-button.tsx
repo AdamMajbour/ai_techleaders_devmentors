@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription, apiCall, Button } from '@devmentor/ui';
 
 export function LogoutButton() {
+  const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +19,7 @@ export function LogoutButton() {
       setError(result.error.message || 'You could not be signed out. Try again.');
       return;
     }
-    window.location.assign('/login');
+    router.push('/login');
   }
 
   return (

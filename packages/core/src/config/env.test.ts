@@ -16,6 +16,14 @@ describe('parseEnv', () => {
     expect(parseEnv({ JWT_SECRET: 'x'.repeat(32) }).PUBLIC_SIGNUP).toBe(true);
   });
 
+  it('treats blank optional OAuth values as unset', () => {
+    expect(parseEnv({
+      JWT_SECRET: 'x'.repeat(32),
+      GITHUB_CLIENT_ID: '',
+      GITHUB_CLIENT_SECRET: '  ',
+    })).toMatchObject({ GITHUB_CLIENT_ID: undefined, GITHUB_CLIENT_SECRET: undefined });
+  });
+
   describe('parseBookingSettings', () => {
     it('defaults the response window and leaves automatic refund reasons empty', () => {
       expect(parseBookingSettings({})).toEqual({

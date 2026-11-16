@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/om-harness/block-push-and-pr.sh\""
+            "command": "node \"$CLAUDE_PROJECT_DIR/.agents/skills/om-harness/hooks/guard.mjs\" block"
           }
         ]
       },
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/om-harness/freeze-tests.sh\""
+            "command": "node \"$CLAUDE_PROJECT_DIR/.agents/skills/om-harness/hooks/guard.mjs\" freeze"
           }
         ]
       }
